@@ -22,6 +22,7 @@ const REPO_CONFIG = [
     description: 'Appium iOS tests (all batches)',
     icon: '🍎',
     platform: 'iOS',
+    defaultEnvironment: 'Alpha app',
     reportUrl: 'https://retech-us.github.io/retech-mobile-automation/ios/',
     ciRunUrl: 'https://github.com/retech-us/retech-mobile-automation/actions',
     summaryUrl: 'https://retech-us.github.io/retech-mobile-automation/run-summary.json',
@@ -36,6 +37,7 @@ const REPO_CONFIG = [
     description: 'Appium Android tests (all batches)',
     icon: '🤖',
     platform: 'Android',
+    defaultEnvironment: 'Alpha app',
     reportUrl: 'https://retech-us.github.io/retech-mobile-automation/android/',
     ciRunUrl: 'https://github.com/retech-us/retech-mobile-automation/actions',
     summaryUrl: 'https://retech-us.github.io/retech-mobile-automation/run-summary.json',
@@ -67,6 +69,23 @@ async function fetchJson(url) {
   } catch {
     return null;
   }
+}
+
+function formatAppEnvironment(value) {
+  if (!value) return null;
+  const normalized = String(value).trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized.endsWith(' app')) {
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  }
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1) + ' app';
+}
+
+function resolveEnvironment(envMeta, config) {
+  const raw = envMeta.environment || envMeta.instance;
+  if (raw) return formatAppEnvironment(raw);
+  if (config.defaultEnvironment) return config.defaultEnvironment;
+  return null;
 }
 
 function parseEnvironment(widget) {
@@ -132,7 +151,8 @@ function fromWidget(config, widget) {
 function enrich(payload, config, envMeta, executors, runSummary) {
   if (envMeta.branch) payload.branch = envMeta.branch;
   if (envMeta.commit) payload.commit = envMeta.commit;
-  if (envMeta.environment) payload.environment = envMeta.environment;
+  const resolvedEnv = resolveEnvironment(envMeta, config);
+  if (resolvedEnv) payload.environment = resolvedEnv;
   if (envMeta.instance) payload.instance = envMeta.instance;
   if (envMeta.baseUrl) payload.baseUrl = envMeta.baseUrl;
   if (envMeta.browser) payload.browser = envMeta.browser;
