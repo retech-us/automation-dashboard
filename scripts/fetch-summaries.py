@@ -20,6 +20,7 @@ REPOS = {
         "environment_url": "https://retech-us.github.io/retech-web-automation/widgets/environment.json",
         "executors_url": "https://retech-us.github.io/retech-web-automation/widgets/executors.json",
         "repo_name": "retech-us/retech-web-automation",
+        "github_workflow_hint": "Java CI",
     },
     "mobile-ios": {
         "report_url": "https://retech-us.github.io/retech-mobile-automation/ios/",
@@ -31,6 +32,7 @@ REPOS = {
         "repo_name": "retech-us/retech-mobile-automation",
         "platform": "iOS",
         "aggregate_batches": True,
+        "github_workflow_hint": "Mobile Tests",
     },
     "mobile-android": {
         "report_url": "https://retech-us.github.io/retech-mobile-automation/android/",
@@ -42,6 +44,7 @@ REPOS = {
         "repo_name": "retech-us/retech-mobile-automation",
         "platform": "Android",
         "aggregate_batches": True,
+        "github_workflow_hint": "Mobile Tests",
     },
     "api": {
         "report_url": "https://retech-us.github.io/retech-api-automation/",
@@ -51,6 +54,7 @@ REPOS = {
         "environment_url": "https://retech-us.github.io/retech-api-automation/widgets/environment.json",
         "executors_url": "https://retech-us.github.io/retech-api-automation/widgets/executors.json",
         "repo_name": "retech-us/retech-api-automation",
+        "github_workflow_hint": "API",
     },
 }
 
@@ -89,7 +93,64 @@ def parse_environment(widget: list | None) -> dict:
         "browser": lookup.get("Browser"),
         "workflow": lookup.get("Workflow"),
         "app": lookup.get("App"),
+        "appName": lookup.get("APP Name") or lookup.get("App Name"),
+        "appVersion": lookup.get("App Version"),
+        "targetEnvironment": lookup.get("Test Environment"),
+        "osName": lookup.get("OS Name") or lookup.get("OS"),
     }
+
+
+def fetch_github_run(repo_name: str, workflow_hint: str) -> dict | None:
+    import os
+
+    url = f"https://api.github.com/repos/{repo_name}/actions/runs?per_page=20&status=completed"
+    headers = {"User-Agent": "automation-dashboard/1.0", "Accept": "application/vnd.github+json"}
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError):
+        return None
+    for run in data.get("workflow_runs") or []:
+        name = run.get("name") or ""
+        if workflow_hint.lower() not in name.lower():
+            continue
+        if "pages build" in name.lower():
+            continue
+        return {
+            "branch": run.get("head_branch"),
+            "commit": (run.get("head_sha") or "")[:7],
+            "ciRunUrl": run.get("html_url"),
+            "workflow": name,
+            "runNumber": run.get("run_number"),
+            "runId": str(run.get("id") or ""),
+            "finishedAt": run.get("updated_at"),
+        }
+    return None
+
+
+def summarize_history_trend(trend: list | None) -> list[dict]:
+    if not isinstance(trend, list):
+        return []
+    rows = []
+    for entry in trend:
+        data = entry.get("data") or {}
+        total = int(data.get("total") or 0)
+        if total <= 0:
+            continue
+        passed = int(data.get("passed") or 0)
+        failed = int(data.get("failed") or 0) + int(data.get("broken") or 0)
+        rows.append({
+            "passPct": round((passed / total) * 100, 1),
+            "total": total,
+            "failed": failed,
+        })
+        if len(rows) >= 6:
+            break
+    return rows
 
 
 def merge_widgets(widgets: list[dict]) -> dict | None:
@@ -271,6 +332,14 @@ def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dic
         payload["workflow"] = env_meta["workflow"]
     if env_meta.get("app"):
         payload["app"] = env_meta["app"]
+    if env_meta.get("appName"):
+        payload["appName"] = env_meta["appName"]
+    if env_meta.get("appVersion"):
+        payload["appVersion"] = env_meta["appVersion"]
+    if env_meta.get("targetEnvironment"):
+        payload["targetEnvironment"] = env_meta["targetEnvironment"]
+    if env_meta.get("osName"):
+        payload["osName"] = env_meta["osName"]
 
     if isinstance(executors, list) and executors:
         ex = executors[0]
@@ -308,6 +377,30 @@ def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dic
     return payload
 
 
+def enrich_github(payload: dict, cfg: dict) -> dict:
+    hint = cfg.get("github_workflow_hint")
+    if not hint:
+        return payload
+    gh = fetch_github_run(cfg["repo_name"], hint)
+    if not gh:
+        return payload
+    if not payload.get("branch") and gh.get("branch"):
+        payload["branch"] = gh["branch"]
+    if not payload.get("commit") and gh.get("commit"):
+        payload["commit"] = gh["commit"]
+    if gh.get("ciRunUrl"):
+        payload["ciRunUrl"] = gh["ciRunUrl"]
+    if not payload.get("workflow") and gh.get("workflow"):
+        payload["workflow"] = gh["workflow"]
+    if not payload.get("runId") and gh.get("runId"):
+        payload["runId"] = gh["runId"]
+    if gh.get("runNumber"):
+        payload["runNumber"] = gh["runNumber"]
+    if (not payload.get("finishedAt") or payload.get("durationMs", 0) == 0) and gh.get("finishedAt"):
+        payload["finishedAt"] = gh["finishedAt"]
+    return payload
+
+
 def fetch_repo(repo_id: str, out_dir: Path) -> dict:
     cfg = REPOS[repo_id]
     cached_path = out_dir / f"{repo_id}.json"
@@ -329,12 +422,14 @@ def fetch_repo(repo_id: str, out_dir: Path) -> dict:
         widget = fetch_json(cfg["widget_url"])
 
     payload = resolve_best_payload(repo_id, cfg, widget, history_trend, run_summary, cached)
+    payload["historyTrend"] = summarize_history_trend(history_trend)
 
     if cfg.get("platform"):
         payload["platform"] = cfg["platform"]
 
     summary_for_enrich = run_summary if run_summary and (run_summary.get("repo") or run_summary.get("summary")) else None
-    return enrich(payload, cfg, env_meta, executors, summary_for_enrich)
+    payload = enrich(payload, cfg, env_meta, executors, summary_for_enrich)
+    return enrich_github(payload, cfg)
 
 
 def main() -> int:
