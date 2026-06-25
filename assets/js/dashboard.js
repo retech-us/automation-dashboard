@@ -319,6 +319,19 @@ function formatDate(iso) {
   try { return new Date(iso).toLocaleString(); } catch { return iso; }
 }
 
+function computeRates(counts) {
+  const total = counts.total || 0;
+  if (!total) return { passPct: 0, failPct: 0 };
+  const passPct = Math.round((counts.passed / total) * 1000) / 10;
+  const failPct = Math.round((counts.review / total) * 1000) / 10;
+  return { passPct, failPct };
+}
+
+function cardStatus(summary, counts) {
+  if (!counts.total) return 'unknown';
+  return counts.review > 0 ? 'fail' : 'pass';
+}
+
 function renderCategoryChips(categories) {
   if (!categories || !Object.keys(categories).length) return '';
   const chips = Object.entries(categories)
@@ -329,37 +342,50 @@ function renderCategoryChips(categories) {
 
 function renderCard(config, summary) {
   const counts = summary?.counts || computeCounts(summary);
+  const rates = computeRates(counts);
+  const status = cardStatus(summary, counts);
   const noData = counts.total === 0;
+  const branchLabel = summary?.branch
+    ? `${escapeHtml(summary.branch)}${summary?.commit ? ` @ ${escapeHtml(summary.commit)}` : ''}`
+    : '—';
 
   return `
-    <article class="card" data-repo="${config.id}">
+    <article class="card card--${status}" data-repo="${config.id}">
       <div class="card__header">
         <div>
           <h2 class="card__title">${config.icon} ${config.title}</h2>
           <p class="card__desc">${config.description}</p>
+          ${summary?.branch ? `<span class="branch-pill" title="Branch from latest published Allure report">${branchLabel}</span>` : ''}
         </div>
-        <div class="metric-badge" title="Tests executed in latest Allure report">
-          <span class="metric-badge__value">${noData ? '—' : counts.total}</span>
-          <span class="metric-badge__label">tests run</span>
+        <div class="rate-badge ${status}" title="Pass rate from latest available run">
+          <span class="rate-badge__value">${noData ? '—' : rates.passPct + '%'}</span>
+          <span class="rate-badge__label">${noData ? 'no data' : counts.review > 0 ? 'has failures' : 'all passed'}</span>
         </div>
       </div>
       <div class="card__body">
         ${noData ? `<p class="no-data-msg">No published test results found for this suite in Allure reports.</p>` : `
+        <div class="progress-bar" aria-hidden="true">
+          <div class="progress-bar__pass" style="width:${rates.passPct}%"></div>
+          <div class="progress-bar__fail" style="width:${rates.failPct}%"></div>
+        </div>
         <div class="stats">
-          <div class="stat"><span class="stat__value">${counts.total}</span><span class="stat__label">Executed</span></div>
-          <div class="stat"><span class="stat__value stat__value--ok">${counts.passed}</span><span class="stat__label">Completed</span></div>
-          <div class="stat"><span class="stat__value stat__value--review">${counts.review}</span><span class="stat__label">For review</span></div>
+          <div class="stat"><span class="stat__value">${counts.total}</span><span class="stat__label">Total</span></div>
+          <div class="stat stat--pass"><span class="stat__value stat__value--pass">${counts.passed}</span><span class="stat__label">Passed</span></div>
+          <div class="stat stat--fail"><span class="stat__value stat__value--fail">${counts.review}</span><span class="stat__label">Failed</span></div>
           <div class="stat"><span class="stat__value">${counts.skipped}</span><span class="stat__label">Skipped</span></div>
+        </div>
+        <div class="result-row">
+          <span class="status-badge ${status}">${status === 'pass' ? '● Passed' : status === 'fail' ? '● Failed' : '● Unknown'}</span>
+          <span class="result-row__meta">${rates.passPct}% pass · ${rates.failPct}% fail</span>
         </div>
         ${summary?.lastAvailable ? '<p class="data-note">Latest publish was empty — showing last available Allure run from report history.</p>' : ''}`}
         <ul class="meta-list">
           ${config.platform ? `<li><strong>Platform:</strong> ${config.platform}</li>` : ''}
           <li><strong>Environment:</strong> ${summary?.environment || '—'}</li>
           <li><strong>Instance:</strong> ${summary?.instance ? escapeHtml(summary.instance) : '—'}</li>
-          <li><strong>Branch:</strong> ${summary?.branch || '—'} ${summary?.commit ? '@ ' + summary.commit : ''}</li>
+          <li><strong>Branch:</strong> ${branchLabel}</li>
           <li><strong>Last run:</strong> ${formatDate(summary?.finishedAt)}</li>
           <li><strong>Duration:</strong> ${formatDuration(summary?.durationMs)}</li>
-          <li><strong>Source:</strong> ${summary?.dataSource || 'allure-report'}</li>
         </ul>
         ${renderCategoryChips(summary?.failureCategories)}
         <div class="card__actions">
@@ -373,9 +399,20 @@ function renderCard(config, summary) {
 
 function renderOverallBanner(summaries) {
   const valid = summaries.filter((s) => (s?.counts?.total || 0) > 0);
-  const totalTests = valid.reduce((a, s) => a + (s.counts?.total || 0), 0);
   if (!valid.length) return '<strong>Loading latest Allure report data…</strong>';
-  return `<div class="overall-banner neutral"><strong>${valid.length} suites monitored</strong> · ${totalTests} tests executed in latest CI runs · Data sourced from Allure reports</div>`;
+
+  const totalTests = valid.reduce((a, s) => a + (s.counts?.total || 0), 0);
+  const totalPassed = valid.reduce((a, s) => a + (s.counts?.passed || 0), 0);
+  const totalFailed = valid.reduce((a, s) => a + (s.counts?.review || 0), 0);
+  const overallPass = totalTests ? Math.round((totalPassed / totalTests) * 1000) / 10 : 0;
+  const bannerClass = totalFailed > 0 ? 'fail' : 'pass';
+
+  return `<div class="overall-banner ${bannerClass}">
+    <strong>${valid.length} suites</strong> · ${totalTests} tests ·
+    <span class="text-pass">${totalPassed} passed</span> ·
+    <span class="text-fail">${totalFailed} failed</span> ·
+    ${overallPass}% overall pass · Latest published Allure results (any branch)
+  </div>`;
 }
 
 function renderFailures(summaries) {
