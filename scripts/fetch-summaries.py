@@ -20,15 +20,25 @@ REPOS = {
         "executors_url": "https://retech-us.github.io/retech-web-automation/widgets/executors.json",
         "repo_name": "retech-us/retech-web-automation",
     },
-    "mobile": {
-        "report_url": "https://retech-us.github.io/retech-mobile-automation/",
+    "mobile-ios": {
+        "report_url": "https://retech-us.github.io/retech-mobile-automation/ios/",
         "ci_url": "https://github.com/retech-us/retech-mobile-automation/actions",
         "summary_url": "https://retech-us.github.io/retech-mobile-automation/run-summary.json",
-        "widget_url": "https://retech-us.github.io/retech-mobile-automation/widgets/summary.json",
-        "environment_url": "https://retech-us.github.io/retech-mobile-automation/widgets/environment.json",
-        "executors_url": "https://retech-us.github.io/retech-mobile-automation/widgets/executors.json",
+        "widget_url": "https://retech-us.github.io/retech-mobile-automation/ios/widgets/summary.json",
+        "environment_url": "https://retech-us.github.io/retech-mobile-automation/ios/widgets/environment.json",
+        "executors_url": "https://retech-us.github.io/retech-mobile-automation/ios/widgets/executors.json",
         "repo_name": "retech-us/retech-mobile-automation",
-        "mobile_batches": True,
+        "platform": "iOS",
+    },
+    "mobile-android": {
+        "report_url": "https://retech-us.github.io/retech-mobile-automation/android/",
+        "ci_url": "https://github.com/retech-us/retech-mobile-automation/actions",
+        "summary_url": "https://retech-us.github.io/retech-mobile-automation/run-summary.json",
+        "widget_url": "https://retech-us.github.io/retech-mobile-automation/android/widgets/summary.json",
+        "environment_url": "https://retech-us.github.io/retech-mobile-automation/android/widgets/environment.json",
+        "executors_url": "https://retech-us.github.io/retech-mobile-automation/android/widgets/executors.json",
+        "repo_name": "retech-us/retech-mobile-automation",
+        "platform": "Android",
     },
     "api": {
         "report_url": "https://retech-us.github.io/retech-api-automation/",
@@ -73,20 +83,6 @@ def parse_environment(widget: list | None) -> dict:
         "browser": lookup.get("Browser"),
         "workflow": lookup.get("Workflow"),
     }
-
-
-def fetch_mobile_environment(cfg: dict) -> dict:
-    merged = parse_environment(fetch_json(cfg["environment_url"]))
-    if merged.get("branch") or merged.get("environment"):
-        return merged
-    base = cfg["report_url"]
-    for batch in range(5, 0, -1):
-        for platform in ("ios", "android"):
-            url = f"{base}{platform}/batch-{batch}/widgets/environment.json"
-            parsed = parse_environment(fetch_json(url))
-            if parsed.get("branch") or parsed.get("environment") or parsed.get("instance"):
-                return parsed
-    return merged
 
 
 def compute_rates(summary: dict) -> dict:
@@ -203,10 +199,7 @@ def fetch_repo(repo_id: str) -> dict:
     run_summary = fetch_json(cfg["summary_url"])
     executors = fetch_json(cfg["executors_url"])
 
-    if cfg.get("mobile_batches"):
-        env_meta = fetch_mobile_environment(cfg)
-    else:
-        env_meta = parse_environment(fetch_json(cfg["environment_url"]))
+    env_meta = parse_environment(fetch_json(cfg["environment_url"]))
 
     if widget and widget.get("statistic"):
         payload = from_widget(repo_id, widget, cfg)
@@ -216,6 +209,9 @@ def fetch_repo(repo_id: str) -> dict:
         payload["rates"] = compute_rates(payload)
     else:
         return placeholder(repo_id, cfg)
+
+    if cfg.get("platform"):
+        payload["platform"] = cfg["platform"]
 
     return enrich(payload, cfg, env_meta, executors, run_summary if run_summary and run_summary.get("repo") else None)
 
