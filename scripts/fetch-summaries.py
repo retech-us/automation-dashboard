@@ -29,6 +29,7 @@ REPOS = {
         "executors_url": "https://retech-us.github.io/retech-mobile-automation/ios/widgets/executors.json",
         "repo_name": "retech-us/retech-mobile-automation",
         "platform": "iOS",
+        "default_environment": "Alpha app",
     },
     "mobile-android": {
         "report_url": "https://retech-us.github.io/retech-mobile-automation/android/",
@@ -39,6 +40,7 @@ REPOS = {
         "executors_url": "https://retech-us.github.io/retech-mobile-automation/android/widgets/executors.json",
         "repo_name": "retech-us/retech-mobile-automation",
         "platform": "Android",
+        "default_environment": "Alpha app",
     },
     "api": {
         "report_url": "https://retech-us.github.io/retech-api-automation/",
@@ -59,6 +61,24 @@ def fetch_json(url: str):
             return json.loads(resp.read().decode("utf-8"))
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError):
         return None
+
+
+def format_app_environment(value: str | None) -> str | None:
+    if not value:
+        return None
+    normalized = value.strip().lower()
+    if not normalized:
+        return None
+    if normalized.endswith(" app"):
+        return normalized[0].upper() + normalized[1:]
+    return normalized[0].upper() + normalized[1:] + " app"
+
+
+def resolve_environment(env_meta: dict, cfg: dict) -> str | None:
+    raw = env_meta.get("environment") or env_meta.get("instance")
+    if raw:
+        return format_app_environment(str(raw))
+    return cfg.get("default_environment")
 
 
 def parse_environment(widget: list | None) -> dict:
@@ -142,7 +162,11 @@ def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dic
     if env_meta.get("commit"):
         payload["commit"] = env_meta["commit"]
     if env_meta.get("environment"):
-        payload["environment"] = env_meta["environment"]
+        payload["environment"] = format_app_environment(str(env_meta["environment"])) or env_meta["environment"]
+    elif env_meta.get("instance"):
+        payload["environment"] = format_app_environment(str(env_meta["instance"]))
+    elif cfg.get("default_environment"):
+        payload["environment"] = cfg["default_environment"]
     if env_meta.get("instance"):
         payload["instance"] = env_meta["instance"]
     if env_meta.get("baseUrl"):
