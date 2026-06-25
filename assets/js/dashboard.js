@@ -2,6 +2,8 @@
  * Public automation dashboard — latest Allure report stats + report metadata.
  */
 
+const BUILD_TAG = '20260625b';
+
 const REPO_CONFIG = [
   {
     id: 'web',
@@ -63,9 +65,11 @@ const REPO_CONFIG = [
 
 async function fetchJson(url) {
   try {
-    const response = await fetch(url, { cache: 'no-store' });
+    const sep = url.includes('?') ? '&' : '?';
+    const response = await fetch(`${url}${sep}_=${BUILD_TAG}`, { cache: 'no-store' });
     if (!response.ok) return null;
-    return response.json();
+    const data = await response.json();
+    return data;
   } catch {
     return null;
   }
@@ -218,7 +222,8 @@ function resolveBestPayload(config, widget, historyTrend, runSummary, cached) {
     rank(payload, 800 + trendStats.total);
   }
   if (cached?.summary?.total > 0) {
-    rank({ ...cached, dataSource: cached.dataSource || 'cached-fallback' }, 700 + cached.summary.total);
+    const bundledScore = cached.dataSource && cached.dataSource !== 'unavailable' ? 950 : 750;
+    rank({ ...cached }, bundledScore + cached.summary.total);
   }
   if (widget?.statistic) {
     rank(fromWidget(config, widget), 50);
@@ -289,22 +294,31 @@ function placeholder(config) {
   };
 }
 
+function mergeSummaries(bundled, live) {
+  if (!bundled?.summary?.total) return live;
+  if (!live?.summary?.total) return bundled;
+  const bundledTotal = bundled.summary.total || 0;
+  const liveTotal = live.summary.total || 0;
+  if (liveTotal >= bundledTotal) return live;
+  return { ...bundled, ...live, summary: bundled.summary, counts: bundled.counts || computeCounts(bundled) };
+}
 async function fetchSummary(config) {
+  const bundled = await fetchJson(config.localPath);
   const historyTrendUrl = `${config.reportUrl}widgets/history-trend.json`;
-  const [executors, runSummary, envWidget, historyTrend, cached] = await Promise.all([
+  const [executors, runSummary, envWidget, historyTrend] = await Promise.all([
     fetchJson(config.executorsUrl),
     fetchJson(config.summaryUrl),
     fetchJson(config.environmentUrl),
     fetchJson(historyTrendUrl),
-    fetchJson(config.localPath),
   ]);
   const widget = config.aggregateBatches
     ? await fetchMobileWidget(config)
     : await fetchJson(config.widgetUrl);
   const envMeta = parseEnvironment(envWidget);
-  const payload = resolveBestPayload(config, widget, historyTrend, runSummary, cached);
+  const payload = resolveBestPayload(config, widget, historyTrend, runSummary, bundled);
   const summaryForEnrich = runSummary?.repo || runSummary?.summary ? runSummary : null;
-  return enrich(payload, config, envMeta, executors, summaryForEnrich);
+  const enriched = enrich(payload, config, envMeta, executors, summaryForEnrich);
+  return mergeSummaries(bundled, enriched);
 }
 
 function formatDuration(ms) {
@@ -350,7 +364,7 @@ function renderCard(config, summary) {
     : '—';
 
   return `
-    <article class="card card--${status}" data-repo="${config.id}">
+    <article class="card card--${config.id} card--${status}" data-repo="${config.id}">
       <div class="card__header">
         <div>
           <h2 class="card__title">${config.icon} ${config.title}</h2>
@@ -440,13 +454,25 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-async function loadDashboard() {
-  document.getElementById('repo-cards').innerHTML = '<p style="color:var(--muted)">Loading latest Allure reports…</p>';
-  const results = await Promise.all(REPO_CONFIG.map((cfg) => fetchSummary(cfg)));
+function renderDashboard(results) {
   document.getElementById('repo-cards').innerHTML = REPO_CONFIG.map((cfg, i) => renderCard(cfg, results[i])).join('');
   document.getElementById('overall-banner').innerHTML = renderOverallBanner(results);
   document.getElementById('failures-list').innerHTML = renderFailures(results);
-  document.getElementById('last-updated').textContent = `Latest Allure data · ${new Date().toLocaleString()}`;
+}
+
+async function loadDashboard() {
+  document.getElementById('repo-cards').innerHTML = '<p class="loading-cards">Loading latest test results…</p>';
+  document.getElementById('last-updated').textContent = 'Refreshing…';
+
+  const bundled = await Promise.all(REPO_CONFIG.map((cfg) => fetchJson(cfg.localPath)));
+  if (bundled.some((b) => (b?.summary?.total || 0) > 0)) {
+    renderDashboard(bundled.map((b, i) => b?.summary ? b : placeholder(REPO_CONFIG[i])));
+    document.getElementById('last-updated').textContent = `Cached data · ${new Date().toLocaleString()}`;
+  }
+
+  const results = await Promise.all(REPO_CONFIG.map((cfg) => fetchSummary(cfg)));
+  renderDashboard(results);
+  document.getElementById('last-updated').textContent = `Live Allure data · ${new Date().toLocaleString()}`;
 }
 
 document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
