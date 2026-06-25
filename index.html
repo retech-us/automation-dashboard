@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Retech Automation Dashboard</title>
+  <link rel="stylesheet" href="assets/css/dashboard.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header__inner">
+      <div>
+        <p class="eyebrow">Retech QA</p>
+        <h1>Automation Dashboard</h1>
+        <p class="subtitle">Unified view of Web, Mobile, and API test health</p>
+      </div>
+      <div class="header__meta">
+        <span id="last-updated" class="meta-pill">Loading…</span>
+        <button id="refresh-btn" class="btn" type="button">Refresh</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="overall-banner" class="overall-banner" aria-live="polite"></section>
+
+    <section class="cards" id="repo-cards" aria-label="Automation repositories"></section>
+
+    <section class="panel">
+      <div class="panel__header">
+        <h2>Recent Failures</h2>
+        <p>Human-readable reasons from the latest runs</p>
+      </div>
+      <div id="failures-list" class="failures-list"></div>
+    </section>
+
+    <section class="panel docs-panel">
+      <div class="panel__header">
+        <h2>How to Use This Dashboard</h2>
+      </div>
+      <div class="docs-grid">
+        <article>
+          <h3>What each repo covers</h3>
+          <ul>
+            <li><strong>Web</strong> — Selenium + Cucumber UI tests for Rebotics Management web app</li>
+            <li><strong>Mobile</strong> — Appium tests for iOS and Android retail apps</li>
+            <li><strong>API</strong> — REST Assured tests for backend services</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Reading pass / fail</h3>
+          <ul>
+            <li><span class="dot dot--pass"></span> Green = latest run passed</li>
+            <li><span class="dot dot--fail"></span> Red = one or more failures</li>
+            <li>Numbers show total, passed, failed, skipped from the last CI run</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Debugging in Allure</h3>
+          <ul>
+            <li>Click <strong>View Allure Report</strong> on any card</li>
+            <li>Open failed tests → check Steps, Attachments (screenshots), and History</li>
+            <li>Look for <code>failure.category</code> labels: login, locator, timeout, api, data, environment, assertion</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Common failure reasons</h3>
+          <ul>
+            <li><strong>login</strong> — Auth service down or bad credentials</li>
+            <li><strong>locator</strong> — UI changed; element not found</li>
+            <li><strong>timeout</strong> — Page/API too slow</li>
+            <li><strong>environment</strong> — Staging deploy or infra issue</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Ownership</h3>
+          <ul>
+            <li>Web: QA Web Automation team</li>
+            <li>Mobile: QA Mobile Automation team</li>
+            <li>API: QA API Automation team</li>
+            <li>Dashboard issues: #qa-automation Slack channel</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Static dashboard · Data from <code>run-summary.json</code> per repo · No backend required</p>
+  </footer>
+
+  <script src="assets/js/dashboard.js"></script>
+</body>
+</html>
