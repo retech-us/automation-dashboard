@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 OUT = ROOT / "assets" / "bootstrap.js"
-VERSION = "8"
+VERSION = "9"
 
 
 def main() -> None:

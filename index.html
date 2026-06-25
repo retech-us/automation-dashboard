@@ -8,15 +8,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.v8.css" />
+  <link rel="stylesheet" href="assets/css/dashboard.v9.css" />
 </head>
 <body>
   <header class="header">
     <div class="header__inner">
       <div>
-        <p class="eyebrow">Store Intell QA <span class="version-tag">v8</span></p>
+        <p class="eyebrow">Store Intell QA <span class="version-tag">v9</span></p>
         <h1>Automation Dashboard</h1>
-        <p class="subtitle">Green = passed · Amber = mostly passed · Red = failures · Any branch</p>
+        <p class="subtitle">Green = passed · Amber = mostly passed · Red = failures</p>
       </div>
       <div class="header__meta">
         <span id="last-updated" class="meta-pill">Loading…</span>
@@ -29,52 +29,12 @@
     <section id="overall-banner" class="overall-banner" aria-live="polite"></section>
     <section class="cards" id="repo-cards" aria-label="Automation repositories"></section>
 
-    <section class="panel">
+    <section class="panel" id="failures-panel" hidden>
       <div class="panel__header">
         <h2>Recent Failures</h2>
         <p>Human-readable reasons from the latest runs</p>
       </div>
       <div id="failures-list" class="failures-list"></div>
-    </section>
-
-    <section class="panel details-panel">
-      <div class="panel__header">
-        <h2>What this dashboard shows</h2>
-        <p>Data pulled live from Allure reports, run summaries, and GitHub Actions</p>
-      </div>
-      <div class="details-grid">
-        <article>
-          <h3>On each card today</h3>
-          <ul>
-            <li>Pass / fail counts and %</li>
-            <li>Branch, commit, CI workflow &amp; run #</li>
-            <li>Environment, instance, browser, app version</li>
-            <li>Failed vs broken breakdown</li>
-            <li>Recent run history trend (mini chart)</li>
-            <li>Top failures &amp; failure categories</li>
-          </ul>
-        </article>
-        <article>
-          <h3>Can be added next</h3>
-          <ul>
-            <li>Flaky test detection from history</li>
-            <li>Per-suite duration trends over time</li>
-            <li>Slack / email alert on CI failure</li>
-            <li>Filter by branch or environment</li>
-            <li>Combined Allure report link</li>
-            <li>Test ownership &amp; feature mapping</li>
-          </ul>
-        </article>
-        <article>
-          <h3>Missing data means</h3>
-          <ul>
-            <li>Field not in published Allure report yet</li>
-            <li>CI job failed before writing metadata</li>
-            <li>Android uses last good run when latest publish is empty</li>
-            <li>Branch filled from GitHub Actions when Allure env is empty</li>
-          </ul>
-        </article>
-      </div>
     </section>
   </main>
 
@@ -83,6 +43,6 @@
   </footer>
 
   <script src="assets/bootstrap.js"></script>
-  <script src="assets/js/app.v8.js"></script>
+  <script src="assets/js/app.v9.js"></script>
 </body>
 </html>
