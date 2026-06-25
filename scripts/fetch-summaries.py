@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -29,7 +30,6 @@ REPOS = {
         "executors_url": "https://retech-us.github.io/retech-mobile-automation/ios/widgets/executors.json",
         "repo_name": "retech-us/retech-mobile-automation",
         "platform": "iOS",
-        "default_environment": "Alpha app",
     },
     "mobile-android": {
         "report_url": "https://retech-us.github.io/retech-mobile-automation/android/",
@@ -40,7 +40,7 @@ REPOS = {
         "executors_url": "https://retech-us.github.io/retech-mobile-automation/android/widgets/executors.json",
         "repo_name": "retech-us/retech-mobile-automation",
         "platform": "Android",
-        "default_environment": "Alpha app",
+        "aggregate_batches": True,
     },
     "api": {
         "report_url": "https://retech-us.github.io/retech-api-automation/",
@@ -63,26 +63,6 @@ def fetch_json(url: str):
         return None
 
 
-def format_app_environment(value: str | None) -> str | None:
-    if not value:
-        return None
-    normalized = value.strip().lower()
-    if not normalized:
-        return None
-    if normalized.endswith(" app"):
-        return normalized[0].upper() + normalized[1:]
-    return normalized[0].upper() + normalized[1:] + " app"
-
-
-def resolve_environment(env_meta: dict, cfg: dict) -> str | None:
-    if cfg.get("default_environment"):
-        raw = env_meta.get("environment") or env_meta.get("instance")
-        if raw:
-            return format_app_environment(str(raw))
-        return cfg.get("default_environment")
-    return env_meta.get("environment") or env_meta.get("instance")
-
-
 def parse_environment(widget: list | None) -> dict:
     if not widget:
         return {}
@@ -92,34 +72,77 @@ def parse_environment(widget: list | None) -> dict:
         values = item.get("values") or []
         if values:
             lookup[name] = values[0]
+    ci = lookup.get("CI") == "true" or str(lookup.get("Environment", "")).lower() == "ci"
+    instance = lookup.get("Instance")
+    base_url = lookup.get("Base URL", "")
+    if not instance and base_url:
+        match = re.search(r"https?://([^.]+)\.", base_url, re.I)
+        if match:
+            instance = match.group(1)
     return {
         "branch": lookup.get("Branch") or lookup.get("Git Branch"),
         "commit": lookup.get("Commit.SHA") or lookup.get("Commit"),
-        "environment": (
-            lookup.get("Environment")
-            or lookup.get("Test Environment")
-            or lookup.get("Instance")
-        ),
-        "instance": lookup.get("Instance"),
-        "baseUrl": lookup.get("Base URL"),
+        "environment": "CI" if ci else lookup.get("Environment"),
+        "instance": instance,
+        "baseUrl": base_url or None,
         "browser": lookup.get("Browser"),
         "workflow": lookup.get("Workflow"),
+        "app": lookup.get("App"),
     }
 
 
-def compute_rates(summary: dict) -> dict:
+def merge_widgets(widgets: list[dict]) -> dict | None:
+    totals = {"total": 0, "passed": 0, "failed": 0, "broken": 0, "skipped": 0}
+    stop = 0
+    start = float("inf")
+    for widget in widgets:
+        stats = widget.get("statistic") or {}
+        if not stats.get("total"):
+            continue
+        totals["total"] += int(stats.get("total", 0))
+        totals["passed"] += int(stats.get("passed", 0))
+        totals["failed"] += int(stats.get("failed", 0))
+        totals["broken"] += int(stats.get("broken", 0))
+        totals["skipped"] += int(stats.get("skipped", 0))
+        time_info = widget.get("time") or {}
+        if time_info.get("stop"):
+            stop = max(stop, int(time_info["stop"]))
+        if time_info.get("start"):
+            start = min(start, int(time_info["start"]))
+    if totals["total"] == 0:
+        return None
+    return {
+        "reportName": "Aggregated Allure Report",
+        "statistic": totals,
+        "time": {
+            "start": None if start == float("inf") else start,
+            "stop": stop or None,
+            "duration": (stop - start) if stop and start != float("inf") else 0,
+        },
+    }
+
+
+def fetch_android_widget(cfg: dict) -> dict | None:
+    primary = fetch_json(cfg["widget_url"])
+    if primary and (primary.get("statistic") or {}).get("total", 0) > 0:
+        return primary
+    widgets = []
+    if primary and primary.get("statistic"):
+        widgets.append(primary)
+    for batch in range(1, 6):
+        widget = fetch_json(f"{cfg['report_url']}batch-{batch}/widgets/summary.json")
+        if widget and (widget.get("statistic") or {}).get("total", 0) > 0:
+            widgets.append(widget)
+    return merge_widgets(widgets) or primary
+
+
+def compute_counts(summary: dict) -> dict:
     s = summary.get("summary") or {}
     total = int(s.get("total") or 0)
     passed = int(s.get("passed") or 0)
-    failed = int(s.get("failed") or 0) + int(s.get("broken") or 0)
+    review = int(s.get("failed") or 0) + int(s.get("broken") or 0)
     skipped = int(s.get("skipped") or 0)
-    if total == 0:
-        return {"passPct": 0, "failPct": 0, "skipPct": 0}
-    return {
-        "passPct": round((passed / total) * 100, 1),
-        "failPct": round((failed / total) * 100, 1),
-        "skipPct": round((skipped / total) * 100, 1),
-    }
+    return {"total": total, "passed": passed, "review": review, "skipped": skipped}
 
 
 def from_widget(repo_id: str, widget: dict, cfg: dict) -> dict:
@@ -136,13 +159,12 @@ def from_widget(repo_id: str, widget: dict, cfg: dict) -> dict:
         if stop
         else datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     )
-    status = "failed" if failed + broken > 0 else ("passed" if total > 0 else "unknown")
     payload = {
         "schemaVersion": "1.0",
         "repo": repo_id,
         "repoName": cfg["repo_name"],
         "repository": cfg["repo_name"],
-        "status": status,
+        "status": "unknown" if total == 0 else ("active" if failed + broken > 0 else "stable"),
         "suite": "regression",
         "finishedAt": finished,
         "durationMs": int(time_info.get("duration", 0)),
@@ -154,7 +176,7 @@ def from_widget(repo_id: str, widget: dict, cfg: dict) -> dict:
         "dataSource": "allure-report",
         "reportName": widget.get("reportName"),
     }
-    payload["rates"] = compute_rates(payload)
+    payload["counts"] = compute_counts(payload)
     return payload
 
 
@@ -163,9 +185,8 @@ def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dic
         payload["branch"] = env_meta["branch"]
     if env_meta.get("commit"):
         payload["commit"] = env_meta["commit"]
-    resolved = resolve_environment(env_meta, cfg)
-    if resolved:
-        payload["environment"] = resolved
+    if env_meta.get("environment"):
+        payload["environment"] = env_meta["environment"]
     if env_meta.get("instance"):
         payload["instance"] = env_meta["instance"]
     if env_meta.get("baseUrl"):
@@ -174,11 +195,15 @@ def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dic
         payload["browser"] = env_meta["browser"]
     if env_meta.get("workflow"):
         payload["workflow"] = env_meta["workflow"]
+    if env_meta.get("app"):
+        payload["app"] = env_meta["app"]
 
     if isinstance(executors, list) and executors:
         ex = executors[0]
         if ex.get("buildUrl"):
             payload["ciRunUrl"] = ex["buildUrl"]
+            if not payload.get("environment") and "github.com" in ex["buildUrl"]:
+                payload["environment"] = "CI"
         if ex.get("buildName") and not payload.get("workflow"):
             payload["workflow"] = ex["buildName"]
 
@@ -187,6 +212,12 @@ def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dic
             payload["branch"] = run_summary["branch"]
         if not payload.get("commit") and run_summary.get("commit"):
             payload["commit"] = run_summary["commit"]
+        if not payload.get("environment") and run_summary.get("environment"):
+            env = str(run_summary["environment"])
+            if env.lower() == "ci":
+                payload["environment"] = "CI"
+        if not payload.get("instance") and run_summary.get("instance"):
+            payload["instance"] = run_summary["instance"]
         if run_summary.get("topFailures"):
             payload["topFailures"] = run_summary["topFailures"]
         if run_summary.get("failureCategories"):
@@ -196,7 +227,7 @@ def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dic
         if run_summary.get("ciRunUrl") and not executors:
             payload["ciRunUrl"] = run_summary["ciRunUrl"]
 
-    payload["rates"] = compute_rates(payload)
+    payload["counts"] = compute_counts(payload)
     return payload
 
 
@@ -207,7 +238,7 @@ def placeholder(repo_id: str, cfg: dict) -> dict:
         "repoName": cfg["repo_name"],
         "status": "unknown",
         "summary": {"total": 0, "passed": 0, "failed": 0, "broken": 0, "skipped": 0},
-        "rates": {"passPct": 0, "failPct": 0, "skipPct": 0},
+        "counts": {"total": 0, "passed": 0, "review": 0, "skipped": 0},
         "reportUrl": cfg["report_url"],
         "ciRunUrl": cfg["ci_url"],
         "topFailures": [],
@@ -218,18 +249,21 @@ def placeholder(repo_id: str, cfg: dict) -> dict:
 
 def fetch_repo(repo_id: str) -> dict:
     cfg = REPOS[repo_id]
-    widget = fetch_json(cfg["widget_url"])
     run_summary = fetch_json(cfg["summary_url"])
     executors = fetch_json(cfg["executors_url"])
-
     env_meta = parse_environment(fetch_json(cfg["environment_url"]))
+
+    if cfg.get("aggregate_batches"):
+        widget = fetch_android_widget(cfg)
+    else:
+        widget = fetch_json(cfg["widget_url"])
 
     if widget and widget.get("statistic"):
         payload = from_widget(repo_id, widget, cfg)
     elif run_summary and run_summary.get("repo"):
         payload = dict(run_summary)
         payload["dataSource"] = "run-summary.json"
-        payload["rates"] = compute_rates(payload)
+        payload["counts"] = compute_counts(payload)
     else:
         return placeholder(repo_id, cfg)
 
@@ -248,10 +282,10 @@ def main() -> int:
         with path.open("w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2)
             handle.write("\n")
-        rates = payload.get("rates", {})
+        counts = payload.get("counts", {})
         print(
-            f"✅ {repo_id}: {rates.get('passPct', 0)}% pass | "
-            f"env={payload.get('environment', '—')} branch={payload.get('branch', '—')}"
+            f"✅ {repo_id}: {counts.get('total', 0)} tests | "
+            f"env={payload.get('environment', '—')} instance={payload.get('instance', '—')}"
         )
     return 0
 
