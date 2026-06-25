@@ -5,97 +5,119 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-06-25T11:17:56Z",
-  "durationMs": 19475220,
+  "finishedAt": "2026-06-25T20:13:45Z",
+  "durationMs": 21304686,
   "summary": {
     "total": 113,
-    "passed": 57,
-    "failed": 7,
-    "broken": 36,
-    "skipped": 13
+    "passed": 60,
+    "failed": 6,
+    "broken": 38,
+    "skipped": 9
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/28149782194",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/28176567867",
   "topFailures": [
     {
-      "name": "Verify Approval AI tab Products approvals",
+      "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:101",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:101': Expected condition failed: waiting for com.retech.web.pageObject.ApprovalAiPageObject$$Lambda/0x00007f78679aa580@164a4aad (tried for 40 second(s) with 250 milliseconds interval)",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Input UPC action by subuser, submit train transaction rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:115",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:115': Expected condition failed: waiting for com.retech.web.pageObject.ApprovalAiPageObject$$Lambda/0x00007f78679aa580@164a4aad (tried for 40 second(s) with 250 milliseconds interval)",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit PLUNF action by subuser, approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:59",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:59': Expected condition failed: waiting for com.retech.web.pageObject.ApprovalAiPageObject$$Lambda/0x00007f78679aa580@164a4aad (tried for 40 second(s) with 250 milliseconds interval)",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit PLUNF action by subuser, rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:73",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:73': Expected condition failed: waiting for com.retech.web.pageObject.ApprovalAiPageObject$$Lambda/0x00007f78679aa580@164a4aad (tried for 40 second(s) with 250 milliseconds interval)",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit correction action by subuser, approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:129",
       "status": "failed",
       "category": "assertion",
-      "feature": "Verify Approval AI tab Products approvals",
-      "reason": "5 failed \u00b7 10 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/b02704cece7f3ba691b3e84ba4300cc3/"
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:129': After correction, product UPC should match candidate UPC expected [079100510214] but found [PRODUCT PREVIEW]",
+      "feature": "Verify Approval AI tab Products approvals"
     },
     {
-      "name": "Verify realogram edits with API and spatial review",
+      "name": "Submit correction action by subuser, rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:157",
       "status": "failed",
       "category": "assertion",
-      "feature": "Verify realogram edits with API and spatial review",
-      "reason": "1 failed \u00b7 0 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/1d5050cf4640add5d2867ea89036ffd6/"
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:157': After correction, product UPC should match candidate UPC expected [038100128911] but found [ ]",
+      "feature": "Verify Approval AI tab Products approvals"
     },
     {
-      "name": "Verify login on FE dashboard",
+      "name": "Submit correction action by subuser, train by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:143",
       "status": "failed",
       "category": "assertion",
-      "feature": "Verify login on FE dashboard",
-      "reason": "1 failed \u00b7 0 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/c124698d1444fb5fc49a06c3b9de779e/"
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [070404000104] but found [PRODUCT PREVIEW]",
+      "feature": "Verify Approval AI tab Products approvals"
     },
     {
-      "name": "Verify price tag corrections and approvals",
+      "name": "Submit exception action by subuser, approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:31",
       "status": "broken",
-      "category": "unknown",
-      "feature": "Verify price tag corrections and approvals",
-      "reason": "0 failed \u00b7 6 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/fdec2b186f1bc680804553f0850ce9ba/"
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:31': Expected condition failed: waiting for com.retech.web.pageObject.ApprovalAiPageObject$$Lambda/0x00007f78679aa580@164a4aad (tried for 40 second(s) with 250 milliseconds interval)",
+      "feature": "Verify Approval AI tab Products approvals"
     },
     {
-      "name": "Verify task tab features",
+      "name": "Submit exception action by subuser, approved by superuser and verify price tag history tab",
+      "fullName": "src/test/resources/features/PriceTags.feature:34",
       "status": "broken",
-      "category": "unknown",
-      "feature": "Verify task tab features",
-      "reason": "0 failed \u00b7 5 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/ffd79f04e0d824867ab2132505cacab9/"
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/PriceTags.feature:34': Expected condition failed: waiting for com.retech.web.pageObject.ApprovalAiPageObject$$Lambda/0x00007f78679aa580@164a4aad (tried for 40 second(s) with 250 milliseconds interval)",
+      "feature": "Verify price tag corrections and approvals"
     },
     {
-      "name": "Validate products tab features",
+      "name": "Submit exception action by subuser, rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:45",
       "status": "broken",
-      "category": "unknown",
-      "feature": "Validate products tab features",
-      "reason": "0 failed \u00b7 4 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/9e92f4b613e9b36d0da615cf8c07ed0c/"
-    },
-    {
-      "name": "Verify scan list page actions",
-      "status": "broken",
-      "category": "unknown",
-      "feature": "Verify scan list page actions",
-      "reason": "0 failed \u00b7 2 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/9f4459dcfb2b029f01b7281d5033769a/"
-    },
-    {
-      "name": "Verify automated approvals and OCR assisted approvals",
-      "status": "broken",
-      "category": "unknown",
-      "feature": "Verify automated approvals and OCR assisted approvals",
-      "reason": "0 failed \u00b7 2 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/3b0cccebd290b229869a39813fa7518a/"
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:45': Expected condition failed: waiting for com.retech.web.pageObject.ApprovalAiPageObject$$Lambda/0x00007f78679aa580@164a4aad (tried for 40 second(s) with 250 milliseconds interval)",
+      "feature": "Verify Approval AI tab Products approvals"
     }
   ],
-  "failureCategories": {},
+  "failureCategories": {
+    "login": 6,
+    "locator": 9,
+    "timeout": 16,
+    "assertion": 5,
+    "unknown": 8
+  },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
     "total": 113,
-    "passed": 57,
-    "review": 43,
-    "skipped": 13
+    "passed": 60,
+    "review": 44,
+    "skipped": 9
   },
   "historyTrend": [
     {
-      "passPct": 50.4,
+      "passPct": 53.1,
       "total": 113,
-      "failed": 43
+      "failed": 44
     },
     {
       "passPct": 35.1,
@@ -104,9 +126,29 @@
     }
   ],
   "branch": "feature/hybrid-automation",
-  "commit": "c2a32b2",
+  "commit": "4adaeb9",
   "environment": "CI",
   "browser": "Chrome",
   "workflow": "Java CI with Maven",
-  "osName": "Linux"
+  "osName": "Linux",
+  "jobs": [
+    {
+      "name": "scan-tests",
+      "status": "failure"
+    },
+    {
+      "name": "sequential-only-tests",
+      "status": "success"
+    },
+    {
+      "name": "hybrid-tests",
+      "status": "failure"
+    },
+    {
+      "name": "parallel-tests",
+      "status": "failure"
+    }
+  ],
+  "runId": "28176567867",
+  "runNumber": 951
 }
