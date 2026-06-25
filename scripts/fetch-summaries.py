@@ -30,6 +30,7 @@ REPOS = {
         "executors_url": "https://retech-us.github.io/retech-mobile-automation/ios/widgets/executors.json",
         "repo_name": "retech-us/retech-mobile-automation",
         "platform": "iOS",
+        "aggregate_batches": True,
     },
     "mobile-android": {
         "report_url": "https://retech-us.github.io/retech-mobile-automation/android/",
@@ -122,7 +123,7 @@ def merge_widgets(widgets: list[dict]) -> dict | None:
     }
 
 
-def fetch_android_widget(cfg: dict) -> dict | None:
+def fetch_mobile_widget(cfg: dict) -> dict | None:
     primary = fetch_json(cfg["widget_url"])
     if primary and (primary.get("statistic") or {}).get("total", 0) > 0:
         return primary
@@ -254,7 +255,7 @@ def fetch_repo(repo_id: str) -> dict:
     env_meta = parse_environment(fetch_json(cfg["environment_url"]))
 
     if cfg.get("aggregate_batches"):
-        widget = fetch_android_widget(cfg)
+        widget = fetch_mobile_widget(cfg)
     else:
         widget = fetch_json(cfg["widget_url"])
 

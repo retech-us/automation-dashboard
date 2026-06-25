@@ -34,7 +34,7 @@ body {
 }
 
 .header__inner {
-  max-width: 1600px;
+  max-width: 1800px;
   margin: 0 auto;
   padding: 24px 20px;
   display: flex;
@@ -89,7 +89,7 @@ h1 {
 .btn:hover { filter: brightness(1.08); }
 
 .container {
-  max-width: 1600px;
+  max-width: 1800px;
   margin: 0 auto;
   padding: 24px 20px 48px;
 }
@@ -112,12 +112,13 @@ h1 {
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
   margin-bottom: 24px;
 }
 
 .card {
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -126,7 +127,7 @@ h1 {
 }
 
 .card__header {
-  padding: 20px;
+  padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: start;
@@ -136,7 +137,7 @@ h1 {
 
 .card__title {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
 }
 
 .card__desc {
@@ -158,12 +159,12 @@ h1 {
 .status-badge.fail { background: rgba(239, 68, 68, 0.15); color: var(--fail); }
 .status-badge.unknown { background: rgba(100, 116, 139, 0.2); color: var(--unknown); }
 
-.card__body { padding: 20px; }
+.card__body { padding: 16px; }
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
   margin-bottom: 16px;
 }
 
@@ -396,8 +397,8 @@ code {
   border-radius: 6px;
 }
 
-@media (max-width: 1200px) {
-  .cards { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 1100px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 640px) {

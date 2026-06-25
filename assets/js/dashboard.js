@@ -29,6 +29,7 @@ const REPO_CONFIG = [
     environmentUrl: 'https://retech-us.github.io/retech-mobile-automation/ios/widgets/environment.json',
     executorsUrl: 'https://retech-us.github.io/retech-mobile-automation/ios/widgets/executors.json',
     localPath: 'data/mobile-ios.json',
+    aggregateBatches: true,
   },
   {
     id: 'mobile-android',
@@ -122,7 +123,7 @@ function mergeWidgets(widgets) {
   };
 }
 
-async function fetchAndroidWidget(config) {
+async function fetchMobileWidget(config) {
   const primary = await fetchJson(config.widgetUrl);
   if (primary?.statistic?.total > 0) return primary;
 
@@ -236,7 +237,7 @@ async function fetchSummary(config) {
     fetchJson(config.environmentUrl),
   ]);
   const widget = config.aggregateBatches
-    ? await fetchAndroidWidget(config)
+    ? await fetchMobileWidget(config)
     : await fetchJson(config.widgetUrl);
   const envMeta = parseEnvironment(envWidget);
 
