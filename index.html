@@ -10,15 +10,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.css?v=6" />
+  <link rel="stylesheet" href="assets/css/dashboard.v7.css" />
 </head>
 <body>
   <header class="header">
     <div class="header__inner">
       <div>
-        <p class="eyebrow">Store Intell QA</p>
+        <p class="eyebrow">Store Intell QA <span class="version-tag">v7</span></p>
         <h1>Automation Dashboard</h1>
-        <p class="subtitle">Live pass / fail status across Web, Mobile &amp; API — latest run from any branch</p>
+        <p class="subtitle">Green = passed · Red = failed · Latest run from any branch</p>
       </div>
       <div class="header__meta">
         <span id="last-updated" class="meta-pill">Loading…</span>
@@ -38,43 +38,13 @@
       </div>
       <div id="failures-list" class="failures-list"></div>
     </section>
-
-    <section class="panel docs-panel">
-      <div class="panel__header">
-        <h2>How to Use This Dashboard</h2>
-      </div>
-      <div class="docs-grid">
-        <article>
-          <h3>What each repo covers</h3>
-          <ul>
-            <li><strong>Web</strong> — Selenium + Cucumber UI tests</li>
-            <li><strong>Mobile</strong> — iOS and Android Appium tests</li>
-            <li><strong>API</strong> — REST Assured backend tests</li>
-          </ul>
-        </article>
-        <article>
-          <h3>Reading pass / fail</h3>
-          <ul>
-            <li><span class="dot dot--pass"></span> Green = passed tests</li>
-            <li><span class="dot dot--fail"></span> Red = failed or broken tests</li>
-            <li>Branch pill shows which git branch produced the report</li>
-          </ul>
-        </article>
-        <article>
-          <h3>Debugging in Allure</h3>
-          <ul>
-            <li>Click <strong>View Allure Report</strong> on any card</li>
-            <li>Check Steps, Attachments, and failure categories</li>
-          </ul>
-        </article>
-      </div>
-    </section>
   </main>
 
   <footer class="footer">
-    <p>Store Intell QA · <a href="https://retech-us.github.io/automation-dashboard/" style="color:#93c5fd">automation-dashboard</a></p>
+    <p>Store Intell QA Automation Dashboard</p>
   </footer>
 
-  <script src="assets/js/dashboard.js?v=6"></script>
+  <script src="assets/bootstrap.js"></script>
+  <script src="assets/js/app.v7.js"></script>
 </body>
 </html>
