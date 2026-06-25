@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Store Intell QA — Automation Dashboard</title>
-  <link rel="stylesheet" href="assets/css/dashboard.css?v=4" />
+  <link rel="stylesheet" href="assets/css/dashboard.css?v=5" />
 </head>
 <body>
   <header class="header">
@@ -48,12 +48,11 @@
           </ul>
         </article>
         <article>
-          <h3>Reading the cards</h3>
+          <h3>Reading pass / fail</h3>
           <ul>
-            <li><strong>tests run</strong> — total tests executed in the latest Allure report</li>
-            <li><strong>Completed</strong> — tests that finished successfully</li>
-            <li><strong>For review</strong> — failed or broken tests needing attention</li>
-            <li><strong>Environment / Instance</strong> — pulled from each Allure report (not hardcoded)</li>
+            <li><span class="dot dot--pass"></span> Green = tests passed in the latest available run</li>
+            <li><span class="dot dot--fail"></span> Red = failed or broken tests needing attention</li>
+            <li>Branch name shows which git branch produced that published report</li>
           </ul>
         </article>
         <article>
@@ -90,6 +89,6 @@
     <p>Static dashboard · Data from <code>run-summary.json</code> per repo · No backend required</p>
   </footer>
 
-  <script src="assets/js/dashboard.js?v=4"></script>
+  <script src="assets/js/dashboard.js?v=5"></script>
 </body>
 </html>
