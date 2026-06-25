@@ -22,32 +22,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch run summaries from all repos
-        run: |
-          set -euo pipefail
-          mkdir -p data
-
-          fetch_summary() {
-            local id="$1"
-            local url="$2"
-            echo "Fetching $id from $url"
-            if curl -fsSL --max-time 30 "$url" -o "data/${id}.json"; then
-              echo "✅ $id summary downloaded"
-            else
-              echo "⚠️  Could not fetch $id — keeping existing file if present"
-              if [ ! -f "data/${id}.json" ]; then
-                echo '{"repo":"'"$id"'","status":"unknown","summary":{"total":0,"passed":0,"failed":0,"skipped":0},"reportUrl":"#","topFailures":[]}' > "data/${id}.json"
-              fi
-            fi
-          }
-
-          fetch_summary web  "https://retech-us.github.io/retech-web-automation/run-summary.json"
-          fetch_summary mobile "https://retech-us.github.io/retech-mobile-automation/run-summary.json"
-          fetch_summary api   "https://retech-us.github.io/retech-api-automation/run-summary.json"
-
-          echo ""
-          echo "📦 Dashboard data files:"
-          ls -la data/
+      - name: Fetch live run summaries from all repos
+        run: python3 scripts/fetch-summaries.py data
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
