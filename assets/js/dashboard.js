@@ -174,8 +174,59 @@ function fromWidget(config, widget) {
   return payload;
 }
 
-function reviewCount(failed, broken) {
-  return (failed || 0) + (broken || 0);
+function latestFromHistoryTrend(trend) {
+  if (!Array.isArray(trend)) return null;
+  for (const entry of trend) {
+    const data = entry?.data;
+    if (data?.total > 0) return data;
+  }
+  return null;
+}
+
+function fromRunSummary(config, runSummary) {
+  const payload = {
+    ...runSummary,
+    repo: config.id,
+    reportUrl: runSummary.reportUrl || config.reportUrl,
+    ciRunUrl: runSummary.ciRunUrl || config.ciRunUrl,
+    dataSource: 'run-summary.json',
+  };
+  payload.counts = computeCounts(payload);
+  return payload;
+}
+
+function resolveBestPayload(config, widget, historyTrend, runSummary, cached) {
+  const candidates = [];
+
+  const rank = (payload, score) => candidates.push({ payload, score });
+
+  if (widget?.statistic?.total > 0) {
+    rank(fromWidget(config, widget), 1000 + widget.statistic.total);
+  }
+  if (runSummary?.summary?.total > 0) {
+    rank(fromRunSummary(config, runSummary), 900 + runSummary.summary.total);
+  }
+  const trendStats = latestFromHistoryTrend(historyTrend);
+  if (trendStats?.total > 0) {
+    const payload = fromWidget(config, {
+      statistic: trendStats,
+      time: {},
+      reportName: 'Allure Report',
+    });
+    payload.dataSource = 'allure-history-trend';
+    payload.lastAvailable = true;
+    rank(payload, 800 + trendStats.total);
+  }
+  if (cached?.summary?.total > 0) {
+    rank({ ...cached, dataSource: cached.dataSource || 'cached-fallback' }, 700 + cached.summary.total);
+  }
+  if (widget?.statistic) {
+    rank(fromWidget(config, widget), 50);
+  }
+
+  if (!candidates.length) return placeholder(config);
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates[0].payload;
 }
 
 function enrich(payload, config, envMeta, executors, runSummary) {
@@ -209,11 +260,19 @@ function enrich(payload, config, envMeta, executors, runSummary) {
     if (runSummary.topFailures?.length) payload.topFailures = runSummary.topFailures;
     if (runSummary.failureCategories) payload.failureCategories = runSummary.failureCategories;
     if (runSummary.runId) payload.runId = runSummary.runId;
-    if (runSummary.ciRunUrl && !executors?.length) payload.ciRunUrl = runSummary.ciRunUrl;
+    if (runSummary.ciRunUrl) payload.ciRunUrl = runSummary.ciRunUrl;
+  }
+
+  if (!payload.environment && payload.ciRunUrl?.includes('github.com')) {
+    payload.environment = 'CI';
   }
 
   payload.counts = computeCounts(payload);
   return payload;
+}
+
+function reviewCount(failed, broken) {
+  return (failed || 0) + (broken || 0);
 }
 
 function placeholder(config) {
@@ -231,28 +290,21 @@ function placeholder(config) {
 }
 
 async function fetchSummary(config) {
-  const [executors, runSummary, envWidget] = await Promise.all([
+  const historyTrendUrl = `${config.reportUrl}widgets/history-trend.json`;
+  const [executors, runSummary, envWidget, historyTrend, cached] = await Promise.all([
     fetchJson(config.executorsUrl),
     fetchJson(config.summaryUrl),
     fetchJson(config.environmentUrl),
+    fetchJson(historyTrendUrl),
+    fetchJson(config.localPath),
   ]);
   const widget = config.aggregateBatches
     ? await fetchMobileWidget(config)
     : await fetchJson(config.widgetUrl);
   const envMeta = parseEnvironment(envWidget);
-
-  let payload;
-  if (widget?.statistic) {
-    payload = fromWidget(config, widget);
-  } else if (runSummary?.repo) {
-    payload = { ...runSummary, dataSource: 'run-summary.json', counts: computeCounts(runSummary) };
-  } else {
-    const cached = await fetchJson(config.localPath);
-    if (cached?.repo) return cached;
-    return placeholder(config);
-  }
-
-  return enrich(payload, config, envMeta, executors, runSummary?.repo ? runSummary : null);
+  const payload = resolveBestPayload(config, widget, historyTrend, runSummary, cached);
+  const summaryForEnrich = runSummary?.repo || runSummary?.summary ? runSummary : null;
+  return enrich(payload, config, envMeta, executors, summaryForEnrich);
 }
 
 function formatDuration(ms) {
@@ -292,13 +344,14 @@ function renderCard(config, summary) {
         </div>
       </div>
       <div class="card__body">
-        ${noData ? `<p class="no-data-msg">${config.id === 'mobile-android' ? 'No Android results published yet. Data will appear after the next CI run completes.' : 'No test results published yet for this suite.'}</p>` : `
+        ${noData ? `<p class="no-data-msg">No published test results found for this suite in Allure reports.</p>` : `
         <div class="stats">
           <div class="stat"><span class="stat__value">${counts.total}</span><span class="stat__label">Executed</span></div>
           <div class="stat"><span class="stat__value stat__value--ok">${counts.passed}</span><span class="stat__label">Completed</span></div>
           <div class="stat"><span class="stat__value stat__value--review">${counts.review}</span><span class="stat__label">For review</span></div>
           <div class="stat"><span class="stat__value">${counts.skipped}</span><span class="stat__label">Skipped</span></div>
-        </div>`}
+        </div>
+        ${summary?.lastAvailable ? '<p class="data-note">Latest publish was empty — showing last available Allure run from report history.</p>' : ''}`}
         <ul class="meta-list">
           ${config.platform ? `<li><strong>Platform:</strong> ${config.platform}</li>` : ''}
           <li><strong>Environment:</strong> ${summary?.environment || '—'}</li>
@@ -306,6 +359,7 @@ function renderCard(config, summary) {
           <li><strong>Branch:</strong> ${summary?.branch || '—'} ${summary?.commit ? '@ ' + summary.commit : ''}</li>
           <li><strong>Last run:</strong> ${formatDate(summary?.finishedAt)}</li>
           <li><strong>Duration:</strong> ${formatDuration(summary?.durationMs)}</li>
+          <li><strong>Source:</strong> ${summary?.dataSource || 'allure-report'}</li>
         </ul>
         ${renderCategoryChips(summary?.failureCategories)}
         <div class="card__actions">

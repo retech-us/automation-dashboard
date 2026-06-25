@@ -137,6 +137,16 @@ def fetch_mobile_widget(cfg: dict) -> dict | None:
     return merge_widgets(widgets) or primary
 
 
+def latest_from_history_trend(trend: list | None) -> dict | None:
+    if not trend:
+        return None
+    for entry in trend:
+        data = entry.get("data") or {}
+        if int(data.get("total") or 0) > 0:
+            return data
+    return None
+
+
 def compute_counts(summary: dict) -> dict:
     s = summary.get("summary") or {}
     total = int(s.get("total") or 0)
@@ -179,6 +189,69 @@ def from_widget(repo_id: str, widget: dict, cfg: dict) -> dict:
     }
     payload["counts"] = compute_counts(payload)
     return payload
+
+
+def from_run_summary(repo_id: str, run_summary: dict, cfg: dict) -> dict:
+    payload = dict(run_summary)
+    payload["repo"] = repo_id
+    payload["reportUrl"] = run_summary.get("reportUrl") or cfg["report_url"]
+    payload["ciRunUrl"] = run_summary.get("ciRunUrl") or cfg["ci_url"]
+    payload["dataSource"] = "run-summary.json"
+    payload["counts"] = compute_counts(payload)
+    return payload
+
+
+def resolve_best_payload(
+    repo_id: str,
+    cfg: dict,
+    widget: dict | None,
+    history_trend: list | None,
+    run_summary: dict | None,
+    cached: dict | None,
+) -> dict:
+    candidates: list[tuple[int, dict]] = []
+
+    def rank(payload: dict, score: int) -> None:
+        candidates.append((score, payload))
+
+    stats = (widget or {}).get("statistic") or {}
+    if int(stats.get("total") or 0) > 0:
+        rank(from_widget(repo_id, widget, cfg), 1000 + int(stats["total"]))
+    if run_summary and int((run_summary.get("summary") or {}).get("total") or 0) > 0:
+        rank(from_run_summary(repo_id, run_summary, cfg), 900 + int(run_summary["summary"]["total"]))
+    trend_stats = latest_from_history_trend(history_trend)
+    if trend_stats:
+        payload = from_widget(repo_id, {"statistic": trend_stats, "time": {}, "reportName": "Allure Report"}, cfg)
+        payload["dataSource"] = "allure-history-trend"
+        payload["lastAvailable"] = True
+        rank(payload, 800 + int(trend_stats["total"]))
+    if cached and int((cached.get("summary") or {}).get("total") or 0) > 0:
+        cached_payload = dict(cached)
+        cached_payload["dataSource"] = cached_payload.get("dataSource") or "cached-fallback"
+        rank(cached_payload, 700 + int(cached["summary"]["total"]))
+    if widget and widget.get("statistic"):
+        rank(from_widget(repo_id, widget, cfg), 50)
+
+    if not candidates:
+        return placeholder(repo_id, cfg)
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return candidates[0][1]
+
+
+def placeholder(repo_id: str, cfg: dict) -> dict:
+    return {
+        "schemaVersion": "1.0",
+        "repo": repo_id,
+        "repoName": cfg["repo_name"],
+        "status": "unknown",
+        "summary": {"total": 0, "passed": 0, "failed": 0, "broken": 0, "skipped": 0},
+        "counts": {"total": 0, "passed": 0, "review": 0, "skipped": 0},
+        "reportUrl": cfg["report_url"],
+        "ciRunUrl": cfg["ci_url"],
+        "topFailures": [],
+        "failureCategories": {},
+        "dataSource": "unavailable",
+    }
 
 
 def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dict | None) -> dict:
@@ -225,67 +298,58 @@ def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dic
             payload["failureCategories"] = run_summary["failureCategories"]
         if run_summary.get("runId"):
             payload["runId"] = run_summary["runId"]
-        if run_summary.get("ciRunUrl") and not executors:
+        if run_summary.get("ciRunUrl"):
             payload["ciRunUrl"] = run_summary["ciRunUrl"]
+
+    if not payload.get("environment") and "github.com" in str(payload.get("ciRunUrl", "")):
+        payload["environment"] = "CI"
 
     payload["counts"] = compute_counts(payload)
     return payload
 
 
-def placeholder(repo_id: str, cfg: dict) -> dict:
-    return {
-        "schemaVersion": "1.0",
-        "repo": repo_id,
-        "repoName": cfg["repo_name"],
-        "status": "unknown",
-        "summary": {"total": 0, "passed": 0, "failed": 0, "broken": 0, "skipped": 0},
-        "counts": {"total": 0, "passed": 0, "review": 0, "skipped": 0},
-        "reportUrl": cfg["report_url"],
-        "ciRunUrl": cfg["ci_url"],
-        "topFailures": [],
-        "failureCategories": {},
-        "dataSource": "unavailable",
-    }
-
-
-def fetch_repo(repo_id: str) -> dict:
+def fetch_repo(repo_id: str, out_dir: Path) -> dict:
     cfg = REPOS[repo_id]
+    cached_path = out_dir / f"{repo_id}.json"
+    cached = None
+    if cached_path.exists():
+        try:
+            cached = json.loads(cached_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            cached = None
+
     run_summary = fetch_json(cfg["summary_url"])
     executors = fetch_json(cfg["executors_url"])
     env_meta = parse_environment(fetch_json(cfg["environment_url"]))
+    history_trend = fetch_json(f"{cfg['report_url']}widgets/history-trend.json")
 
     if cfg.get("aggregate_batches"):
         widget = fetch_mobile_widget(cfg)
     else:
         widget = fetch_json(cfg["widget_url"])
 
-    if widget and widget.get("statistic"):
-        payload = from_widget(repo_id, widget, cfg)
-    elif run_summary and run_summary.get("repo"):
-        payload = dict(run_summary)
-        payload["dataSource"] = "run-summary.json"
-        payload["counts"] = compute_counts(payload)
-    else:
-        return placeholder(repo_id, cfg)
+    payload = resolve_best_payload(repo_id, cfg, widget, history_trend, run_summary, cached)
 
     if cfg.get("platform"):
         payload["platform"] = cfg["platform"]
 
-    return enrich(payload, cfg, env_meta, executors, run_summary if run_summary and run_summary.get("repo") else None)
+    summary_for_enrich = run_summary if run_summary and (run_summary.get("repo") or run_summary.get("summary")) else None
+    return enrich(payload, cfg, env_meta, executors, summary_for_enrich)
 
 
 def main() -> int:
     out_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("data")
     out_dir.mkdir(parents=True, exist_ok=True)
     for repo_id in REPOS:
-        payload = fetch_repo(repo_id)
+        payload = fetch_repo(repo_id, out_dir)
         path = out_dir / f"{repo_id}.json"
         with path.open("w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2)
             handle.write("\n")
         counts = payload.get("counts", {})
+        source = payload.get("dataSource", "—")
         print(
-            f"✅ {repo_id}: {counts.get('total', 0)} tests | "
+            f"✅ {repo_id}: {counts.get('total', 0)} tests ({source}) | "
             f"env={payload.get('environment', '—')} instance={payload.get('instance', '—')}"
         )
     return 0
