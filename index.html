@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Store Intell QA — Automation Dashboard</title>
-  <link rel="stylesheet" href="assets/css/dashboard.css?v=5" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/dashboard.css?v=6" />
 </head>
 <body>
   <header class="header">
@@ -12,7 +18,7 @@
       <div>
         <p class="eyebrow">Store Intell QA</p>
         <h1>Automation Dashboard</h1>
-        <p class="subtitle">Unified view of Web, Mobile, and API test execution</p>
+        <p class="subtitle">Live pass / fail status across Web, Mobile &amp; API — latest run from any branch</p>
       </div>
       <div class="header__meta">
         <span id="last-updated" class="meta-pill">Loading…</span>
@@ -23,7 +29,6 @@
 
   <main class="container">
     <section id="overall-banner" class="overall-banner" aria-live="polite"></section>
-
     <section class="cards" id="repo-cards" aria-label="Automation repositories"></section>
 
     <section class="panel">
@@ -42,43 +47,24 @@
         <article>
           <h3>What each repo covers</h3>
           <ul>
-            <li><strong>Web</strong> — Selenium + Cucumber UI tests for Rebotics Management web app</li>
-            <li><strong>Mobile</strong> — Appium tests shown separately for <strong>iOS</strong> and <strong>Android</strong></li>
-            <li><strong>API</strong> — REST Assured tests for backend services</li>
+            <li><strong>Web</strong> — Selenium + Cucumber UI tests</li>
+            <li><strong>Mobile</strong> — iOS and Android Appium tests</li>
+            <li><strong>API</strong> — REST Assured backend tests</li>
           </ul>
         </article>
         <article>
           <h3>Reading pass / fail</h3>
           <ul>
-            <li><span class="dot dot--pass"></span> Green = tests passed in the latest available run</li>
-            <li><span class="dot dot--fail"></span> Red = failed or broken tests needing attention</li>
-            <li>Branch name shows which git branch produced that published report</li>
+            <li><span class="dot dot--pass"></span> Green = passed tests</li>
+            <li><span class="dot dot--fail"></span> Red = failed or broken tests</li>
+            <li>Branch pill shows which git branch produced the report</li>
           </ul>
         </article>
         <article>
           <h3>Debugging in Allure</h3>
           <ul>
             <li>Click <strong>View Allure Report</strong> on any card</li>
-            <li>Open failed tests → check Steps, Attachments (screenshots), and History</li>
-            <li>Look for <code>failure.category</code> labels: login, locator, timeout, api, data, environment, assertion</li>
-          </ul>
-        </article>
-        <article>
-          <h3>Common failure reasons</h3>
-          <ul>
-            <li><strong>login</strong> — Auth service down or bad credentials</li>
-            <li><strong>locator</strong> — UI changed; element not found</li>
-            <li><strong>timeout</strong> — Page/API too slow</li>
-            <li><strong>environment</strong> — Staging deploy or infra issue</li>
-          </ul>
-        </article>
-        <article>
-          <h3>Ownership</h3>
-          <ul>
-            <li>Web: QA Web Automation team</li>
-            <li>Mobile: QA Mobile Automation team</li>
-            <li>API: QA API Automation team</li>
-            <li>Dashboard issues: #qa-automation Slack channel</li>
+            <li>Check Steps, Attachments, and failure categories</li>
           </ul>
         </article>
       </div>
@@ -86,9 +72,9 @@
   </main>
 
   <footer class="footer">
-    <p>Static dashboard · Data from <code>run-summary.json</code> per repo · No backend required</p>
+    <p>Store Intell QA · <a href="https://retech-us.github.io/automation-dashboard/" style="color:#93c5fd">automation-dashboard</a></p>
   </footer>
 
-  <script src="assets/js/dashboard.js?v=5"></script>
+  <script src="assets/js/dashboard.js?v=6"></script>
 </body>
 </html>

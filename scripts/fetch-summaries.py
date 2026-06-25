@@ -226,9 +226,9 @@ def resolve_best_payload(
         payload["lastAvailable"] = True
         rank(payload, 800 + int(trend_stats["total"]))
     if cached and int((cached.get("summary") or {}).get("total") or 0) > 0:
+        bundled_score = 950 if cached.get("dataSource") and cached.get("dataSource") != "unavailable" else 750
         cached_payload = dict(cached)
-        cached_payload["dataSource"] = cached_payload.get("dataSource") or "cached-fallback"
-        rank(cached_payload, 700 + int(cached["summary"]["total"]))
+        rank(cached_payload, bundled_score + int(cached["summary"]["total"]))
     if widget and widget.get("statistic"):
         rank(from_widget(repo_id, widget, cfg), 50)
 
