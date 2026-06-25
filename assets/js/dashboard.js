@@ -17,18 +17,32 @@ const REPO_CONFIG = [
     localPath: 'data/web.json',
   },
   {
-    id: 'mobile',
-    title: 'Mobile Automation',
-    description: 'Appium + Allure (iOS & Android)',
-    icon: '📱',
-    reportUrl: 'https://retech-us.github.io/retech-mobile-automation/',
+    id: 'mobile-ios',
+    title: 'Mobile — iOS',
+    description: 'Appium iOS tests (all batches)',
+    icon: '🍎',
+    platform: 'iOS',
+    reportUrl: 'https://retech-us.github.io/retech-mobile-automation/ios/',
     ciRunUrl: 'https://github.com/retech-us/retech-mobile-automation/actions',
     summaryUrl: 'https://retech-us.github.io/retech-mobile-automation/run-summary.json',
-    widgetUrl: 'https://retech-us.github.io/retech-mobile-automation/widgets/summary.json',
-    environmentUrl: 'https://retech-us.github.io/retech-mobile-automation/widgets/environment.json',
-    executorsUrl: 'https://retech-us.github.io/retech-mobile-automation/widgets/executors.json',
-    mobileBatches: true,
-    localPath: 'data/mobile.json',
+    widgetUrl: 'https://retech-us.github.io/retech-mobile-automation/ios/widgets/summary.json',
+    environmentUrl: 'https://retech-us.github.io/retech-mobile-automation/ios/widgets/environment.json',
+    executorsUrl: 'https://retech-us.github.io/retech-mobile-automation/ios/widgets/executors.json',
+    localPath: 'data/mobile-ios.json',
+  },
+  {
+    id: 'mobile-android',
+    title: 'Mobile — Android',
+    description: 'Appium Android tests (all batches)',
+    icon: '🤖',
+    platform: 'Android',
+    reportUrl: 'https://retech-us.github.io/retech-mobile-automation/android/',
+    ciRunUrl: 'https://github.com/retech-us/retech-mobile-automation/actions',
+    summaryUrl: 'https://retech-us.github.io/retech-mobile-automation/run-summary.json',
+    widgetUrl: 'https://retech-us.github.io/retech-mobile-automation/android/widgets/summary.json',
+    environmentUrl: 'https://retech-us.github.io/retech-mobile-automation/android/widgets/environment.json',
+    executorsUrl: 'https://retech-us.github.io/retech-mobile-automation/android/widgets/executors.json',
+    localPath: 'data/mobile-android.json',
   },
   {
     id: 'api',
@@ -72,19 +86,6 @@ function parseEnvironment(widget) {
   };
 }
 
-async function fetchMobileEnvironment(config) {
-  let env = parseEnvironment(await fetchJson(config.environmentUrl));
-  if (env.branch || env.environment) return env;
-  for (let batch = 5; batch >= 1; batch--) {
-    for (const platform of ['ios', 'android']) {
-      const url = `${config.reportUrl}${platform}/batch-${batch}/widgets/environment.json`;
-      const parsed = parseEnvironment(await fetchJson(url));
-      if (parsed.branch || parsed.environment || parsed.instance) return parsed;
-    }
-  }
-  return env;
-}
-
 function computeRates(summary) {
   const s = summary?.summary || {};
   const total = s.total || 0;
@@ -110,7 +111,9 @@ function fromWidget(config, widget) {
   const payload = {
     schemaVersion: '1.0',
     repo: config.id,
-    repoName: `retech-us/retech-${config.id === 'api' ? 'api' : config.id}-automation`,
+    repoName: config.id.startsWith('mobile')
+      ? 'retech-us/retech-mobile-automation'
+      : `retech-us/retech-${config.id === 'api' ? 'api' : config.id}-automation`,
     status: failed + broken > 0 ? 'failed' : total > 0 ? 'passed' : 'unknown',
     finishedAt: stop ? new Date(stop).toISOString() : new Date().toISOString(),
     durationMs: widget.time?.duration || 0,
@@ -170,14 +173,13 @@ function placeholder(config) {
 }
 
 async function fetchSummary(config) {
-  const [widget, executors, runSummary] = await Promise.all([
+  const [widget, executors, runSummary, envWidget] = await Promise.all([
     fetchJson(config.widgetUrl),
     fetchJson(config.executorsUrl),
     fetchJson(config.summaryUrl),
+    fetchJson(config.environmentUrl),
   ]);
-  const envMeta = config.mobileBatches
-    ? await fetchMobileEnvironment(config)
-    : parseEnvironment(await fetchJson(config.environmentUrl));
+  const envMeta = parseEnvironment(envWidget);
 
   let payload;
   if (widget?.statistic) {
@@ -191,6 +193,20 @@ async function fetchSummary(config) {
   }
 
   return enrich(payload, config, envMeta, executors, runSummary?.repo ? runSummary : null);
+}
+
+function combineMobileSummaries(summaries, configs) {
+  const iosIdx = configs.findIndex((c) => c.id === 'mobile-ios');
+  const androidIdx = configs.findIndex((c) => c.id === 'mobile-android');
+  if (iosIdx < 0 || androidIdx < 0) return null;
+  const ios = summaries[iosIdx]?.summary || {};
+  const android = summaries[androidIdx]?.summary || {};
+  const total = (ios.total || 0) + (android.total || 0);
+  const passed = (ios.passed || 0) + (android.passed || 0);
+  const failed = (ios.failed || 0) + (android.failed || 0) + (ios.broken || 0) + (android.broken || 0);
+  if (!total) return null;
+  const passPct = Math.round((passed / total) * 1000) / 10;
+  return { total, passed, failed, passPct };
 }
 
 function formatDuration(ms) {
@@ -251,6 +267,7 @@ function renderCard(config, summary) {
           <span class="progress-bar__fail" style="width:${failPct}%"></span>
         </div>`}
         <ul class="meta-list">
+          <li><strong>Platform:</strong> ${config.platform || '—'}</li>
           <li><strong>Environment:</strong> ${summary?.environment || '—'}</li>
           ${summary?.instance ? `<li><strong>Instance:</strong> ${escapeHtml(summary.instance)}</li>` : ''}
           ${summary?.baseUrl ? `<li><strong>Base URL:</strong> ${escapeHtml(summary.baseUrl)}</li>` : ''}
@@ -269,13 +286,17 @@ function renderCard(config, summary) {
   `;
 }
 
-function renderOverallBanner(summaries) {
+function renderOverallBanner(summaries, configs) {
   const valid = summaries.filter((s) => s?.summary?.total > 0);
   if (!valid.length) return '<strong>Loading latest Allure report data…</strong>';
   const avgPass = Math.round(valid.reduce((a, s) => a + (s.rates?.passPct || 0), 0) / valid.length * 10) / 10;
   const failedSuites = valid.filter((s) => (s.rates?.failPct || 0) > 0).length;
   const cls = failedSuites > 0 ? 'fail' : 'pass';
-  return `<div class="overall-banner ${cls}"><strong>Overall pass rate: ${avgPass}%</strong> · ${failedSuites} of ${valid.length} suites have failures (latest Allure reports)</div>`;
+  const mobileCombined = combineMobileSummaries(summaries, configs);
+  const mobileNote = mobileCombined
+    ? ` · Mobile combined: ${mobileCombined.total} tests, ${mobileCombined.passPct}% pass (iOS + Android)`
+    : '';
+  return `<div class="overall-banner ${cls}"><strong>Overall pass rate: ${avgPass}%</strong> · ${failedSuites} of ${valid.length} suites have failures${mobileNote}</div>`;
 }
 
 function renderFailures(summaries) {
@@ -307,7 +328,7 @@ async function loadDashboard() {
   document.getElementById('repo-cards').innerHTML = '<p style="color:var(--muted)">Loading latest Allure reports…</p>';
   const results = await Promise.all(REPO_CONFIG.map((cfg) => fetchSummary(cfg)));
   document.getElementById('repo-cards').innerHTML = REPO_CONFIG.map((cfg, i) => renderCard(cfg, results[i])).join('');
-  document.getElementById('overall-banner').innerHTML = renderOverallBanner(results);
+  document.getElementById('overall-banner').innerHTML = renderOverallBanner(results, REPO_CONFIG);
   document.getElementById('failures-list').innerHTML = renderFailures(results);
   document.getElementById('last-updated').textContent = `Latest Allure data · ${new Date().toLocaleString()}`;
 }
