@@ -75,10 +75,12 @@ def format_app_environment(value: str | None) -> str | None:
 
 
 def resolve_environment(env_meta: dict, cfg: dict) -> str | None:
-    raw = env_meta.get("environment") or env_meta.get("instance")
-    if raw:
-        return format_app_environment(str(raw))
-    return cfg.get("default_environment")
+    if cfg.get("default_environment"):
+        raw = env_meta.get("environment") or env_meta.get("instance")
+        if raw:
+            return format_app_environment(str(raw))
+        return cfg.get("default_environment")
+    return env_meta.get("environment") or env_meta.get("instance")
 
 
 def parse_environment(widget: list | None) -> dict:
@@ -161,12 +163,9 @@ def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dic
         payload["branch"] = env_meta["branch"]
     if env_meta.get("commit"):
         payload["commit"] = env_meta["commit"]
-    if env_meta.get("environment"):
-        payload["environment"] = format_app_environment(str(env_meta["environment"])) or env_meta["environment"]
-    elif env_meta.get("instance"):
-        payload["environment"] = format_app_environment(str(env_meta["instance"]))
-    elif cfg.get("default_environment"):
-        payload["environment"] = cfg["default_environment"]
+    resolved = resolve_environment(env_meta, cfg)
+    if resolved:
+        payload["environment"] = resolved
     if env_meta.get("instance"):
         payload["instance"] = env_meta["instance"]
     if env_meta.get("baseUrl"):
