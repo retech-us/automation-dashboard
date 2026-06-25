@@ -83,9 +83,11 @@ function formatAppEnvironment(value) {
 
 function resolveEnvironment(envMeta, config) {
   const raw = envMeta.environment || envMeta.instance;
-  if (raw) return formatAppEnvironment(raw);
-  if (config.defaultEnvironment) return config.defaultEnvironment;
-  return null;
+  if (config.defaultEnvironment) {
+    if (raw) return formatAppEnvironment(raw);
+    return config.defaultEnvironment;
+  }
+  return raw || null;
 }
 
 function parseEnvironment(widget) {
