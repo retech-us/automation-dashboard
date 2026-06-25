@@ -1,6 +1,5 @@
 /**
- * Public automation dashboard — always fetches live data from GitHub Pages.
- * Falls back to bundled data/*.json when live fetch fails (e.g. offline).
+ * Public automation dashboard — latest Allure report stats + enriched metadata.
  */
 
 const REPO_CONFIG = [
@@ -13,6 +12,8 @@ const REPO_CONFIG = [
     ciRunUrl: 'https://github.com/retech-us/retech-web-automation/actions',
     summaryUrl: 'https://retech-us.github.io/retech-web-automation/run-summary.json',
     widgetUrl: 'https://retech-us.github.io/retech-web-automation/widgets/summary.json',
+    environmentUrl: 'https://retech-us.github.io/retech-web-automation/widgets/environment.json',
+    executorsUrl: 'https://retech-us.github.io/retech-web-automation/widgets/executors.json',
     localPath: 'data/web.json',
   },
   {
@@ -24,6 +25,9 @@ const REPO_CONFIG = [
     ciRunUrl: 'https://github.com/retech-us/retech-mobile-automation/actions',
     summaryUrl: 'https://retech-us.github.io/retech-mobile-automation/run-summary.json',
     widgetUrl: 'https://retech-us.github.io/retech-mobile-automation/widgets/summary.json',
+    environmentUrl: 'https://retech-us.github.io/retech-mobile-automation/widgets/environment.json',
+    executorsUrl: 'https://retech-us.github.io/retech-mobile-automation/widgets/executors.json',
+    mobileBatches: true,
     localPath: 'data/mobile.json',
   },
   {
@@ -35,14 +39,64 @@ const REPO_CONFIG = [
     ciRunUrl: 'https://github.com/retech-us/retech-api-automation/actions',
     summaryUrl: 'https://retech-us.github.io/retech-api-automation/run-summary.json',
     widgetUrl: 'https://retech-us.github.io/retech-api-automation/widgets/summary.json',
+    environmentUrl: 'https://retech-us.github.io/retech-api-automation/widgets/environment.json',
+    executorsUrl: 'https://retech-us.github.io/retech-api-automation/widgets/executors.json',
     localPath: 'data/api.json',
   },
 ];
 
 async function fetchJson(url) {
-  const response = await fetch(url, { cache: 'no-store' });
-  if (!response.ok) return null;
-  return response.json();
+  try {
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
+}
+
+function parseEnvironment(widget) {
+  if (!Array.isArray(widget)) return {};
+  const lookup = {};
+  for (const item of widget) {
+    if (item.values?.[0]) lookup[item.name] = item.values[0];
+  }
+  return {
+    branch: lookup.Branch || lookup['Git Branch'],
+    commit: lookup['Commit.SHA'] || lookup.Commit,
+    environment: lookup.Environment || lookup['Test Environment'] || lookup.Instance,
+    instance: lookup.Instance,
+    baseUrl: lookup['Base URL'],
+    browser: lookup.Browser,
+    workflow: lookup.Workflow,
+  };
+}
+
+async function fetchMobileEnvironment(config) {
+  let env = parseEnvironment(await fetchJson(config.environmentUrl));
+  if (env.branch || env.environment) return env;
+  for (let batch = 5; batch >= 1; batch--) {
+    for (const platform of ['ios', 'android']) {
+      const url = `${config.reportUrl}${platform}/batch-${batch}/widgets/environment.json`;
+      const parsed = parseEnvironment(await fetchJson(url));
+      if (parsed.branch || parsed.environment || parsed.instance) return parsed;
+    }
+  }
+  return env;
+}
+
+function computeRates(summary) {
+  const s = summary?.summary || {};
+  const total = s.total || 0;
+  const passed = s.passed || 0;
+  const failed = (s.failed || 0) + (s.broken || 0);
+  const skipped = s.skipped || 0;
+  if (!total) return { passPct: 0, failPct: 0, skipPct: 0 };
+  return {
+    passPct: Math.round((passed / total) * 1000) / 10,
+    failPct: Math.round((failed / total) * 1000) / 10,
+    skipPct: Math.round((skipped / total) * 1000) / 10,
+  };
 }
 
 function fromWidget(config, widget) {
@@ -52,62 +106,91 @@ function fromWidget(config, widget) {
   const passed = stats.passed || 0;
   const skipped = stats.skipped || 0;
   const total = stats.total || 0;
-  const status = failed + broken > 0 ? 'failed' : total > 0 ? 'passed' : 'unknown';
-  return {
+  const stop = widget.time?.stop;
+  const payload = {
     schemaVersion: '1.0',
     repo: config.id,
     repoName: `retech-us/retech-${config.id === 'api' ? 'api' : config.id}-automation`,
-    status,
-    environment: 'staging',
-    suite: 'regression',
-    finishedAt: new Date().toISOString(),
+    status: failed + broken > 0 ? 'failed' : total > 0 ? 'passed' : 'unknown',
+    finishedAt: stop ? new Date(stop).toISOString() : new Date().toISOString(),
     durationMs: widget.time?.duration || 0,
     summary: { total, passed, failed, broken, skipped },
     reportUrl: config.reportUrl,
     ciRunUrl: config.ciRunUrl,
     topFailures: [],
     failureCategories: {},
-    dataSource: 'allure-widget-fallback',
+    dataSource: 'allure-report',
     reportName: widget.reportName,
   };
+  payload.rates = computeRates(payload);
+  return payload;
+}
+
+function enrich(payload, config, envMeta, executors, runSummary) {
+  if (envMeta.branch) payload.branch = envMeta.branch;
+  if (envMeta.commit) payload.commit = envMeta.commit;
+  if (envMeta.environment) payload.environment = envMeta.environment;
+  if (envMeta.instance) payload.instance = envMeta.instance;
+  if (envMeta.baseUrl) payload.baseUrl = envMeta.baseUrl;
+  if (envMeta.browser) payload.browser = envMeta.browser;
+  if (envMeta.workflow) payload.workflow = envMeta.workflow;
+
+  if (Array.isArray(executors) && executors[0]?.buildUrl) {
+    payload.ciRunUrl = executors[0].buildUrl;
+  }
+  if (Array.isArray(executors) && executors[0]?.buildName && !payload.workflow) {
+    payload.workflow = executors[0].buildName;
+  }
+
+  if (runSummary) {
+    if (!payload.branch && runSummary.branch) payload.branch = runSummary.branch;
+    if (!payload.commit && runSummary.commit) payload.commit = runSummary.commit;
+    if (runSummary.topFailures?.length) payload.topFailures = runSummary.topFailures;
+    if (runSummary.failureCategories) payload.failureCategories = runSummary.failureCategories;
+    if (runSummary.runId) payload.runId = runSummary.runId;
+    if (runSummary.ciRunUrl && !executors?.length) payload.ciRunUrl = runSummary.ciRunUrl;
+  }
+
+  payload.rates = computeRates(payload);
+  return payload;
 }
 
 function placeholder(config) {
   return {
-    schemaVersion: '1.0',
     repo: config.id,
     status: 'unknown',
     summary: { total: 0, passed: 0, failed: 0, broken: 0, skipped: 0 },
+    rates: { passPct: 0, failPct: 0, skipPct: 0 },
     reportUrl: config.reportUrl,
     ciRunUrl: config.ciRunUrl,
     topFailures: [],
+    failureCategories: {},
     dataSource: 'unavailable',
   };
 }
 
 async function fetchSummary(config) {
-  // 1. Live run-summary.json (richest data)
-  try {
-    const summary = await fetchJson(config.summaryUrl);
-    if (summary?.repo) {
-      summary.dataSource = 'run-summary.json';
-      return summary;
-    }
-  } catch (_) { /* continue */ }
+  const [widget, executors, runSummary] = await Promise.all([
+    fetchJson(config.widgetUrl),
+    fetchJson(config.executorsUrl),
+    fetchJson(config.summaryUrl),
+  ]);
+  const envMeta = config.mobileBatches
+    ? await fetchMobileEnvironment(config)
+    : parseEnvironment(await fetchJson(config.environmentUrl));
 
-  // 2. Allure widget fallback (pass/fail counts from published report)
-  try {
-    const widget = await fetchJson(config.widgetUrl);
-    if (widget?.statistic) return fromWidget(config, widget);
-  } catch (_) { /* continue */ }
-
-  // 3. Bundled cache (updated by dashboard CI every 30 min)
-  try {
+  let payload;
+  if (widget?.statistic) {
+    payload = fromWidget(config, widget);
+  } else if (runSummary?.repo) {
+    payload = { ...runSummary, dataSource: 'run-summary.json', rates: computeRates(runSummary) };
+  } else {
     const cached = await fetchJson(config.localPath);
     if (cached?.repo) return cached;
-  } catch (_) { /* continue */ }
+    return placeholder(config);
+  }
 
-  return placeholder(config);
+  return enrich(payload, config, envMeta, executors, runSummary?.repo ? runSummary : null);
 }
 
 function formatDuration(ms) {
@@ -122,24 +205,26 @@ function formatDate(iso) {
   try { return new Date(iso).toLocaleString(); } catch { return iso; }
 }
 
-function statusClass(status) {
-  if (status === 'passed') return 'pass';
-  if (status === 'failed') return 'fail';
-  return 'unknown';
+function rateClass(passPct) {
+  if (passPct >= 90) return 'pass';
+  if (passPct >= 70) return 'warn';
+  return 'fail';
 }
 
-function dataSourceNote(summary) {
-  if (!summary?.dataSource || summary.dataSource === 'run-summary.json') return '';
-  if (summary.dataSource === 'allure-widget-fallback') {
-    return '<li><strong>Data:</strong> Live from Allure report (full failure details after next CI run)</li>';
-  }
-  return '<li><strong>Data:</strong> Awaiting first CI run</li>';
+function renderCategoryChips(categories) {
+  if (!categories || !Object.keys(categories).length) return '';
+  const chips = Object.entries(categories)
+    .map(([cat, count]) => `<span class="category-chip">${cat}: ${count}</span>`)
+    .join('');
+  return `<div class="category-chips"><strong>Failure types:</strong> ${chips}</div>`;
 }
 
 function renderCard(config, summary) {
-  const status = summary?.status || 'unknown';
   const s = summary?.summary || { total: 0, passed: 0, failed: 0, skipped: 0 };
-  const noData = status === 'unknown' && s.total === 0;
+  const rates = summary?.rates || computeRates(summary);
+  const noData = s.total === 0;
+  const passPct = rates.passPct ?? 0;
+  const failPct = rates.failPct ?? 0;
 
   return `
     <article class="card" data-repo="${config.id}">
@@ -148,23 +233,33 @@ function renderCard(config, summary) {
           <h2 class="card__title">${config.icon} ${config.title}</h2>
           <p class="card__desc">${config.description}</p>
         </div>
-        <span class="status-badge ${statusClass(status)}">${noData ? 'no data' : status}</span>
+        <div class="rate-badge ${rateClass(passPct)}" title="Pass rate from latest Allure report">
+          <span class="rate-badge__value">${noData ? '—' : passPct + '%'}</span>
+          <span class="rate-badge__label">pass rate</span>
+        </div>
       </div>
       <div class="card__body">
-        ${noData ? '<p class="no-data-msg">No test data available yet. Data appears after the next CI run.</p>' : `
+        ${noData ? '<p class="no-data-msg">No test data available yet.</p>' : `
         <div class="stats">
           <div class="stat"><span class="stat__value">${s.total}</span><span class="stat__label">Total</span></div>
-          <div class="stat"><span class="stat__value" style="color:var(--pass)">${s.passed}</span><span class="stat__label">Passed</span></div>
-          <div class="stat"><span class="stat__value" style="color:var(--fail)">${s.failed + (s.broken || 0)}</span><span class="stat__label">Failed</span></div>
-          <div class="stat"><span class="stat__value">${s.skipped}</span><span class="stat__label">Skipped</span></div>
+          <div class="stat"><span class="stat__value" style="color:var(--pass)">${passPct}%</span><span class="stat__label">Passed (${s.passed})</span></div>
+          <div class="stat"><span class="stat__value" style="color:var(--fail)">${failPct}%</span><span class="stat__label">Failed (${(s.failed || 0) + (s.broken || 0)})</span></div>
+          <div class="stat"><span class="stat__value">${rates.skipPct}%</span><span class="stat__label">Skipped (${s.skipped})</span></div>
+        </div>
+        <div class="progress-bar" aria-hidden="true">
+          <span class="progress-bar__pass" style="width:${passPct}%"></span>
+          <span class="progress-bar__fail" style="width:${failPct}%"></span>
         </div>`}
         <ul class="meta-list">
           <li><strong>Environment:</strong> ${summary?.environment || '—'}</li>
+          ${summary?.instance ? `<li><strong>Instance:</strong> ${escapeHtml(summary.instance)}</li>` : ''}
+          ${summary?.baseUrl ? `<li><strong>Base URL:</strong> ${escapeHtml(summary.baseUrl)}</li>` : ''}
           <li><strong>Branch:</strong> ${summary?.branch || '—'} ${summary?.commit ? '@ ' + summary.commit : ''}</li>
-          <li><strong>Finished:</strong> ${formatDate(summary?.finishedAt)}</li>
+          <li><strong>Last run:</strong> ${formatDate(summary?.finishedAt)}</li>
           <li><strong>Duration:</strong> ${formatDuration(summary?.durationMs)}</li>
-          ${dataSourceNote(summary)}
+          <li><strong>Source:</strong> Latest Allure report</li>
         </ul>
+        ${renderCategoryChips(summary?.failureCategories)}
         <div class="card__actions">
           <a class="link-btn primary" href="${summary?.reportUrl || config.reportUrl}" target="_blank" rel="noopener">View Allure Report</a>
           <a class="link-btn" href="${summary?.ciRunUrl || config.ciRunUrl}" target="_blank" rel="noopener">View CI Run</a>
@@ -175,17 +270,12 @@ function renderCard(config, summary) {
 }
 
 function renderOverallBanner(summaries) {
-  const valid = summaries.filter((s) => s && s.summary?.total > 0);
-  if (!valid.length) {
-    return '<strong>Loading data from automation repos…</strong> If this persists, check that GitHub Pages is enabled on each repo.';
-  }
-  const failed = valid.filter((s) => s.status === 'failed').length;
-  const passed = valid.filter((s) => s.status === 'passed').length;
-  const cls = failed > 0 ? 'fail' : 'pass';
-  const msg = failed > 0
-    ? `${failed} of ${valid.length} automation suites failed on the latest run.`
-    : `All ${passed} automation suites passed on the latest run.`;
-  return `<div class="overall-banner ${cls}"><strong>${msg}</strong></div>`;
+  const valid = summaries.filter((s) => s?.summary?.total > 0);
+  if (!valid.length) return '<strong>Loading latest Allure report data…</strong>';
+  const avgPass = Math.round(valid.reduce((a, s) => a + (s.rates?.passPct || 0), 0) / valid.length * 10) / 10;
+  const failedSuites = valid.filter((s) => (s.rates?.failPct || 0) > 0).length;
+  const cls = failedSuites > 0 ? 'fail' : 'pass';
+  return `<div class="overall-banner ${cls}"><strong>Overall pass rate: ${avgPass}%</strong> · ${failedSuites} of ${valid.length} suites have failures (latest Allure reports)</div>`;
 }
 
 function renderFailures(summaries) {
@@ -197,7 +287,7 @@ function renderFailures(summaries) {
     }
   }
   if (!items.length) {
-    return '<p style="color:var(--muted);padding:8px 0;">No detailed failure reasons yet. API repo shows these after CI publishes run-summary.json.</p>';
+    return '<p style="color:var(--muted);padding:8px 0;">No detailed failure breakdown available yet for this repo.</p>';
   }
   return items.map((f) => `
     <div class="failure-item">
@@ -214,18 +304,12 @@ function escapeHtml(str) {
 }
 
 async function loadDashboard() {
-  const cardsEl = document.getElementById('repo-cards');
-  const bannerEl = document.getElementById('overall-banner');
-  const failuresEl = document.getElementById('failures-list');
-  const updatedEl = document.getElementById('last-updated');
-
-  cardsEl.innerHTML = '<p style="color:var(--muted)">Loading live data from GitHub Pages…</p>';
-
+  document.getElementById('repo-cards').innerHTML = '<p style="color:var(--muted)">Loading latest Allure reports…</p>';
   const results = await Promise.all(REPO_CONFIG.map((cfg) => fetchSummary(cfg)));
-  cardsEl.innerHTML = REPO_CONFIG.map((cfg, i) => renderCard(cfg, results[i])).join('');
-  bannerEl.innerHTML = renderOverallBanner(results);
-  failuresEl.innerHTML = renderFailures(results);
-  updatedEl.textContent = `Live data · Updated ${new Date().toLocaleString()}`;
+  document.getElementById('repo-cards').innerHTML = REPO_CONFIG.map((cfg, i) => renderCard(cfg, results[i])).join('');
+  document.getElementById('overall-banner').innerHTML = renderOverallBanner(results);
+  document.getElementById('failures-list').innerHTML = renderFailures(results);
+  document.getElementById('last-updated').textContent = `Latest Allure data · ${new Date().toLocaleString()}`;
 }
 
 document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
