@@ -15,9 +15,20 @@
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-api-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions",
-  "topFailures": [],
-  "failureCategories": {},
+  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/28163602988",
+  "topFailures": [
+    {
+      "name": "shouldUpdateTaskDefTypeAndValidateViaGet",
+      "fullName": "com.retech.rebm.api.tests.TaskApiTest.shouldUpdateTaskDefTypeAndValidateViaGet",
+      "status": "broken",
+      "category": "data",
+      "reason": "Test data validation failed in 'com.retech.rebm.api.tests.TaskApiTest.shouldUpdateTaskDefTypeAndValidateViaGet'",
+      "feature": "API Automation Test Suite"
+    }
+  ],
+  "failureCategories": {
+    "data": 1
+  },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
@@ -40,5 +51,9 @@
   "targetEnvironment": "Development",
   "osName": "Linux",
   "workflow": "rebm-api",
+  "branch": "develop",
+  "commit": "f0cdb3c",
+  "runId": "28163602988",
+  "runNumber": 214,
   "environment": "CI"
 }

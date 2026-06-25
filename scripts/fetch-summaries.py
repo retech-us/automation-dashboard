@@ -365,8 +365,12 @@ def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dic
             payload["topFailures"] = run_summary["topFailures"]
         if run_summary.get("failureCategories"):
             payload["failureCategories"] = run_summary["failureCategories"]
+        if run_summary.get("jobs"):
+            payload["jobs"] = run_summary["jobs"]
         if run_summary.get("runId"):
             payload["runId"] = run_summary["runId"]
+        if run_summary.get("runNumber"):
+            payload["runNumber"] = run_summary["runNumber"]
         if run_summary.get("ciRunUrl"):
             payload["ciRunUrl"] = run_summary["ciRunUrl"]
 
@@ -375,6 +379,33 @@ def enrich(payload: dict, cfg: dict, env_meta: dict, executors, run_summary: dic
 
     payload["counts"] = compute_counts(payload)
     return payload
+
+
+def failures_from_behaviors(behaviors: dict | None, report_url: str, limit: int = 8) -> list[dict]:
+    if not behaviors or not isinstance(behaviors.get("items"), list):
+        return []
+    rows: list[dict] = []
+    for item in behaviors["items"]:
+        stats = item.get("statistic") or {}
+        failed = int(stats.get("failed") or 0)
+        broken = int(stats.get("broken") or 0)
+        if failed + broken <= 0:
+            continue
+        status = "failed" if failed > 0 else "broken"
+        uid = item.get("uid")
+        rows.append({
+            "name": item.get("name") or "Unnamed feature",
+            "status": status,
+            "category": "assertion" if status == "failed" else "unknown",
+            "feature": item.get("name"),
+            "reason": f"{failed} failed · {broken} broken in feature",
+            "reportUrl": f"{report_url}#behaviors/{uid}/" if uid else report_url,
+            "_severity": failed * 10 + broken,
+        })
+    rows.sort(key=lambda row: row.get("_severity", 0), reverse=True)
+    for row in rows:
+        row.pop("_severity", None)
+    return rows[:limit]
 
 
 def enrich_github(payload: dict, cfg: dict) -> dict:
@@ -429,7 +460,11 @@ def fetch_repo(repo_id: str, out_dir: Path) -> dict:
 
     summary_for_enrich = run_summary if run_summary and (run_summary.get("repo") or run_summary.get("summary")) else None
     payload = enrich(payload, cfg, env_meta, executors, summary_for_enrich)
-    return enrich_github(payload, cfg)
+    payload = enrich_github(payload, cfg)
+    behaviors = fetch_json(f"{cfg['report_url']}widgets/behaviors.json")
+    if not payload.get("topFailures"):
+        payload["topFailures"] = failures_from_behaviors(behaviors, cfg["report_url"])
+    return payload
 
 
 def main() -> int:
