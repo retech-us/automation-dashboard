@@ -5,18 +5,26 @@
   "repository": "retech-us/retech-api-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-06-28T18:54:10Z",
-  "durationMs": 89111,
+  "finishedAt": "2026-06-29T19:14:05Z",
+  "durationMs": 89886,
   "summary": {
     "total": 99,
-    "passed": 98,
-    "failed": 0,
+    "passed": 97,
+    "failed": 1,
     "broken": 1,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-api-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/28332442125",
+  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/28396313226",
   "topFailures": [
+    {
+      "name": "shouldCompleteUserOnboardingFlow",
+      "fullName": "com.retech.rebm.api.tests.E2EWorkflowTest.shouldCompleteUserOnboardingFlow",
+      "status": "failed",
+      "category": "api",
+      "reason": "API call failed in 'com.retech.rebm.api.tests.E2EWorkflowTest.shouldCompleteUserOnboardingFlow': 1 expectation failed.",
+      "feature": "API Automation Test Suite"
+    },
     {
       "name": "shouldUpdateTaskDefTypeAndValidateViaGet",
       "fullName": "com.retech.rebm.api.tests.TaskApiTest.shouldUpdateTaskDefTypeAndValidateViaGet",
@@ -27,33 +35,34 @@
     }
   ],
   "failureCategories": {
+    "api": 1,
     "data": 1
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 99,
-    "passed": 98,
-    "review": 1,
+    "passed": 97,
+    "review": 2,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 99.0,
+      "passPct": 98.0,
       "total": 99,
-      "failed": 1
+      "failed": 2
     }
   ],
   "instance": "epsilon",
   "baseUrl": "https://epsilon.rebotics.net/api/",
   "appName": "rebm",
-  "appVersion": "26.5.100",
+  "appVersion": "26.5.106",
   "targetEnvironment": "Development",
   "osName": "Linux",
   "workflow": "rebm-api",
   "branch": "develop",
   "commit": "f0cdb3c",
-  "runId": "28332442125",
-  "runNumber": 218,
+  "runId": "28396313226",
+  "runNumber": 219,
   "environment": "CI"
 }
