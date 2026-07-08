@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-07-07T10:27:05Z",
-  "durationMs": 20889372,
+  "finishedAt": "2026-07-08T10:15:32Z",
+  "durationMs": 20937027,
   "summary": {
     "total": 109,
-    "passed": 57,
+    "passed": 58,
     "failed": 6,
-    "broken": 40,
-    "skipped": 6
+    "broken": 36,
+    "skipped": 8
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/28841834179",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/28917332511",
   "topFailures": [
     {
       "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
@@ -45,8 +45,8 @@
       "name": "Submit PLUNF action by subuser, rejected by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:73",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:73'",
+      "category": "api",
+      "reason": "API call failed in 'src/test/resources/features/ApprovalAi.feature:73': Approval AI shell not ready \u2014 functional shell or History tab failed after direct URL and sidebar fallback. URL=https://epsilon.rebotics.net/approval-ai/products",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -54,7 +54,7 @@
       "fullName": "src/test/resources/features/ApprovalAi.feature:129",
       "status": "failed",
       "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:129': After correction, product UPC should match candidate UPC expected [079100520091] but found [PRODUCT PREVIEW]",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:129': After correction, product UPC should match candidate UPC expected [011110121219] but found [ ]",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -62,7 +62,7 @@
       "fullName": "src/test/resources/features/ApprovalAi.feature:157",
       "status": "failed",
       "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:157': After correction, product UPC should match candidate UPC expected [552786139912] but found [PRODUCT PREVIEW]",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:157': After correction, product UPC should match candidate UPC expected [079100923274] but found [PRODUCT PREVIEW]",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -70,7 +70,7 @@
       "fullName": "src/test/resources/features/ApprovalAi.feature:143",
       "status": "failed",
       "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [029000020771] but found [ ]",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [070796212062] but found [PRODUCT PREVIEW]",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -85,8 +85,8 @@
       "name": "Submit exception action by subuser, approved by superuser and verify price tag history tab",
       "fullName": "src/test/resources/features/PriceTags.feature:34",
       "status": "broken",
-      "category": "api",
-      "reason": "API call failed in 'src/test/resources/features/PriceTags.feature:34': Approval AI shell not ready \u2014 functional shell or History tab failed after direct URL and sidebar fallback. URL=https://epsilon.rebotics.net/approval-ai/products",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/PriceTags.feature:34': Element could not be found or healed after attempts. Screen=PriceTagPageObject Purpose=Price Tags menu item",
       "feature": "Verify price tag corrections and approvals"
     },
     {
@@ -100,25 +100,25 @@
   ],
   "failureCategories": {
     "login": 5,
-    "locator": 14,
-    "timeout": 7,
+    "locator": 9,
+    "timeout": 6,
     "api": 13,
-    "assertion": 4,
+    "assertion": 6,
     "unknown": 3
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
     "total": 109,
-    "passed": 57,
-    "review": 46,
-    "skipped": 6
+    "passed": 58,
+    "review": 42,
+    "skipped": 8
   },
   "historyTrend": [
     {
-      "passPct": 52.3,
+      "passPct": 53.2,
       "total": 109,
-      "failed": 46
+      "failed": 42
     },
     {
       "passPct": 35.1,
@@ -139,7 +139,7 @@
     },
     {
       "name": "sequential-only-tests",
-      "status": "failure"
+      "status": "success"
     },
     {
       "name": "hybrid-tests",
@@ -150,6 +150,6 @@
       "status": "failure"
     }
   ],
-  "runId": "28841834179",
-  "runNumber": 965
+  "runId": "28917332511",
+  "runNumber": 966
 }
