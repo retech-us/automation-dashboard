@@ -3,46 +3,57 @@
   "repo": "api",
   "repoName": "retech-us/retech-api-automation",
   "repository": "retech-us/retech-api-automation",
-  "status": "stable",
+  "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-07-21T18:56:29Z",
-  "durationMs": 85627,
+  "finishedAt": "2026-07-22T18:52:21Z",
+  "durationMs": 97171,
   "summary": {
     "total": 99,
-    "passed": 99,
-    "failed": 0,
+    "passed": 98,
+    "failed": 1,
     "broken": 0,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-api-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/29859146234",
-  "topFailures": [],
-  "failureCategories": {},
+  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/29948340803",
+  "topFailures": [
+    {
+      "name": "shouldUpdateUserAndValidateViaGet",
+      "fullName": "com.retech.rebm.api.tests.UserApiTest.shouldUpdateUserAndValidateViaGet",
+      "status": "failed",
+      "category": "api",
+      "reason": "API call failed in 'com.retech.rebm.api.tests.UserApiTest.shouldUpdateUserAndValidateViaGet': 1 expectation failed.",
+      "feature": "API Automation Test Suite"
+    }
+  ],
+  "failureCategories": {
+    "api": 1
+  },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 99,
-    "passed": 99,
-    "review": 0,
+    "passed": 98,
+    "review": 1,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 100.0,
+      "passPct": 99.0,
       "total": 99,
-      "failed": 0
+      "failed": 1
     }
   ],
   "instance": "epsilon",
   "baseUrl": "https://epsilon.rebotics.net/api/",
   "appName": "rebm",
-  "appVersion": "26.5.161",
+  "appVersion": "26.5.166",
   "targetEnvironment": "Development",
   "osName": "Linux",
   "workflow": "rebm-api",
   "branch": "develop",
   "commit": "d26644a",
-  "runId": "29859146234",
-  "runNumber": 243,
+  "runId": "29948340803",
+  "runNumber": 244,
   "environment": "CI"
 }
