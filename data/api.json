@@ -5,55 +5,63 @@
   "repository": "retech-us/retech-api-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-07-22T18:52:21Z",
-  "durationMs": 97171,
+  "finishedAt": "2026-07-23T18:54:38Z",
+  "durationMs": 158460,
   "summary": {
     "total": 99,
-    "passed": 98,
-    "failed": 1,
+    "passed": 97,
+    "failed": 2,
     "broken": 0,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-api-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/29948340803",
+  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/30035451180",
   "topFailures": [
     {
-      "name": "shouldUpdateUserAndValidateViaGet",
-      "fullName": "com.retech.rebm.api.tests.UserApiTest.shouldUpdateUserAndValidateViaGet",
+      "name": "shouldGetProcessingActionsByStoreAndDate",
+      "fullName": "com.retech.rebm.api.tests.ProcessingActionApiTest.shouldGetProcessingActionsByStoreAndDate",
       "status": "failed",
       "category": "api",
-      "reason": "API call failed in 'com.retech.rebm.api.tests.UserApiTest.shouldUpdateUserAndValidateViaGet': 1 expectation failed.",
+      "reason": "API call failed in 'com.retech.rebm.api.tests.ProcessingActionApiTest.shouldGetProcessingActionsByStoreAndDate': 1 expectation failed.",
+      "feature": "API Automation Test Suite"
+    },
+    {
+      "name": "shouldMaintainDataConsistencyAcrossResources",
+      "fullName": "com.retech.rebm.api.tests.E2EWorkflowTest.shouldMaintainDataConsistencyAcrossResources",
+      "status": "failed",
+      "category": "api",
+      "reason": "API call failed in 'com.retech.rebm.api.tests.E2EWorkflowTest.shouldMaintainDataConsistencyAcrossResources': 1 expectation failed.",
       "feature": "API Automation Test Suite"
     }
   ],
   "failureCategories": {
-    "api": 1
+    "api": 2
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 99,
-    "passed": 98,
-    "review": 1,
+    "passed": 97,
+    "review": 2,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 99.0,
+      "passPct": 98.0,
       "total": 99,
-      "failed": 1
+      "failed": 2
     }
   ],
   "instance": "epsilon",
   "baseUrl": "https://epsilon.rebotics.net/api/",
   "appName": "rebm",
-  "appVersion": "26.5.166",
+  "appVersion": "26.5.168",
   "targetEnvironment": "Development",
   "osName": "Linux",
   "workflow": "rebm-api",
   "branch": "develop",
   "commit": "d26644a",
-  "runId": "29948340803",
-  "runNumber": 244,
+  "runId": "30035451180",
+  "runNumber": 245,
   "environment": "CI"
 }
