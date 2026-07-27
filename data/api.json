@@ -3,46 +3,66 @@
   "repo": "api",
   "repoName": "retech-us/retech-api-automation",
   "repository": "retech-us/retech-api-automation",
-  "status": "stable",
+  "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-07-26T18:49:43Z",
-  "durationMs": 65624,
+  "finishedAt": "2026-07-27T19:01:14Z",
+  "durationMs": 107780,
   "summary": {
     "total": 99,
-    "passed": 99,
-    "failed": 0,
-    "broken": 0,
+    "passed": 97,
+    "failed": 1,
+    "broken": 1,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-api-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/30215463813",
-  "topFailures": [],
-  "failureCategories": {},
+  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/30296135188",
+  "topFailures": [
+    {
+      "name": "shouldGetProcessingActionStatus",
+      "fullName": "com.retech.rebm.api.tests.ProcessingActionApiTest.shouldGetProcessingActionStatus",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'com.retech.rebm.api.tests.ProcessingActionApiTest.shouldGetProcessingActionStatus': Failed to deserialize ProcessingActionResponse list",
+      "feature": "API Automation Test Suite"
+    },
+    {
+      "name": "shouldUploadFileAndValidateViaGet",
+      "fullName": "com.retech.rebm.api.tests.FileUploadApiTest.shouldUploadFileAndValidateViaGet",
+      "status": "failed",
+      "category": "api",
+      "reason": "API call failed in 'com.retech.rebm.api.tests.FileUploadApiTest.shouldUploadFileAndValidateViaGet': 1 expectation failed.",
+      "feature": "API Automation Test Suite"
+    }
+  ],
+  "failureCategories": {
+    "api": 1,
+    "unknown": 1
+  },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 99,
-    "passed": 99,
-    "review": 0,
+    "passed": 97,
+    "review": 2,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 100.0,
+      "passPct": 98.0,
       "total": 99,
-      "failed": 0
+      "failed": 2
     }
   ],
   "instance": "epsilon",
   "baseUrl": "https://epsilon.rebotics.net/api/",
   "appName": "rebm",
-  "appVersion": "26.5.169",
+  "appVersion": "26.5.171",
   "targetEnvironment": "Development",
   "osName": "Linux",
   "workflow": "rebm-api",
   "branch": "develop",
   "commit": "d26644a",
-  "runId": "30215463813",
-  "runNumber": 248,
+  "runId": "30296135188",
+  "runNumber": 249,
   "environment": "CI"
 }
