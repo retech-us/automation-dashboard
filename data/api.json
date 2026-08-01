@@ -3,46 +3,57 @@
   "repo": "api",
   "repoName": "retech-us/retech-api-automation",
   "repository": "retech-us/retech-api-automation",
-  "status": "stable",
+  "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-07-31T18:59:09Z",
-  "durationMs": 117701,
+  "finishedAt": "2026-08-01T18:49:52Z",
+  "durationMs": 89115,
   "summary": {
     "total": 99,
-    "passed": 99,
-    "failed": 0,
+    "passed": 98,
+    "failed": 1,
     "broken": 0,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-api-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/30657103143",
-  "topFailures": [],
-  "failureCategories": {},
+  "ciRunUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/30713310244",
+  "topFailures": [
+    {
+      "name": "shouldMaintainDataConsistencyAcrossResources",
+      "fullName": "com.retech.rebm.api.tests.E2EWorkflowTest.shouldMaintainDataConsistencyAcrossResources",
+      "status": "failed",
+      "category": "api",
+      "reason": "API call failed in 'com.retech.rebm.api.tests.E2EWorkflowTest.shouldMaintainDataConsistencyAcrossResources': 1 expectation failed.",
+      "feature": "API Automation Test Suite"
+    }
+  ],
+  "failureCategories": {
+    "api": 1
+  },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 99,
-    "passed": 99,
-    "review": 0,
+    "passed": 98,
+    "review": 1,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 100.0,
+      "passPct": 99.0,
       "total": 99,
-      "failed": 0
+      "failed": 1
     }
   ],
   "instance": "epsilon",
   "baseUrl": "https://epsilon.rebotics.net/api/",
   "appName": "rebm",
-  "appVersion": "26.5.176",
+  "appVersion": "26.5.177",
   "targetEnvironment": "Development",
   "osName": "Linux",
   "workflow": "rebm-api",
   "branch": "develop",
   "commit": "d26644a",
-  "runId": "30657103143",
-  "runNumber": 253,
+  "runId": "30713310244",
+  "runNumber": 254,
   "environment": "CI"
 }
