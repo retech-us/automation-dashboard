@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-08-03T10:37:01Z",
-  "durationMs": 22038656,
+  "finishedAt": "2026-08-04T10:18:02Z",
+  "durationMs": 21137312,
   "summary": {
-    "total": 112,
-    "passed": 61,
-    "failed": 7,
-    "broken": 32,
-    "skipped": 12
+    "total": 109,
+    "passed": 56,
+    "failed": 10,
+    "broken": 35,
+    "skipped": 8
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/30784422863",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/30877461600",
   "topFailures": [
     {
       "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
@@ -29,8 +29,8 @@
       "name": "Input UPC action by subuser, submit train transaction rejected by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:115",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:115': Element 'ScanDetailsPageObject:Input UPC 2' not found: AI heal was rejected by validation (Text mismatch. expected contains='input upc 2') and declared locators did not match.",
+      "category": "api",
+      "reason": "API call failed in 'src/test/resources/features/ApprovalAi.feature:115': Approval AI shell not ready \u2014 functional shell or History tab failed after direct URL and sidebar fallback. URL=https://epsilon.rebotics.net/approval-ai/products",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -54,7 +54,7 @@
       "fullName": "src/test/resources/features/ApprovalAi.feature:129",
       "status": "failed",
       "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:129': After correction, product UPC should match candidate UPC expected [072036730480] but found [PRODUCT PREVIEW]",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:129': After correction, product UPC should match candidate UPC expected [070404001163] but found [PRODUCT PREVIEW]",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -62,7 +62,7 @@
       "fullName": "src/test/resources/features/ApprovalAi.feature:157",
       "status": "failed",
       "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:157': After correction, product UPC should match candidate UPC expected [705599013881] but found [ ]",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:157': After correction, product UPC should match candidate UPC expected [040000525578] but found [PRODUCT PREVIEW]",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -70,7 +70,15 @@
       "fullName": "src/test/resources/features/ApprovalAi.feature:143",
       "status": "failed",
       "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [072745976940] but found [PRODUCT PREVIEW]",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [017800174138] but found [PRODUCT PREVIEW]",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit exception action by subuser, approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:31",
+      "status": "failed",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAi.feature:31': LOGIN failed - user not redirected from login page. Current URL: https://epsilon.rebotics.net/log-in. Check credentials and network connectivity.",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -88,37 +96,29 @@
       "category": "api",
       "reason": "API call failed in 'src/test/resources/features/ApprovalAi.feature:45': Approval AI shell not ready \u2014 functional shell or History tab failed after direct URL and sidebar fallback. URL=https://epsilon.rebotics.net/approval-ai/products",
       "feature": "Verify Approval AI tab Products approvals"
-    },
-    {
-      "name": "Submit exception action by subuser, rejected by superuser and verify price tag history tab",
-      "fullName": "src/test/resources/features/PriceTags.feature:47",
-      "status": "broken",
-      "category": "api",
-      "reason": "API call failed in 'src/test/resources/features/PriceTags.feature:47': Approval AI shell not ready \u2014 functional shell or History tab failed after direct URL and sidebar fallback. URL=https://epsilon.rebotics.net/approval-ai/products",
-      "feature": "Verify price tag corrections and approvals"
     }
   ],
   "failureCategories": {
-    "login": 4,
-    "locator": 7,
-    "timeout": 9,
-    "api": 10,
-    "assertion": 5,
+    "login": 7,
+    "locator": 9,
+    "timeout": 7,
+    "api": 12,
+    "assertion": 6,
     "unknown": 4
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
-    "total": 112,
-    "passed": 61,
-    "review": 39,
-    "skipped": 12
+    "total": 109,
+    "passed": 56,
+    "review": 45,
+    "skipped": 8
   },
   "historyTrend": [
     {
-      "passPct": 54.5,
-      "total": 112,
-      "failed": 39
+      "passPct": 51.4,
+      "total": 109,
+      "failed": 45
     },
     {
       "passPct": 35.1,
@@ -150,6 +150,6 @@
       "status": "failure"
     }
   ],
-  "runId": "30784422863",
-  "runNumber": 987
+  "runId": "30877461600",
+  "runNumber": 988
 }
