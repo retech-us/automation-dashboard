@@ -2,7 +2,7 @@
  * Public automation dashboard — release confidence for technical + non-technical audiences.
  */
 
-const BUILD_TAG = '20260805r';
+const BUILD_TAG = '20260805s';
 const DASHBOARD_VERSION = window.DASHBOARD_VERSION || '16';
 
 const REPO_DISPLAY = {
@@ -2795,106 +2795,6 @@ function routeChatIntent(question) {
 }
 
 
-const GENAI = {
-  proxyStatusUrl: '/api/chat/status',
-  proxyChatUrl: '/api/chat',
-  model: 'gpt-4.1',
-  ready: false,
-  mode: 'offline', // offline | proxy | remote
-  remoteProxyUrl: '',
-};
-
-function buildGenAiSystemPrompt(knowledge) {
-  return [
-    'You are the Store Intell QA dashboard assistant.',
-    'Answer ONLY using the provided DASHBOARD_DATA JSON. Do not invent suites, failures, scores, or trends.',
-    'If the question is unrelated to this automation dashboard / release quality, refuse briefly and ask for a dashboard question.',
-    'Be concise and stakeholder-friendly. Prefer short bullets. Mention release gate, week-over-week, triage buckets, and suites when relevant.',
-    'Never ask for or reveal API keys. Never write code unless asked about dashboard data interpretation.',
-    'DASHBOARD_DATA:',
-    JSON.stringify(knowledge),
-  ].join('\n');
-}
-
-async function loadGenAiConfig() {
-  try {
-    const cfg = await fetchJson('data/genai-config.json');
-    if (cfg?.model) GENAI.model = cfg.model;
-    if (cfg?.remoteProxyUrl) GENAI.remoteProxyUrl = String(cfg.remoteProxyUrl).replace(/\/$/, '');
-  } catch { /* optional */ }
-}
-
-async function probeProxy(statusUrl, chatUrl, modeLabel) {
-  const res = await fetch(`${statusUrl}?_=${BUILD_TAG}`, { cache: 'no-store' });
-  if (!res.ok) return false;
-  const data = await res.json();
-  if (!data?.genaiReady) return false;
-  GENAI.ready = true;
-  GENAI.mode = modeLabel;
-  GENAI.proxyStatusUrl = statusUrl;
-  GENAI.proxyChatUrl = chatUrl;
-  if (data.model) GENAI.model = data.model;
-  return true;
-}
-
-async function detectGenAiMode() {
-  await loadGenAiConfig();
-
-  // Local Docker / dashboard-server.py (OPENAI_KEY in env / .env)
-  try {
-    if (await probeProxy('/api/chat/status', '/api/chat', 'proxy')) return GENAI;
-  } catch { /* no local proxy */ }
-
-  // Optional remote proxy URL from genai-config (CI variable) — not browser paste
-  if (GENAI.remoteProxyUrl) {
-    try {
-      if (await probeProxy(`${GENAI.remoteProxyUrl}/api/chat/status`, `${GENAI.remoteProxyUrl}/api/chat`, 'remote')) {
-        return GENAI;
-      }
-    } catch { /* remote not ready */ }
-  }
-
-  GENAI.ready = false;
-  GENAI.mode = 'offline';
-  return GENAI;
-}
-
-function updateGenAiStatusUi() {
-  const el = document.getElementById('chat-genai-status');
-  if (!el) return;
-  if (GENAI.mode === 'proxy' && GENAI.ready) {
-    el.textContent = `GenAI on · ${GENAI.model} (Docker / OPENAI_KEY)`;
-    el.className = 'chat-genai-status chat-genai-status--on';
-  } else if (GENAI.mode === 'remote' && GENAI.ready) {
-    el.textContent = `GenAI on · ${GENAI.model} (remote proxy)`;
-    el.className = 'chat-genai-status chat-genai-status--on';
-  } else {
-    el.textContent = 'GenAI off · run: docker compose up --build';
-    el.className = 'chat-genai-status chat-genai-status--off';
-  }
-}
-
-async function askGenAi(question) {
-  const knowledge = buildChatKnowledge();
-  const messages = [
-    { role: 'system', content: buildGenAiSystemPrompt(knowledge) },
-    { role: 'user', content: question },
-  ];
-
-  if (GENAI.mode === 'proxy' || GENAI.mode === 'remote') {
-    const res = await fetch(GENAI.proxyChatUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: GENAI.model, messages }),
-    });
-    const data = await res.json();
-    if (!data?.ok || !data.content) throw new Error(data?.error || `Proxy error ${res.status}`);
-    return String(data.content).trim();
-  }
-
-  throw new Error('GenAI is not connected — run docker compose up --build with OPENAI_KEY');
-}
-
 async function handleChatSubmit(event) {
   event?.preventDefault?.();
   const input = document.getElementById('chat-input');
@@ -2912,31 +2812,8 @@ async function handleChatSubmit(event) {
   const suffix = tab ? `\n\n_Opened the **${tab}** tab for you._` : '';
 
   if (askBtn) askBtn.disabled = true;
-  appendChatMessage('assistant', GENAI.ready ? '_Thinking with GenAI…_' : '_Answering from dashboard rules…_');
-  const log = document.getElementById('chat-log');
-  const thinking = log?.lastElementChild;
-
   try {
-    let answer;
-    if (GENAI.ready) {
-      try {
-        answer = await askGenAi(question);
-      } catch (err) {
-        console.warn('GenAI failed, falling back to rules', err);
-        answer = [
-          answerFromKnowledge(question),
-          '',
-          `_GenAI unavailable (${String(err.message || err).slice(0, 120)}). Showing rule-based answer._`,
-        ].join('\n');
-      }
-    } else {
-      answer = [
-        answerFromKnowledge(question),
-        '',
-        '_Tip: run `docker compose up --build` with OPENAI_KEY in `.env`, then open http://127.0.0.1:8765/ (GitHub Pages has no GenAI proxy)._',
-      ].join('\n');
-    }
-    if (thinking) thinking.remove();
+    const answer = answerFromKnowledge(question);
     appendChatMessage('assistant', answer + suffix);
   } finally {
     if (askBtn) askBtn.disabled = false;
@@ -3042,7 +2919,6 @@ function wireChatbot() {
       handleChatSubmit();
     });
   });
-  detectGenAiMode().then(updateGenAiStatusUi);
 }
 
 async function loadDashboard() {
