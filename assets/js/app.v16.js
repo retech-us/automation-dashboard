@@ -2,7 +2,7 @@
  * Public automation dashboard — release confidence for technical + non-technical audiences.
  */
 
-const BUILD_TAG = '20260805p';
+const BUILD_TAG = '20260805q';
 const DASHBOARD_VERSION = window.DASHBOARD_VERSION || '16';
 
 const REPO_DISPLAY = {
@@ -1882,7 +1882,7 @@ function trendLineDefs() {
 }
 
 function renderTrendChartSvg(agg) {
-  const width = 760;
+  const width = 1120;
   const height = 230;
   const padX = 44;
   const padY = 26;
@@ -1992,7 +1992,7 @@ function renderTrendChartSvg(agg) {
     <div class="chart-wrap" data-trend-chart data-trend-json="${payloadAttr}">
       <div class="chart-tooltip" id="trend-tooltip" hidden></div>
       <div class="chart-scan" aria-hidden="true"></div>
-      <svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Automation pass-rate trend">
+      <svg class="trend-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Automation pass-rate trend">
         <defs>
           <linearGradient id="overallGlow" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#94a3b8" stop-opacity="0.45" />
