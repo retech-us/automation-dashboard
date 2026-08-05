@@ -22,6 +22,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+HOST = os.environ.get("DASHBOARD_HOST", "127.0.0.1")
 PORT = int(os.environ.get("DASHBOARD_PORT", "8765"))
 API_BASE = os.environ.get("OPENAI_API_BASE", "https://ai-api.symphonyretailai.com")
 DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1")
@@ -165,10 +166,12 @@ class Handler(SimpleHTTPRequestHandler):
 def main():
     os.chdir(ROOT)
     key = load_openai_key()
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    print(f"Dashboard + GenAI proxy: http://127.0.0.1:{PORT}/", flush=True)
+    server = ThreadingHTTPServer((HOST, PORT), Handler)
+    display_host = "127.0.0.1" if HOST in {"0.0.0.0", "::"} else HOST
+    print(f"Dashboard + GenAI proxy: http://{display_host}:{PORT}/", flush=True)
+    print(f"Bind: {HOST}:{PORT}", flush=True)
     print(f"Model: {DEFAULT_MODEL} @ {API_BASE}", flush=True)
-    print(f"OPENAI_KEY: {'found' if key else 'MISSING — set env or secure.properties'}", flush=True)
+    print(f"OPENAI_KEY: {'found' if key else 'MISSING — set OPENAI_KEY env (or Docker -e / compose)'}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

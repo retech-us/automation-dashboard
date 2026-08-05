@@ -29,6 +29,28 @@ jobs:
           python3 scripts/fetch-summaries.py data
           python3 scripts/generate-bootstrap.py
 
+      # Optional: GenAI on GitHub Pages (static host cannot run Docker).
+      # Set repo variable GENAI_REMOTE_PROXY_URL to a proxy that holds OPENAI_KEY
+      # (e.g. Cloudflare worker from workers/chat-proxy.js), no trailing slash.
+      - name: Inject GenAI remote proxy URL for Pages
+        env:
+          GENAI_REMOTE_PROXY_URL: ${{ vars.GENAI_REMOTE_PROXY_URL }}
+        run: |
+          python3 <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path("data/genai-config.json")
+          cfg = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+          proxy = (os.environ.get("GENAI_REMOTE_PROXY_URL") or "").strip().rstrip("/")
+          if proxy:
+              cfg["remoteProxyUrl"] = proxy
+              print(f"GenAI remoteProxyUrl → {proxy}")
+          else:
+              cfg.setdefault("remoteProxyUrl", "")
+              print("GENAI_REMOTE_PROXY_URL not set — Pages GenAI stays off until variable or Connect GenAI.")
+          path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+          PY
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -36,4 +58,4 @@ jobs:
           publish_branch: gh-pages
           publish_dir: .
           keep_files: false
-          exclude_assets: '.github'
+          exclude_assets: '.github,.env,Dockerfile,docker-compose.yml,.dockerignore'

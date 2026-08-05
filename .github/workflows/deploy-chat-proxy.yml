@@ -1,0 +1,57 @@
+# Deploy Cloudflare Worker chat proxy so GitHub Pages can use GenAI
+# without exposing OPENAI_KEY in the browser.
+#
+# Required secrets:
+#   OPENAI_KEY              — same as web automation / Docker CI
+#   CLOUDFLARE_API_TOKEN    — Workers Edit permission
+# Optional:
+#   CLOUDFLARE_ACCOUNT_ID
+#
+# After first successful deploy, copy the worker URL from the job log, set repo
+# variable GENAI_REMOTE_PROXY_URL (no trailing slash), then re-run Update Dashboard.
+name: Deploy GenAI chat proxy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - workers/**
+      - .github/workflows/deploy-chat-proxy.yml
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require secrets
+        env:
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          missing=0
+          if [ -z "$OPENAI_KEY" ]; then
+            echo "::error::Secret OPENAI_KEY is missing."
+            missing=1
+          fi
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Secret CLOUDFLARE_API_TOKEN is missing (needed to deploy workers/chat-proxy)."
+            missing=1
+          fi
+          exit $missing
+
+      - name: Deploy worker + sync OPENAI_KEY
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers
+          command: deploy
+          secrets: |
+            OPENAI_KEY
+        env:
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}

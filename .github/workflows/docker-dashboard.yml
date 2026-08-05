@@ -1,0 +1,147 @@
+# Build, smoke-test, and publish the dashboard Docker image (GenAI proxy + static UI).
+# Uses the same OPENAI_KEY secret as web automation / genai-key-smoke.
+#
+# Note: GitHub Pages is static and cannot run this container. For GenAI on the
+# published Pages site, set repo variable GENAI_REMOTE_PROXY_URL to a proxy that
+# holds OPENAI_KEY (e.g. workers/chat-proxy). Local/self-host: pull from GHCR.
+name: Docker dashboard
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - Dockerfile
+      - docker-compose.yml
+      - .dockerignore
+      - scripts/dashboard-server.py
+      - index.html
+      - assets/**
+      - data/**
+      - .github/workflows/docker-dashboard.yml
+  pull_request:
+    paths:
+      - Dockerfile
+      - docker-compose.yml
+      - .dockerignore
+      - scripts/dashboard-server.py
+      - index.html
+      - assets/**
+      - data/**
+      - .github/workflows/docker-dashboard.yml
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: automation-dashboard
+  REGISTRY: ghcr.io
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Image tags
+        id: meta
+        run: |
+          OWNER_LC=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          REPO_LC=$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')
+          IMAGE="${{ env.REGISTRY }}/${OWNER_LC}/${REPO_LC}"
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "tags=${IMAGE}:sha-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            echo "extra_tags=${IMAGE}:latest" >> "$GITHUB_OUTPUT"
+          else
+            echo "extra_tags=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: |
+            ${{ steps.meta.outputs.image }}:ci
+            ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start container with OPENAI_KEY
+        env:
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+        run: |
+          if [ -z "$OPENAI_KEY" ]; then
+            echo "::error::Secret OPENAI_KEY is missing. Add it under Settings → Secrets and variables → Actions (same value as web automation)."
+            exit 1
+          fi
+          docker run -d --name dashboard \
+            -p 8765:8765 \
+            -e OPENAI_KEY \
+            -e DASHBOARD_HOST=0.0.0.0 \
+            "${{ steps.meta.outputs.image }}:ci"
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8765/api/chat/status >/tmp/status.json; then
+              cat /tmp/status.json
+              echo
+              break
+            fi
+            sleep 1
+          done
+          test -f /tmp/status.json
+          python3 - <<'PY'
+          import json
+          data = json.load(open("/tmp/status.json"))
+          assert data.get("ok") is True, data
+          assert data.get("genaiReady") is True, data
+          print("GenAI proxy ready:", data.get("model"), data.get("keySource") or data.get("provider"))
+          PY
+
+      - name: Smoke Ask Dashboard chat API
+        run: |
+          curl -sS -o /tmp/chat.json -w "%{http_code}" \
+            -X POST http://127.0.0.1:8765/api/chat \
+            -H "Content-Type: application/json" \
+            -d '{"messages":[{"role":"user","content":"Reply with OK only."}]}' \
+            > /tmp/chat_http.txt
+          STATUS=$(cat /tmp/chat_http.txt)
+          echo "HTTP $STATUS"
+          head -c 500 /tmp/chat.json; echo
+          test "$STATUS" = "200"
+          python3 - <<'PY'
+          import json
+          data = json.load(open("/tmp/chat.json"))
+          assert data.get("ok") is True, data
+          assert data.get("content"), data
+          print("Chat OK:", (data.get("content") or "")[:80])
+          PY
+
+      - name: Stop container
+        if: always()
+        run: docker rm -f dashboard || true
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image to GHCR
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ steps.meta.outputs.extra_tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

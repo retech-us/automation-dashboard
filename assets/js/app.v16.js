@@ -2,7 +2,7 @@
  * Public automation dashboard — release confidence for technical + non-technical audiences.
  */
 
-const BUILD_TAG = '20260805m';
+const BUILD_TAG = '20260805n';
 const DASHBOARD_VERSION = window.DASHBOARD_VERSION || '16';
 
 const REPO_DISPLAY = {
@@ -2942,7 +2942,7 @@ async function askGenAi(question) {
 function promptForOpenAiKey() {
   const current = getStoredOpenAiKey();
   const next = window.prompt(
-    'Paste OPENAI_KEY (same value as the GitHub Actions secret). Stored only in this browser.\n\nBetter: export OPENAI_KEY and run python3 scripts/dashboard-server.py',
+    'Paste OPENAI_KEY (same value as the GitHub Actions secret). Stored only in this browser.\n\nBetter: docker compose up --build  (with OPENAI_KEY in .env)',
     current || '',
   );
   if (next == null) return;
@@ -2988,7 +2988,7 @@ async function handleChatSubmit(event) {
       answer = [
         answerFromKnowledge(question),
         '',
-        '_Tip: run `python3 scripts/dashboard-server.py` to use the same OPENAI_KEY as web automation, or click Connect GenAI._',
+        '_Tip: run with Docker (`docker compose up --build`) or `python3 scripts/dashboard-server.py` using OPENAI_KEY, or click Connect GenAI._',
       ].join('\n');
     }
     if (thinking) thinking.remove();
