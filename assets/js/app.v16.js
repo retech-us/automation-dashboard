@@ -2,7 +2,7 @@
  * Public automation dashboard — release confidence for technical + non-technical audiences.
  */
 
-const BUILD_TAG = '20260805j';
+const BUILD_TAG = '20260805m';
 const DASHBOARD_VERSION = window.DASHBOARD_VERSION || '16';
 
 const REPO_DISPLAY = {
@@ -2594,6 +2594,18 @@ function buildChatKnowledge() {
       estimated: agg.estimated,
     },
     failures,
+    releaseGate: (() => {
+      try {
+        const g = computeReleaseGate(CURRENT_RESULTS);
+        return { verdict: g.verdict, label: g.label, blurb: g.blurb, blockers: g.blockers };
+      } catch { return null; }
+    })(),
+    weekOverWeek: (() => {
+      try {
+        const w = computeWeekOverWeek(CURRENT_RESULTS);
+        return w.available ? { label: w.label, thisWeek: w.thisWeek, lastWeek: w.lastWeek, delta: w.delta, suites: w.suites } : null;
+      } catch { return null; }
+    })(),
     ai: {
       headline: AI_IMPACT_CACHE?.headline || null,
     },
@@ -2782,9 +2794,166 @@ function routeChatIntent(question) {
   return null;
 }
 
-function handleChatSubmit(event) {
+
+const GENAI = {
+  proxyStatusUrl: '/api/chat/status',
+  proxyChatUrl: '/api/chat',
+  directBase: 'https://ai-api.symphonyretailai.com',
+  model: 'gpt-4.1',
+  ready: false,
+  mode: 'offline', // offline | proxy | remote | direct
+  remoteProxyUrl: '',
+};
+
+function getStoredOpenAiKey() {
+  try { return (localStorage.getItem('dashboard.openaiKey') || '').trim(); } catch { return ''; }
+}
+
+function setStoredOpenAiKey(key) {
+  try {
+    if (key) localStorage.setItem('dashboard.openaiKey', key.trim());
+    else localStorage.removeItem('dashboard.openaiKey');
+  } catch { /* ignore */ }
+}
+
+function buildGenAiSystemPrompt(knowledge) {
+  return [
+    'You are the Store Intell QA dashboard assistant.',
+    'Answer ONLY using the provided DASHBOARD_DATA JSON. Do not invent suites, failures, scores, or trends.',
+    'If the question is unrelated to this automation dashboard / release quality, refuse briefly and ask for a dashboard question.',
+    'Be concise and stakeholder-friendly. Prefer short bullets. Mention release gate, week-over-week, triage buckets, and suites when relevant.',
+    'Never ask for or reveal API keys. Never write code unless asked about dashboard data interpretation.',
+    'DASHBOARD_DATA:',
+    JSON.stringify(knowledge),
+  ].join('\n');
+}
+
+async function loadGenAiConfig() {
+  try {
+    const cfg = await fetchJson('data/genai-config.json');
+    if (cfg?.model) GENAI.model = cfg.model;
+    if (cfg?.apiBase) GENAI.directBase = cfg.apiBase;
+    if (cfg?.remoteProxyUrl) GENAI.remoteProxyUrl = String(cfg.remoteProxyUrl).replace(/\/$/, '');
+  } catch { /* optional */ }
+}
+
+async function probeProxy(statusUrl, chatUrl, modeLabel) {
+  const res = await fetch(`${statusUrl}?_=${BUILD_TAG}`, { cache: 'no-store' });
+  if (!res.ok) return false;
+  const data = await res.json();
+  if (!data?.genaiReady) return false;
+  GENAI.ready = true;
+  GENAI.mode = modeLabel;
+  GENAI.proxyStatusUrl = statusUrl;
+  GENAI.proxyChatUrl = chatUrl;
+  if (data.model) GENAI.model = data.model;
+  return true;
+}
+
+async function detectGenAiMode() {
+  await loadGenAiConfig();
+
+  // 1) Local dashboard-server.py (uses env / secure.properties / GitHub-secret value you export)
+  try {
+    if (await probeProxy('/api/chat/status', '/api/chat', 'proxy')) return GENAI;
+  } catch { /* no local proxy */ }
+
+  // 2) Remote worker configured for GitHub Pages (secret lives on the worker, not in the page)
+  if (GENAI.remoteProxyUrl) {
+    try {
+      if (await probeProxy(`${GENAI.remoteProxyUrl}/api/chat/status`, `${GENAI.remoteProxyUrl}/api/chat`, 'remote')) {
+        return GENAI;
+      }
+    } catch { /* remote not ready */ }
+  }
+
+  // 3) Browser-stored key (same OPENAI_KEY value as GitHub secret) — last resort
+  if (getStoredOpenAiKey()) {
+    GENAI.ready = true;
+    GENAI.mode = 'direct';
+    return GENAI;
+  }
+
+  GENAI.ready = false;
+  GENAI.mode = 'offline';
+  return GENAI;
+}
+
+function updateGenAiStatusUi() {
+  const el = document.getElementById('chat-genai-status');
+  if (!el) return;
+  if (GENAI.mode === 'proxy' && GENAI.ready) {
+    el.textContent = `GenAI on · ${GENAI.model} (local proxy / OPENAI_KEY)`;
+    el.className = 'chat-genai-status chat-genai-status--on';
+  } else if (GENAI.mode === 'remote' && GENAI.ready) {
+    el.textContent = `GenAI on · ${GENAI.model} (GitHub secret via proxy)`;
+    el.className = 'chat-genai-status chat-genai-status--on';
+  } else if (GENAI.mode === 'direct' && GENAI.ready) {
+    el.textContent = `GenAI on · ${GENAI.model} (browser key)`;
+    el.className = 'chat-genai-status chat-genai-status--on';
+  } else {
+    el.textContent = 'GenAI off · add OPENAI_KEY secret + local/remote proxy';
+    el.className = 'chat-genai-status chat-genai-status--off';
+  }
+}
+
+async function askGenAi(question) {
+  const knowledge = buildChatKnowledge();
+  const messages = [
+    { role: 'system', content: buildGenAiSystemPrompt(knowledge) },
+    { role: 'user', content: question },
+  ];
+
+  if (GENAI.mode === 'proxy' || GENAI.mode === 'remote') {
+    const res = await fetch(GENAI.proxyChatUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: GENAI.model, messages }),
+    });
+    const data = await res.json();
+    if (!data?.ok || !data.content) throw new Error(data?.error || `Proxy error ${res.status}`);
+    return String(data.content).trim();
+  }
+
+  if (GENAI.mode === 'direct') {
+    const key = getStoredOpenAiKey();
+    if (!key) throw new Error('No OPENAI_KEY stored in the browser.');
+    const res = await fetch(`${GENAI.directBase}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({ model: GENAI.model, messages, temperature: 0.2 }),
+    });
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new Error(`GenAI HTTP ${res.status}: ${detail.slice(0, 240)}`);
+    }
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) throw new Error('Empty GenAI response');
+    return String(content).trim();
+  }
+
+  throw new Error('GenAI is not connected');
+}
+
+function promptForOpenAiKey() {
+  const current = getStoredOpenAiKey();
+  const next = window.prompt(
+    'Paste OPENAI_KEY (same value as the GitHub Actions secret). Stored only in this browser.\n\nBetter: export OPENAI_KEY and run python3 scripts/dashboard-server.py',
+    current || '',
+  );
+  if (next == null) return;
+  setStoredOpenAiKey(next.trim());
+  detectGenAiMode().then(updateGenAiStatusUi);
+}
+
+async function handleChatSubmit(event) {
   event?.preventDefault?.();
   const input = document.getElementById('chat-input');
+  const askBtn = document.querySelector('#chat-form button[type="submit"]');
   if (!input) return;
   const question = input.value.trim();
   if (!question) return;
@@ -2795,9 +2964,39 @@ function handleChatSubmit(event) {
   appendChatMessage('user', question);
   input.value = '';
   const tab = routeChatIntent(question);
-  const answer = answerFromKnowledge(question);
   const suffix = tab ? `\n\n_Opened the **${tab}** tab for you._` : '';
-  appendChatMessage('assistant', answer + suffix);
+
+  if (askBtn) askBtn.disabled = true;
+  appendChatMessage('assistant', GENAI.ready ? '_Thinking with GenAI…_' : '_Answering from dashboard rules…_');
+  const log = document.getElementById('chat-log');
+  const thinking = log?.lastElementChild;
+
+  try {
+    let answer;
+    if (GENAI.ready) {
+      try {
+        answer = await askGenAi(question);
+      } catch (err) {
+        console.warn('GenAI failed, falling back to rules', err);
+        answer = [
+          answerFromKnowledge(question),
+          '',
+          `_GenAI unavailable (${String(err.message || err).slice(0, 120)}). Showing rule-based answer._`,
+        ].join('\n');
+      }
+    } else {
+      answer = [
+        answerFromKnowledge(question),
+        '',
+        '_Tip: run `python3 scripts/dashboard-server.py` to use the same OPENAI_KEY as web automation, or click Connect GenAI._',
+      ].join('\n');
+    }
+    if (thinking) thinking.remove();
+    appendChatMessage('assistant', answer + suffix);
+  } finally {
+    if (askBtn) askBtn.disabled = false;
+    input.focus();
+  }
 }
 
 function buildExportPackHtml() {
@@ -2884,11 +3083,13 @@ function wireChatbot() {
   const closeBtn = document.getElementById('chat-close');
   const form = document.getElementById('chat-form');
   const chips = document.querySelectorAll('[data-chat-q]');
+  const connectBtn = document.getElementById('chat-connect-genai');
   toggle?.addEventListener('click', () => {
     const panel = document.getElementById('chat-panel');
     setChatOpen(!!panel?.hidden);
   });
   closeBtn?.addEventListener('click', () => setChatOpen(false));
+  connectBtn?.addEventListener('click', promptForOpenAiKey);
   form?.addEventListener('submit', handleChatSubmit);
   chips.forEach((chip) => {
     chip.addEventListener('click', () => {
@@ -2898,6 +3099,7 @@ function wireChatbot() {
       handleChatSubmit();
     });
   });
+  detectGenAiMode().then(updateGenAiStatusUi);
 }
 
 async function loadDashboard() {
