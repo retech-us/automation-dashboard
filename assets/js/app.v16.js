@@ -2,7 +2,7 @@
  * Public automation dashboard — release confidence for technical + non-technical audiences.
  */
 
-const BUILD_TAG = '20260805q';
+const BUILD_TAG = '20260805r';
 const DASHBOARD_VERSION = window.DASHBOARD_VERSION || '16';
 
 const REPO_DISPLAY = {
@@ -2798,23 +2798,11 @@ function routeChatIntent(question) {
 const GENAI = {
   proxyStatusUrl: '/api/chat/status',
   proxyChatUrl: '/api/chat',
-  directBase: 'https://ai-api.symphonyretailai.com',
   model: 'gpt-4.1',
   ready: false,
-  mode: 'offline', // offline | proxy | remote | direct
+  mode: 'offline', // offline | proxy | remote
   remoteProxyUrl: '',
 };
-
-function getStoredOpenAiKey() {
-  try { return (localStorage.getItem('dashboard.openaiKey') || '').trim(); } catch { return ''; }
-}
-
-function setStoredOpenAiKey(key) {
-  try {
-    if (key) localStorage.setItem('dashboard.openaiKey', key.trim());
-    else localStorage.removeItem('dashboard.openaiKey');
-  } catch { /* ignore */ }
-}
 
 function buildGenAiSystemPrompt(knowledge) {
   return [
@@ -2832,7 +2820,6 @@ async function loadGenAiConfig() {
   try {
     const cfg = await fetchJson('data/genai-config.json');
     if (cfg?.model) GENAI.model = cfg.model;
-    if (cfg?.apiBase) GENAI.directBase = cfg.apiBase;
     if (cfg?.remoteProxyUrl) GENAI.remoteProxyUrl = String(cfg.remoteProxyUrl).replace(/\/$/, '');
   } catch { /* optional */ }
 }
@@ -2853,25 +2840,18 @@ async function probeProxy(statusUrl, chatUrl, modeLabel) {
 async function detectGenAiMode() {
   await loadGenAiConfig();
 
-  // 1) Local dashboard-server.py (uses env / secure.properties / GitHub-secret value you export)
+  // Local Docker / dashboard-server.py (OPENAI_KEY in env / .env)
   try {
     if (await probeProxy('/api/chat/status', '/api/chat', 'proxy')) return GENAI;
   } catch { /* no local proxy */ }
 
-  // 2) Remote worker configured for GitHub Pages (secret lives on the worker, not in the page)
+  // Optional remote proxy URL from genai-config (CI variable) — not browser paste
   if (GENAI.remoteProxyUrl) {
     try {
       if (await probeProxy(`${GENAI.remoteProxyUrl}/api/chat/status`, `${GENAI.remoteProxyUrl}/api/chat`, 'remote')) {
         return GENAI;
       }
     } catch { /* remote not ready */ }
-  }
-
-  // 3) Browser-stored key (same OPENAI_KEY value as GitHub secret) — last resort
-  if (getStoredOpenAiKey()) {
-    GENAI.ready = true;
-    GENAI.mode = 'direct';
-    return GENAI;
   }
 
   GENAI.ready = false;
@@ -2883,16 +2863,13 @@ function updateGenAiStatusUi() {
   const el = document.getElementById('chat-genai-status');
   if (!el) return;
   if (GENAI.mode === 'proxy' && GENAI.ready) {
-    el.textContent = `GenAI on · ${GENAI.model} (local proxy / OPENAI_KEY)`;
+    el.textContent = `GenAI on · ${GENAI.model} (Docker / OPENAI_KEY)`;
     el.className = 'chat-genai-status chat-genai-status--on';
   } else if (GENAI.mode === 'remote' && GENAI.ready) {
-    el.textContent = `GenAI on · ${GENAI.model} (GitHub secret via proxy)`;
-    el.className = 'chat-genai-status chat-genai-status--on';
-  } else if (GENAI.mode === 'direct' && GENAI.ready) {
-    el.textContent = `GenAI on · ${GENAI.model} (browser key)`;
+    el.textContent = `GenAI on · ${GENAI.model} (remote proxy)`;
     el.className = 'chat-genai-status chat-genai-status--on';
   } else {
-    el.textContent = 'GenAI off · click Connect GenAI (paste OPENAI_KEY)';
+    el.textContent = 'GenAI off · run: docker compose up --build';
     el.className = 'chat-genai-status chat-genai-status--off';
   }
 }
@@ -2915,39 +2892,7 @@ async function askGenAi(question) {
     return String(data.content).trim();
   }
 
-  if (GENAI.mode === 'direct') {
-    const key = getStoredOpenAiKey();
-    if (!key) throw new Error('No OPENAI_KEY stored in the browser.');
-    const res = await fetch(`${GENAI.directBase}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${key}`,
-      },
-      body: JSON.stringify({ model: GENAI.model, messages, temperature: 0.2 }),
-    });
-    if (!res.ok) {
-      const detail = await res.text();
-      throw new Error(`GenAI HTTP ${res.status}: ${detail.slice(0, 240)}`);
-    }
-    const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) throw new Error('Empty GenAI response');
-    return String(content).trim();
-  }
-
-  throw new Error('GenAI is not connected');
-}
-
-function promptForOpenAiKey() {
-  const current = getStoredOpenAiKey();
-  const next = window.prompt(
-    'Paste OPENAI_KEY (same value as the GitHub Actions secret). Stored only in this browser.\n\nBetter: docker compose up --build  (with OPENAI_KEY in .env)',
-    current || '',
-  );
-  if (next == null) return;
-  setStoredOpenAiKey(next.trim());
-  detectGenAiMode().then(updateGenAiStatusUi);
+  throw new Error('GenAI is not connected — run docker compose up --build with OPENAI_KEY');
 }
 
 async function handleChatSubmit(event) {
@@ -2988,7 +2933,7 @@ async function handleChatSubmit(event) {
       answer = [
         answerFromKnowledge(question),
         '',
-        '_Tip: on the public URL click **Connect GenAI** and paste OPENAI_KEY. Locally use `docker compose up --build` or `python3 scripts/dashboard-server.py`._',
+        '_Tip: run `docker compose up --build` with OPENAI_KEY in `.env`, then open http://127.0.0.1:8765/ (GitHub Pages has no GenAI proxy)._',
       ].join('\n');
     }
     if (thinking) thinking.remove();
@@ -3083,13 +3028,11 @@ function wireChatbot() {
   const closeBtn = document.getElementById('chat-close');
   const form = document.getElementById('chat-form');
   const chips = document.querySelectorAll('[data-chat-q]');
-  const connectBtn = document.getElementById('chat-connect-genai');
   toggle?.addEventListener('click', () => {
     const panel = document.getElementById('chat-panel');
     setChatOpen(!!panel?.hidden);
   });
   closeBtn?.addEventListener('click', () => setChatOpen(false));
-  connectBtn?.addEventListener('click', promptForOpenAiKey);
   form?.addEventListener('submit', handleChatSubmit);
   chips.forEach((chip) => {
     chip.addEventListener('click', () => {
