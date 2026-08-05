@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "updatedAt": "2026-06-25T12:00:00Z",
+  "headline": "AI keeps tests recovering while teams focus on real product bugs",
+  "capabilities": [
+    {
+      "id": "self-heal",
+      "title": "Self-healing locators",
+      "blurb": "When a screen changes, AI can find the right button or field so tests keep running."
+    },
+    {
+      "id": "flaky-quarantine",
+      "title": "Flaky test quarantine",
+      "blurb": "Unstable tests are flagged and parked so they do not block release decisions."
+    },
+    {
+      "id": "quality-gate",
+      "title": "AI quality gate",
+      "blurb": "CI checks that healing stays safe — no silent false greens on critical flows."
+    },
+    {
+      "id": "knowledge-base",
+      "title": "Learned locator memory",
+      "blurb": "Successful fixes are remembered across runs, so the same break is healed faster next time."
+    }
+  ],
+  "metrics": [
+    {
+      "id": "heals",
+      "label": "Locator recovers assisted",
+      "value": "On every Web CI run",
+      "note": "Healing runs when the UI drifts"
+    },
+    {
+      "id": "gate",
+      "label": "Safety gate",
+      "value": "Active in CI",
+      "note": "Critical flows cannot pass on a bad heal"
+    },
+    {
+      "id": "quarantine",
+      "label": "Flake protection",
+      "value": "Auto-quarantine on",
+      "note": "Chronic flakes skip PR gates"
+    },
+    {
+      "id": "coverage",
+      "label": "Protected surfaces",
+      "value": "Web · iOS · Android · API",
+      "note": "One quality signal for the whole product"
+    }
+  ],
+  "story": [
+    "Built with AI-assisted framework design across Web, Mobile, and API automation.",
+    "Self-healing and flaky detection reduce noise so humans review real product issues.",
+    "This dashboard translates technical runs into release confidence anyone can read."
+  ]
+}

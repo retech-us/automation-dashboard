@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 OUT = ROOT / "assets" / "bootstrap.js"
-VERSION = "10"
+VERSION = "16"
 
 
 def main() -> None:
@@ -20,6 +20,13 @@ def main() -> None:
         except (json.JSONDecodeError, OSError):
             continue
 
+    history_path = DATA_DIR / "history" / "automation-trend.json"
+    if history_path.exists():
+        try:
+            snapshots["automation-trend"] = json.loads(history_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            pass
+
     payload = json.dumps({"version": VERSION, "snapshots": snapshots}, separators=(",", ":"))
     OUT.write_text(
         f"/* generated — do not edit */\n"
@@ -27,7 +34,7 @@ def main() -> None:
         f"window.DASHBOARD_SNAPSHOTS = {payload};\n",
         encoding="utf-8",
     )
-    print(f"✅ bootstrap.js written ({len(snapshots)} repos, version {VERSION})")
+    print(f"✅ bootstrap.js written ({len(snapshots)} snapshots, version {VERSION})")
 
 
 if __name__ == "__main__":
