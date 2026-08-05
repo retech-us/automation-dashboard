@@ -15,74 +15,95 @@
     "skipped": 13
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31000700211",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31003165546",
   "topFailures": [
     {
-      "name": "Verify Approval AI tab Products approvals",
+      "name": "Verify BOH import",
+      "fullName": "src/test/resources/features/Imports.feature:27",
       "status": "failed",
-      "category": "assertion",
-      "feature": "Verify Approval AI tab Products approvals",
-      "reason": "5 failed \u00b7 10 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/b02704cece7f3ba691b3e84ba4300cc3/"
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/Imports.feature:27': Login failed after 3 attempts: Username input field could not be found. URL: https://epsilon.rebotics.net/log-in",
+      "feature": "Verify import functionality"
     },
     {
-      "name": "Verify realogram edits with API and spatial review",
-      "status": "failed",
-      "category": "assertion",
-      "feature": "Verify realogram edits with API and spatial review",
-      "reason": "1 failed \u00b7 0 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/1d5050cf4640add5d2867ea89036ffd6/"
+      "name": "Verify automate cleaning confirm button",
+      "fullName": "src/test/resources/features/CleansingTool.feature:33",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/CleansingTool.feature:33': Element could not be found or healed after attempts. Screen=CleansingToolPageObject Purpose=Loader Icon",
+      "feature": "Verify cleansing tool"
     },
     {
-      "name": "Verify login on FE dashboard",
-      "status": "failed",
-      "category": "assertion",
-      "feature": "Verify login on FE dashboard",
-      "reason": "1 failed \u00b7 0 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/c124698d1444fb5fc49a06c3b9de779e/"
+      "name": "Verify automate cleaning delete button",
+      "fullName": "src/test/resources/features/CleansingTool.feature:39",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/CleansingTool.feature:39': Element could not be found or healed after attempts. Screen=CleansingToolPageObject Purpose=Loader Icon",
+      "feature": "Verify cleansing tool"
     },
     {
-      "name": "Verify price tag corrections and approvals",
+      "name": "Verify automated approval for OCR assisted FVs, approved by superuser shows in history",
+      "fullName": "src/test/resources/features/ApprovalAutomated.feature:21",
       "status": "broken",
       "category": "unknown",
-      "feature": "Verify price tag corrections and approvals",
-      "reason": "0 failed \u00b7 6 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/fdec2b186f1bc680804553f0850ce9ba/"
+      "reason": "Test failed: 'src/test/resources/features/ApprovalAutomated.feature:21': Failed to click Accept button after all attempts",
+      "feature": "Verify automated approvals and OCR assisted approvals"
     },
     {
-      "name": "Verify task tab features",
+      "name": "Verify automated approval for OCR assisted FVs, rejected by superuser shows in history",
+      "fullName": "src/test/resources/features/ApprovalAutomated.feature:27",
       "status": "broken",
-      "category": "unknown",
-      "feature": "Verify task tab features",
-      "reason": "0 failed \u00b7 5 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/ffd79f04e0d824867ab2132505cacab9/"
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAutomated.feature:27': Expected condition failed: waiting for com.retech.web.utils.ApprovalAiNavigationHelper$$Lambda/0x00007fdc439dc200@20983a1b (tried for 60 second(s) with 300 milliseconds interval)",
+      "feature": "Verify automated approvals and OCR assisted approvals"
     },
     {
-      "name": "Validate products tab features",
+      "name": "Verify automated approval for automated FVs, approved by superuser shows in history",
+      "fullName": "src/test/resources/features/ApprovalAutomated.feature:9",
       "status": "broken",
       "category": "unknown",
-      "feature": "Validate products tab features",
-      "reason": "0 failed \u00b7 4 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/9e92f4b613e9b36d0da615cf8c07ed0c/"
+      "reason": "Test failed: 'src/test/resources/features/ApprovalAutomated.feature:9': Failed to click Accept button after all attempts",
+      "feature": "Verify automated approvals and OCR assisted approvals"
     },
     {
-      "name": "Verify scan list page actions",
+      "name": "Verify automated approval for automated FVs, rejected by superuser shows in history",
+      "fullName": "src/test/resources/features/ApprovalAutomated.feature:15",
       "status": "broken",
-      "category": "unknown",
-      "feature": "Verify scan list page actions",
-      "reason": "0 failed \u00b7 2 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/9f4459dcfb2b029f01b7281d5033769a/"
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAutomated.feature:15': Expected condition failed: waiting for com.retech.web.utils.ApprovalAiNavigationHelper$$Lambda/0x00007fdc439dc200@20983a1b (tried for 60 second(s) with 300 milliseconds interval)",
+      "feature": "Verify automated approvals and OCR assisted approvals"
     },
     {
-      "name": "Verify automated approvals and OCR assisted approvals",
+      "name": "Verify bulk import",
+      "fullName": "src/test/resources/features/Imports.feature:68",
       "status": "broken",
-      "category": "unknown",
-      "feature": "Verify automated approvals and OCR assisted approvals",
-      "reason": "0 failed \u00b7 2 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/3b0cccebd290b229869a39813fa7518a/"
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/Imports.feature:68': stale element reference: stale element not found in the current frame",
+      "feature": "Verify import functionality"
+    },
+    {
+      "name": "Verify cancel import",
+      "fullName": "src/test/resources/features/Imports.feature:75",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/Imports.feature:75'",
+      "feature": "Verify import functionality"
+    },
+    {
+      "name": "Verify cleansing tool delete FV",
+      "fullName": "src/test/resources/features/CleansingTool.feature:9",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/CleansingTool.feature:9': Element 'CleansingToolPageObject:Delete Button 1' not found: AI heal was rejected by validation (Tag mismatch. expected=button actual=div) and declared locators did not match.",
+      "feature": "Verify cleansing tool"
     }
   ],
-  "failureCategories": {},
+  "failureCategories": {
+    "login": 6,
+    "locator": 3,
+    "assertion": 1,
+    "unknown": 2
+  },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
@@ -93,17 +114,23 @@
   },
   "historyTrend": [
     {
+      "passPct": 70.7,
+      "total": 41,
+      "failed": 12
+    },
+    {
       "passPct": 35.1,
       "total": 97,
       "failed": 29
     }
   ],
-  "branch": "feature/hybrid-automation",
-  "commit": "c2a32b2",
+  "branch": "fix/ci-admin-stability-routing",
+  "commit": "a67679d",
   "environment": "CI",
   "browser": "Chrome",
   "workflow": "Java CI with Maven",
   "osName": "Linux",
+  "instance": "epsilon",
   "jobs": [
     {
       "name": "scan-tests",
@@ -111,7 +138,7 @@
     },
     {
       "name": "sequential-only-tests",
-      "status": "cancelled"
+      "status": "failure"
     },
     {
       "name": "hybrid-tests",
@@ -119,9 +146,9 @@
     },
     {
       "name": "parallel-tests",
-      "status": "cancelled"
+      "status": "failure"
     }
   ],
-  "runId": "31000700211",
-  "runNumber": 993
+  "runId": "31003165546",
+  "runNumber": 994
 }
