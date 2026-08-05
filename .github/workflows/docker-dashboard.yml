@@ -73,14 +73,21 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Start container with OPENAI_KEY
+      - name: Start container and GenAI smoke (optional)
+        id: smoke
         env:
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
         run: |
           if [ -z "$OPENAI_KEY" ]; then
-            echo "::error::Secret OPENAI_KEY is missing. Add it under Settings → Secrets and variables → Actions (same value as web automation)."
-            exit 1
+            echo "ran=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::OPENAI_KEY secret not set — building/pushing image only. Add the secret to enable GenAI smoke tests."
+            {
+              echo "### GenAI smoke skipped"
+              echo "Add repo secret \`OPENAI_KEY\` (same as web automation) to enable chat proxy smoke tests."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
+          echo "ran=true" >> "$GITHUB_OUTPUT"
           docker run -d --name dashboard \
             -p 8765:8765 \
             -e OPENAI_KEY \
@@ -104,6 +111,7 @@ jobs:
           PY
 
       - name: Smoke Ask Dashboard chat API
+        if: steps.smoke.outputs.ran == 'true'
         run: |
           curl -sS -o /tmp/chat.json -w "%{http_code}" \
             -X POST http://127.0.0.1:8765/api/chat \
@@ -123,7 +131,7 @@ jobs:
           PY
 
       - name: Stop container
-        if: always()
+        if: always() && steps.smoke.outputs.ran == 'true'
         run: docker rm -f dashboard || true
 
       - name: Log in to GHCR
