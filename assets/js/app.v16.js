@@ -2,7 +2,7 @@
  * Public automation dashboard — release confidence for technical + non-technical audiences.
  */
 
-const BUILD_TAG = '20260805o';
+const BUILD_TAG = '20260805p';
 const DASHBOARD_VERSION = window.DASHBOARD_VERSION || '16';
 
 const REPO_DISPLAY = {
@@ -2892,7 +2892,7 @@ function updateGenAiStatusUi() {
     el.textContent = `GenAI on · ${GENAI.model} (browser key)`;
     el.className = 'chat-genai-status chat-genai-status--on';
   } else {
-    el.textContent = 'GenAI off · add OPENAI_KEY secret + local/remote proxy';
+    el.textContent = 'GenAI off · click Connect GenAI (paste OPENAI_KEY)';
     el.className = 'chat-genai-status chat-genai-status--off';
   }
 }
@@ -2988,7 +2988,7 @@ async function handleChatSubmit(event) {
       answer = [
         answerFromKnowledge(question),
         '',
-        '_Tip: for GenAI, run locally with `docker compose up --build` (or `python3 scripts/dashboard-server.py`) using OPENAI_KEY, or click Connect GenAI. The public Pages site has no key proxy._',
+        '_Tip: on the public URL click **Connect GenAI** and paste OPENAI_KEY. Locally use `docker compose up --build` or `python3 scripts/dashboard-server.py`._',
       ].join('\n');
     }
     if (thinking) thinking.remove();

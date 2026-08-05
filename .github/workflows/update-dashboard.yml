@@ -29,6 +29,27 @@ jobs:
           python3 scripts/fetch-summaries.py data
           python3 scripts/generate-bootstrap.py
 
+      # Optional Pages GenAI without browser paste: set variable GENAI_REMOTE_PROXY_URL
+      # after deploying workers/chat-proxy. Otherwise use Connect GenAI on the live site.
+      - name: Inject GenAI remote proxy URL for Pages
+        env:
+          GENAI_REMOTE_PROXY_URL: ${{ vars.GENAI_REMOTE_PROXY_URL }}
+        run: |
+          python3 <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path("data/genai-config.json")
+          cfg = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+          proxy = (os.environ.get("GENAI_REMOTE_PROXY_URL") or "").strip().rstrip("/")
+          if proxy:
+              cfg["remoteProxyUrl"] = proxy
+              print(f"GenAI remoteProxyUrl → {proxy}")
+          else:
+              cfg["remoteProxyUrl"] = ""
+              print("No GENAI_REMOTE_PROXY_URL — Pages GenAI via Connect GenAI button.")
+          path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+          PY
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
