@@ -7,42 +7,104 @@
   <title>Store Intell QA — Automation Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.v10.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/dashboard.v16.css" />
 </head>
 <body>
+  <div class="site-chrome">
   <header class="header">
     <div class="header__inner">
       <div>
-        <p class="eyebrow">Store Intell QA <span class="version-tag">v10</span></p>
-        <h1>Automation Dashboard</h1>
-        <p class="subtitle">Green = passed · Amber = mostly passed · Red = failures</p>
+        <p class="eyebrow">Store Intell QA <span class="version-tag">v16</span></p>
+        <h1>Quality at a glance</h1>
+        <p class="subtitle">Release confidence for Web, Mobile &amp; API — readable for everyone</p>
       </div>
       <div class="header__meta">
         <span id="last-updated" class="meta-pill">Loading…</span>
+        <button id="export-btn" class="btn btn--ghost" type="button">Export pack</button>
         <button id="refresh-btn" class="btn" type="button">Refresh</button>
       </div>
     </div>
   </header>
 
-  <main class="container">
-    <section id="overall-banner" class="overall-banner" aria-live="polite"></section>
-    <section class="cards" id="repo-cards" aria-label="Automation repositories"></section>
+  <nav class="tab-nav" aria-label="Dashboard sections">
+    <div class="tab-nav__inner" role="tablist">
+      <button type="button" class="tab-btn" role="tab" id="tab-overview" data-tab="overview" aria-controls="panel-overview" aria-selected="true">Overview</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-attention" data-tab="attention" aria-controls="panel-attention" aria-selected="false">Needs attention</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-trends" data-tab="trends" aria-controls="panel-trends" aria-selected="false">Trends</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-ai" data-tab="ai" aria-controls="panel-ai" aria-selected="false">AI impact</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-suites" data-tab="suites" aria-controls="panel-suites" aria-selected="false">Suite details</button>
+    </div>
+  </nav>
+  </div>
 
-    <section class="panel" id="failures-panel" hidden>
-      <div class="panel__header">
-        <h2>Recent Failures</h2>
-        <p>Human-readable reasons from the latest runs</p>
-      </div>
-      <div id="failures-list" class="failures-list"></div>
-    </section>
+  <main class="container">
+    <div id="panel-overview" class="tab-panel" role="tabpanel" aria-labelledby="tab-overview">
+      <section id="overall-banner" class="overall-banner" aria-live="polite"></section>
+      <section class="panel panel--areas" id="business-areas" aria-label="Product areas"></section>
+      <section class="panel panel--triage" id="issue-triage" aria-label="Issue triage"></section>
+    </div>
+
+    <div id="panel-attention" class="tab-panel" role="tabpanel" aria-labelledby="tab-attention" hidden>
+      <section class="panel" id="failures-panel">
+        <div class="panel__header">
+          <h2>What needs attention</h2>
+          <p>Plain-language reasons — tagged as environment, flaky, or likely defect</p>
+        </div>
+        <div id="failures-list" class="failures-list"></div>
+        <p id="failures-empty" class="empty-state" hidden>No mapped failures in the current snapshot.</p>
+      </section>
+    </div>
+
+    <div id="panel-trends" class="tab-panel" role="tabpanel" aria-labelledby="tab-trends" hidden>
+      <section class="panel panel--trends" id="trends-panel" aria-label="Automation trends"></section>
+    </div>
+
+    <div id="panel-ai" class="tab-panel" role="tabpanel" aria-labelledby="tab-ai" hidden>
+      <section class="panel panel--ai" id="ai-impact" aria-label="AI impact"></section>
+    </div>
+
+    <div id="panel-suites" class="tab-panel" role="tabpanel" aria-labelledby="tab-suites" hidden>
+      <section class="cards" id="repo-cards" aria-label="Automation repositories"></section>
+    </div>
   </main>
 
   <footer class="footer">
-    <p>Store Intell QA · <a href="https://retech-us.github.io/automation-dashboard/" style="color:#93c5fd">automation-dashboard</a></p>
+    <p>Store Intell QA · Built with AI-assisted automation · <a href="https://retech-us.github.io/automation-dashboard/" style="color:#93c5fd">automation-dashboard</a></p>
   </footer>
 
+  <button id="chat-toggle" class="chat-toggle" type="button" aria-expanded="false" aria-controls="chat-panel">
+    Ask dashboard
+  </button>
+
+  <aside id="chat-panel" class="chat-panel" hidden aria-label="Dashboard assistant">
+    <div class="chat-panel__header">
+      <div>
+        <p class="chat-kicker">Dashboard AI</p>
+        <h2>Ask about this data</h2>
+        <p>Answers only from the live automation snapshot — not general chat.</p>
+      </div>
+      <button id="chat-close" class="btn btn--ghost" type="button">Close</button>
+    </div>
+    <div id="chat-log" class="chat-log" aria-live="polite">
+      <div class="chat-msg chat-msg--assistant">
+        Hi — I only answer questions about this dashboard (release confidence, suites, flaky vs defects, trends, failures).
+      </div>
+    </div>
+    <div class="chat-chips">
+      <button type="button" class="chat-chip" data-chat-q="What is overall release confidence?">Overall confidence</button>
+      <button type="button" class="chat-chip" data-chat-q="How is Web doing?">Web status</button>
+      <button type="button" class="chat-chip" data-chat-q="How many defects vs flaky vs environment?">Defects vs flaky</button>
+      <button type="button" class="chat-chip" data-chat-q="What needs attention?">What needs attention</button>
+      <button type="button" class="chat-chip" data-chat-q="What does the weekly trend show?">Weekly trend</button>
+    </div>
+    <form id="chat-form" class="chat-form">
+      <input id="chat-input" type="text" autocomplete="off" placeholder="Ask about Web, flaky tests, trends…" aria-label="Ask the dashboard" />
+      <button class="btn" type="submit">Ask</button>
+    </form>
+  </aside>
+
   <script src="assets/bootstrap.js"></script>
-  <script src="assets/js/app.v10.js"></script>
+  <script src="assets/js/app.v16.js"></script>
 </body>
 </html>

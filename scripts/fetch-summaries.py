@@ -470,19 +470,85 @@ def fetch_repo(repo_id: str, out_dir: Path) -> dict:
 def main() -> int:
     out_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("data")
     out_dir.mkdir(parents=True, exist_ok=True)
+    payloads: dict[str, dict] = {}
     for repo_id in REPOS:
         payload = fetch_repo(repo_id, out_dir)
         path = out_dir / f"{repo_id}.json"
         with path.open("w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2)
             handle.write("\n")
+        payloads[repo_id] = payload
         counts = payload.get("counts", {})
         source = payload.get("dataSource", "—")
         print(
             f"✅ {repo_id}: {counts.get('total', 0)} tests ({source}) | "
             f"env={payload.get('environment', '—')} instance={payload.get('instance', '—')}"
         )
+    append_automation_history(out_dir, payloads)
     return 0
+
+
+def _point_from_payload(suite: str, payload: dict) -> dict | None:
+    counts = payload.get("counts") or {}
+    summary = payload.get("summary") or {}
+    total = int(counts.get("total") or summary.get("total") or 0)
+    if total <= 0:
+        return None
+    passed = int(counts.get("passed") or summary.get("passed") or 0)
+    failed = int(counts.get("review") or (summary.get("failed", 0) + summary.get("broken", 0)))
+    finished = payload.get("finishedAt")
+    if finished:
+        try:
+            day = datetime.fromisoformat(finished.replace("Z", "+00:00")).date().isoformat()
+        except ValueError:
+            day = datetime.now(timezone.utc).date().isoformat()
+    else:
+        day = datetime.now(timezone.utc).date().isoformat()
+    return {
+        "date": day,
+        "suite": suite,
+        "passPct": round((passed / total) * 100, 1),
+        "total": total,
+        "passed": passed,
+        "failed": failed,
+        "source": "ci-snapshot",
+    }
+
+
+def append_automation_history(out_dir: Path, payloads: dict[str, dict]) -> None:
+    """Upsert today's (or run-day) pass-rate points for the trend graph."""
+    history_dir = out_dir / "history"
+    history_dir.mkdir(parents=True, exist_ok=True)
+    path = history_dir / "automation-trend.json"
+    if path.exists():
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            doc = {"schemaVersion": "1.0", "points": []}
+    else:
+        doc = {"schemaVersion": "1.0", "points": []}
+
+    points = list(doc.get("points") or [])
+    index = {(p.get("suite"), p.get("date")): i for i, p in enumerate(points)}
+    added = 0
+    for suite, payload in payloads.items():
+        point = _point_from_payload(suite, payload)
+        if not point:
+            continue
+        key = (point["suite"], point["date"])
+        if key in index:
+            points[index[key]] = point
+        else:
+            points.append(point)
+            index[key] = len(points) - 1
+            added += 1
+
+    points.sort(key=lambda p: (p.get("date") or "", p.get("suite") or ""))
+    doc["points"] = points
+    doc["updatedAt"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    doc["schemaVersion"] = "1.0"
+    path.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+    print(f"📈 history: {len(points)} points ({added} new) → {path}")
 
 
 if __name__ == "__main__":
