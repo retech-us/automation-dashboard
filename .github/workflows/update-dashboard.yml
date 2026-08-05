@@ -29,8 +29,8 @@ jobs:
           python3 scripts/fetch-summaries.py data
           python3 scripts/generate-bootstrap.py
 
-      # Optional Pages GenAI without browser paste: set variable GENAI_REMOTE_PROXY_URL
-      # after deploying workers/chat-proxy. Otherwise use Connect GenAI on the live site.
+      # Optional Pages GenAI without Docker: set variable GENAI_REMOTE_PROXY_URL
+      # after deploying workers/chat-proxy. Default path is local Docker + OPENAI_KEY.
       - name: Inject GenAI remote proxy URL for Pages
         env:
           GENAI_REMOTE_PROXY_URL: ${{ vars.GENAI_REMOTE_PROXY_URL }}
@@ -46,7 +46,7 @@ jobs:
               print(f"GenAI remoteProxyUrl → {proxy}")
           else:
               cfg["remoteProxyUrl"] = ""
-              print("No GENAI_REMOTE_PROXY_URL — Pages GenAI via Connect GenAI button.")
+              print("No GENAI_REMOTE_PROXY_URL — use docker compose up --build for GenAI.")
           path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
           PY
 
