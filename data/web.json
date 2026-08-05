@@ -5,42 +5,18 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-06-25T11:17:56Z",
-  "durationMs": 19475220,
+  "finishedAt": "2026-08-05T19:04:04Z",
+  "durationMs": 11264043,
   "summary": {
-    "total": 113,
-    "passed": 57,
-    "failed": 7,
-    "broken": 36,
-    "skipped": 13
+    "total": 65,
+    "passed": 41,
+    "failed": 1,
+    "broken": 21,
+    "skipped": 2
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31003165546",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31022573278",
   "topFailures": [
-    {
-      "name": "Verify BOH import",
-      "fullName": "src/test/resources/features/Imports.feature:27",
-      "status": "failed",
-      "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/features/Imports.feature:27': Login failed after 3 attempts: Username input field could not be found. URL: https://epsilon.rebotics.net/log-in",
-      "feature": "Verify import functionality"
-    },
-    {
-      "name": "Verify automate cleaning confirm button",
-      "fullName": "src/test/resources/features/CleansingTool.feature:33",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/CleansingTool.feature:33': Element could not be found or healed after attempts. Screen=CleansingToolPageObject Purpose=Loader Icon",
-      "feature": "Verify cleansing tool"
-    },
-    {
-      "name": "Verify automate cleaning delete button",
-      "fullName": "src/test/resources/features/CleansingTool.feature:39",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/CleansingTool.feature:39': Element could not be found or healed after attempts. Screen=CleansingToolPageObject Purpose=Loader Icon",
-      "feature": "Verify cleansing tool"
-    },
     {
       "name": "Verify automated approval for OCR assisted FVs, approved by superuser shows in history",
       "fullName": "src/test/resources/features/ApprovalAutomated.feature:21",
@@ -53,8 +29,8 @@
       "name": "Verify automated approval for OCR assisted FVs, rejected by superuser shows in history",
       "fullName": "src/test/resources/features/ApprovalAutomated.feature:27",
       "status": "broken",
-      "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAutomated.feature:27': Expected condition failed: waiting for com.retech.web.utils.ApprovalAiNavigationHelper$$Lambda/0x00007fdc439dc200@20983a1b (tried for 60 second(s) with 300 milliseconds interval)",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAutomated.feature:27'",
       "feature": "Verify automated approvals and OCR assisted approvals"
     },
     {
@@ -69,25 +45,9 @@
       "name": "Verify automated approval for automated FVs, rejected by superuser shows in history",
       "fullName": "src/test/resources/features/ApprovalAutomated.feature:15",
       "status": "broken",
-      "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAutomated.feature:15': Expected condition failed: waiting for com.retech.web.utils.ApprovalAiNavigationHelper$$Lambda/0x00007fdc439dc200@20983a1b (tried for 60 second(s) with 300 milliseconds interval)",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAutomated.feature:15'",
       "feature": "Verify automated approvals and OCR assisted approvals"
-    },
-    {
-      "name": "Verify bulk import",
-      "fullName": "src/test/resources/features/Imports.feature:68",
-      "status": "broken",
-      "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/features/Imports.feature:68': stale element reference: stale element not found in the current frame",
-      "feature": "Verify import functionality"
-    },
-    {
-      "name": "Verify cancel import",
-      "fullName": "src/test/resources/features/Imports.feature:75",
-      "status": "broken",
-      "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/features/Imports.feature:75'",
-      "feature": "Verify import functionality"
     },
     {
       "name": "Verify cleansing tool delete FV",
@@ -96,27 +56,68 @@
       "category": "locator",
       "reason": "UI element not found or not interactable in 'src/test/resources/features/CleansingTool.feature:9': Element 'CleansingToolPageObject:Delete Button 1' not found: AI heal was rejected by validation (Tag mismatch. expected=button actual=div) and declared locators did not match.",
       "feature": "Verify cleansing tool"
+    },
+    {
+      "name": "Verify cloning of an existing task",
+      "fullName": "src/test/resources/features/Tasks.feature:59",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/Tasks.feature:59': Category overlay did not appear after clicking Category field. Cannot proceed with search.",
+      "feature": "Verify task tab features"
+    },
+    {
+      "name": "Verify creation of a new user task group and assign selected user",
+      "fullName": "src/test/resources/features/TaskGroups.feature:17",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/features/TaskGroups.feature:17': Assign-User modal never became visible. It was likely dismissed before Save (e.g. a stray ESC/outside-click closed the dialog) or never opened.",
+      "feature": "Verify task user group tab functionality"
+    },
+    {
+      "name": "Verify creation of new files",
+      "fullName": "src/test/resources/features/FilesTab.feature:12",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/features/FilesTab.feature:12': File id=17913166 name='sample_pdf_1785945515253.pdf' did not appear in file list after upload and multiple retry attempts. Check backend processing.",
+      "feature": "Validate files tab features"
+    },
+    {
+      "name": "Verify deactivating an existing task and creating a new task with the same name",
+      "fullName": "src/test/resources/features/Tasks.feature:69",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/Tasks.feature:69': Category overlay did not appear after clicking Category field. Cannot proceed with search.",
+      "feature": "Verify task tab features"
+    },
+    {
+      "name": "Verify delete assigned user store",
+      "fullName": "src/test/resources/features/Store.feature:28",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/Store.feature:28': Expected condition failed: waiting for com.retech.web.pageObject.StorePageObject$$Lambda/0x00007f7faf9accd0@2efb6029 (tried for 30 second(s) with 500 milliseconds interval)",
+      "feature": "Verify stores page functionalities"
     }
   ],
   "failureCategories": {
-    "login": 6,
-    "locator": 3,
+    "login": 1,
+    "locator": 14,
+    "timeout": 2,
     "assertion": 1,
-    "unknown": 2
+    "unknown": 4
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
-    "total": 113,
-    "passed": 57,
-    "review": 43,
-    "skipped": 13
+    "total": 65,
+    "passed": 41,
+    "review": 22,
+    "skipped": 2
   },
   "historyTrend": [
     {
-      "passPct": 70.7,
-      "total": 41,
-      "failed": 12
+      "passPct": 63.1,
+      "total": 65,
+      "failed": 22
     },
     {
       "passPct": 35.1,
@@ -125,12 +126,12 @@
     }
   ],
   "branch": "fix/ci-admin-stability-routing",
-  "commit": "a67679d",
+  "commit": "13c8936",
   "environment": "CI",
+  "instance": "epsilon",
   "browser": "Chrome",
   "workflow": "Java CI with Maven",
   "osName": "Linux",
-  "instance": "epsilon",
   "jobs": [
     {
       "name": "scan-tests",
@@ -142,13 +143,13 @@
     },
     {
       "name": "hybrid-tests",
-      "status": "cancelled"
+      "status": "failure"
     },
     {
       "name": "parallel-tests",
       "status": "failure"
     }
   ],
-  "runId": "31003165546",
-  "runNumber": 994
+  "runId": "31022573278",
+  "runNumber": 995
 }
