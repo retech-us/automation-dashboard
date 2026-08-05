@@ -82,9 +82,13 @@
       <div>
         <p class="chat-kicker">Dashboard AI</p>
         <h2>Ask about this data</h2>
-        <p>Answers only from the live automation snapshot — not general chat.</p>
+        <p>Answers from GenAI using live dashboard data only — same Symphony key as web automation.</p>
+        <p id="chat-genai-status" class="chat-genai-status chat-genai-status--off">Checking GenAI…</p>
       </div>
-      <button id="chat-close" class="btn btn--ghost" type="button">Close</button>
+      <div class="chat-panel__actions">
+        <button id="chat-connect-genai" class="btn btn--ghost" type="button" title="Paste OPENAI_KEY in this browser (optional)">Connect GenAI</button>
+        <button id="chat-close" class="btn btn--ghost" type="button">Close</button>
+      </div>
     </div>
     <div id="chat-log" class="chat-log" aria-live="polite">
       <div class="chat-msg chat-msg--assistant">
