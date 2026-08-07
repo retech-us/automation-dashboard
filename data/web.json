@@ -5,121 +5,118 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-08-06T22:09:42Z",
-  "durationMs": 8339034,
+  "finishedAt": "2026-06-25T11:17:56Z",
+  "durationMs": 19475220,
   "summary": {
-    "total": 74,
-    "passed": 28,
-    "failed": 5,
-    "broken": 32,
-    "skipped": 8
+    "total": 113,
+    "passed": 57,
+    "failed": 7,
+    "broken": 36,
+    "skipped": 13
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31127134258",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31146555470",
   "topFailures": [
     {
-      "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
-      "fullName": "src/test/resources/features/ApprovalAi.feature:101",
+      "name": "User creates a new product and edits",
+      "fullName": "src/test/resources/features/ProductsTab.feature:27",
       "status": "broken",
       "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAi.feature:101': invalid element state: Element is not currently interactable and may not be manipulated",
-      "feature": "Verify Approval AI tab Products approvals"
+      "reason": "Login/auth failure in 'src/test/resources/features/ProductsTab.feature:27': invalid element state",
+      "feature": "Validate products tab features"
     },
     {
-      "name": "Input UPC action by subuser, submit train transaction rejected by superuser and verify history tab",
-      "fullName": "src/test/resources/features/ApprovalAi.feature:115",
+      "name": "User creates a new product with UPC and product image",
+      "fullName": "src/test/resources/features/ProductsTab.feature:17",
       "status": "broken",
       "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAi.feature:115': invalid element state: Element is not currently interactable and may not be manipulated",
-      "feature": "Verify Approval AI tab Products approvals"
+      "reason": "Login/auth failure in 'src/test/resources/features/ProductsTab.feature:17': invalid element state",
+      "feature": "Validate products tab features"
     },
     {
-      "name": "Submit PLUNF action by subuser, approved by superuser and verify history tab",
-      "fullName": "src/test/resources/features/ApprovalAi.feature:59",
+      "name": "User creates a new product with multiple UPC and product image",
+      "fullName": "src/test/resources/features/ProductsTab.feature:22",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ProductsTab.feature:22': invalid element state",
+      "feature": "Validate products tab features"
+    },
+    {
+      "name": "User creates a new product without UPC",
+      "fullName": "src/test/resources/features/ProductsTab.feature:12",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ProductsTab.feature:12': invalid element state",
+      "feature": "Validate products tab features"
+    },
+    {
+      "name": "Verify BOO import",
+      "fullName": "src/test/resources/features/Imports.feature:32",
       "status": "broken",
       "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:59': Element could not be found or healed after attempts. Screen=ScanDetailsPageObject Purpose=Product Status Text 85",
-      "feature": "Verify Approval AI tab Products approvals"
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/Imports.feature:32': Add Resource button could not be clicked after retries",
+      "feature": "Verify import functionality"
     },
     {
-      "name": "Submit PLUNF action by subuser, rejected by superuser and verify history tab",
-      "fullName": "src/test/resources/features/ApprovalAi.feature:73",
+      "name": "Verify assign planogram import",
+      "fullName": "src/test/resources/features/Imports.feature:22",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/Imports.feature:22': Expected condition failed: waiting for com.retech.web.utils.BaseTestClass$$Lambda/0x00007f8ccb8fb090@e57aa59 (tried for 30 second(s) with 200 milliseconds interval)",
+      "feature": "Verify import functionality"
+    },
+    {
+      "name": "Verify automate cleaning delete button",
+      "fullName": "src/test/resources/features/CleansingTool.feature:39",
       "status": "broken",
       "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:73': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI PLUNF Tab",
-      "feature": "Verify Approval AI tab Products approvals"
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/CleansingTool.feature:39': Element could not be found or healed after attempts. Screen=CleansingToolPageObject Purpose=Loader Icon",
+      "feature": "Verify cleansing tool"
     },
     {
-      "name": "Submit correction action by subuser, approved by superuser and verify history tab",
-      "fullName": "src/test/resources/features/ApprovalAi.feature:129",
-      "status": "failed",
-      "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:129': After correction, product UPC should match candidate UPC expected [029000016699] but found []",
-      "feature": "Verify Approval AI tab Products approvals"
+      "name": "Verify automated approval for OCR assisted FVs, approved by superuser shows in history",
+      "fullName": "src/test/resources/features/ApprovalAutomated.feature:21",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/features/ApprovalAutomated.feature:21': Failed to click Accept button after all attempts",
+      "feature": "Verify automated approvals and OCR assisted approvals"
     },
     {
-      "name": "Submit correction action by subuser, rejected by superuser and verify history tab",
-      "fullName": "src/test/resources/features/ApprovalAi.feature:157",
+      "name": "Verify automated approval for OCR assisted FVs, rejected by superuser shows in history",
+      "fullName": "src/test/resources/features/ApprovalAutomated.feature:27",
       "status": "broken",
       "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:157'",
-      "feature": "Verify Approval AI tab Products approvals"
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAutomated.feature:27': Expected condition failed: waiting for com.retech.web.utils.ApprovalAiNavigationHelper$$Lambda/0x00007f8ccb9f2d20@21dd6c57 (tried for 60 second(s) with 300 milliseconds interval)",
+      "feature": "Verify automated approvals and OCR assisted approvals"
     },
     {
-      "name": "Submit correction action by subuser, train by superuser and verify history tab",
-      "fullName": "src/test/resources/features/ApprovalAi.feature:143",
-      "status": "failed",
-      "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [872181000649",
-      "feature": "Verify Approval AI tab Products approvals"
-    },
-    {
-      "name": "Submit exception action by subuser, approved by superuser and verify history tab",
-      "fullName": "src/test/resources/features/ApprovalAi.feature:31",
+      "name": "Verify automated approval for automated FVs, approved by superuser shows in history",
+      "fullName": "src/test/resources/features/ApprovalAutomated.feature:9",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:31': Element could not be found or healed after attempts. Screen=ScanDetailsPageObject Purpose=Counter Exception",
-      "feature": "Verify Approval AI tab Products approvals"
-    },
-    {
-      "name": "Submit exception action by subuser, approved by superuser and verify price tag history tab",
-      "fullName": "src/test/resources/features/PriceTags.feature:34",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/PriceTags.feature:34': Element 'PriceTagPageObject:Price Tag Finish Button' not found: AI heal was rejected by validation (Tag mismatch. expected=button actual=sl-scan-price-tags) and declared locators did not match.",
-      "feature": "Verify price tag corrections and approvals"
-    },
-    {
-      "name": "Submit exception action by subuser, rejected by superuser and verify history tab",
-      "fullName": "src/test/resources/features/ApprovalAi.feature:45",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:45': Element could not be found or healed after attempts. Screen=ScanDetailsPageObject Purpose=Counter Exception",
-      "feature": "Verify Approval AI tab Products approvals"
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/features/ApprovalAutomated.feature:9': Failed to click Accept button after all attempts",
+      "feature": "Verify automated approvals and OCR assisted approvals"
     }
   ],
   "failureCategories": {
-    "login": 4,
-    "locator": 8,
-    "timeout": 3,
-    "data": 3,
-    "environment": 1,
-    "assertion": 4,
-    "unknown": 14
+    "login": 7,
+    "locator": 4,
+    "timeout": 2,
+    "unknown": 2
   },
   "dataSource": "allure-report",
-  "reportName": "Allure Report - hybrid-tests",
+  "reportName": "Allure Report - parallel-tests",
   "counts": {
-    "total": 74,
-    "passed": 28,
-    "review": 37,
-    "skipped": 8
+    "total": 113,
+    "passed": 57,
+    "review": 43,
+    "skipped": 13
   },
   "historyTrend": [
     {
-      "passPct": 37.8,
-      "total": 74,
-      "failed": 37
+      "passPct": 61.0,
+      "total": 41,
+      "failed": 15
     },
     {
       "passPct": 35.1,
@@ -127,31 +124,30 @@
       "failed": 29
     }
   ],
-  "branch": "fix/ci-admin-stability-routing",
-  "commit": "2c309c9",
+  "branch": "develop",
+  "commit": "3eae8db",
   "environment": "CI",
-  "instance": "epsilon",
   "browser": "Chrome",
   "workflow": "Java CI with Maven",
   "osName": "Linux",
   "jobs": [
     {
       "name": "scan-tests",
-      "status": "failure"
+      "status": "cancelled"
     },
     {
       "name": "sequential-only-tests",
-      "status": "abandoned"
+      "status": "success"
     },
     {
       "name": "hybrid-tests",
-      "status": "failure"
+      "status": "cancelled"
     },
     {
       "name": "parallel-tests",
-      "status": "abandoned"
+      "status": "failure"
     }
   ],
-  "runId": "31127134258",
-  "runNumber": 1005
+  "runId": "31146555470",
+  "runNumber": 1006
 }
