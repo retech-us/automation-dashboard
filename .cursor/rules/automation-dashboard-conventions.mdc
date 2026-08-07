@@ -1,0 +1,39 @@
+---
+description: automation-dashboard project conventions — static GitHub Pages QA dashboard.
+globs:
+  - "index.html"
+  - "assets/**/*"
+  - "data/**/*"
+  - "scripts/**/*"
+  - ".github/workflows/**/*"
+alwaysApply: false
+---
+
+# Project Conventions (automation-dashboard)
+
+## Stack
+
+- Static HTML/CSS/JS dashboard (GitHub Pages on `gh-pages`)
+- Current UI: `index.html` + `assets/css/dashboard.v16.css` + `assets/js/app.v16.js`
+- Data: `data/*.json`, `data/history/`, fetched by `scripts/fetch-summaries.py`
+- CI: `.github/workflows/update-dashboard.yml` deploys Pages
+
+## When changing the dashboard
+
+1. Bump `BUILD_TAG` in `app.v16.js` when JS/CSS behavior changes (cache bust).
+2. Keep Ask Dashboard rule-based only (no GenAI keys in the browser).
+3. Match existing tab layout: Overview | Needs attention | Trends | AI impact | Suite details.
+4. Prefer small, focused diffs; do not add backend unless explicitly requested.
+
+## Useful skills for this repo
+
+- Frontend / UI → `frontend-ui-engineering`
+- CI / Pages deploy → `ci-cd-and-automation`, `cicd-pipeline-skill`
+- Charts / trends / data viz → `frontend-ui-engineering`
+- Flaky / triage language → `flaky-test-detective`, `qa-manual-istqb`
+- Planning / refactors → `planning-and-task-breakdown`, `code-simplification`
+- Allure / reporting context → `allure-configure-reporting`
+
+## Related automation repos (sibling under sympohonyworkspace)
+
+- `retech-web-automation`, `retech-mobile-automation`, `retech-api-automation` publish `run-summary.json`
