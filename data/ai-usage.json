@@ -1,37 +1,134 @@
 {
   "schemaVersion": "1.1",
-  "updatedAt": "2026-08-07T14:49:14Z",
+  "updatedAt": "2026-08-07T15:18:15Z",
   "repos": {
     "web": {
       "repo": "web",
       "repoName": "retech-us/retech-web-automation",
       "framework": "Web \u00b7 TestNG + Selenium",
-      "aiEnabled": true,
+      "aiEnabled": null,
       "aiCapable": true,
-      "finishedAt": "2026-08-07T14:37:35Z",
-      "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31162899649",
+      "finishedAt": "2026-08-07T15:06:49Z",
+      "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31172679804",
       "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-      "status": "enabled",
-      "source": "allure-environment",
-      "runId": "31162899649",
+      "status": "live",
+      "source": "allure-pages-json",
+      "runId": "31172679804",
       "summary": {
-        "llmInvocations": 0,
-        "healsSucceeded": 0,
-        "healsFailed": 0,
+        "llmInvocations": 282.0,
+        "healsSucceeded": 133.0,
+        "healsFailed": 527.0,
         "healsSkipped": 0,
-        "healSuccessRatePct": 0,
-        "elementInteractions": 0,
+        "healSuccessRatePct": 20.2,
+        "elementInteractions": 2544.0,
         "estimatedCostUsd": 0,
         "estimatedMinutesSaved": 0,
-        "avgAiLatencyMs": 0,
-        "learnedLocatorsCount": 0,
+        "avgAiLatencyMs": 2997.0,
+        "learnedLocatorsCount": 3,
         "flakyQuarantineCount": 0
       },
-      "jobs": [],
-      "topFailingLocators": {},
-      "topHealedModules": {},
+      "jobs": [
+        {
+          "name": "scan-tests",
+          "status": "completed",
+          "metrics": {
+            "llmInvocations": 248.0,
+            "healsSucceeded": 110.0,
+            "healsFailed": 459.0,
+            "healsSkipped": 0,
+            "healSuccessRatePct": 19.332161687170476,
+            "elementInteractions": 1829.0,
+            "estimatedCostUsd": 0,
+            "estimatedMinutesSaved": 0,
+            "avgAiLatencyMs": 2855.3629032258063,
+            "learnedLocatorsCount": 2,
+            "flakyQuarantineCount": 0
+          }
+        },
+        {
+          "name": "sequential-only-tests",
+          "status": "completed",
+          "metrics": {
+            "llmInvocations": 28.0,
+            "healsSucceeded": 10.0,
+            "healsFailed": 58.0,
+            "healsSkipped": 0,
+            "healSuccessRatePct": 14.705882352941176,
+            "elementInteractions": 482.0,
+            "estimatedCostUsd": 0,
+            "estimatedMinutesSaved": 0,
+            "avgAiLatencyMs": 3817.964285714286,
+            "learnedLocatorsCount": 0,
+            "flakyQuarantineCount": 0
+          }
+        },
+        {
+          "name": "hybrid-tests",
+          "status": "completed",
+          "metrics": {
+            "llmInvocations": 6.0,
+            "healsSucceeded": 13.0,
+            "healsFailed": 10.0,
+            "healsSkipped": 0,
+            "healSuccessRatePct": 56.52173913043478,
+            "elementInteractions": 217.0,
+            "estimatedCostUsd": 0,
+            "estimatedMinutesSaved": 0,
+            "avgAiLatencyMs": 5021.166666666667,
+            "learnedLocatorsCount": 1,
+            "flakyQuarantineCount": 0
+          }
+        },
+        {
+          "name": "parallel-tests",
+          "status": "completed",
+          "metrics": {
+            "llmInvocations": 0,
+            "healsSucceeded": 0,
+            "healsFailed": 0,
+            "healsSkipped": 0,
+            "healSuccessRatePct": 0,
+            "elementInteractions": 16.0,
+            "estimatedCostUsd": 0,
+            "estimatedMinutesSaved": 0,
+            "avgAiLatencyMs": 0,
+            "learnedLocatorsCount": 0,
+            "flakyQuarantineCount": 0
+          }
+        }
+      ],
+      "topFailingLocators": {
+        "SpatialReviewRealogramPageObject:Realogram burger icon heal candidate": 120,
+        "SpatialReviewRealogramPageObject:SpatialReviewRealogramPageObject:Realogram burger icon heal candidate": 120,
+        "SpatialReviewRealogramPageObject:Realogram control-panel fallback clickable": 48,
+        "SpatialReviewRealogramPageObject:SpatialReviewRealogramPageObject:Realogram control-panel fallback clickable": 24,
+        "ScanDetailsPageObject:ScanDetailsPageObject:Finish Button": 23,
+        "ScanDetailsPageObject:Finish Button": 23,
+        "SpatialReviewRealogramPageObject:Review Button": 7,
+        "SpatialReviewRealogramPageObject:SpatialReviewRealogramPageObject:Review Button": 6,
+        "ScanDetailsPageObject:ScanDetailsPageObject:Candidate UPC Element 13,2": 4,
+        "ScanDetailsPageObject:ScanDetailsPageObject:Correction Checkbox 53,2": 4,
+        "ImportsPageObject:ImportsPageObject:Preview Status": 28,
+        "ImportsPageObject:Preview Status": 28,
+        "FilesTabPageObject:Administration Tab": 2,
+        "AssociateTabPageObject:AssociateTabPageObject:Associate doSave button": 4,
+        "AssociateTabPageObject:Associate doSave button": 4,
+        "StorePageObject:StorePageObject:Edit Store Button": 1,
+        "StorePageObject:Edit Store Button": 1
+      },
+      "topHealedModules": {
+        "SpatialReviewRealogramPageObject": 366,
+        "ScanDetailsPageObject": 222,
+        "ApprovalAiPageObject": 6,
+        "ImportsPageObject": 56,
+        "SupplierTabPageObject": 10,
+        "FilesTabPageObject": 2,
+        "StorePageObject": 13,
+        "AssociateTabPageObject": 8,
+        "TaskGroupsPageObject": 2
+      },
       "topSkipReasons": {},
-      "note": "AI enabled in Allure environment \u2014 run metrics will appear after the next CI publish."
+      "note": null
     },
     "mobile-ios": {
       "repo": "mobile-ios",
@@ -80,19 +177,19 @@
     }
   },
   "totals": {
-    "llmInvocations": 0,
-    "healsSucceeded": 0,
-    "healsFailed": 0,
-    "healsSkipped": 0,
-    "healSuccessRatePct": 0,
-    "elementInteractions": 0,
-    "estimatedCostUsd": 0,
-    "estimatedMinutesSaved": 0,
-    "avgAiLatencyMs": 0,
-    "learnedLocatorsCount": 0,
-    "flakyQuarantineCount": 0,
-    "reposReporting": 0,
-    "frameworksReporting": 0,
-    "frameworksWithAiEnabled": 1
+    "llmInvocations": 282.0,
+    "healsSucceeded": 133.0,
+    "healsFailed": 527.0,
+    "healsSkipped": 0.0,
+    "healSuccessRatePct": 20.2,
+    "elementInteractions": 2544.0,
+    "estimatedCostUsd": 0.0,
+    "estimatedMinutesSaved": 0.0,
+    "avgAiLatencyMs": 2997.0,
+    "learnedLocatorsCount": 3.0,
+    "flakyQuarantineCount": 0.0,
+    "reposReporting": 1,
+    "frameworksReporting": 1,
+    "frameworksWithAiEnabled": 0
   }
 }
