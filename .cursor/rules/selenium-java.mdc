@@ -1,0 +1,35 @@
+---
+description: Selenium WebDriver 4+ / Java essentials — locator priority, explicit waits, POM, assertions, Allure. Applied to Java test and page-object files.
+globs:
+  - "**/*.java"
+  - "**/testng*.xml"
+alwaysApply: false
+---
+
+# Selenium WebDriver + Java Essentials
+
+Stack: Selenium 4.x · Java · TestNG · Allure · Maven (this repo). Upstream skill examples may mention JUnit 5 / AssertJ — prefer this project's TestNG + existing assertion patterns.
+
+## Locator Priority (always follow)
+
+1. `By.id()` / `By.name()` — fastest, most stable
+2. `[data-testid]` / `[data-qa]` CSS — stable, explicit
+3. Semantic CSS (`form#login input[type='email']`, `button[aria-label]`)
+4. Class-based CSS — caution (changes with styling)
+5. XPath — complex traversal only; **never** absolute XPath
+
+## Non-Negotiable Rules
+
+- **POM required**: all UI interaction through Page Object classes; Page Objects hold no assertions (except visibility)
+- **No `Thread.sleep()`**: use `WebDriverWait` + `ExpectedConditions`; `Duration.ofSeconds()` for timeouts (Selenium 4)
+- **Assertions**: follow existing project patterns (`org.testng.Assert` / soft-assert helpers already in the suite)
+- **Fluent Page Objects**: methods return `this` or the next `Page` object
+- **Naming**: match existing packages under `com.retech.web` (`pageObject`, `tests`, `stepDefination`, `core`)
+- **Reporting**: Allure annotations (`@Epic`/`@Feature`/`@Story`/`@Severity`) on tests; `@Step` on Page Object actions
+- **Logging**: project logger patterns only — no `System.out.println`
+- **Driver lifecycle**: use existing core/base driver setup; rely on Selenium Manager (4.6+) — do not add external driver-management libraries
+- **Suites**: wire new tests via existing `testng*.xml` suites when relevant
+
+## References
+
+For full patterns use the `webapp-selenium-testing` skill. For a11y scans use `accessibility-selenium-testing`.

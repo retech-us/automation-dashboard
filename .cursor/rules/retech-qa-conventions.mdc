@@ -1,0 +1,47 @@
+---
+description: retech-web-automation project QA conventions — package layout, TestNG, Allure, hybrid suites.
+globs:
+  - "src/**/*.java"
+  - "**/testng*.xml"
+  - "**/pom.xml"
+alwaysApply: false
+---
+
+# Project QA Conventions (retech-web-automation)
+
+## Stack
+
+- Selenium WebDriver + Java + Maven
+- TestNG (not JUnit) with suite XMLs at repo root (`testng*.xml`)
+- Allure reporting
+- Page Objects under `src/test/java/com/retech/web/pageObject`
+- Tests under `src/test/java/com/retech/web/tests` (and Cucumber steps under `stepDefination` when applicable)
+- Core/driver utilities under `src/test/java/com/retech/web/core` and `utils`
+
+## When generating or changing tests
+
+1. Prefer existing Page Objects / helpers over new parallel abstractions.
+2. Follow locator priority from `selenium-java` rules; avoid absolute XPath and `Thread.sleep()`.
+3. Keep credentials and environment config in `src/test/resources/config` / env vars — never hardcode secrets.
+4. Attach meaningful Allure steps for new flows.
+5. If a skill defaults to JUnit 5 / AssertJ / Playwright, adapt to TestNG + this repo's patterns.
+
+## Useful skills (prefer these for this stack)
+
+- Cucumber / Gherkin / steps → `cucumber-skill` + `cucumber-best-practices`
+- TestNG suites / groups / parallel → `testng-skill`
+- Selenium WebDriver Java → `selenium-skill` or `webapp-selenium-testing`
+- REST Assured / API → `api-testing`
+- Allure reporting → `allure-configure-reporting`
+- Flaky triage → `flaky-test-detective` (pair with project self-heal code under `com.retech.web.selfheal` / `ai`)
+- A11y (Selenium) → `accessibility-selenium-testing` or `accessibility-skill`
+- CI pipelines → `cicd-pipeline-skill` + project `cicd-testing` rule
+- Simplify / cut over-engineering → `ponytail` / `ponytail-review` / `ponytail-audit`
+
+## Useful agent personas
+
+- Selenium work → `.cursor/agents/selenium-test-specialist.agent.md`
+- Flaky / failing UI → same specialist + `flaky-test-detective` + `webapp-selenium-testing` / `selenium-skill`
+- Refactors / DRY / POM extraction → `.cursor/agents/test-refactor-specialist.agent.md`
+- Routing multi-step QA work → `.cursor/agents/qa-orchestrator.agent.md`
+- API-only work → `.cursor/agents/api-tester-specialist.agent.md` + `api-testing` skill

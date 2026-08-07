@@ -1,0 +1,32 @@
+---
+description: CI/CD test pipeline essentials — test tiers, GitHub Actions patterns, sharding, reporting gates, flaky handling.
+globs:
+  - ".github/workflows/**/*.{yml,yaml}"
+  - "**/testng*.xml"
+  - "**/pom.xml"
+alwaysApply: false
+---
+
+# CI/CD Test Pipeline Essentials
+
+## Test Tier System (fastest/most-critical → slowest/broadest)
+
+| Tier | Scope | Trigger |
+| --- | --- | --- |
+| **0 Smoke** | Critical path (5–10) | Every commit |
+| **1 Sanity** | Core features (20–50) | Every PR |
+| **2 Selective** | Change-based | On merge |
+| **3 Full** | Complete regression | Nightly / pre-release |
+
+## Non-Negotiable Rules
+
+- **Tag by tier** for selective execution via TestNG groups / suite XML (e.g. smoke, sanity, regression)
+- **Parallelism**: prefer existing TestNG parallel suites (`testng-*-parallel.xml`) and CI job split over inventing new runners
+- **Retries CI-only**: keep local runs fail-fast; use CI retry/quarantine policies deliberately
+- **Deployment gates**: smoke must pass before broader regression stages (`needs:` in workflow)
+- **Test data in CI**: environment variables for secrets (never hardcode); CI-specific data; seed before / truncate after
+- **Artifacts on failure**: upload Allure results/reports and screenshots on failure
+
+## References
+
+For broader regression strategy playbooks, use the `playwright-regression-testing` skill concepts adapted to this Maven/TestNG stack.
