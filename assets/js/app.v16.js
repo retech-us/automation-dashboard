@@ -2,7 +2,7 @@
  * Public automation dashboard — release confidence for technical + non-technical audiences.
  */
 
-const BUILD_TAG = '20260805s';
+const BUILD_TAG = '20260807a';
 const DASHBOARD_VERSION = window.DASHBOARD_VERSION || '16';
 
 const REPO_DISPLAY = {
@@ -132,6 +132,7 @@ const ISSUE_BUCKETS = {
 };
 
 let AI_IMPACT_CACHE = null;
+let AI_USAGE_CACHE = null;
 
 function getBootstrapSnapshot(config) {
   const snapshots = window.DASHBOARD_SNAPSHOTS?.snapshots;
@@ -1535,49 +1536,235 @@ function deriveAiSignals(summaries) {
   return { bullets, healCandidates, humanDecisions, byCategory };
 }
 
-function renderAiImpact(summaries, aiImpact) {
+function formatAiCount(n) {
+  const v = Number(n) || 0;
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 10_000) return `${Math.round(v / 1000)}k`;
+  return String(Math.round(v));
+}
+
+function formatAiMoney(usd) {
+  const v = Number(usd) || 0;
+  if (v === 0) return '$0';
+  if (v < 0.01) return '<$0.01';
+  return `$${v.toFixed(2)}`;
+}
+
+function formatAiPct(pct) {
+  const v = Number(pct) || 0;
+  return `${v.toFixed(v >= 10 ? 0 : 1)}%`;
+}
+
+function formatRelativeTime(iso) {
+  if (!iso) return 'recently';
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return String(iso);
+  const mins = Math.round((Date.now() - then) / 60000);
+  if (mins < 2) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 48) return `${hrs}h ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function topMapEntries(map, limit = 5) {
+  if (!map || typeof map !== 'object') return [];
+  return Object.entries(map)
+    .map(([key, val]) => ({ key, val: Number(val) || 0 }))
+    .sort((a, b) => b.val - a.val)
+    .slice(0, limit);
+}
+
+function buildAiUsageHelpBullets(totals, signals) {
+  const bullets = [];
+  if (totals.reposReporting > 0) {
+    if (totals.healsSucceeded > 0) {
+      bullets.push(`${formatAiCount(totals.healsSucceeded)} locator recoveries kept tests running instead of failing on UI drift.`);
+    }
+    if (totals.estimatedMinutesSaved > 0) {
+      bullets.push(`~${formatAiCount(totals.estimatedMinutesSaved)} minutes of manual triage avoided this run (framework estimate).`);
+    }
+    if (totals.learnedLocatorsCount > 0) {
+      bullets.push(`${formatAiCount(totals.learnedLocatorsCount)} learned locators in memory — repeat breaks heal faster.`);
+    }
+    if (totals.flakyQuarantineCount > 0) {
+      bullets.push(`${formatAiCount(totals.flakyQuarantineCount)} flaky scenarios flagged for quarantine so PR gates stay honest.`);
+    }
+  }
+  if (signals.healCandidates > 0) {
+    bullets.push(`${signals.healCandidates} current failure(s) look UI-timing related — exactly what self-healing targets.`);
+  }
+  if (signals.humanDecisions > 0) {
+    bullets.push(`${signals.humanDecisions} assertion mismatch(es) need a product decision — AI will not auto-green those.`);
+  }
+  if (!bullets.length) {
+    bullets.push('Framework AI guardrails stay on during every CI job; metrics appear here once suites publish ai-usage.json.');
+  }
+  return bullets;
+}
+
+function renderAiUsageMetricCard(value, label, note, live = false) {
+  return `
+    <div class="ai-metric${live ? ' ai-metric--live' : ''}">
+      <span class="ai-metric__value">${escapeHtml(value)}</span>
+      <span class="ai-metric__label">${escapeHtml(label)}</span>
+      ${note ? `<span class="ai-metric__note">${escapeHtml(note)}</span>` : ''}
+    </div>`;
+}
+
+function renderAiRepoUsageRows(aiUsage) {
+  const repos = aiUsage?.repos || {};
+  const rows = Object.keys(REPO_DISPLAY).map((id) => {
+    const entry = repos[id] || {};
+    const s = entry.summary || {};
+    const label = REPO_DISPLAY[id]?.label || id;
+    const status = entry.status || 'pending';
+    const inv = Number(s.llmInvocations) || 0;
+    const healPct = Number(s.healSuccessRatePct) || 0;
+    const statusBadge = status === 'live'
+      ? '<span class="ai-repo-status ai-repo-status--live">Live</span>'
+      : '<span class="ai-repo-status ai-repo-status--pending">Pending</span>';
+    const ci = entry.ciRunUrl
+      ? `<a href="${escapeHtml(entry.ciRunUrl)}" target="_blank" rel="noopener">CI job</a>`
+      : '—';
+    return `
+      <tr>
+        <td>${escapeHtml(label)} ${statusBadge}</td>
+        <td>${status === 'live' ? formatAiCount(inv) : '—'}</td>
+        <td>${status === 'live' && (s.healsSucceeded || s.healsFailed) ? formatAiPct(healPct) : '—'}</td>
+        <td>${status === 'live' ? formatAiMoney(s.estimatedCostUsd) : '—'}</td>
+        <td>${status === 'live' ? formatAiCount(s.estimatedMinutesSaved) : '—'}</td>
+        <td>${ci}</td>
+      </tr>`;
+  }).join('');
+
+  const jobRows = [];
+  for (const [repoId, entry] of Object.entries(repos)) {
+    for (const job of entry.jobs || []) {
+      const m = job.metrics || {};
+      jobRows.push(`
+        <tr class="ai-job-row">
+          <td>${escapeHtml(REPO_DISPLAY[repoId]?.label || repoId)} · ${escapeHtml(job.name || 'job')}</td>
+          <td>${formatAiCount(m.llmInvocations || m.llmDecisionCount)}</td>
+          <td>${m.healSuccessRatePct != null ? formatAiPct(m.healSuccessRatePct) : '—'}</td>
+          <td>${formatAiMoney(m.estimatedCostUsd || m.aiEstimatedCostDollars)}</td>
+          <td>${formatAiCount(m.estimatedMinutesSaved || m.aiEstimatedTimeSavedMinutes)}</td>
+          <td>${escapeHtml(job.status || '—')}</td>
+        </tr>`);
+    }
+  }
+
+  return `
+    <div class="ai-repo-table-wrap">
+      <table class="ai-repo-table">
+        <thead>
+          <tr>
+            <th>Suite / job</th>
+            <th>LLM calls</th>
+            <th>Heal rate</th>
+            <th>Est. cost</th>
+            <th>Time saved</th>
+            <th>Link / status</th>
+          </tr>
+        </thead>
+        <tbody>${rows}${jobRows.join('')}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderAiTopLists(aiUsage) {
+  const repos = aiUsage?.repos || {};
+  const locators = {};
+  const modules = {};
+  for (const entry of Object.values(repos)) {
+    for (const [k, v] of Object.entries(entry.topFailingLocators || {})) {
+      locators[k] = (locators[k] || 0) + (Number(v) || 0);
+    }
+    for (const [k, v] of Object.entries(entry.topHealedModules || {})) {
+      modules[k] = (modules[k] || 0) + (Number(v) || 0);
+    }
+  }
+  const locList = topMapEntries(locators, 5);
+  const modList = topMapEntries(modules, 5);
+  if (!locList.length && !modList.length) return '';
+
+  const locHtml = locList.map((r) => `<li><span>${escapeHtml(r.key)}</span><strong>${r.val}</strong></li>`).join('')
+    || '<li class="triage-empty">No locator hotspots yet</li>';
+  const modHtml = modList.map((r) => `<li><span>${escapeHtml(r.key)}</span><strong>${r.val}</strong></li>`).join('')
+    || '<li class="triage-empty">No healed modules yet</li>';
+
+  return `
+    <div class="ai-top-grid">
+      <div>
+        <h3>Top failing locators (AI)</h3>
+        <ul class="ai-top-list">${locHtml}</ul>
+      </div>
+      <div>
+        <h3>Most healed modules</h3>
+        <ul class="ai-top-list">${modHtml}</ul>
+      </div>
+    </div>`;
+}
+
+function renderAiImpact(summaries, aiImpact, aiUsage) {
   const data = aiImpact || AI_IMPACT_CACHE || {};
+  const usage = aiUsage || AI_USAGE_CACHE || {};
   const signals = deriveAiSignals(summaries);
+  const totals = usage.totals || {};
+  const hasLive = (totals.reposReporting || 0) > 0;
+
   const caps = (data.capabilities || []).map((c) => `
     <article class="ai-cap">
       <h3>${escapeHtml(c.title)}</h3>
       <p>${escapeHtml(c.blurb)}</p>
     </article>`).join('');
 
-  const metrics = (data.metrics || []).map((m) => `
-    <div class="ai-metric">
-      <span class="ai-metric__value">${escapeHtml(m.value)}</span>
-      <span class="ai-metric__label">${escapeHtml(m.label)}</span>
-      ${m.note ? `<span class="ai-metric__note">${escapeHtml(m.note)}</span>` : ''}
-    </div>`).join('');
+  const usageMetrics = hasLive ? `
+    ${renderAiUsageMetricCard(formatAiCount(totals.llmInvocations), 'LLM invocations', 'Symphony gateway calls this run', true)}
+    ${renderAiUsageMetricCard(formatAiPct(totals.healSuccessRatePct), 'Heal success', `${formatAiCount(totals.healsSucceeded)} ok · ${formatAiCount(totals.healsFailed)} failed`, true)}
+    ${renderAiUsageMetricCard(formatAiMoney(totals.estimatedCostUsd), 'Est. AI cost', 'Per-run framework estimate', true)}
+    ${renderAiUsageMetricCard(`${formatAiCount(totals.estimatedMinutesSaved)} min`, 'Time saved', 'Less manual locator triage', true)}
+    ${renderAiUsageMetricCard(formatAiCount(totals.learnedLocatorsCount), 'Learned locators', 'Memory across runs', true)}
+    ${renderAiUsageMetricCard(formatAiCount(totals.elementInteractions), 'UI interactions', 'Elements touched in framework', true)}
+  ` : (data.metrics || []).map((m) => renderAiUsageMetricCard(m.value, m.label, m.note)).join('');
 
   const liveStats = `
     <div class="ai-live">
-      <div class="ai-metric">
-        <span class="ai-metric__value">${signals.healCandidates}</span>
-        <span class="ai-metric__label">UI-noise signals</span>
-        <span class="ai-metric__note">Good candidates for healing</span>
-      </div>
-      <div class="ai-metric">
-        <span class="ai-metric__value">${signals.humanDecisions}</span>
-        <span class="ai-metric__label">Human decisions</span>
-        <span class="ai-metric__note">Expected vs actual mismatches</span>
-      </div>
+      ${renderAiUsageMetricCard(String(signals.healCandidates), 'UI-noise signals', 'Good healing candidates')}
+      ${renderAiUsageMetricCard(String(signals.humanDecisions), 'Human decisions', 'Assertion / product mismatches')}
     </div>`;
 
+  const helpBullets = buildAiUsageHelpBullets(totals, signals).map((b) => `<li>${escapeHtml(b)}</li>`).join('');
   const story = (data.story || []).map((line) => `<li>${escapeHtml(line)}</li>`).join('');
   const liveBullets = signals.bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join('');
+  const updated = usage.updatedAt ? `<p class="ai-updated">AI metrics updated ${escapeHtml(formatRelativeTime(usage.updatedAt))}</p>` : '';
+  const pendingNote = hasLive ? '' : '<p class="ai-pending">Waiting for CI jobs to publish <code>ai-usage.json</code> (Web automation ships first).</p>';
 
   return `
     <div class="panel__header ai-panel__header">
       <div>
-        <p class="ai-kicker">Built with AI · AI-in-QA</p>
-        <h2>AI impact</h2>
-        <p>${escapeHtml(data.headline || 'Automation that recovers, explains, and protects release decisions.')}</p>
+        <p class="ai-kicker">Built with AI · framework usage</p>
+        <h2>AI usage metrics</h2>
+        <p>${escapeHtml(data.headline || 'How AI-assisted healing and guardrails reduce noise in automation runs.')}</p>
+        ${updated}
       </div>
     </div>
     <div class="ai-panel__body">
-      <div class="ai-metrics-row">${metrics}${liveStats}</div>
+      ${pendingNote}
+      <section class="ai-section" aria-label="Live AI usage counters">
+        <h3 class="ai-section__title">This run</h3>
+        <div class="ai-metrics-row">${usageMetrics}${liveStats}</div>
+      </section>
+      <section class="ai-section" aria-label="Per suite AI usage">
+        <h3 class="ai-section__title">By suite &amp; CI job</h3>
+        <p class="ai-section__sub">Pulled from each repo’s published <code>ai-usage.json</code> after the workflow finishes.</p>
+        ${renderAiRepoUsageRows(usage)}
+      </section>
+      ${renderAiTopLists(usage)}
+      <section class="ai-section" aria-label="How AI helps automation">
+        <h3 class="ai-section__title">How it helps automation</h3>
+        <ul class="ai-help-list">${helpBullets}</ul>
+      </section>
       <div class="ai-caps">${caps}</div>
       <div class="ai-story">
         <div>
@@ -2464,8 +2651,9 @@ function wireTabs() {
   });
 }
 
-function renderDashboard(results, aiImpact) {
+function renderDashboard(results, aiImpact, aiUsage) {
   if (aiImpact) AI_IMPACT_CACHE = aiImpact;
+  if (aiUsage) AI_USAGE_CACHE = aiUsage;
   CURRENT_RESULTS = results || [];
 
   const banner = document.getElementById('overall-banner');
@@ -2484,7 +2672,7 @@ function renderDashboard(results, aiImpact) {
   }
 
   const aiEl = document.getElementById('ai-impact');
-  if (aiEl) aiEl.innerHTML = renderAiImpact(results, AI_IMPACT_CACHE);
+  if (aiEl) aiEl.innerHTML = renderAiImpact(results, AI_IMPACT_CACHE, AI_USAGE_CACHE);
 
   const cards = document.getElementById('repo-cards');
   if (cards) cards.innerHTML = REPO_CONFIG.map((cfg, i) => renderCard(cfg, results[i])).join('');
@@ -2499,6 +2687,12 @@ function renderDashboard(results, aiImpact) {
 async function loadAiImpact() {
   const bundled = window.DASHBOARD_SNAPSHOTS?.snapshots?.['ai-impact'];
   const live = await fetchJson('data/ai-impact.json');
+  return live || bundled || null;
+}
+
+async function loadAiUsage() {
+  const bundled = window.DASHBOARD_SNAPSHOTS?.snapshots?.['ai-usage'];
+  const live = await fetchJson('data/ai-usage.json');
   return live || bundled || null;
 }
 
@@ -2926,23 +3120,27 @@ async function loadDashboard() {
   document.getElementById('last-updated').textContent = `Dashboard v${DASHBOARD_VERSION} · refreshing…`;
 
   const aiImpactPromise = loadAiImpact();
+  const aiUsagePromise = loadAiUsage();
   const historyPromise = loadTrendHistory();
   const bundled = REPO_CONFIG.map((cfg) => getBootstrapSnapshot(cfg));
   const bundledAi = window.DASHBOARD_SNAPSHOTS?.snapshots?.['ai-impact'];
+  const bundledUsage = window.DASHBOARD_SNAPSHOTS?.snapshots?.['ai-usage'];
   await historyPromise;
   if (bundled.some((b) => (b?.summary?.total || 0) > 0)) {
     renderDashboard(
       bundled.map((b, i) => (b?.summary ? b : placeholder(REPO_CONFIG[i]))),
       bundledAi,
+      bundledUsage,
     );
     document.getElementById('last-updated').textContent = `Dashboard v${DASHBOARD_VERSION} · ${new Date().toLocaleString()}`;
   }
 
-  const [results, aiImpact] = await Promise.all([
+  const [results, aiImpact, aiUsage] = await Promise.all([
     Promise.all(REPO_CONFIG.map((cfg) => fetchSummary(cfg))),
     aiImpactPromise,
+    aiUsagePromise,
   ]);
-  renderDashboard(results, aiImpact);
+  renderDashboard(results, aiImpact, aiUsage);
   document.getElementById('last-updated').textContent = `Dashboard v${DASHBOARD_VERSION} · live · ${new Date().toLocaleString()}`;
 }
 
