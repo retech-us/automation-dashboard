@@ -22,6 +22,8 @@ REPOS = {
         "executors_url": "https://retech-us.github.io/retech-web-automation/widgets/executors.json",
         "repo_name": "retech-us/retech-web-automation",
         "github_workflow_hint": "Java CI",
+        "framework": "Web · TestNG + Selenium",
+        "ai_capable": True,
     },
     "mobile-ios": {
         "report_url": "https://retech-us.github.io/retech-mobile-automation/ios/",
@@ -34,6 +36,8 @@ REPOS = {
         "platform": "iOS",
         "aggregate_batches": True,
         "github_workflow_hint": "Mobile Tests",
+        "framework": "Mobile · Appium",
+        "ai_capable": True,
     },
     "mobile-android": {
         "report_url": "https://retech-us.github.io/retech-mobile-automation/android/",
@@ -46,6 +50,8 @@ REPOS = {
         "platform": "Android",
         "aggregate_batches": True,
         "github_workflow_hint": "Mobile Tests",
+        "framework": "Mobile · Appium",
+        "ai_capable": True,
     },
     "api": {
         "report_url": "https://retech-us.github.io/retech-api-automation/",
@@ -56,6 +62,8 @@ REPOS = {
         "executors_url": "https://retech-us.github.io/retech-api-automation/widgets/executors.json",
         "repo_name": "retech-us/retech-api-automation",
         "github_workflow_hint": "API",
+        "framework": "API · REST Assured",
+        "ai_capable": True,
     },
 }
 
@@ -67,6 +75,156 @@ def fetch_json(url: str):
             return json.loads(resp.read().decode("utf-8"))
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError):
         return None
+
+
+def fetch_text(url: str) -> str | None:
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "automation-dashboard/1.0"})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return resp.read().decode("utf-8")
+    except (urllib.error.URLError, TimeoutError, ValueError, UnicodeDecodeError):
+        return None
+
+
+AI_ENV_KEYS = {
+    "AI.TotalInvocations": "llmInvocations",
+    "AI.SuccessfulHealings": "healsSucceeded",
+    "AI.FailedHealings": "healsFailed",
+    "AI.SkippedInvocations": "healsSkipped",
+    "AI.HealSuccessRatePct": "healSuccessRatePct",
+    "AI.EstimatedCostUsd": "estimatedCostUsd",
+    "AI.EstimatedMinutesSaved": "estimatedMinutesSaved",
+    "AI.AvgLatencyMs": "avgAiLatencyMs",
+    "AI.ElementInteractions": "elementInteractions",
+}
+
+AI_TEST_NAME_HINTS = ("ai usage metrics", "ai usage")
+AI_ATTACHMENT_NAMES = frozenset({
+    "ai-usage.json",
+    "ai-usage-summary.json",
+    "ai-metrics.json",
+    "ai-effectiveness-summary.json",
+})
+
+
+def _env_lookup(widget: list | None) -> dict[str, str]:
+    lookup: dict[str, str] = {}
+    if not widget:
+        return lookup
+    for item in widget:
+        name = item.get("name", "")
+        values = item.get("values") or []
+        if values:
+            lookup[name] = str(values[0])
+    return lookup
+
+
+def _parse_metric_value(raw: str) -> float:
+    text = str(raw).strip().replace("%", "").replace(",", "")
+    try:
+        return float(text)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def parse_ai_from_environment(widget: list | None) -> tuple[dict, dict]:
+    lookup = _env_lookup(widget)
+    summary: dict[str, float] = {}
+    for env_key, dest in AI_ENV_KEYS.items():
+        if env_key in lookup:
+            summary[dest] = _parse_metric_value(lookup[env_key])
+    meta = {
+        "aiEnabled": lookup.get("SelfHeal.AI.Enabled"),
+        "frameworkLabel": lookup.get("Framework") or lookup.get("Test.Framework"),
+    }
+    return summary, meta
+
+
+def _has_ai_summary(summary: dict) -> bool:
+    return any(_num(summary.get(k)) for k in (
+        "llmInvocations", "healsSucceeded", "healsFailed",
+        "elementInteractions", "estimatedCostUsd",
+    ))
+
+
+def _walk_allure_ai_tests(nodes: list | None, out: list[str]) -> None:
+    for node in nodes or []:
+        name = (node.get("name") or "").lower()
+        uid = node.get("uid")
+        children = node.get("children")
+        if children:
+            _walk_allure_ai_tests(children, out)
+        elif uid and any(hint in name for hint in AI_TEST_NAME_HINTS):
+            out.append(uid)
+
+
+def fetch_ai_from_allure_attachment(report_url: str) -> dict | None:
+    suites = fetch_json(f"{report_url.rstrip('/')}/data/suites.json")
+    if not suites:
+        return None
+    uids: list[str] = []
+    _walk_allure_ai_tests(suites.get("children"), uids)
+    base = report_url.rstrip("/")
+    for uid in uids:
+        case = fetch_json(f"{base}/data/test-cases/{uid}.json")
+        if not case:
+            continue
+        for att in case.get("attachments") or []:
+            name = att.get("name") or ""
+            if name not in AI_ATTACHMENT_NAMES:
+                continue
+            source = att.get("source")
+            if not source:
+                continue
+            body = fetch_text(f"{base}/data/attachments/{source}")
+            if not body:
+                continue
+            try:
+                parsed = json.loads(body)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, dict):
+                if isinstance(parsed.get("summary"), dict):
+                    return parsed
+                return {"summary": parsed, "jobs": parsed.get("jobs") or []}
+    return None
+
+
+def fetch_ai_raw_for_repo(repo_id: str, cfg: dict) -> tuple[dict | None, str | None, dict]:
+    """Return (raw metrics doc, source label, extra meta)."""
+    meta: dict = {
+        "framework": cfg.get("framework"),
+        "aiCapable": bool(cfg.get("ai_capable")),
+    }
+    report_url = cfg.get("report_url", "").rstrip("/")
+
+    for url, source in (
+        (f"{report_url}/ai-usage.json", "allure-pages-json"),
+        (cfg.get("ai_usage_url"), "ci-json"),
+    ):
+        if not url:
+            continue
+        raw = fetch_json(url)
+        if isinstance(raw, dict) and (raw.get("summary") or _has_ai_summary(raw)):
+            return raw, source, meta
+
+    env_widget = fetch_json(cfg.get("environment_url"))
+    env_summary, env_meta = parse_ai_from_environment(env_widget)
+    if env_meta.get("aiEnabled") is not None:
+        meta["aiEnabled"] = str(env_meta["aiEnabled"]).lower() == "true"
+    if env_meta.get("frameworkLabel"):
+        meta["frameworkLabel"] = env_meta["frameworkLabel"]
+    if _has_ai_summary(env_summary):
+        return {"summary": env_summary}, "allure-environment", meta
+
+    att_raw = fetch_ai_from_allure_attachment(cfg.get("report_url", ""))
+    if att_raw:
+        return att_raw, "allure-attachment", meta
+
+    if meta.get("aiEnabled"):
+        return {"summary": {}}, "allure-environment", meta
+
+    return None, None, meta
 
 
 def parse_environment(widget: list | None) -> dict:
@@ -487,7 +645,148 @@ def main() -> int:
         )
     append_automation_history(out_dir, payloads)
     fetch_ai_usage(out_dir, payloads)
+    fetch_contributors(out_dir)
     return 0
+
+
+REPO_LABELS = {
+    "retech-us/retech-web-automation": "Web",
+    "retech-us/retech-mobile-automation": "Mobile",
+    "retech-us/retech-api-automation": "API",
+}
+
+BOT_LOGINS = frozenset({
+    "dependabot", "dependabot-preview", "renovate", "renovate-bot",
+    "github-actions", "github-actions-bot",
+})
+
+
+def _is_bot(login: str) -> bool:
+    lower = login.lower()
+    return lower in BOT_LOGINS or lower.endswith("[bot]") or lower.endswith("-bot")
+
+
+def _github_api_request(url: str) -> tuple[object | None, str | None]:
+    import os
+
+    headers = {"User-Agent": "automation-dashboard/1.0", "Accept": "application/vnd.github+json"}
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+            next_url = None
+            link = resp.headers.get("Link")
+            if link:
+                for part in link.split(","):
+                    if 'rel="next"' in part:
+                        next_url = part.split(";")[0].strip().strip("<>")
+                        break
+            return body, next_url
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError):
+        return None, None
+
+
+def _fetch_repo_contributors(repo_name: str) -> list[dict]:
+    contributors: list[dict] = []
+    url = f"https://api.github.com/repos/{repo_name}/contributors?per_page=100&anon=1"
+    while url:
+        data, next_url = _github_api_request(url)
+        if not isinstance(data, list):
+            break
+        contributors.extend(data)
+        url = next_url
+    return contributors
+
+
+def _aggregate_contributors(repos_data: dict[str, list[dict]]) -> list[dict]:
+    by_login: dict[str, dict] = {}
+    for repo_name, contributors in repos_data.items():
+        for entry in contributors:
+            login = entry.get("login") or entry.get("name") or "anonymous"
+            if _is_bot(str(login)):
+                continue
+            count = int(entry.get("contributions") or 0)
+            if login not in by_login:
+                by_login[login] = {
+                    "login": login,
+                    "name": entry.get("name"),
+                    "avatarUrl": entry.get("avatar_url"),
+                    "profileUrl": entry.get("html_url") or f"https://github.com/{login}",
+                    "contributions": 0,
+                    "repos": {},
+                }
+            by_login[login]["contributions"] += count
+            by_login[login]["repos"][repo_name] = by_login[login]["repos"].get(repo_name, 0) + count
+
+    ranked = sorted(by_login.values(), key=lambda row: row["contributions"], reverse=True)
+    for index, row in enumerate(ranked, start=1):
+        row["rank"] = index
+    return ranked
+
+
+def fetch_contributors(out_dir: Path) -> None:
+    unique_repos: list[str] = []
+    seen: set[str] = set()
+    for cfg in REPOS.values():
+        repo_name = cfg.get("repo_name")
+        if repo_name and repo_name not in seen:
+            seen.add(repo_name)
+            unique_repos.append(repo_name)
+
+    repos_data = {repo_name: _fetch_repo_contributors(repo_name) for repo_name in unique_repos}
+    ranked = _aggregate_contributors(repos_data)
+
+    doc = {
+        "schemaVersion": "1.0",
+        "updatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "repos": [
+            {
+                "name": repo_name,
+                "label": REPO_LABELS.get(repo_name, repo_name.split("/")[-1]),
+                "url": f"https://github.com/{repo_name}",
+                "contributorCount": len([
+                    c for c in repos_data.get(repo_name, [])
+                    if not _is_bot(str(c.get("login") or c.get("name") or ""))
+                ]),
+            }
+            for repo_name in unique_repos
+        ],
+        "contributors": [
+            {
+                "rank": row["rank"],
+                "login": row["login"],
+                "name": row.get("name"),
+                "avatarUrl": row.get("avatarUrl"),
+                "profileUrl": row.get("profileUrl"),
+                "contributions": row["contributions"],
+                "repos": [
+                    {
+                        "name": repo_name,
+                        "label": REPO_LABELS.get(repo_name, repo_name),
+                        "contributions": count,
+                    }
+                    for repo_name, count in sorted(
+                        row["repos"].items(),
+                        key=lambda item: (-item[1], item[0]),
+                    )
+                ],
+            }
+            for row in ranked
+        ],
+        "totals": {
+            "uniqueContributors": len(ranked),
+            "totalContributions": sum(row["contributions"] for row in ranked),
+        },
+    }
+    path = out_dir / "contributors.json"
+    path.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+    print(
+        f"👥 contributors: {doc['totals']['uniqueContributors']} people · "
+        f"{doc['totals']['totalContributions']} commits → {path}"
+    )
 
 
 def _num(value, default: float = 0) -> float:
@@ -499,18 +798,37 @@ def _num(value, default: float = 0) -> float:
         return default
 
 
-def normalize_ai_usage(repo_id: str, cfg: dict, raw: dict | None, run_payload: dict | None) -> dict:
-    """Map published ai-usage.json (or legacy summary shape) to dashboard contract."""
+def normalize_ai_usage(
+    repo_id: str,
+    cfg: dict,
+    raw: dict | None,
+    run_payload: dict | None,
+    *,
+    source: str | None = None,
+    meta: dict | None = None,
+) -> dict:
+    """Map Allure / CI AI metrics to dashboard contract."""
+    meta = meta or {}
+    framework = meta.get("frameworkLabel") or cfg.get("framework") or repo_id
+    base = {
+        "repo": repo_id,
+        "repoName": cfg.get("repo_name", repo_id),
+        "framework": framework,
+        "aiEnabled": meta.get("aiEnabled"),
+        "aiCapable": meta.get("aiCapable", bool(cfg.get("ai_capable"))),
+        "finishedAt": run_payload.get("finishedAt") if run_payload else None,
+        "ciRunUrl": (run_payload or {}).get("ciRunUrl") or cfg.get("ci_url"),
+        "reportUrl": cfg.get("report_url"),
+    }
+
     if not raw:
         return {
-            "repo": repo_id,
-            "repoName": cfg.get("repo_name", repo_id),
+            **base,
             "status": "pending",
-            "finishedAt": run_payload.get("finishedAt") if run_payload else None,
-            "ciRunUrl": (run_payload or {}).get("ciRunUrl") or cfg.get("ci_url"),
             "summary": {},
             "jobs": [],
-            "note": "AI metrics not published yet for this suite — enable ai-usage.json in CI.",
+            "source": None,
+            "note": "No AI metrics in Allure yet — publish via environment.properties or ai-usage.json attachment.",
         }
 
     summary_src = raw.get("summary") if isinstance(raw.get("summary"), dict) else raw
@@ -532,18 +850,29 @@ def normalize_ai_usage(repo_id: str, cfg: dict, raw: dict | None, run_payload: d
         merged["healSuccessRatePct"] = round((merged["healsSucceeded"] / healed) * 100, 1)
 
     jobs = raw.get("jobs") if isinstance(raw.get("jobs"), list) else []
+    has_metrics = _has_ai_summary(merged)
+    status = "live" if has_metrics else ("enabled" if meta.get("aiEnabled") else "pending")
+    note = None
+    if status == "enabled":
+        note = "AI enabled in Allure environment — run metrics will appear after the next CI publish."
+    elif status == "pending":
+        note = "No AI metrics in Allure yet — publish via environment.properties or ai-usage.json attachment."
+
     return {
+        **base,
         "repo": raw.get("repo") or repo_id,
         "repoName": raw.get("repoName") or cfg.get("repo_name", repo_id),
-        "status": "live",
-        "finishedAt": raw.get("finishedAt") or (run_payload or {}).get("finishedAt"),
-        "ciRunUrl": raw.get("ciRunUrl") or (run_payload or {}).get("ciRunUrl") or cfg.get("ci_url"),
+        "status": status,
+        "source": source,
+        "finishedAt": raw.get("finishedAt") or base["finishedAt"],
+        "ciRunUrl": raw.get("ciRunUrl") or base["ciRunUrl"],
         "runId": raw.get("runId") or (run_payload or {}).get("runId"),
         "summary": merged,
         "jobs": jobs,
         "topFailingLocators": raw.get("topFailingLocators") or summary_src.get("topFailingLocators") or summary_src.get("topFailingLocatorsFromAi") or {},
         "topHealedModules": raw.get("topHealedModules") or summary_src.get("mostHealedModules") or {},
         "topSkipReasons": raw.get("topSkipReasons") or summary_src.get("topAiSkipReasons") or {},
+        "note": note,
     }
 
 
@@ -561,15 +890,20 @@ def aggregate_ai_totals(repos: dict[str, dict]) -> dict:
         "learnedLocatorsCount": 0,
         "flakyQuarantineCount": 0,
         "reposReporting": 0,
+        "frameworksReporting": 0,
+        "frameworksWithAiEnabled": 0,
     }
     latency_weight = 0
     for entry in repos.values():
-        if entry.get("status") != "live":
+        if entry.get("status") not in ("live", "enabled"):
             continue
+        if entry.get("status") == "enabled":
+            totals["frameworksWithAiEnabled"] += 1
         s = entry.get("summary") or {}
         if not any(_num(s.get(k)) for k in ("llmInvocations", "healsSucceeded", "elementInteractions")):
             continue
         totals["reposReporting"] += 1
+        totals["frameworksReporting"] += 1
         for key in (
             "llmInvocations", "healsSucceeded", "healsFailed", "healsSkipped",
             "elementInteractions", "estimatedCostUsd", "estimatedMinutesSaved",
@@ -593,14 +927,13 @@ def aggregate_ai_totals(repos: dict[str, dict]) -> dict:
 def fetch_ai_usage(out_dir: Path, run_payloads: dict[str, dict]) -> None:
     repos: dict[str, dict] = {}
     for repo_id, cfg in REPOS.items():
-        raw = None
-        url = cfg.get("ai_usage_url")
-        if url:
-            raw = fetch_json(url)
-        repos[repo_id] = normalize_ai_usage(repo_id, cfg, raw, run_payloads.get(repo_id))
+        raw, source, meta = fetch_ai_raw_for_repo(repo_id, cfg)
+        repos[repo_id] = normalize_ai_usage(
+            repo_id, cfg, raw, run_payloads.get(repo_id), source=source, meta=meta,
+        )
 
     doc = {
-        "schemaVersion": "1.0",
+        "schemaVersion": "1.1",
         "updatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "repos": repos,
         "totals": aggregate_ai_totals(repos),
@@ -608,8 +941,9 @@ def fetch_ai_usage(out_dir: Path, run_payloads: dict[str, dict]) -> None:
     path = out_dir / "ai-usage.json"
     path.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
     live = doc["totals"]["reposReporting"]
+    enabled = doc["totals"]["frameworksWithAiEnabled"]
     inv = int(doc["totals"]["llmInvocations"])
-    print(f"🤖 ai-usage: {live} repo(s) reporting · {inv} LLM invocations → {path}")
+    print(f"🤖 ai-usage: {live} live · {enabled} AI-enabled · {inv} LLM invocations → {path}")
 
 def _point_from_payload(suite: str, payload: dict) -> dict | None:
     counts = payload.get("counts") or {}
