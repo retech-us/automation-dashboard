@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Aggregated GitHub contributors across automation repos",
+  "type": "object",
+  "required": ["schemaVersion", "updatedAt", "repos", "contributors", "totals"],
+  "properties": {
+    "schemaVersion": { "type": "string" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "repos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "label", "url", "contributorCount"],
+        "properties": {
+          "name": { "type": "string" },
+          "label": { "type": "string" },
+          "url": { "type": "string" },
+          "contributorCount": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "contributors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rank", "login", "contributions", "repos"],
+        "properties": {
+          "rank": { "type": "integer", "minimum": 1 },
+          "login": { "type": "string" },
+          "name": { "type": "string" },
+          "avatarUrl": { "type": "string" },
+          "profileUrl": { "type": "string" },
+          "contributions": { "type": "integer", "minimum": 0 },
+          "repos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "label", "contributions"],
+              "properties": {
+                "name": { "type": "string" },
+                "label": { "type": "string" },
+                "contributions": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "required": ["uniqueContributors", "totalContributions"],
+      "properties": {
+        "uniqueContributors": { "type": "integer", "minimum": 0 },
+        "totalContributions": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

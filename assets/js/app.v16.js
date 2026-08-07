@@ -2,7 +2,7 @@
  * Public automation dashboard — release confidence for technical + non-technical audiences.
  */
 
-const BUILD_TAG = '20260807a';
+const BUILD_TAG = '20260807c';
 const DASHBOARD_VERSION = window.DASHBOARD_VERSION || '16';
 
 const REPO_DISPLAY = {
@@ -12,7 +12,7 @@ const REPO_DISPLAY = {
   api: { icon: '🔌', label: 'API', color: '#f59e0b' },
 };
 
-const DASHBOARD_TABS = ['overview', 'attention', 'trends', 'ai', 'suites'];
+const DASHBOARD_TABS = ['overview', 'attention', 'trends', 'ai', 'suites', 'about'];
 let CURRENT_RESULTS = [];
 let ACTIVE_TAB = 'overview';
 let TREND_RANGE = 'weekly';
@@ -133,6 +133,7 @@ const ISSUE_BUCKETS = {
 
 let AI_IMPACT_CACHE = null;
 let AI_USAGE_CACHE = null;
+let CONTRIBUTORS_CACHE = null;
 
 function getBootstrapSnapshot(config) {
   const snapshots = window.DASHBOARD_SNAPSHOTS?.snapshots;
@@ -1598,9 +1599,49 @@ function buildAiUsageHelpBullets(totals, signals) {
     bullets.push(`${signals.humanDecisions} assertion mismatch(es) need a product decision — AI will not auto-green those.`);
   }
   if (!bullets.length) {
-    bullets.push('Framework AI guardrails stay on during every CI job; metrics appear here once suites publish ai-usage.json.');
+    bullets.push('AI metrics are read from each suite’s published Allure report (environment + attachments).');
   }
   return bullets;
+}
+
+function formatAiSource(source) {
+  const map = {
+    'allure-environment': 'Allure environment',
+    'allure-attachment': 'Allure attachment',
+    'allure-pages-json': 'Allure report JSON',
+    'ci-json': 'CI ai-usage.json',
+  };
+  return map[source] || source || '—';
+}
+
+function renderAiFrameworkCards(aiUsage) {
+  const repos = aiUsage?.repos || {};
+  const cards = Object.keys(REPO_DISPLAY).map((id) => {
+    const entry = repos[id] || {};
+    const label = REPO_DISPLAY[id]?.label || id;
+    const framework = entry.framework || '—';
+    const status = entry.status || 'pending';
+    const s = entry.summary || {};
+    const statusCls = status === 'live' ? 'ai-framework-card--live'
+      : status === 'enabled' ? 'ai-framework-card--enabled' : 'ai-framework-card--pending';
+    const statusLabel = status === 'live' ? 'Reporting'
+      : status === 'enabled' ? 'AI enabled' : 'Pending';
+    const metric = status === 'live'
+      ? `${formatAiCount(s.llmInvocations)} LLM · ${formatAiPct(s.healSuccessRatePct)} heal`
+      : (entry.note || 'Waiting for Allure AI metrics');
+    const report = entry.reportUrl
+      ? `<a href="${escapeHtml(entry.reportUrl)}" target="_blank" rel="noopener">Allure report</a>`
+      : '';
+    return `
+      <article class="ai-framework-card ${statusCls}">
+        <p class="ai-framework-card__suite">${escapeHtml(label)}</p>
+        <h3 class="ai-framework-card__framework">${escapeHtml(framework)}</h3>
+        <p class="ai-framework-card__status">${escapeHtml(statusLabel)}</p>
+        <p class="ai-framework-card__metric">${escapeHtml(metric)}</p>
+        <p class="ai-framework-card__source">${status === 'live' ? escapeHtml(formatAiSource(entry.source)) : report}</p>
+      </article>`;
+  }).join('');
+  return `<div class="ai-framework-grid">${cards}</div>`;
 }
 
 function renderAiUsageMetricCard(value, label, note, live = false) {
@@ -1623,18 +1664,25 @@ function renderAiRepoUsageRows(aiUsage) {
     const healPct = Number(s.healSuccessRatePct) || 0;
     const statusBadge = status === 'live'
       ? '<span class="ai-repo-status ai-repo-status--live">Live</span>'
-      : '<span class="ai-repo-status ai-repo-status--pending">Pending</span>';
+      : status === 'enabled'
+        ? '<span class="ai-repo-status ai-repo-status--enabled">AI on</span>'
+        : '<span class="ai-repo-status ai-repo-status--pending">Pending</span>';
+    const report = entry.reportUrl
+      ? `<a href="${escapeHtml(entry.reportUrl)}" target="_blank" rel="noopener">Allure</a>`
+      : '—';
     const ci = entry.ciRunUrl
-      ? `<a href="${escapeHtml(entry.ciRunUrl)}" target="_blank" rel="noopener">CI job</a>`
+      ? `<a href="${escapeHtml(entry.ciRunUrl)}" target="_blank" rel="noopener">CI</a>`
       : '—';
     return `
       <tr>
         <td>${escapeHtml(label)} ${statusBadge}</td>
+        <td>${escapeHtml(entry.framework || '—')}</td>
         <td>${status === 'live' ? formatAiCount(inv) : '—'}</td>
         <td>${status === 'live' && (s.healsSucceeded || s.healsFailed) ? formatAiPct(healPct) : '—'}</td>
         <td>${status === 'live' ? formatAiMoney(s.estimatedCostUsd) : '—'}</td>
         <td>${status === 'live' ? formatAiCount(s.estimatedMinutesSaved) : '—'}</td>
-        <td>${ci}</td>
+        <td>${status === 'live' ? escapeHtml(formatAiSource(entry.source)) : '—'}</td>
+        <td>${report} · ${ci}</td>
       </tr>`;
   }).join('');
 
@@ -1645,10 +1693,12 @@ function renderAiRepoUsageRows(aiUsage) {
       jobRows.push(`
         <tr class="ai-job-row">
           <td>${escapeHtml(REPO_DISPLAY[repoId]?.label || repoId)} · ${escapeHtml(job.name || 'job')}</td>
+          <td>CI job</td>
           <td>${formatAiCount(m.llmInvocations || m.llmDecisionCount)}</td>
           <td>${m.healSuccessRatePct != null ? formatAiPct(m.healSuccessRatePct) : '—'}</td>
           <td>${formatAiMoney(m.estimatedCostUsd || m.aiEstimatedCostDollars)}</td>
           <td>${formatAiCount(m.estimatedMinutesSaved || m.aiEstimatedTimeSavedMinutes)}</td>
+          <td>Allure attachment</td>
           <td>${escapeHtml(job.status || '—')}</td>
         </tr>`);
     }
@@ -1659,12 +1709,14 @@ function renderAiRepoUsageRows(aiUsage) {
       <table class="ai-repo-table">
         <thead>
           <tr>
-            <th>Suite / job</th>
+            <th>Suite</th>
+            <th>Framework</th>
             <th>LLM calls</th>
             <th>Heal rate</th>
             <th>Est. cost</th>
             <th>Time saved</th>
-            <th>Link / status</th>
+            <th>Source</th>
+            <th>Links</th>
           </tr>
         </thead>
         <tbody>${rows}${jobRows.join('')}</tbody>
@@ -1712,6 +1764,7 @@ function renderAiImpact(summaries, aiImpact, aiUsage) {
   const signals = deriveAiSignals(summaries);
   const totals = usage.totals || {};
   const hasLive = (totals.reposReporting || 0) > 0;
+  const hasEnabled = (totals.frameworksWithAiEnabled || 0) > 0;
 
   const caps = (data.capabilities || []).map((c) => `
     <article class="ai-cap">
@@ -1738,7 +1791,11 @@ function renderAiImpact(summaries, aiImpact, aiUsage) {
   const story = (data.story || []).map((line) => `<li>${escapeHtml(line)}</li>`).join('');
   const liveBullets = signals.bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join('');
   const updated = usage.updatedAt ? `<p class="ai-updated">AI metrics updated ${escapeHtml(formatRelativeTime(usage.updatedAt))}</p>` : '';
-  const pendingNote = hasLive ? '' : '<p class="ai-pending">Waiting for CI jobs to publish <code>ai-usage.json</code> (Web automation ships first).</p>';
+  const pendingNote = hasLive ? '' : (
+    hasEnabled
+      ? '<p class="ai-pending">AI is enabled in Allure for some suites — full metrics appear after the next CI run publishes <code>AI.*</code> environment keys or an <code>ai-usage.json</code> attachment.</p>'
+      : '<p class="ai-pending">Waiting for Allure reports to publish AI metrics (<code>AI.*</code> environment keys or <code>ai-usage.json</code> attachment per framework).</p>'
+  );
 
   return `
     <div class="panel__header ai-panel__header">
@@ -1751,13 +1808,18 @@ function renderAiImpact(summaries, aiImpact, aiUsage) {
     </div>
     <div class="ai-panel__body">
       ${pendingNote}
+      <section class="ai-section" aria-label="AI by framework">
+        <h3 class="ai-section__title">By framework</h3>
+        <p class="ai-section__sub">Which automation stack is using AI — pulled from each suite’s published Allure report.</p>
+        ${renderAiFrameworkCards(usage)}
+      </section>
       <section class="ai-section" aria-label="Live AI usage counters">
         <h3 class="ai-section__title">This run</h3>
         <div class="ai-metrics-row">${usageMetrics}${liveStats}</div>
       </section>
       <section class="ai-section" aria-label="Per suite AI usage">
         <h3 class="ai-section__title">By suite &amp; CI job</h3>
-        <p class="ai-section__sub">Pulled from each repo’s published <code>ai-usage.json</code> after the workflow finishes.</p>
+        <p class="ai-section__sub">Aggregated from Allure environment, attachments, and <code>ai-usage.json</code> when published.</p>
         ${renderAiRepoUsageRows(usage)}
       </section>
       ${renderAiTopLists(usage)}
@@ -1776,6 +1838,150 @@ function renderAiImpact(summaries, aiImpact, aiUsage) {
           <ul>${liveBullets}</ul>
         </div>
       </div>
+    </div>`;
+}
+
+function formatContributorCount(value) {
+  const n = Number(value) || 0;
+  return n.toLocaleString();
+}
+
+function contributorRankClass(rank) {
+  if (rank === 1) return 'contributor-rank contributor-rank--gold';
+  if (rank === 2) return 'contributor-rank contributor-rank--silver';
+  if (rank === 3) return 'contributor-rank contributor-rank--bronze';
+  return 'contributor-rank';
+}
+
+function renderContributorPodium(contributors) {
+  const top = (contributors || []).slice(0, 3);
+  if (!top.length) return '';
+  const order = top.length === 3 ? [top[1], top[0], top[2]] : top;
+  const cards = order.map((person) => {
+    const avatar = person.avatarUrl
+      ? `<img class="contributor-podium__avatar" src="${escapeHtml(person.avatarUrl)}" alt="" width="72" height="72" loading="lazy" />`
+      : '<div class="contributor-podium__avatar contributor-podium__avatar--placeholder" aria-hidden="true"></div>';
+    const displayName = person.name && person.name !== person.login ? person.name : person.login;
+    return `
+      <article class="contributor-podium__card contributor-podium__card--rank-${person.rank}">
+        <span class="${contributorRankClass(person.rank)}">#${person.rank}</span>
+        ${avatar}
+        <h3><a href="${escapeHtml(person.profileUrl || '#')}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayName)}</a></h3>
+        <p class="contributor-podium__login">@${escapeHtml(person.login)}</p>
+        <p class="contributor-podium__count">${formatContributorCount(person.contributions)} contributions</p>
+      </article>`;
+  }).join('');
+  return `<div class="contributor-podium" aria-label="Top contributors">${cards}</div>`;
+}
+
+function renderContributorRepoBadges(repos) {
+  if (!repos?.length) return '<span class="contributor-repo-badge contributor-repo-badge--empty">—</span>';
+  return repos.map((repo) => `
+    <span class="contributor-repo-badge contributor-repo-badge--${escapeHtml(repo.label.toLowerCase())}" title="${escapeHtml(repo.name)}: ${formatContributorCount(repo.contributions)}">
+      ${escapeHtml(repo.label)} <strong>${formatContributorCount(repo.contributions)}</strong>
+    </span>`).join('');
+}
+
+function renderContributorRows(contributors) {
+  if (!contributors?.length) {
+    return '<tr><td colspan="4" class="contributor-empty">No contributor data yet.</td></tr>';
+  }
+  return contributors.map((person) => {
+    const avatar = person.avatarUrl
+      ? `<img class="contributor-table__avatar" src="${escapeHtml(person.avatarUrl)}" alt="" width="32" height="32" loading="lazy" />`
+      : '';
+    const displayName = person.name && person.name !== person.login ? person.name : person.login;
+    return `
+      <tr>
+        <td><span class="${contributorRankClass(person.rank)}">#${person.rank}</span></td>
+        <td>
+          <div class="contributor-table__person">
+            ${avatar}
+            <div>
+              <a class="contributor-table__name" href="${escapeHtml(person.profileUrl || '#')}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayName)}</a>
+              <span class="contributor-table__login">@${escapeHtml(person.login)}</span>
+            </div>
+          </div>
+        </td>
+        <td class="contributor-table__count">${formatContributorCount(person.contributions)}</td>
+        <td><div class="contributor-repo-badges">${renderContributorRepoBadges(person.repos)}</div></td>
+      </tr>`;
+  }).join('');
+}
+
+function renderAbout(contributorsData) {
+  const data = contributorsData || CONTRIBUTORS_CACHE || {};
+  const totals = data.totals || {};
+  const repos = data.repos || [];
+  const contributors = data.contributors || [];
+  const updated = data.updatedAt
+    ? `<p class="about-updated">Contributors updated ${escapeHtml(formatRelativeTime(data.updatedAt))}</p>`
+    : '';
+
+  const repoCards = repos.map((repo) => `
+    <article class="about-repo-card">
+      <h3><a href="${escapeHtml(repo.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(repo.label)}</a></h3>
+      <p class="about-repo-card__name">${escapeHtml(repo.name)}</p>
+      <p class="about-repo-card__stat">${formatContributorCount(repo.contributorCount)} contributors</p>
+    </article>`).join('');
+
+  return `
+    <div class="panel__header about-panel__header">
+      <div>
+        <p class="about-kicker">Store Intell QA · automation program</p>
+        <h2>About this dashboard</h2>
+        <p>Release confidence for Web, Mobile, and API automation — aggregated from CI runs across three repositories.</p>
+        ${updated}
+      </div>
+    </div>
+    <div class="about-panel__body">
+      <section class="about-section" aria-label="Program summary">
+        <div class="about-metrics-row">
+          <article class="about-metric">
+            <span class="about-metric__value">${formatContributorCount(totals.uniqueContributors)}</span>
+            <span class="about-metric__label">Contributors</span>
+            <span class="about-metric__note">Across Web, Mobile &amp; API</span>
+          </article>
+          <article class="about-metric">
+            <span class="about-metric__value">${formatContributorCount(totals.totalContributions)}</span>
+            <span class="about-metric__label">Total commits</span>
+            <span class="about-metric__note">GitHub contribution counts</span>
+          </article>
+          <article class="about-metric">
+            <span class="about-metric__value">${repos.length}</span>
+            <span class="about-metric__label">Repositories</span>
+            <span class="about-metric__note">Automation frameworks</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="about-section" aria-label="Automation repositories">
+        <h3 class="about-section__title">Repositories</h3>
+        <div class="about-repo-grid">${repoCards}</div>
+      </section>
+
+      <section class="about-section" aria-label="Top contributors">
+        <h3 class="about-section__title">Top contributors</h3>
+        <p class="about-section__sub">Ranked by total GitHub contributions across all automation repos (bots excluded).</p>
+        ${renderContributorPodium(contributors)}
+      </section>
+
+      <section class="about-section" aria-label="Contributor leaderboard">
+        <h3 class="about-section__title">Full leaderboard</h3>
+        <div class="contributor-table-wrap">
+          <table class="contributor-table">
+            <thead>
+              <tr>
+                <th scope="col">Rank</th>
+                <th scope="col">Contributor</th>
+                <th scope="col">Total</th>
+                <th scope="col">By repo</th>
+              </tr>
+            </thead>
+            <tbody>${renderContributorRows(contributors)}</tbody>
+          </table>
+        </div>
+      </section>
     </div>`;
 }
 
@@ -2651,9 +2857,10 @@ function wireTabs() {
   });
 }
 
-function renderDashboard(results, aiImpact, aiUsage) {
+function renderDashboard(results, aiImpact, aiUsage, contributors) {
   if (aiImpact) AI_IMPACT_CACHE = aiImpact;
   if (aiUsage) AI_USAGE_CACHE = aiUsage;
+  if (contributors) CONTRIBUTORS_CACHE = contributors;
   CURRENT_RESULTS = results || [];
 
   const banner = document.getElementById('overall-banner');
@@ -2674,6 +2881,9 @@ function renderDashboard(results, aiImpact, aiUsage) {
   const aiEl = document.getElementById('ai-impact');
   if (aiEl) aiEl.innerHTML = renderAiImpact(results, AI_IMPACT_CACHE, AI_USAGE_CACHE);
 
+  const aboutEl = document.getElementById('about-panel');
+  if (aboutEl) aboutEl.innerHTML = renderAbout(CONTRIBUTORS_CACHE);
+
   const cards = document.getElementById('repo-cards');
   if (cards) cards.innerHTML = REPO_CONFIG.map((cfg, i) => renderCard(cfg, results[i])).join('');
 
@@ -2693,6 +2903,12 @@ async function loadAiImpact() {
 async function loadAiUsage() {
   const bundled = window.DASHBOARD_SNAPSHOTS?.snapshots?.['ai-usage'];
   const live = await fetchJson('data/ai-usage.json');
+  return live || bundled || null;
+}
+
+async function loadContributors() {
+  const bundled = window.DASHBOARD_SNAPSHOTS?.snapshots?.contributors;
+  const live = await fetchJson('data/contributors.json');
   return live || bundled || null;
 }
 
@@ -3121,26 +3337,30 @@ async function loadDashboard() {
 
   const aiImpactPromise = loadAiImpact();
   const aiUsagePromise = loadAiUsage();
+  const contributorsPromise = loadContributors();
   const historyPromise = loadTrendHistory();
   const bundled = REPO_CONFIG.map((cfg) => getBootstrapSnapshot(cfg));
   const bundledAi = window.DASHBOARD_SNAPSHOTS?.snapshots?.['ai-impact'];
   const bundledUsage = window.DASHBOARD_SNAPSHOTS?.snapshots?.['ai-usage'];
+  const bundledContributors = window.DASHBOARD_SNAPSHOTS?.snapshots?.contributors;
   await historyPromise;
   if (bundled.some((b) => (b?.summary?.total || 0) > 0)) {
     renderDashboard(
       bundled.map((b, i) => (b?.summary ? b : placeholder(REPO_CONFIG[i]))),
       bundledAi,
       bundledUsage,
+      bundledContributors,
     );
     document.getElementById('last-updated').textContent = `Dashboard v${DASHBOARD_VERSION} · ${new Date().toLocaleString()}`;
   }
 
-  const [results, aiImpact, aiUsage] = await Promise.all([
+  const [results, aiImpact, aiUsage, contributors] = await Promise.all([
     Promise.all(REPO_CONFIG.map((cfg) => fetchSummary(cfg))),
     aiImpactPromise,
     aiUsagePromise,
+    contributorsPromise,
   ]);
-  renderDashboard(results, aiImpact, aiUsage);
+  renderDashboard(results, aiImpact, aiUsage, contributors);
   document.getElementById('last-updated').textContent = `Dashboard v${DASHBOARD_VERSION} · live · ${new Date().toLocaleString()}`;
 }
 

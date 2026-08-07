@@ -13,7 +13,14 @@
         "properties": {
           "repo": { "type": "string" },
           "repoName": { "type": "string" },
-          "status": { "enum": ["live", "pending", "unavailable"] },
+          "status": { "enum": ["live", "enabled", "pending", "unavailable"] },
+          "framework": { "type": "string" },
+          "aiEnabled": { "type": "boolean" },
+          "aiCapable": { "type": "boolean" },
+          "source": {
+            "enum": ["allure-environment", "allure-attachment", "allure-pages-json", "ci-json"]
+          },
+          "reportUrl": { "type": "string" },
           "finishedAt": { "type": "string" },
           "ciRunUrl": { "type": "string" },
           "summary": {
