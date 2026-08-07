@@ -16,6 +16,7 @@ REPOS = {
         "report_url": "https://retech-us.github.io/retech-web-automation/",
         "ci_url": "https://github.com/retech-us/retech-web-automation/actions",
         "summary_url": "https://retech-us.github.io/retech-web-automation/run-summary.json",
+        "ai_usage_url": "https://retech-us.github.io/retech-web-automation/ai-usage.json",
         "widget_url": "https://retech-us.github.io/retech-web-automation/widgets/summary.json",
         "environment_url": "https://retech-us.github.io/retech-web-automation/widgets/environment.json",
         "executors_url": "https://retech-us.github.io/retech-web-automation/widgets/executors.json",
@@ -485,8 +486,130 @@ def main() -> int:
             f"env={payload.get('environment', '—')} instance={payload.get('instance', '—')}"
         )
     append_automation_history(out_dir, payloads)
+    fetch_ai_usage(out_dir, payloads)
     return 0
 
+
+def _num(value, default: float = 0) -> float:
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def normalize_ai_usage(repo_id: str, cfg: dict, raw: dict | None, run_payload: dict | None) -> dict:
+    """Map published ai-usage.json (or legacy summary shape) to dashboard contract."""
+    if not raw:
+        return {
+            "repo": repo_id,
+            "repoName": cfg.get("repo_name", repo_id),
+            "status": "pending",
+            "finishedAt": run_payload.get("finishedAt") if run_payload else None,
+            "ciRunUrl": (run_payload or {}).get("ciRunUrl") or cfg.get("ci_url"),
+            "summary": {},
+            "jobs": [],
+            "note": "AI metrics not published yet for this suite — enable ai-usage.json in CI.",
+        }
+
+    summary_src = raw.get("summary") if isinstance(raw.get("summary"), dict) else raw
+    merged = {
+        "llmInvocations": _num(summary_src.get("llmInvocations") or summary_src.get("aiInvocations") or summary_src.get("llmDecisionCount")),
+        "healsSucceeded": _num(summary_src.get("healsSucceeded") or summary_src.get("aiSuccessCount") or summary_src.get("healingSuccessCount")),
+        "healsFailed": _num(summary_src.get("healsFailed") or summary_src.get("aiFailureCount") or summary_src.get("healingFailureCount")),
+        "healsSkipped": _num(summary_src.get("healsSkipped") or summary_src.get("aiSkippedCount")),
+        "healSuccessRatePct": _num(summary_src.get("healSuccessRatePct") or summary_src.get("aiSuccessRatePct") or summary_src.get("healingSuccessRatePct")),
+        "elementInteractions": _num(summary_src.get("elementInteractions") or summary_src.get("totalElementInteractions")),
+        "estimatedCostUsd": _num(summary_src.get("estimatedCostUsd") or summary_src.get("aiEstimatedCostDollars")),
+        "estimatedMinutesSaved": _num(summary_src.get("estimatedMinutesSaved") or summary_src.get("aiEstimatedTimeSavedMinutes")),
+        "avgAiLatencyMs": _num(summary_src.get("avgAiLatencyMs") or summary_src.get("aiAverageLatencyMs") or summary_src.get("avgTimeAddedByAiMs")),
+        "learnedLocatorsCount": int(_num(summary_src.get("learnedLocatorsCount"))),
+        "flakyQuarantineCount": int(_num(summary_src.get("flakyQuarantineCount"))),
+    }
+    if merged["healSuccessRatePct"] == 0 and merged["healsSucceeded"] + merged["healsFailed"] > 0:
+        healed = merged["healsSucceeded"] + merged["healsFailed"]
+        merged["healSuccessRatePct"] = round((merged["healsSucceeded"] / healed) * 100, 1)
+
+    jobs = raw.get("jobs") if isinstance(raw.get("jobs"), list) else []
+    return {
+        "repo": raw.get("repo") or repo_id,
+        "repoName": raw.get("repoName") or cfg.get("repo_name", repo_id),
+        "status": "live",
+        "finishedAt": raw.get("finishedAt") or (run_payload or {}).get("finishedAt"),
+        "ciRunUrl": raw.get("ciRunUrl") or (run_payload or {}).get("ciRunUrl") or cfg.get("ci_url"),
+        "runId": raw.get("runId") or (run_payload or {}).get("runId"),
+        "summary": merged,
+        "jobs": jobs,
+        "topFailingLocators": raw.get("topFailingLocators") or summary_src.get("topFailingLocators") or summary_src.get("topFailingLocatorsFromAi") or {},
+        "topHealedModules": raw.get("topHealedModules") or summary_src.get("mostHealedModules") or {},
+        "topSkipReasons": raw.get("topSkipReasons") or summary_src.get("topAiSkipReasons") or {},
+    }
+
+
+def aggregate_ai_totals(repos: dict[str, dict]) -> dict:
+    totals = {
+        "llmInvocations": 0,
+        "healsSucceeded": 0,
+        "healsFailed": 0,
+        "healsSkipped": 0,
+        "healSuccessRatePct": 0,
+        "elementInteractions": 0,
+        "estimatedCostUsd": 0,
+        "estimatedMinutesSaved": 0,
+        "avgAiLatencyMs": 0,
+        "learnedLocatorsCount": 0,
+        "flakyQuarantineCount": 0,
+        "reposReporting": 0,
+    }
+    latency_weight = 0
+    for entry in repos.values():
+        if entry.get("status") != "live":
+            continue
+        s = entry.get("summary") or {}
+        if not any(_num(s.get(k)) for k in ("llmInvocations", "healsSucceeded", "elementInteractions")):
+            continue
+        totals["reposReporting"] += 1
+        for key in (
+            "llmInvocations", "healsSucceeded", "healsFailed", "healsSkipped",
+            "elementInteractions", "estimatedCostUsd", "estimatedMinutesSaved",
+            "learnedLocatorsCount", "flakyQuarantineCount",
+        ):
+            totals[key] += _num(s.get(key))
+        inv = _num(s.get("llmInvocations"))
+        if inv > 0:
+            latency_weight += inv
+            totals["avgAiLatencyMs"] += _num(s.get("avgAiLatencyMs")) * inv
+    if latency_weight > 0:
+        totals["avgAiLatencyMs"] = round(totals["avgAiLatencyMs"] / latency_weight, 1)
+    healed = totals["healsSucceeded"] + totals["healsFailed"]
+    if healed > 0:
+        totals["healSuccessRatePct"] = round((totals["healsSucceeded"] / healed) * 100, 1)
+    totals["estimatedCostUsd"] = round(totals["estimatedCostUsd"], 4)
+    totals["estimatedMinutesSaved"] = round(totals["estimatedMinutesSaved"], 1)
+    return totals
+
+
+def fetch_ai_usage(out_dir: Path, run_payloads: dict[str, dict]) -> None:
+    repos: dict[str, dict] = {}
+    for repo_id, cfg in REPOS.items():
+        raw = None
+        url = cfg.get("ai_usage_url")
+        if url:
+            raw = fetch_json(url)
+        repos[repo_id] = normalize_ai_usage(repo_id, cfg, raw, run_payloads.get(repo_id))
+
+    doc = {
+        "schemaVersion": "1.0",
+        "updatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "repos": repos,
+        "totals": aggregate_ai_totals(repos),
+    }
+    path = out_dir / "ai-usage.json"
+    path.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+    live = doc["totals"]["reposReporting"]
+    inv = int(doc["totals"]["llmInvocations"])
+    print(f"🤖 ai-usage: {live} repo(s) reporting · {inv} LLM invocations → {path}")
 
 def _point_from_payload(suite: str, payload: dict) -> dict | None:
     counts = payload.get("counts") or {}

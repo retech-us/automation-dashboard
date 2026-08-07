@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI usage metrics (per repo or aggregated)",
+  "type": "object",
+  "required": ["schemaVersion", "updatedAt", "repos"],
+  "properties": {
+    "schemaVersion": { "type": "string" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "repos": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "repo": { "type": "string" },
+          "repoName": { "type": "string" },
+          "status": { "enum": ["live", "pending", "unavailable"] },
+          "finishedAt": { "type": "string" },
+          "ciRunUrl": { "type": "string" },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "llmInvocations": { "type": "number" },
+              "healsSucceeded": { "type": "number" },
+              "healsFailed": { "type": "number" },
+              "healsSkipped": { "type": "number" },
+              "healSuccessRatePct": { "type": "number" },
+              "elementInteractions": { "type": "number" },
+              "estimatedCostUsd": { "type": "number" },
+              "estimatedMinutesSaved": { "type": "number" },
+              "avgAiLatencyMs": { "type": "number" },
+              "learnedLocatorsCount": { "type": "number" },
+              "flakyQuarantineCount": { "type": "number" }
+            }
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "status": { "type": "string" },
+                "metrics": { "type": "object" }
+              }
+            }
+          },
+          "topFailingLocators": { "type": "object" },
+          "topHealedModules": { "type": "object" },
+          "topSkipReasons": { "type": "object" }
+        }
+      }
+    },
+    "totals": { "type": "object" }
+  }
+}

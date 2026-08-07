@@ -1320,6 +1320,146 @@ body.mode-executive .panel--ai { display: none; }
   line-height: 1.35;
 }
 
+.ai-metric--live {
+  border-color: rgba(110, 231, 183, 0.35);
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08), var(--surface-2));
+}
+
+.ai-section {
+  margin-bottom: 20px;
+}
+
+.ai-section__title {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.ai-section__sub {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.ai-updated,
+.ai-pending {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.ai-pending code {
+  font-size: 0.78rem;
+}
+
+.ai-repo-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.ai-repo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.ai-repo-table th,
+.ai-repo-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.ai-repo-table th {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #93c5fd;
+}
+
+.ai-repo-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ai-job-row td {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.ai-repo-status {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ai-repo-status--live {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+
+.ai-repo-status--pending {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+}
+
+.ai-help-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+
+.ai-help-list li + li {
+  margin-top: 6px;
+}
+
+.ai-top-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.ai-top-grid h3 {
+  margin: 0 0 8px;
+  font-size: 0.88rem;
+}
+
+.ai-top-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.ai-top-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.ai-top-list li:last-child {
+  border-bottom: none;
+}
+
+.ai-top-list strong {
+  color: #93c5fd;
+  font-variant-numeric: tabular-nums;
+}
+
 .ai-caps {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

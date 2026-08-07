@@ -15,74 +15,95 @@
     "skipped": 13
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/28149782194",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31146555470",
   "topFailures": [
     {
-      "name": "Verify Approval AI tab Products approvals",
-      "status": "failed",
-      "category": "assertion",
-      "feature": "Verify Approval AI tab Products approvals",
-      "reason": "5 failed \u00b7 10 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/b02704cece7f3ba691b3e84ba4300cc3/"
+      "name": "User creates a new product and edits",
+      "fullName": "src/test/resources/features/ProductsTab.feature:27",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ProductsTab.feature:27': invalid element state",
+      "feature": "Validate products tab features"
     },
     {
-      "name": "Verify realogram edits with API and spatial review",
-      "status": "failed",
-      "category": "assertion",
-      "feature": "Verify realogram edits with API and spatial review",
-      "reason": "1 failed \u00b7 0 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/1d5050cf4640add5d2867ea89036ffd6/"
+      "name": "User creates a new product with UPC and product image",
+      "fullName": "src/test/resources/features/ProductsTab.feature:17",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ProductsTab.feature:17': invalid element state",
+      "feature": "Validate products tab features"
     },
     {
-      "name": "Verify login on FE dashboard",
-      "status": "failed",
-      "category": "assertion",
-      "feature": "Verify login on FE dashboard",
-      "reason": "1 failed \u00b7 0 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/c124698d1444fb5fc49a06c3b9de779e/"
+      "name": "User creates a new product with multiple UPC and product image",
+      "fullName": "src/test/resources/features/ProductsTab.feature:22",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ProductsTab.feature:22': invalid element state",
+      "feature": "Validate products tab features"
     },
     {
-      "name": "Verify price tag corrections and approvals",
+      "name": "User creates a new product without UPC",
+      "fullName": "src/test/resources/features/ProductsTab.feature:12",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ProductsTab.feature:12': invalid element state",
+      "feature": "Validate products tab features"
+    },
+    {
+      "name": "Verify BOO import",
+      "fullName": "src/test/resources/features/Imports.feature:32",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/Imports.feature:32': Add Resource button could not be clicked after retries",
+      "feature": "Verify import functionality"
+    },
+    {
+      "name": "Verify assign planogram import",
+      "fullName": "src/test/resources/features/Imports.feature:22",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/Imports.feature:22': Expected condition failed: waiting for com.retech.web.utils.BaseTestClass$$Lambda/0x00007f8ccb8fb090@e57aa59 (tried for 30 second(s) with 200 milliseconds interval)",
+      "feature": "Verify import functionality"
+    },
+    {
+      "name": "Verify automate cleaning delete button",
+      "fullName": "src/test/resources/features/CleansingTool.feature:39",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/CleansingTool.feature:39': Element could not be found or healed after attempts. Screen=CleansingToolPageObject Purpose=Loader Icon",
+      "feature": "Verify cleansing tool"
+    },
+    {
+      "name": "Verify automated approval for OCR assisted FVs, approved by superuser shows in history",
+      "fullName": "src/test/resources/features/ApprovalAutomated.feature:21",
       "status": "broken",
       "category": "unknown",
-      "feature": "Verify price tag corrections and approvals",
-      "reason": "0 failed \u00b7 6 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/fdec2b186f1bc680804553f0850ce9ba/"
+      "reason": "Test failed: 'src/test/resources/features/ApprovalAutomated.feature:21': Failed to click Accept button after all attempts",
+      "feature": "Verify automated approvals and OCR assisted approvals"
     },
     {
-      "name": "Verify task tab features",
+      "name": "Verify automated approval for OCR assisted FVs, rejected by superuser shows in history",
+      "fullName": "src/test/resources/features/ApprovalAutomated.feature:27",
       "status": "broken",
-      "category": "unknown",
-      "feature": "Verify task tab features",
-      "reason": "0 failed \u00b7 5 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/ffd79f04e0d824867ab2132505cacab9/"
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAutomated.feature:27': Expected condition failed: waiting for com.retech.web.utils.ApprovalAiNavigationHelper$$Lambda/0x00007f8ccb9f2d20@21dd6c57 (tried for 60 second(s) with 300 milliseconds interval)",
+      "feature": "Verify automated approvals and OCR assisted approvals"
     },
     {
-      "name": "Validate products tab features",
+      "name": "Verify automated approval for automated FVs, approved by superuser shows in history",
+      "fullName": "src/test/resources/features/ApprovalAutomated.feature:9",
       "status": "broken",
       "category": "unknown",
-      "feature": "Validate products tab features",
-      "reason": "0 failed \u00b7 4 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/9e92f4b613e9b36d0da615cf8c07ed0c/"
-    },
-    {
-      "name": "Verify scan list page actions",
-      "status": "broken",
-      "category": "unknown",
-      "feature": "Verify scan list page actions",
-      "reason": "0 failed \u00b7 2 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/9f4459dcfb2b029f01b7281d5033769a/"
-    },
-    {
-      "name": "Verify automated approvals and OCR assisted approvals",
-      "status": "broken",
-      "category": "unknown",
-      "feature": "Verify automated approvals and OCR assisted approvals",
-      "reason": "0 failed \u00b7 2 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-web-automation/#behaviors/3b0cccebd290b229869a39813fa7518a/"
+      "reason": "Test failed: 'src/test/resources/features/ApprovalAutomated.feature:9': Failed to click Accept button after all attempts",
+      "feature": "Verify automated approvals and OCR assisted approvals"
     }
   ],
-  "failureCategories": {},
+  "failureCategories": {
+    "login": 7,
+    "locator": 4,
+    "timeout": 2,
+    "unknown": 2
+  },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
@@ -93,9 +114,9 @@
   },
   "historyTrend": [
     {
-      "passPct": 50.4,
-      "total": 113,
-      "failed": 43
+      "passPct": 61.0,
+      "total": 41,
+      "failed": 15
     },
     {
       "passPct": 35.1,
@@ -103,10 +124,30 @@
       "failed": 29
     }
   ],
-  "branch": "feature/hybrid-automation",
-  "commit": "c2a32b2",
+  "branch": "develop",
+  "commit": "3eae8db",
   "environment": "CI",
   "browser": "Chrome",
   "workflow": "Java CI with Maven",
-  "osName": "Linux"
+  "osName": "Linux",
+  "jobs": [
+    {
+      "name": "scan-tests",
+      "status": "cancelled"
+    },
+    {
+      "name": "sequential-only-tests",
+      "status": "success"
+    },
+    {
+      "name": "hybrid-tests",
+      "status": "cancelled"
+    },
+    {
+      "name": "parallel-tests",
+      "status": "failure"
+    }
+  ],
+  "runId": "31146555470",
+  "runNumber": 1006
 }
