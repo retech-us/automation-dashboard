@@ -15,18 +15,28 @@
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31309639135",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31309946685",
   "topFailures": [
     {
-      "name": "Tracked Capture Screen",
+      "name": "Verify Task Status Filter for Completed Tasks",
+      "fullName": "src/test/resources/featureFiles/04_TaskTabFilters.feature:35",
       "status": "broken",
       "category": "unknown",
-      "feature": "Tracked Capture Screen",
-      "reason": "0 failed \u00b7 1 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/#behaviors/5445a981cb84d4d2ee7ec384c2f5b499/"
+      "reason": "Test failed: 'src/test/resources/featureFiles/04_TaskTabFilters.feature:35': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_8",
+      "feature": "Verify Task Tab Filters"
+    },
+    {
+      "name": "Verify Task Status Filter for Not Started Tasks",
+      "fullName": "src/test/resources/featureFiles/04_TaskTabFilters.feature:5",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/04_TaskTabFilters.feature:5': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_8",
+      "feature": "Verify Task Tab Filters"
     }
   ],
-  "failureCategories": {},
+  "failureCategories": {
+    "unknown": 2
+  },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
@@ -72,12 +82,12 @@
   "branch": "framework-stability-pr",
   "commit": "e8cb22e",
   "workflow": "Mobile Tests \u2013 Android & iOS Parallel",
-  "runId": "31309639135",
-  "runNumber": 241,
+  "runId": "31309946685",
+  "runNumber": 243,
   "jobs": [
     {
       "name": "ios-tests",
-      "status": "failure"
+      "status": "skipped"
     },
     {
       "name": "android-tests",

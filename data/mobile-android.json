@@ -5,31 +5,52 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-08-07T05:12:03Z",
-  "durationMs": 0,
+  "finishedAt": "2026-08-09T11:20:47Z",
+  "durationMs": 536431,
   "summary": {
-    "total": 25,
-    "passed": 19,
-    "failed": 2,
-    "broken": 4,
+    "total": 2,
+    "passed": 0,
+    "failed": 0,
+    "broken": 2,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/android/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31309639135",
-  "topFailures": [],
-  "failureCategories": {},
-  "dataSource": "allure-history-trend",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31309946685",
+  "topFailures": [
+    {
+      "name": "Verify Task Status Filter for Completed Tasks",
+      "fullName": "src/test/resources/featureFiles/04_TaskTabFilters.feature:35",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/04_TaskTabFilters.feature:35': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_8",
+      "feature": "Verify Task Tab Filters"
+    },
+    {
+      "name": "Verify Task Status Filter for Not Started Tasks",
+      "fullName": "src/test/resources/featureFiles/04_TaskTabFilters.feature:5",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/04_TaskTabFilters.feature:5': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_8",
+      "feature": "Verify Task Tab Filters"
+    }
+  ],
+  "failureCategories": {
+    "unknown": 2
+  },
+  "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
-    "total": 25,
-    "passed": 19,
-    "review": 6,
+    "total": 2,
+    "passed": 0,
+    "review": 2,
     "skipped": 0
   },
-  "lastAvailable": true,
-  "platform": "Android",
-  "environment": "CI",
   "historyTrend": [
+    {
+      "passPct": 0.0,
+      "total": 2,
+      "failed": 2
+    },
     {
       "passPct": 68.0,
       "total": 25,
@@ -54,26 +75,22 @@
       "passPct": 80.0,
       "total": 25,
       "failed": 5
-    },
-    {
-      "passPct": 0.0,
-      "total": 2,
-      "failed": 2
     }
   ],
-  "branch": "framework-stability-pr",
-  "commit": "e8cb22e",
-  "workflow": "Mobile Tests \u2013 Android & iOS Parallel",
-  "runId": "31309639135",
-  "runNumber": 241,
+  "platform": "Android",
+  "branch": "126/merge",
+  "commit": "ddbb8b2",
   "jobs": [
     {
       "name": "ios-tests",
-      "status": "failure"
+      "status": "skipped"
     },
     {
       "name": "android-tests",
       "status": "failure"
     }
-  ]
+  ],
+  "runId": "31309946685",
+  "runNumber": 243,
+  "environment": "CI"
 }
