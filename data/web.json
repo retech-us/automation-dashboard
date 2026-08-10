@@ -5,116 +5,120 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-06-25T11:17:56Z",
-  "durationMs": 19475220,
+  "finishedAt": "2026-08-10T07:59:49Z",
+  "durationMs": 14457189,
   "summary": {
-    "total": 113,
-    "passed": 57,
-    "failed": 7,
-    "broken": 36,
-    "skipped": 13
+    "total": 112,
+    "passed": 65,
+    "failed": 3,
+    "broken": 34,
+    "skipped": 10
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31357343793",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31353939558",
   "topFailures": [
     {
-      "name": "Verify cleansing tool delete FV",
-      "fullName": "src/test/resources/features/CleansingTool.feature:9",
+      "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:101",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAi.feature:101': invalid element state: Element is not currently interactable and may not be manipulated",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Input UPC action by subuser, submit train transaction rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:115",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAi.feature:115': invalid element state: Element is not currently interactable and may not be manipulated",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit PLUNF action by subuser, approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:59",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:59'",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit PLUNF action by subuser, rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:73",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:73'",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit correction action by subuser, approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:129",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:129'",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit correction action by subuser, rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:157",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:157'",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit correction action by subuser, train by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:143",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [072036734440",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit exception action by subuser, approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:31",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:31'",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit exception action by subuser, approved by superuser and verify price tag history tab",
+      "fullName": "src/test/resources/features/PriceTags.feature:34",
+      "status": "broken",
+      "category": "data",
+      "reason": "Test data validation failed in 'src/test/resources/features/PriceTags.feature:34': Price Tags approval tab not found after Approval AI navigation",
+      "feature": "Verify price tag corrections and approvals"
+    },
+    {
+      "name": "Submit exception action by subuser, rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:45",
       "status": "broken",
       "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/CleansingTool.feature:9': FV action control not found for preview=1 action=3 purpose=Delete Button 1. URL: https://epsilon.rebotics.net/cleansing-tool/by-upc/798015",
-      "feature": "Verify cleansing tool"
-    },
-    {
-      "name": "Verify cloning of an existing task",
-      "fullName": "src/test/resources/features/Tasks.feature:59",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/features/Tasks.feature:59': Failed to find and click task type button for: AMP Team - Planogram Reset Compliance",
-      "feature": "Verify task tab features"
-    },
-    {
-      "name": "Verify deactivating an existing task and creating a new task with the same name",
-      "fullName": "src/test/resources/features/Tasks.feature:69",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/features/Tasks.feature:69': Failed to find and click task type button for: AMP Team - Planogram Reset Compliance",
-      "feature": "Verify task tab features"
-    },
-    {
-      "name": "Verify editing of an existing task and adding another store",
-      "fullName": "src/test/resources/features/Tasks.feature:64",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/features/Tasks.feature:64': Failed to find and click task type button for: AMP Team - Planogram Reset Compliance",
-      "feature": "Verify task tab features"
-    },
-    {
-      "name": "Verify new task creation with BOH filter",
-      "fullName": "src/test/resources/features/Tasks.feature:29",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/features/Tasks.feature:29': Failed to find and click task type button for: AMP Team - Planogram Reset Compliance",
-      "feature": "Verify task tab features"
-    },
-    {
-      "name": "Verify new task creation with POG action filter as Add",
-      "fullName": "src/test/resources/features/Tasks.feature:39",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/features/Tasks.feature:39': Failed to find and click task type button for: AMP Team - Planogram Reset Compliance",
-      "feature": "Verify task tab features"
-    },
-    {
-      "name": "Verify new task creation with POG compliance threshold",
-      "fullName": "src/test/resources/features/Tasks.feature:44",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/features/Tasks.feature:44': Failed to find and click task type button for: AMP Team - Planogram Reset Compliance",
-      "feature": "Verify task tab features"
-    },
-    {
-      "name": "Verify new task creation with basic task",
-      "fullName": "src/test/resources/features/Tasks.feature:9",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/features/Tasks.feature:9': Failed to find and click task type button for: AMP Team - Planogram Reset Compliance",
-      "feature": "Verify task tab features"
-    },
-    {
-      "name": "Verify new task creation with deactivate filter as NW and DW",
-      "fullName": "src/test/resources/features/Tasks.feature:24",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/features/Tasks.feature:24': Failed to find and click task type button for: AMP Team - Planogram Reset Compliance",
-      "feature": "Verify task tab features"
-    },
-    {
-      "name": "Verify new task creation with existing and new item status filter",
-      "fullName": "src/test/resources/features/Tasks.feature:14",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/features/Tasks.feature:14': Failed to find and click task type button for: AMP Team - Planogram Reset Compliance",
-      "feature": "Verify task tab features"
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:45': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI Exception Tab",
+      "feature": "Verify Approval AI tab Products approvals"
     }
   ],
   "failureCategories": {
-    "locator": 1,
+    "login": 3,
+    "locator": 4,
+    "timeout": 9,
+    "data": 5,
+    "assertion": 3,
     "unknown": 13
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
-    "total": 113,
-    "passed": 57,
-    "review": 43,
-    "skipped": 13
+    "total": 112,
+    "passed": 65,
+    "review": 37,
+    "skipped": 10
   },
   "historyTrend": [
     {
-      "passPct": 72.6,
-      "total": 62,
-      "failed": 14
+      "passPct": 58.0,
+      "total": 112,
+      "failed": 37
     },
     {
       "passPct": 35.1,
@@ -123,15 +127,16 @@
     }
   ],
   "branch": "develop",
-  "commit": "6911847",
+  "commit": "dda4e7b",
   "environment": "CI",
+  "instance": "epsilon",
   "browser": "Chrome",
   "workflow": "Java CI with Maven",
   "osName": "Linux",
   "jobs": [
     {
       "name": "scan-tests",
-      "status": "skipped"
+      "status": "failure"
     },
     {
       "name": "sequential-only-tests",
@@ -146,7 +151,6 @@
       "status": "failure"
     }
   ],
-  "runId": "31357343793",
-  "runNumber": 1014,
-  "instance": "epsilon"
+  "runId": "31353939558",
+  "runNumber": 1013
 }
