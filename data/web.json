@@ -5,117 +5,119 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-06-25T11:17:56Z",
-  "durationMs": 19475220,
+  "finishedAt": "2026-08-10T13:03:50Z",
+  "durationMs": 11264738,
   "summary": {
-    "total": 113,
-    "passed": 57,
-    "failed": 7,
-    "broken": 36,
-    "skipped": 13
+    "total": 112,
+    "passed": 62,
+    "failed": 4,
+    "broken": 26,
+    "skipped": 20
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31365212779",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31376614757",
   "topFailures": [
     {
-      "name": "User creates a new product with UPC and product image",
-      "fullName": "src/test/resources/features/ProductsTab.feature:17",
+      "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:101",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:101': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI Train Tab",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Input UPC action by subuser, submit train transaction rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:115",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAi.feature:115': invalid element state: Element is not currently interactable and may not be manipulated",
+      "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit PLUNF action by subuser, approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:59",
       "status": "broken",
       "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ProductsTab.feature:17': Expected condition failed: waiting for com.retech.web.pageObject.ProductsTabPageObject$$Lambda/0x00007f082b972000@4e2aef9a (tried for 20 second(s) with 300 milliseconds interval)",
-      "feature": "Validate products tab features"
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:59'",
+      "feature": "Verify Approval AI tab Products approvals"
     },
     {
-      "name": "Verify cancel import",
-      "fullName": "src/test/resources/features/Imports.feature:75",
+      "name": "Submit PLUNF action by subuser, rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:73",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/Imports.feature:75': Add Resource button could not be clicked after retries",
-      "feature": "Verify import functionality"
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:73'",
+      "feature": "Verify Approval AI tab Products approvals"
     },
     {
-      "name": "Verify cleansing tool delete FV",
-      "fullName": "src/test/resources/features/CleansingTool.feature:9",
+      "name": "Submit correction action by subuser, approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:129",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/CleansingTool.feature:9': FV action control not found for preview=1 action=3 purpose=Delete Button 1. URL: https://epsilon.rebotics.net/cleansing-tool/by-upc/798015",
-      "feature": "Verify cleansing tool"
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:129'",
+      "feature": "Verify Approval AI tab Products approvals"
     },
     {
-      "name": "Verify cloning of an existing task",
-      "fullName": "src/test/resources/features/Tasks.feature:59",
+      "name": "Submit correction action by subuser, rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:157",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/Tasks.feature:59'",
-      "feature": "Verify task tab features"
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:157'",
+      "feature": "Verify Approval AI tab Products approvals"
     },
     {
-      "name": "Verify creation of a new user task group and assign selected user",
-      "fullName": "src/test/resources/features/TaskGroups.feature:17",
+      "name": "Submit correction action by subuser, train by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:143",
       "status": "failed",
       "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/TaskGroups.feature:17': User 'superuser_automated' not assigned to Store after save operation",
-      "feature": "Verify task user group tab functionality"
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [027000690611] but found [072036987570]",
+      "feature": "Verify Approval AI tab Products approvals"
     },
     {
-      "name": "Verify deactivating an existing task and creating a new task with the same name",
-      "fullName": "src/test/resources/features/Tasks.feature:69",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/Tasks.feature:69'",
-      "feature": "Verify task tab features"
-    },
-    {
-      "name": "Verify edit store",
-      "fullName": "src/test/resources/features/Store.feature:23",
+      "name": "Submit exception action by subuser, approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:31",
       "status": "broken",
       "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/Store.feature:23'",
-      "feature": "Verify stores page functionalities"
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:31'",
+      "feature": "Verify Approval AI tab Products approvals"
     },
     {
-      "name": "Verify editing of an existing task and adding another store",
-      "fullName": "src/test/resources/features/Tasks.feature:64",
+      "name": "Submit exception action by subuser, approved by superuser and verify price tag history tab",
+      "fullName": "src/test/resources/features/PriceTags.feature:34",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/Tasks.feature:64'",
-      "feature": "Verify task tab features"
+      "category": "data",
+      "reason": "Test data validation failed in 'src/test/resources/features/PriceTags.feature:34': Price Tags approval tab not found after Approval AI navigation",
+      "feature": "Verify price tag corrections and approvals"
     },
     {
-      "name": "Verify new task creation with BOH filter",
-      "fullName": "src/test/resources/features/Tasks.feature:29",
+      "name": "Submit exception action by subuser, rejected by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:45",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/Tasks.feature:29'",
-      "feature": "Verify task tab features"
-    },
-    {
-      "name": "Verify new task creation with POG action filter as Add",
-      "fullName": "src/test/resources/features/Tasks.feature:39",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/Tasks.feature:39'",
-      "feature": "Verify task tab features"
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:45'",
+      "feature": "Verify Approval AI tab Products approvals"
     }
   ],
   "failureCategories": {
-    "locator": 17,
-    "timeout": 2,
-    "assertion": 1
+    "login": 2,
+    "locator": 10,
+    "timeout": 9,
+    "data": 6,
+    "assertion": 3
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
-    "total": 113,
-    "passed": 57,
-    "review": 43,
-    "skipped": 13
+    "total": 112,
+    "passed": 62,
+    "review": 30,
+    "skipped": 20
   },
   "historyTrend": [
     {
-      "passPct": 62.9,
-      "total": 62,
-      "failed": 20
+      "passPct": 55.4,
+      "total": 112,
+      "failed": 30
     },
     {
       "passPct": 35.1,
@@ -124,15 +126,16 @@
     }
   ],
   "branch": "develop",
-  "commit": "45cbd95",
+  "commit": "acf8fd1",
   "environment": "CI",
+  "instance": "epsilon",
   "browser": "Chrome",
   "workflow": "Java CI with Maven",
   "osName": "Linux",
   "jobs": [
     {
       "name": "scan-tests",
-      "status": "skipped"
+      "status": "failure"
     },
     {
       "name": "sequential-only-tests",
@@ -147,7 +150,6 @@
       "status": "failure"
     }
   ],
-  "runId": "31365212779",
-  "runNumber": 1015,
-  "instance": "epsilon"
+  "runId": "31376614757",
+  "runNumber": 1016
 }
