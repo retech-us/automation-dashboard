@@ -5,78 +5,88 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-08-10T01:34:25Z",
-  "durationMs": 6397285,
+  "finishedAt": "2026-08-10T05:58:34Z",
+  "durationMs": 2117304,
   "summary": {
-    "total": 25,
-    "passed": 23,
+    "total": 7,
+    "passed": 2,
     "failed": 0,
-    "broken": 2,
+    "broken": 5,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31357035492",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31357031883",
   "topFailures": [
     {
-      "name": "validate Out Of Shelf Tab features",
+      "name": "Tracked Capture Screen Camera icon",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "unknown",
-      "feature": "validate Out Of Shelf Tab features",
-      "reason": "0 failed \u00b7 2 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/#behaviors/42b6d485af5a8f3e38bb238436aa517b/"
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from planogram level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': View POG button not found after category expand",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from section level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen section rejection",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 80 seconds",
+      "feature": "Tracked Capture Screen"
     }
   ],
-  "failureCategories": {},
+  "failureCategories": {
+    "locator": 2,
+    "timeout": 3
+  },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
-    "total": 25,
-    "passed": 23,
-    "review": 2,
+    "total": 7,
+    "passed": 2,
+    "review": 5,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 92.0,
-      "total": 25,
-      "failed": 2
-    },
-    {
-      "passPct": 9.1,
-      "total": 11,
-      "failed": 10
-    },
-    {
-      "passPct": 92.0,
-      "total": 25,
-      "failed": 2
-    },
-    {
-      "passPct": 88.0,
-      "total": 25,
-      "failed": 3
-    },
-    {
-      "passPct": 96.0,
-      "total": 25,
-      "failed": 1
-    },
-    {
-      "passPct": 24.0,
-      "total": 25,
-      "failed": 19
+      "passPct": 28.6,
+      "total": 7,
+      "failed": 5
     }
   ],
   "platform": "iOS",
-  "branch": "126/merge",
-  "commit": "4a23c87",
+  "branch": "framework-stability-pr",
+  "commit": "436903e",
   "jobs": [
     {
       "name": "platform-tests",
       "status": "failure"
     }
   ],
-  "runId": "31357035492",
-  "runNumber": 250,
+  "runId": "31357031883",
+  "runNumber": 249,
   "environment": "CI"
 }
