@@ -5,53 +5,133 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-08-10T09:47:43Z",
-  "durationMs": 3316443,
+  "finishedAt": "2026-08-10T17:58:26Z",
+  "durationMs": 28345773,
   "summary": {
-    "total": 7,
-    "passed": 4,
+    "total": 25,
+    "passed": 17,
     "failed": 0,
-    "broken": 3,
+    "broken": 8,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31376408944",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31376787166",
   "topFailures": [
     {
-      "name": "Tracked Capture Screen",
+      "name": "Navigate through all the steps of the task",
+      "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became clickable within 80 seconds",
+      "feature": "Navigation through steps of the task"
+    },
+    {
+      "name": "Navigate through task with action step included",
+      "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': java.util.NoSuchElementException",
+      "feature": "Navigation through steps of the task"
+    },
+    {
+      "name": "Price tag actions are not generated if the price tag not detected",
+      "fullName": "src/test/resources/featureFiles/08_PriceTagActions.feature:34",
       "status": "broken",
       "category": "unknown",
-      "feature": "Tracked Capture Screen",
-      "reason": "0 failed \u00b7 3 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/#behaviors/5445a981cb84d4d2ee7ec384c2f5b499/"
+      "reason": "Test failed: 'src/test/resources/featureFiles/08_PriceTagActions.feature:34': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_8",
+      "feature": "to validate Price Tag actions"
+    },
+    {
+      "name": "Tracked Capture Screen Camera icon",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen Camera icon",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from planogram level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from section level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen section rejection",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen section rejection",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Target element not visible after 10 attempts.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen sorting by Capture when TASKS_CAPTURE_BANNER_AISLE_BASED disabled",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:43",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:43': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
     }
   ],
-  "failureCategories": {},
+  "failureCategories": {
+    "locator": 6,
+    "timeout": 10,
+    "unknown": 9
+  },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
-    "total": 7,
-    "passed": 4,
-    "review": 3,
+    "total": 25,
+    "passed": 17,
+    "review": 8,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 57.1,
-      "total": 7,
-      "failed": 3
+      "passPct": 68.0,
+      "total": 25,
+      "failed": 8
     }
   ],
   "platform": "iOS",
   "branch": "develop",
-  "commit": "7908eb0",
+  "commit": "c4366ed",
   "jobs": [
     {
-      "name": "platform-tests",
-      "status": "cancelled"
+      "name": "android-tests",
+      "status": "failure"
+    },
+    {
+      "name": "ios-tests",
+      "status": "failure"
     }
   ],
-  "runId": "31376408944",
-  "runNumber": 256,
+  "runId": "31376787166",
+  "runNumber": 257,
   "environment": "CI"
 }
