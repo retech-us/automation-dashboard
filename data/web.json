@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-08-11T08:02:58Z",
-  "durationMs": 14976719,
+  "finishedAt": "2026-08-11T15:24:31Z",
+  "durationMs": 14814369,
   "summary": {
     "total": 112,
-    "passed": 62,
-    "failed": 4,
-    "broken": 36,
-    "skipped": 10
+    "passed": 60,
+    "failed": 5,
+    "broken": 40,
+    "skipped": 7
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31456667289",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31485757622",
   "topFailures": [
     {
       "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
@@ -29,8 +29,8 @@
       "name": "Input UPC action by subuser, submit train transaction rejected by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:115",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:115': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI Train Tab",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAi.feature:115': invalid element state: Element is not currently interactable and may not be manipulated",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -52,9 +52,9 @@
     {
       "name": "Submit correction action by subuser, approved by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:129",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:129'",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:129': After correction, product UPC should match candidate UPC expected [071190006936",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -62,7 +62,7 @@
       "fullName": "src/test/resources/features/ApprovalAi.feature:157",
       "status": "failed",
       "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:157': After correction, product UPC should match candidate UPC expected [034000399970",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:157': After correction, product UPC should match candidate UPC expected [029000016651] but found [029000016699]",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -77,16 +77,16 @@
       "name": "Submit exception action by subuser, approved by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:31",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:31'",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:31': Burger icon not found after all locator strategies. This indicates a UI regression or changed DOM structure. URL: unknown | Check diagnostics above for page structure details.",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
       "name": "Submit exception action by subuser, approved by superuser and verify price tag history tab",
       "fullName": "src/test/resources/features/PriceTags.feature:34",
-      "status": "failed",
-      "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/features/PriceTags.feature:34': Login failed after 3 attempts: Username input field could not be found. URL: unknown",
+      "status": "broken",
+      "category": "data",
+      "reason": "Test data validation failed in 'src/test/resources/features/PriceTags.feature:34': Price Tags approval tab not found after Approval AI navigation",
       "feature": "Verify price tag corrections and approvals"
     },
     {
@@ -99,25 +99,26 @@
     }
   ],
   "failureCategories": {
-    "login": 16,
-    "locator": 11,
+    "login": 3,
+    "locator": 13,
     "timeout": 5,
-    "data": 5,
-    "assertion": 3
+    "data": 6,
+    "assertion": 5,
+    "unknown": 13
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
     "total": 112,
-    "passed": 62,
-    "review": 40,
-    "skipped": 10
+    "passed": 60,
+    "review": 45,
+    "skipped": 7
   },
   "historyTrend": [
     {
-      "passPct": 55.4,
+      "passPct": 53.6,
       "total": 112,
-      "failed": 40
+      "failed": 45
     },
     {
       "passPct": 35.1,
@@ -126,7 +127,7 @@
     }
   ],
   "branch": "develop",
-  "commit": "43a2659",
+  "commit": "a0ce0e8",
   "environment": "CI",
   "instance": "epsilon",
   "browser": "Chrome",
@@ -150,6 +151,6 @@
       "status": "failure"
     }
   ],
-  "runId": "31456667289",
-  "runNumber": 1018
+  "runId": "31485757622",
+  "runNumber": 1019
 }
