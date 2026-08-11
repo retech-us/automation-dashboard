@@ -1550,6 +1550,25 @@ function formatAiMoney(usd) {
   return `$${v.toFixed(2)}`;
 }
 
+function formatAiDuration(mins) {
+  const v = Number(mins) || 0;
+  if (v <= 0) return '0m';
+  if (v < 1) {
+    const sec = Math.round(v * 60);
+    return sec > 0 ? `${sec}s` : '<1s';
+  }
+  if (v < 60) {
+    const whole = Math.floor(v);
+    const sec = Math.round((v - whole) * 60);
+    if (sec > 0) return `${whole}m ${sec}s`;
+    return `${whole}m`;
+  }
+  const hrs = Math.floor(v / 60);
+  const remainingMins = Math.round(v % 60);
+  if (remainingMins > 0) return `${hrs}h ${remainingMins}m`;
+  return `${hrs}h`;
+}
+
 function formatAiPct(pct) {
   const v = Number(pct) || 0;
   return `${v.toFixed(v >= 10 ? 0 : 1)}%`;
@@ -1582,7 +1601,7 @@ function buildAiUsageHelpBullets(totals, signals) {
       bullets.push(`${formatAiCount(totals.healsSucceeded)} locator recoveries kept tests running instead of failing on UI drift.`);
     }
     if (totals.estimatedMinutesSaved > 0) {
-      bullets.push(`~${formatAiCount(totals.estimatedMinutesSaved)} minutes of manual triage avoided this run (framework estimate).`);
+      bullets.push(`~${formatAiDuration(totals.estimatedMinutesSaved)} of manual triage avoided this run (framework estimate).`);
     }
     if (totals.learnedLocatorsCount > 0) {
       bullets.push(`${formatAiCount(totals.learnedLocatorsCount)} learned locators in memory — repeat breaks heal faster.`);
@@ -1679,7 +1698,7 @@ function renderAiRepoUsageRows(aiUsage) {
         <td>${status === 'live' ? formatAiCount(inv) : '—'}</td>
         <td>${status === 'live' && (s.healsSucceeded || s.healsFailed) ? formatAiPct(healPct) : '—'}</td>
         <td>${status === 'live' ? formatAiMoney(s.estimatedCostUsd) : '—'}</td>
-        <td>${status === 'live' ? formatAiCount(s.estimatedMinutesSaved) : '—'}</td>
+        <td>${status === 'live' ? formatAiDuration(s.estimatedMinutesSaved) : '—'}</td>
         <td>${status === 'live' ? escapeHtml(formatAiSource(entry.source)) : '—'}</td>
         <td>${report} · ${ci}</td>
       </tr>`;
@@ -1696,7 +1715,7 @@ function renderAiRepoUsageRows(aiUsage) {
           <td>${formatAiCount(m.llmInvocations || m.llmDecisionCount)}</td>
           <td>${m.healSuccessRatePct != null ? formatAiPct(m.healSuccessRatePct) : '—'}</td>
           <td>${formatAiMoney(m.estimatedCostUsd || m.aiEstimatedCostDollars)}</td>
-          <td>${formatAiCount(m.estimatedMinutesSaved || m.aiEstimatedTimeSavedMinutes)}</td>
+          <td>${formatAiDuration(m.estimatedMinutesSaved || m.aiEstimatedTimeSavedMinutes)}</td>
           <td>Allure attachment</td>
           <td>${escapeHtml(job.status || '—')}</td>
         </tr>`);
@@ -1775,7 +1794,7 @@ function renderAiImpact(summaries, aiImpact, aiUsage) {
     ${renderAiUsageMetricCard(formatAiCount(totals.llmInvocations), 'LLM invocations', 'Symphony gateway calls this run', true)}
     ${renderAiUsageMetricCard(formatAiPct(totals.healSuccessRatePct), 'Heal success', `${formatAiCount(totals.healsSucceeded)} ok · ${formatAiCount(totals.healsFailed)} failed`, true)}
     ${renderAiUsageMetricCard(formatAiMoney(totals.estimatedCostUsd), 'Est. AI cost', 'Per-run framework estimate', true)}
-    ${renderAiUsageMetricCard(`${formatAiCount(totals.estimatedMinutesSaved)} min`, 'Time saved', 'Less manual locator triage', true)}
+    ${renderAiUsageMetricCard(formatAiDuration(totals.estimatedMinutesSaved), 'Time saved', 'Less manual locator triage', true)}
     ${renderAiUsageMetricCard(formatAiCount(totals.learnedLocatorsCount), 'Learned locators', 'Memory across runs', true)}
     ${renderAiUsageMetricCard(formatAiCount(totals.elementInteractions), 'UI interactions', 'Elements touched in framework', true)}
   ` : (data.metrics || []).map((m) => renderAiUsageMetricCard(m.value, m.label, m.note)).join('');
