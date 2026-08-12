@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-08-11T12:40:36Z",
-  "durationMs": 24751690,
+  "finishedAt": "2026-08-12T05:17:16Z",
+  "durationMs": 19464738,
   "summary": {
     "total": 25,
-    "passed": 18,
+    "passed": 19,
     "failed": 0,
-    "broken": 7,
+    "broken": 6,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/android/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31462424521",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31547749247",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -26,43 +26,11 @@
       "feature": "Navigation through steps of the task"
     },
     {
-      "name": "Navigate through task with survey",
-      "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
-      "status": "failed",
-      "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Exception in completeSurveyAndCloseTheTask: Cached elements 'By.id: com.retechlabs.rebotics.alpha:id/completeButton' do not exist in DOM anymore",
-      "feature": "Navigation through steps of the task"
-    },
-    {
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
       "category": "locator",
       "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen Camera icon",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen View POG from planogram level",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen View POG from section level",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -82,41 +50,39 @@
       "feature": "Tracked Capture Screen"
     },
     {
-      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
-      "status": "failed",
-      "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': No aisle titles are visible after applying the sort. expected [false] but found [true]",
-      "feature": "Tracked Capture Screen"
+      "name": "Verify Task Status Filter for In Progress Tasks",
+      "fullName": "src/test/resources/featureFiles/04_TaskTabFilters.feature:24",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/04_TaskTabFilters.feature:24': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 30 seconds",
+      "feature": "Verify Task Tab Filters"
     },
     {
-      "name": "Verify Task Status Filter for Completed Tasks",
-      "fullName": "src/test/resources/featureFiles/04_TaskTabFilters.feature:35",
+      "name": "Verify Task Status Filter for Incomplete Tasks",
+      "fullName": "src/test/resources/featureFiles/04_TaskTabFilters.feature:13",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/04_TaskTabFilters.feature:35': Task filter icon not found after header preparation",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/04_TaskTabFilters.feature:13': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 30 seconds",
       "feature": "Verify Task Tab Filters"
     }
   ],
   "failureCategories": {
-    "login": 1,
-    "locator": 5,
-    "timeout": 14,
-    "assertion": 1
+    "locator": 3,
+    "timeout": 3
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 18,
-    "review": 7,
+    "passed": 19,
+    "review": 6,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 72.0,
+      "passPct": 76.0,
       "total": 25,
-      "failed": 7
+      "failed": 6
     }
   ],
   "platform": "Android",
@@ -132,7 +98,7 @@
       "status": "failure"
     }
   ],
-  "runId": "31462424521",
-  "runNumber": 259,
+  "runId": "31547749247",
+  "runNumber": 260,
   "environment": "CI"
 }
