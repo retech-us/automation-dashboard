@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-08-12T05:17:16Z",
-  "durationMs": 19464738,
+  "finishedAt": "2026-08-13T08:08:56Z",
+  "durationMs": 15168372,
   "summary": {
-    "total": 25,
-    "passed": 19,
+    "total": 18,
+    "passed": 14,
     "failed": 0,
-    "broken": 6,
+    "broken": 4,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31547749247",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31652084865",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -26,28 +26,12 @@
       "feature": "Navigation through steps of the task"
     },
     {
-      "name": "Tracked Capture Screen Camera icon",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
+      "name": "Navigate through task with survey",
+      "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen section rejection",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': No selectable reason option found within 40s",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': Could not find 'Ascending' element using any locator strategy. Please verify the sorting dialog is open and the element is visible.",
-      "feature": "Tracked Capture Screen"
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "feature": "Navigation through steps of the task"
     },
     {
       "name": "Verify Task Status Filter for In Progress Tasks",
@@ -67,22 +51,22 @@
     }
   ],
   "failureCategories": {
-    "locator": 3,
-    "timeout": 3
+    "timeout": 3,
+    "unknown": 1
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
-    "total": 25,
-    "passed": 19,
-    "review": 6,
+    "total": 18,
+    "passed": 14,
+    "review": 4,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 76.0,
-      "total": 25,
-      "failed": 6
+      "passPct": 77.8,
+      "total": 18,
+      "failed": 4
     }
   ],
   "platform": "iOS",
@@ -95,10 +79,10 @@
     },
     {
       "name": "ios-tests",
-      "status": "failure"
+      "status": "cancelled"
     }
   ],
-  "runId": "31547749247",
-  "runNumber": 260,
+  "runId": "31652084865",
+  "runNumber": 261,
   "environment": "CI"
 }
