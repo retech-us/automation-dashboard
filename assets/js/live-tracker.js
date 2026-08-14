@@ -215,6 +215,7 @@
     start() {
       if (this.isPolling) return;
       this.isPolling = true;
+      this.renderLiveBanner();
       this.checkAll();
     }
 
@@ -349,110 +350,119 @@
     }
 
     renderLiveBanner() {
-      let bannerContainer = document.getElementById('live-execution-container');
-      if (!bannerContainer) {
-        const main = document.querySelector('main.container');
-        if (!main) return;
-        bannerContainer = document.createElement('div');
-        bannerContainer.id = 'live-execution-container';
-        main.insertBefore(bannerContainer, main.firstChild);
-      }
+      const contentEl = document.getElementById('live-runs-content');
+      const statusPill = document.getElementById('live-status-pill');
+      const tabDot = document.getElementById('live-tab-dot');
 
       if (this.activeRuns.size === 0) {
-        bannerContainer.innerHTML = '';
-        bannerContainer.hidden = true;
+        if (tabDot) tabDot.hidden = true;
+        if (statusPill) statusPill.textContent = 'Idle · All Suites Completed';
+        if (contentEl) {
+          contentEl.innerHTML = `
+            <div class="live-empty-state">
+              <div class="live-empty-icon">☕</div>
+              <h3>No Automation Pipelines In Progress</h3>
+              <p>All test suites (Web, Mobile iOS, Mobile Android, and API) are currently idle. No workflows are running in GitHub Actions right now.</p>
+              <div class="live-empty-meta">
+                <span class="live-pulse" style="display:inline-block;width:8px;height:8px;"></span> Listening to GitHub Actions CI · Auto-checks every 30s
+              </div>
+            </div>
+          `;
+        }
         return;
       }
 
-      bannerContainer.hidden = false;
       const runs = Array.from(this.activeRuns.values());
+      if (tabDot) tabDot.hidden = false;
+      if (statusPill) statusPill.textContent = `🟢 ${runs.length} Active Run(s) In Progress`;
 
-      bannerContainer.innerHTML = runs.map(run => {
-        const pct = Math.min(100, Math.max(0, run.percent || 0));
-        const total = run.total || 0;
-        const completed = run.completed || 0;
-        const passed = run.passed || 0;
-        const failed = run.failed || 0;
-        const skipped = run.skipped || 0;
-        const etaText = run.etaSeconds ? `~${Math.floor(run.etaSeconds / 60)}m ${run.etaSeconds % 60}s remaining` : 'Calculating ETA…';
-        const current = run.currentTest || 'Running tests…';
-        const logs = run.recentLogs || [];
+      if (contentEl) {
+        contentEl.innerHTML = runs.map(run => {
+          const pct = Math.min(100, Math.max(0, run.percent || 0));
+          const total = run.total || 0;
+          const completed = run.completed || 0;
+          const passed = run.passed || 0;
+          const failed = run.failed || 0;
+          const skipped = run.skipped || 0;
+          const etaText = run.etaSeconds ? `~${Math.floor(run.etaSeconds / 60)}m ${run.etaSeconds % 60}s remaining` : 'Calculating ETA…';
+          const current = run.currentTest || 'Running tests…';
+          const logs = run.recentLogs || [];
 
-        return `
-          <section class="live-card" aria-label="Live Test Execution">
-            <div class="live-card__header">
-              <div class="live-card__title">
-                <span class="live-pulse" aria-hidden="true"></span>
-                <span class="live-badge">LIVE IN PROGRESS</span>
-                <h3>${run.icon} ${run.label} — Run #${run.runNumber || run.runId}</h3>
-                <span class="live-workflow">${escapeHtml(run.workflowName || '')}</span>
+          return `
+            <section class="live-card" aria-label="Live Test Execution">
+              <div class="live-card__header">
+                <div class="live-card__title">
+                  <span class="live-pulse" aria-hidden="true"></span>
+                  <span class="live-badge">LIVE IN PROGRESS</span>
+                  <h3>${run.icon} ${run.label} — Run #${run.runNumber || run.runId}</h3>
+                  <span class="live-workflow">${escapeHtml(run.workflowName || '')}</span>
+                </div>
+                <div class="live-card__actions">
+                  ${this.isSimulated ? `<button type="button" class="btn btn--ghost btn--sm" id="btn-stop-sim">Stop demo</button>` : ''}
+                  <a href="${run.htmlUrl}" target="_blank" rel="noopener noreferrer" class="btn btn--ghost btn--sm">
+                    View in GitHub Actions ↗
+                  </a>
+                </div>
               </div>
-              <div class="live-card__actions">
-                ${this.isSimulated ? `<button type="button" class="btn btn--ghost btn--sm" id="btn-stop-sim">Stop demo</button>` : ''}
-                <a href="${run.htmlUrl}" target="_blank" rel="noopener noreferrer" class="btn btn--ghost btn--sm">
-                  View in GitHub Actions ↗
-                </a>
-              </div>
-            </div>
 
-            <div class="live-progress-bar-wrap">
-              <div class="live-progress-bar" style="width: ${pct}%"></div>
-            </div>
+              <div class="live-progress-bar-wrap">
+                <div class="live-progress-bar" style="width: ${pct}%"></div>
+              </div>
 
-            <div class="live-metrics-row">
-              <div class="live-metric">
-                <span class="live-metric__label">Progress</span>
-                <span class="live-metric__value">${pct.toFixed(0)}% <small>(${completed}/${total > 0 ? total : '?'})</small></span>
+              <div class="live-metrics-row">
+                <div class="live-metric">
+                  <span class="live-metric__label">Progress</span>
+                  <span class="live-metric__value">${pct.toFixed(0)}% <small>(${completed}/${total > 0 ? total : '?'})</small></span>
+                </div>
+                <div class="live-metric live-metric--pass">
+                  <span class="live-metric__label">Passed</span>
+                  <span class="live-metric__value">${passed}</span>
+                </div>
+                <div class="live-metric live-metric--fail">
+                  <span class="live-metric__label">Failed</span>
+                  <span class="live-metric__value">${failed}</span>
+                </div>
+                <div class="live-metric">
+                  <span class="live-metric__label">Skipped</span>
+                  <span class="live-metric__value">${skipped}</span>
+                </div>
+                <div class="live-metric live-metric--eta">
+                  <span class="live-metric__label">Estimated Time</span>
+                  <span class="live-metric__value">${etaText}</span>
+                </div>
               </div>
-              <div class="live-metric live-metric--pass">
-                <span class="live-metric__label">Passed</span>
-                <span class="live-metric__value">${passed}</span>
-              </div>
-              <div class="live-metric live-metric--fail">
-                <span class="live-metric__label">Failed</span>
-                <span class="live-metric__value">${failed}</span>
-              </div>
-              <div class="live-metric">
-                <span class="live-metric__label">Skipped</span>
-                <span class="live-metric__value">${skipped}</span>
-              </div>
-              <div class="live-metric live-metric--eta">
-                <span class="live-metric__label">Estimated Time</span>
-                <span class="live-metric__value">${etaText}</span>
-              </div>
-            </div>
 
-            <div class="live-current-test">
-              <span class="live-spinner" aria-hidden="true"></span>
-              <span class="live-current-label">Currently Executing:</span>
-              <code class="live-test-name">${escapeHtml(current)}</code>
-            </div>
-
-            <details class="live-console-details" open>
-              <summary class="live-console-toggle">
-                <span>Live Test Stream (${logs.length} events)</span>
-                <span class="live-console-hint">Click to collapse</span>
-              </summary>
-              <div class="live-console-output" id="live-console-log">
-                ${logs.length > 0
-                  ? logs.map(l => `<div class="live-log-line ${getLogLineClass(l)}">${escapeHtml(l)}</div>`).join('')
-                  : '<div class="live-log-line live-log-line--muted">Waiting for structured log stream from GitHub Actions...</div>'}
+              <div class="live-current-test">
+                <span class="live-spinner" aria-hidden="true"></span>
+                <span class="live-current-label">Currently Executing:</span>
+                <code class="live-test-name">${escapeHtml(current)}</code>
               </div>
-            </details>
-          </section>
-        `;
-      }).join('');
 
-      // Auto-scroll console
-      const consoleEl = document.getElementById('live-console-log');
-      if (consoleEl && this.consoleAutoScroll) {
-        consoleEl.scrollTop = consoleEl.scrollHeight;
+              <details class="live-console-details" open>
+                <summary class="live-console-toggle">
+                  <span>Live Test Stream (${logs.length} events)</span>
+                  <span class="live-console-hint">Click to collapse</span>
+                </summary>
+                <div class="live-console-output" id="live-console-log">
+                  ${logs.length > 0
+                    ? logs.map(l => `<div class="live-log-line ${getLogLineClass(l)}">${escapeHtml(l)}</div>`).join('')
+                    : '<div class="live-log-line live-log-line--muted">Waiting for structured log stream from GitHub Actions...</div>'}
+                </div>
+              </details>
+            </section>
+          `;
+        }).join('');
+
+        // Auto-scroll console
+        const consoleEl = document.getElementById('live-console-log');
+        if (consoleEl && this.consoleAutoScroll) {
+          consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        document.getElementById('btn-stop-sim')?.addEventListener('click', () => {
+          this.stopSimulation();
+        });
       }
-
-      // Wire stop sim button if present
-      document.getElementById('btn-stop-sim')?.addEventListener('click', () => {
-        this.stopSimulation();
-      });
     }
   }
 

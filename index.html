@@ -21,10 +21,9 @@
       </div>
       <div class="header__meta">
         <span id="last-updated" class="meta-pill">Loading…</span>
-        <button id="theme-toggle-btn" class="btn btn--ghost btn-theme-toggle" type="button" aria-label="Toggle Light / Dark theme">
+        <button id="theme-toggle-btn" class="btn btn--ghost btn-theme-toggle" type="button" aria-label="Toggle Light / Dark theme" onclick="toggleTheme()">
           <span id="theme-toggle-icon">☀️</span> <span id="theme-toggle-label">Light</span>
         </button>
-        <button id="live-sim-btn" class="btn btn--ghost" type="button" title="Simulate a live running test suite for demo">Demo Live Run</button>
         <button id="export-btn" class="btn btn--ghost" type="button">Export pack</button>
         <button id="refresh-btn" class="btn" type="button">Refresh</button>
       </div>
@@ -56,13 +55,14 @@
       <button type="button" class="tab-btn" role="tab" id="tab-trends" data-tab="trends" aria-controls="panel-trends" aria-selected="false">Trends</button>
       <button type="button" class="tab-btn" role="tab" id="tab-ai" data-tab="ai" aria-controls="panel-ai" aria-selected="false">AI usage</button>
       <button type="button" class="tab-btn" role="tab" id="tab-suites" data-tab="suites" aria-controls="panel-suites" aria-selected="false">Suite details</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-live" data-tab="live" aria-controls="panel-live" aria-selected="false">
+        <span class="live-pulse-dot" id="live-tab-dot" hidden></span> Live run
+      </button>
     </div>
   </nav>
   </div>
 
   <main class="container">
-    <div id="live-execution-container" hidden></div>
-
     <div id="panel-overview" class="tab-panel" role="tabpanel" aria-labelledby="tab-overview">
       <section id="overall-banner" class="overall-banner" aria-live="polite"></section>
       <section class="panel panel--areas" id="business-areas" aria-label="Product areas"></section>
@@ -91,6 +91,21 @@
 
     <div id="panel-suites" class="tab-panel" role="tabpanel" aria-labelledby="tab-suites" hidden>
       <section class="cards" id="repo-cards" aria-label="Automation repositories"></section>
+    </div>
+
+    <div id="panel-live" class="tab-panel" role="tabpanel" aria-labelledby="tab-live" hidden>
+      <section class="panel" id="live-panel-wrapper">
+        <div class="panel__header">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <h2>⚡ Live Automation Pipeline Execution</h2>
+              <span id="live-status-pill" class="meta-pill">Checking CI…</span>
+            </div>
+          </div>
+          <p>Real-time test-by-test execution progress streamed from GitHub Actions</p>
+        </div>
+        <div id="live-runs-content" style="padding:24px;"></div>
+      </section>
     </div>
   </main>
 

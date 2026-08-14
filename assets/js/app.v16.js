@@ -12,7 +12,7 @@ const REPO_DISPLAY = {
   api: { icon: '🔌', label: 'API', color: '#f59e0b' },
 };
 
-const DASHBOARD_TABS = ['overview', 'attention', 'trends', 'ai', 'suites'];
+const DASHBOARD_TABS = ['overview', 'attention', 'trends', 'ai', 'suites', 'live'];
 let CURRENT_RESULTS = [];
 let ACTIVE_TAB = 'overview';
 let TREND_RANGE = 'weekly';
@@ -3327,24 +3327,28 @@ function initTheme() {
 }
 
 function applyTheme(theme) {
-  const icon = document.getElementById('theme-toggle-icon');
-  const label = document.getElementById('theme-toggle-label');
-  if (theme === 'light') {
+  const isLight = theme === 'light';
+  if (isLight) {
     document.documentElement.setAttribute('data-theme', 'light');
-    if (icon) icon.textContent = '🌙';
-    if (label) label.textContent = 'Dark';
+    document.body.setAttribute('data-theme', 'light');
   } else {
     document.documentElement.removeAttribute('data-theme');
-    if (icon) icon.textContent = '☀️';
-    if (label) label.textContent = 'Light';
+    document.body.removeAttribute('data-theme');
   }
-  try { localStorage.setItem('dashboard.theme', theme); } catch {}
+  const icon = document.getElementById('theme-toggle-icon');
+  const label = document.getElementById('theme-toggle-label');
+  if (icon) icon.textContent = isLight ? '🌙' : '☀️';
+  if (label) label.textContent = isLight ? 'Dark' : 'Light';
+  try { localStorage.setItem('dashboard.theme', isLight ? 'light' : 'dark'); } catch {}
 }
 
 function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
   applyTheme(current === 'light' ? 'dark' : 'light');
 }
+
+window.toggleTheme = toggleTheme;
+window.applyTheme = applyTheme;
 
 function wireControls() {
   document.getElementById('refresh-btn')?.addEventListener('click', loadDashboard);
@@ -3367,13 +3371,6 @@ function wireControls() {
     const btn = event.target.closest('[data-goto-tab]');
     if (!btn) return;
     setActiveTab(btn.getAttribute('data-goto-tab'));
-  });
-
-  // Live tracker demo controls
-  document.getElementById('live-sim-btn')?.addEventListener('click', () => {
-    if (window.LiveTracker) {
-      window.LiveTracker.simulateRun('web');
-    }
   });
 
   wireTabs();

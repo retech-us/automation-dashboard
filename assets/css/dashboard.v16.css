@@ -30,8 +30,8 @@
   --surface-2: #f1f5f9;
   --text: #0f172a;
   --muted: #64748b;
-  --border: rgba(0, 0, 0, 0.08);
-  --shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.08);
+  --border: rgba(0, 0, 0, 0.1);
+  --shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.08);
   --pass: #059669;
   --fail: #e11d48;
   --warn: #d97706;
@@ -42,15 +42,16 @@
     radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59, 130, 246, 0.08), transparent),
     radial-gradient(ellipse 60% 40% at 100% 0%, rgba(139, 92, 246, 0.06), transparent),
     var(--bg);
+  color: #0f172a;
 }
 
 [data-theme="light"] .site-chrome {
-  background: rgba(255, 255, 255, 0.88);
-  border-bottom-color: var(--border);
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 [data-theme="light"] h1 {
-  background: linear-gradient(135deg, #0f172a 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -61,8 +62,69 @@
 [data-theme="light"] .health-banner,
 [data-theme="light"] .suite-health,
 [data-theme="light"] .area-tile,
-[data-theme="light"] .gate-banner {
-  box-shadow: var(--shadow);
+[data-theme="light"] .gate-banner,
+[data-theme="light"] .smartui-card {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .tab-btn {
+  color: #64748b;
+}
+
+[data-theme="light"] .tab-btn:hover {
+  color: #0f172a;
+}
+
+[data-theme="light"] .tab-btn--active,
+[data-theme="light"] .tab-btn[aria-selected="true"] {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+[data-theme="light"] .btn--ghost {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .btn--ghost:hover {
+  background: #e2e8f0;
+}
+
+[data-theme="light"] .meta-pill {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .chat-toggle {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+[data-theme="light"] .chat-panel {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .chat-msg--assistant {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+[data-theme="light"] .chat-chip {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .chat-form input {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.1);
 }
 
 * { box-sizing: border-box; }
@@ -3077,5 +3139,69 @@ code {
 [data-theme="light"] .smartui-browser-tag {
   background: rgba(0, 0, 0, 0.05);
 }
+
+.live-pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: live-pulse-anim 1.6s infinite cubic-bezier(0.66, 0, 0, 1);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.live-empty-state {
+  text-align: center;
+  padding: 56px 24px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border);
+  margin: 10px 0;
+}
+
+[data-theme="light"] .live-empty-state {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.live-empty-icon {
+  font-size: 2.6rem;
+  margin-bottom: 12px;
+}
+
+.live-empty-state h3 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.live-empty-state p {
+  color: var(--muted);
+  font-size: 0.92rem;
+  max-width: 580px;
+  margin: 0 auto 18px;
+  line-height: 1.5;
+}
+
+.live-empty-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+
+[data-theme="light"] .live-empty-meta {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
 
 
