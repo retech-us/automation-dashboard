@@ -3258,6 +3258,36 @@ function wireControls() {
     if (!btn) return;
     setActiveTab(btn.getAttribute('data-goto-tab'));
   });
+
+  // Live tracker demo & settings controls
+  document.getElementById('live-sim-btn')?.addEventListener('click', () => {
+    if (window.LiveTracker) {
+      window.LiveTracker.simulateRun('web');
+    }
+  });
+
+  const settingsModal = document.getElementById('token-modal');
+  const tokenInput = document.getElementById('github-token-input');
+
+  document.getElementById('settings-btn')?.addEventListener('click', () => {
+    if (settingsModal && tokenInput && window.LiveTracker) {
+      tokenInput.value = window.LiveTracker.getToken();
+      settingsModal.hidden = false;
+      tokenInput.focus();
+    }
+  });
+
+  document.getElementById('token-modal-cancel')?.addEventListener('click', () => {
+    if (settingsModal) settingsModal.hidden = true;
+  });
+
+  document.getElementById('token-modal-save')?.addEventListener('click', () => {
+    if (settingsModal && tokenInput && window.LiveTracker) {
+      window.LiveTracker.setToken(tokenInput.value);
+      settingsModal.hidden = true;
+    }
+  });
+
   wireTabs();
   wireChatbot();
 }

@@ -1,0 +1,486 @@
+/**
+ * Live Test Execution Tracker for Automation Dashboard.
+ * Polls GitHub Actions API & logs without external servers to track running suites in real time.
+ */
+
+(function (window) {
+  'use strict';
+
+  const GITHUB_TOKEN_KEY = 'dashboard.githubToken';
+  const POLLING_INTERVAL_ACTIVE = 5000; // 5s when active run detected
+  const POLLING_INTERVAL_IDLE = 30000;  // 30s when idle
+
+  const REPO_REGISTRY = [
+    { key: 'web', label: 'Web Automation', icon: '🌐', repo: 'retech-us/retech-web-automation', workflowHint: 'Java CI' },
+    { key: 'mobile-ios', label: 'iOS Mobile', icon: '🍎', repo: 'retech-us/retech-mobile-automation', workflowHint: 'Mobile Tests' },
+    { key: 'mobile-android', label: 'Android Mobile', icon: '🤖', repo: 'retech-us/retech-mobile-automation', workflowHint: 'Mobile Tests' },
+    { key: 'api', label: 'API Automation', icon: '🔌', repo: 'retech-us/retech-api-automation', workflowHint: 'API' }
+  ];
+
+  class LiveTracker {
+    constructor() {
+      this.activeRuns = new Map(); // key -> run details
+      this.pollTimer = null;
+      this.isPolling = false;
+      this.listeners = [];
+      this.isSimulated = false;
+      this.simulationTimer = null;
+      this.consoleAutoScroll = true;
+    }
+
+    getToken() {
+      try {
+        return localStorage.getItem(GITHUB_TOKEN_KEY) || '';
+      } catch {
+        return '';
+      }
+    }
+
+    setToken(token) {
+      try {
+        if (token) {
+          localStorage.setItem(GITHUB_TOKEN_KEY, token.trim());
+        } else {
+          localStorage.removeItem(GITHUB_TOKEN_KEY);
+        }
+      } catch {}
+      this.checkAll();
+    }
+
+    getHeaders() {
+      const token = this.getToken();
+      const headers = {
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'automation-dashboard-live-tracker/1.0'
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      return headers;
+    }
+
+    async checkRepoRuns(repoCfg) {
+      const url = `https://api.github.com/repos/${repoCfg.repo}/actions/runs?status=in_progress&per_page=3`;
+      try {
+        const resp = await fetch(url, { headers: this.getHeaders() });
+        if (!resp.ok) {
+          if (resp.status === 403 && !this.getToken()) {
+            console.warn('[LiveTracker] GitHub API rate limit reached. Add a read-only GitHub Token in Dashboard Settings for higher limits.');
+          }
+          return null;
+        }
+        const data = await resp.json();
+        const runs = data.workflow_runs || [];
+        if (runs.length === 0) return null;
+
+        // Take the latest in_progress run
+        const activeRun = runs[0];
+        return {
+          repoKey: repoCfg.key,
+          label: repoCfg.label,
+          icon: repoCfg.icon,
+          repo: repoCfg.repo,
+          runId: activeRun.id,
+          runNumber: activeRun.run_number,
+          workflowName: activeRun.name,
+          htmlUrl: activeRun.html_url,
+          status: activeRun.status,
+          createdAt: activeRun.created_at,
+          updatedAt: activeRun.updated_at,
+          event: activeRun.event
+        };
+      } catch (err) {
+        console.warn(`[LiveTracker] Failed to check runs for ${repoCfg.repo}:`, err);
+        return null;
+      }
+    }
+
+    async fetchJobAndLogs(runInfo) {
+      const jobsUrl = `https://api.github.com/repos/${runInfo.repo}/actions/runs/${runInfo.runId}/jobs`;
+      try {
+        const resp = await fetch(jobsUrl, { headers: this.getHeaders() });
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        const jobs = data.jobs || [];
+        const runningJob = jobs.find(j => j.status === 'in_progress') || jobs[0];
+        if (!runningJob) return null;
+
+        runInfo.jobId = runningJob.id;
+        runInfo.jobName = runningJob.name;
+        runInfo.steps = runningJob.steps || [];
+
+        // Attempt to fetch raw log stream for running job if token is available
+        if (this.getToken()) {
+          const logsUrl = `https://api.github.com/repos/${runInfo.repo}/actions/jobs/${runningJob.id}/logs`;
+          const logResp = await fetch(logsUrl, { headers: this.getHeaders() });
+          if (logResp.ok) {
+            const rawLog = await logResp.text();
+            this.parseLogStream(runInfo, rawLog);
+          }
+        }
+        return runInfo;
+      } catch (err) {
+        console.warn(`[LiveTracker] Failed to fetch job details for run ${runInfo.runId}:`, err);
+        return runInfo;
+      }
+    }
+
+    parseLogStream(runInfo, rawLog) {
+      if (!rawLog) return;
+      const lines = rawLog.split('\n');
+      const progressMarker = '[QA_LIVE_PROGRESS] ';
+      let latestProgress = null;
+      const recentLogs = [];
+
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        if (recentLogs.length < 50) {
+          recentLogs.unshift(line);
+        }
+
+        if (!latestProgress && line.includes(progressMarker)) {
+          try {
+            const jsonStr = line.substring(line.indexOf(progressMarker) + progressMarker.length);
+            latestProgress = JSON.parse(jsonStr);
+          } catch (e) {
+            // Ignore malformed line
+          }
+        }
+      }
+
+      runInfo.recentLogs = recentLogs;
+
+      if (latestProgress) {
+        runInfo.currentTest = latestProgress.details || latestProgress.currentTest || 'Executing test...';
+        runInfo.total = Number(latestProgress.total) || 0;
+        runInfo.completed = Number(latestProgress.completed) || 0;
+        runInfo.passed = Number(latestProgress.passed) || 0;
+        runInfo.failed = Number(latestProgress.failed) || 0;
+        runInfo.skipped = Number(latestProgress.skipped) || 0;
+        runInfo.percent = runInfo.total > 0 ? ((runInfo.completed / runInfo.total) * 100) : 0;
+      } else {
+        // Fallback: estimate from job steps
+        const completedSteps = (runInfo.steps || []).filter(s => s.status === 'completed').length;
+        const totalSteps = Math.max((runInfo.steps || []).length, 1);
+        runInfo.currentTest = (runInfo.steps || []).find(s => s.status === 'in_progress')?.name || 'Running test step...';
+        runInfo.percent = Math.round((completedSteps / totalSteps) * 100);
+      }
+
+      // Calculate ETA
+      const elapsedSec = (Date.now() - new Date(runInfo.createdAt).getTime()) / 1000;
+      if (runInfo.completed && runInfo.total && runInfo.completed > 0) {
+        const remaining = runInfo.total - runInfo.completed;
+        const avgSecPerTest = elapsedSec / runInfo.completed;
+        runInfo.etaSeconds = Math.round(remaining * avgSecPerTest);
+      }
+    }
+
+    async checkAll() {
+      if (this.isSimulated) return;
+      const detected = new Map();
+
+      for (const repoCfg of REPO_REGISTRY) {
+        const runInfo = await this.checkRepoRuns(repoCfg);
+        if (runInfo) {
+          await this.fetchJobAndLogs(runInfo);
+          detected.set(repoCfg.key, runInfo);
+        }
+      }
+
+      const hadActive = this.activeRuns.size > 0;
+      this.activeRuns = detected;
+      const hasActive = this.activeRuns.size > 0;
+
+      this.notifyListeners();
+      this.renderLiveBanner();
+
+      // If active runs transitioned to completed, notify to refresh main dashboard data
+      if (hadActive && !hasActive && typeof window.loadDashboard === 'function') {
+        window.loadDashboard();
+      }
+
+      // Reschedule adaptive polling
+      this.scheduleNextPoll(hasActive ? POLLING_INTERVAL_ACTIVE : POLLING_INTERVAL_IDLE);
+    }
+
+    scheduleNextPoll(delayMs) {
+      if (this.pollTimer) clearTimeout(this.pollTimer);
+      this.pollTimer = setTimeout(() => {
+        this.checkAll();
+      }, delayMs);
+    }
+
+    start() {
+      if (this.isPolling) return;
+      this.isPolling = true;
+      this.checkAll();
+    }
+
+    stop() {
+      this.isPolling = false;
+      if (this.pollTimer) clearTimeout(this.pollTimer);
+    }
+
+    subscribe(callback) {
+      this.listeners.push(callback);
+    }
+
+    notifyListeners() {
+      for (const cb of this.listeners) {
+        try {
+          cb(this.activeRuns);
+        } catch (e) {
+          console.error('[LiveTracker] Listener error:', e);
+        }
+      }
+    }
+
+    // Interactive Demo / Simulation Mode for testing UI without triggering GitHub CI
+    simulateRun(repoKey = 'web') {
+      this.isSimulated = true;
+      let total = 60;
+      let completed = 0;
+      let passed = 0;
+      let failed = 0;
+      let skipped = 0;
+
+      const sampleTests = [
+        'LoginPageTest#testValidCustomerLogin',
+        'LoginPageTest#testRememberMeCheckbox',
+        'CatalogSearchTest#testSearchBySku',
+        'CatalogSearchTest#testFilterByPriceRange',
+        'CartManagementTest#testAddItemToCart',
+        'CartManagementTest#testUpdateQuantity',
+        'CartManagementTest#testApplyDiscountCoupon',
+        'OrderCheckoutTest#testShippingAddressValidation',
+        'OrderCheckoutTest#testPaymentWithCreditCard',
+        'OrderCheckoutTest#testPaymentWith3DSecureVerification',
+        'PriceTagTest#testOcrPriceTagRecognition',
+        'StoreScanTest#testSpatialUploadWorkflow'
+      ];
+
+      const simRun = {
+        repoKey,
+        label: 'Web Automation',
+        icon: '🌐',
+        repo: 'retech-us/retech-web-automation',
+        runId: 'sim-984210',
+        runNumber: 142,
+        workflowName: 'Java CI with Selenium',
+        htmlUrl: 'https://github.com/retech-us/retech-web-automation/actions',
+        status: 'in_progress',
+        createdAt: new Date().toISOString(),
+        total,
+        completed: 0,
+        passed: 0,
+        failed: 0,
+        skipped: 0,
+        percent: 0,
+        etaSeconds: 180,
+        currentTest: sampleTests[0],
+        recentLogs: [
+          `[${new Date().toLocaleTimeString()}] [INFO] Starting TestNG regression runner...`,
+          `[${new Date().toLocaleTimeString()}] [INFO] Suite: Web Automation Tests initialized.`
+        ]
+      };
+
+      this.activeRuns.set(repoKey, simRun);
+      this.notifyListeners();
+      this.renderLiveBanner();
+
+      if (this.simulationTimer) clearInterval(this.simulationTimer);
+
+      this.simulationTimer = setInterval(() => {
+        if (completed >= total) {
+          clearInterval(this.simulationTimer);
+          simRun.status = 'completed';
+          simRun.percent = 100;
+          simRun.currentTest = 'All tests completed!';
+          simRun.recentLogs.push(`[${new Date().toLocaleTimeString()}] [INFO] Suite execution completed.`);
+          this.notifyListeners();
+          this.renderLiveBanner();
+          setTimeout(() => {
+            this.activeRuns.delete(repoKey);
+            this.isSimulated = false;
+            this.notifyListeners();
+            this.renderLiveBanner();
+            if (typeof window.loadDashboard === 'function') window.loadDashboard();
+          }, 3000);
+          return;
+        }
+
+        completed++;
+        const isFail = completed === 7 || completed === 22;
+        if (isFail) {
+          failed++;
+        } else {
+          passed++;
+        }
+
+        const currentTestName = sampleTests[completed % sampleTests.length];
+        simRun.completed = completed;
+        simRun.passed = passed;
+        simRun.failed = failed;
+        simRun.percent = Math.round((completed / total) * 100);
+        simRun.currentTest = currentTestName;
+        simRun.etaSeconds = Math.max(5, (total - completed) * 2);
+
+        const logMsg = isFail
+          ? `[${new Date().toLocaleTimeString()}] [QA_LIVE_PROGRESS] FAIL: ${currentTestName} (AssertionError: 200 != 500)`
+          : `[${new Date().toLocaleTimeString()}] [QA_LIVE_PROGRESS] PASS: ${currentTestName} (0.8s)`;
+
+        simRun.recentLogs.push(logMsg);
+        if (simRun.recentLogs.length > 50) simRun.recentLogs.shift();
+
+        this.notifyListeners();
+        this.renderLiveBanner();
+      }, 1200);
+    }
+
+    stopSimulation() {
+      if (this.simulationTimer) clearInterval(this.simulationTimer);
+      this.isSimulated = false;
+      this.activeRuns.clear();
+      this.notifyListeners();
+      this.renderLiveBanner();
+      this.checkAll();
+    }
+
+    renderLiveBanner() {
+      let bannerContainer = document.getElementById('live-execution-container');
+      if (!bannerContainer) {
+        const main = document.querySelector('main.container');
+        if (!main) return;
+        bannerContainer = document.createElement('div');
+        bannerContainer.id = 'live-execution-container';
+        main.insertBefore(bannerContainer, main.firstChild);
+      }
+
+      if (this.activeRuns.size === 0) {
+        bannerContainer.innerHTML = '';
+        bannerContainer.hidden = true;
+        return;
+      }
+
+      bannerContainer.hidden = false;
+      const runs = Array.from(this.activeRuns.values());
+
+      bannerContainer.innerHTML = runs.map(run => {
+        const pct = Math.min(100, Math.max(0, run.percent || 0));
+        const total = run.total || 0;
+        const completed = run.completed || 0;
+        const passed = run.passed || 0;
+        const failed = run.failed || 0;
+        const skipped = run.skipped || 0;
+        const etaText = run.etaSeconds ? `~${Math.floor(run.etaSeconds / 60)}m ${run.etaSeconds % 60}s remaining` : 'Calculating ETA…';
+        const current = run.currentTest || 'Running tests…';
+        const logs = run.recentLogs || [];
+
+        return `
+          <section class="live-card" aria-label="Live Test Execution">
+            <div class="live-card__header">
+              <div class="live-card__title">
+                <span class="live-pulse" aria-hidden="true"></span>
+                <span class="live-badge">LIVE IN PROGRESS</span>
+                <h3>${run.icon} ${run.label} — Run #${run.runNumber || run.runId}</h3>
+                <span class="live-workflow">${escapeHtml(run.workflowName || '')}</span>
+              </div>
+              <div class="live-card__actions">
+                ${this.isSimulated ? `<button type="button" class="btn btn--ghost btn--sm" id="btn-stop-sim">Stop demo</button>` : ''}
+                <a href="${run.htmlUrl}" target="_blank" rel="noopener noreferrer" class="btn btn--ghost btn--sm">
+                  View in GitHub Actions ↗
+                </a>
+              </div>
+            </div>
+
+            <div class="live-progress-bar-wrap">
+              <div class="live-progress-bar" style="width: ${pct}%"></div>
+            </div>
+
+            <div class="live-metrics-row">
+              <div class="live-metric">
+                <span class="live-metric__label">Progress</span>
+                <span class="live-metric__value">${pct.toFixed(0)}% <small>(${completed}/${total > 0 ? total : '?'})</small></span>
+              </div>
+              <div class="live-metric live-metric--pass">
+                <span class="live-metric__label">Passed</span>
+                <span class="live-metric__value">${passed}</span>
+              </div>
+              <div class="live-metric live-metric--fail">
+                <span class="live-metric__label">Failed</span>
+                <span class="live-metric__value">${failed}</span>
+              </div>
+              <div class="live-metric">
+                <span class="live-metric__label">Skipped</span>
+                <span class="live-metric__value">${skipped}</span>
+              </div>
+              <div class="live-metric live-metric--eta">
+                <span class="live-metric__label">Estimated Time</span>
+                <span class="live-metric__value">${etaText}</span>
+              </div>
+            </div>
+
+            <div class="live-current-test">
+              <span class="live-spinner" aria-hidden="true"></span>
+              <span class="live-current-label">Currently Executing:</span>
+              <code class="live-test-name">${escapeHtml(current)}</code>
+            </div>
+
+            <details class="live-console-details" open>
+              <summary class="live-console-toggle">
+                <span>Live Test Stream (${logs.length} events)</span>
+                <span class="live-console-hint">Click to collapse</span>
+              </summary>
+              <div class="live-console-output" id="live-console-log">
+                ${logs.length > 0
+                  ? logs.map(l => `<div class="live-log-line ${getLogLineClass(l)}">${escapeHtml(l)}</div>`).join('')
+                  : '<div class="live-log-line live-log-line--muted">Waiting for structured log stream from GitHub Actions...</div>'}
+              </div>
+            </details>
+          </section>
+        `;
+      }).join('');
+
+      // Auto-scroll console
+      const consoleEl = document.getElementById('live-console-log');
+      if (consoleEl && this.consoleAutoScroll) {
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+      }
+
+      // Wire stop sim button if present
+      document.getElementById('btn-stop-sim')?.addEventListener('click', () => {
+        this.stopSimulation();
+      });
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function getLogLineClass(line) {
+    if (!line) return '';
+    if (line.includes('FAIL') || line.includes('ERROR') || line.includes('AssertionError')) return 'live-log-line--error';
+    if (line.includes('PASS') || line.includes('SUCCESS')) return 'live-log-line--success';
+    if (line.includes('RUNNING') || line.includes('[QA_LIVE_PROGRESS]')) return 'live-log-line--info';
+    return '';
+  }
+
+  window.LiveTracker = new LiveTracker();
+
+  // Auto-start poller on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => window.LiveTracker.start());
+  } else {
+    window.LiveTracker.start();
+  }
+
+})(window);

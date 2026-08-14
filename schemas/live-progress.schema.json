@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LiveTestProgress",
+  "description": "Schema for live test progress emitted by test listeners and parsed by the dashboard",
+  "type": "object",
+  "properties": {
+    "repo": {
+      "type": "string",
+      "description": "Repository identifier (e.g. web, mobile-ios, mobile-android, api)"
+    },
+    "runId": {
+      "type": ["string", "integer"],
+      "description": "GitHub Actions workflow run ID"
+    },
+    "workflow": {
+      "type": "string",
+      "description": "Workflow name"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["QUEUED", "RUNNING", "COMPLETED", "FAILED"],
+      "description": "Execution status"
+    },
+    "currentTest": {
+      "type": "string",
+      "description": "Currently executing test class and method"
+    },
+    "completed": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total tests completed so far (passed + failed + skipped)"
+    },
+    "total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total scheduled tests in the suite"
+    },
+    "passed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "failed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "skipped": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "etaSeconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recentLogs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["repo", "completed", "total", "passed", "failed"]
+}

@@ -21,6 +21,8 @@
       </div>
       <div class="header__meta">
         <span id="last-updated" class="meta-pill">Loading…</span>
+        <button id="live-sim-btn" class="btn btn--ghost" type="button" title="Simulate a live running test suite for demo">Demo Live Run</button>
+        <button id="settings-btn" class="btn btn--ghost" type="button" title="Configure GitHub Token for unlimited live tracking">Settings</button>
         <button id="export-btn" class="btn btn--ghost" type="button">Export pack</button>
         <button id="refresh-btn" class="btn" type="button">Refresh</button>
       </div>
@@ -39,6 +41,8 @@
   </div>
 
   <main class="container">
+    <div id="live-execution-container" hidden></div>
+
     <div id="panel-overview" class="tab-panel" role="tabpanel" aria-labelledby="tab-overview">
       <section id="overall-banner" class="overall-banner" aria-live="polite"></section>
       <section class="panel panel--areas" id="business-areas" aria-label="Product areas"></section>
@@ -106,7 +110,21 @@
     </form>
   </aside>
 
+  <!-- Settings Modal for GitHub Token -->
+  <div id="token-modal" class="modal-backdrop" hidden>
+    <div class="modal-dialog" role="dialog" aria-labelledby="modal-token-title" aria-modal="true">
+      <h3 id="modal-token-title">Live Tracking Settings</h3>
+      <p>Enter a read-only GitHub Personal Access Token (PAT) to enable high-frequency live log streaming (up to 5,000 req/hr). Token is kept locally in your browser only.</p>
+      <input type="password" id="github-token-input" placeholder="github_pat_..." autocomplete="off" />
+      <div class="modal-dialog__actions">
+        <button type="button" class="btn btn--ghost" id="token-modal-cancel">Cancel</button>
+        <button type="button" class="btn" id="token-modal-save">Save Token</button>
+      </div>
+    </div>
+  </div>
+
   <script src="assets/bootstrap.js"></script>
+  <script src="assets/js/live-tracker.js"></script>
   <script src="assets/js/app.v16.js"></script>
 </body>
 </html>
