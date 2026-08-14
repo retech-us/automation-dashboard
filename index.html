@@ -21,6 +21,9 @@
       </div>
       <div class="header__meta">
         <span id="last-updated" class="meta-pill">Loading…</span>
+        <button id="theme-toggle-btn" class="btn btn--ghost btn-theme-toggle" type="button" aria-label="Toggle Light / Dark theme">
+          <span id="theme-toggle-icon">☀️</span> <span id="theme-toggle-label">Light</span>
+        </button>
         <button id="live-sim-btn" class="btn btn--ghost" type="button" title="Simulate a live running test suite for demo">Demo Live Run</button>
         <button id="settings-btn" class="btn btn--ghost" type="button" title="Configure GitHub Token for unlimited live tracking">Settings</button>
         <button id="export-btn" class="btn btn--ghost" type="button">Export pack</button>
@@ -28,6 +31,24 @@
       </div>
     </div>
   </header>
+
+  <!-- SVG Gradients for Radial Gauge -->
+  <svg style="position: absolute; width: 0; height: 0; overflow: hidden;" aria-hidden="true">
+    <defs>
+      <linearGradient id="gauge-gradient-ready" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#10b981" />
+        <stop offset="100%" stop-color="#06b6d4" />
+      </linearGradient>
+      <linearGradient id="gauge-gradient-caution" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f59e0b" />
+        <stop offset="100%" stop-color="#fbbf24" />
+      </linearGradient>
+      <linearGradient id="gauge-gradient-blocked" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f43f5e" />
+        <stop offset="100%" stop-color="#fb7185" />
+      </linearGradient>
+    </defs>
+  </svg>
 
   <nav class="tab-nav" aria-label="Dashboard sections">
     <div class="tab-nav__inner" role="tablist">
@@ -46,6 +67,7 @@
     <div id="panel-overview" class="tab-panel" role="tabpanel" aria-labelledby="tab-overview">
       <section id="overall-banner" class="overall-banner" aria-live="polite"></section>
       <section class="panel panel--areas" id="business-areas" aria-label="Product areas"></section>
+      <section class="panel smartui-panel" id="smartui-section" aria-label="SmartUI Visual QA"></section>
       <section class="panel panel--triage" id="issue-triage" aria-label="Issue triage"></section>
     </div>
 
