@@ -60,20 +60,39 @@
     }
 
     async checkRepoRuns(repoCfg) {
+      // Check local live status from dashboard data
+      try {
+        const localResp = await fetch(`data/live-status.json?_t=${Date.now()}`);
+        if (localResp.ok) {
+          const liveData = await localResp.json();
+          if (liveData && liveData[repoCfg.key] && (liveData[repoCfg.key].status === 'RUNNING' || liveData[repoCfg.key].status === 'in_progress')) {
+            return {
+              repoKey: repoCfg.key,
+              label: repoCfg.label,
+              icon: repoCfg.icon,
+              repo: repoCfg.repo,
+              ...liveData[repoCfg.key]
+            };
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // Check GitHub Actions directly if token is available
+      const token = this.getToken();
+      if (!token) {
+        return null;
+      }
+
       const url = `https://api.github.com/repos/${repoCfg.repo}/actions/runs?status=in_progress&per_page=3`;
       try {
         const resp = await fetch(url, { headers: this.getHeaders() });
-        if (!resp.ok) {
-          if (resp.status === 403 && !this.getToken()) {
-            console.warn('[LiveTracker] GitHub API rate limit reached. Add a read-only GitHub Token in Dashboard Settings for higher limits.');
-          }
-          return null;
-        }
+        if (!resp.ok) return null;
         const data = await resp.json();
         const runs = data.workflow_runs || [];
         if (runs.length === 0) return null;
 
-        // Take the latest in_progress run
         const activeRun = runs[0];
         return {
           repoKey: repoCfg.key,
@@ -90,7 +109,6 @@
           event: activeRun.event
         };
       } catch (err) {
-        console.warn(`[LiveTracker] Failed to check runs for ${repoCfg.repo}:`, err);
         return null;
       }
     }
