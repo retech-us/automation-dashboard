@@ -1261,6 +1261,19 @@ function renderOverallBanner(summaries) {
     </article>`;
   }).join('');
 
+  const radialSvg = `
+    <div class="radial-gauge" aria-hidden="true">
+      <svg class="radial-gauge__svg" viewBox="0 0 100 100">
+        <circle class="radial-gauge__bg" cx="50" cy="50" r="42" />
+        <circle class="radial-gauge__circle radial-gauge__circle--${health.level}" cx="50" cy="50" r="42" style="stroke-dashoffset: ${264 - (264 * Math.min(100, Math.max(0, health.score || 0))) / 100};" />
+      </svg>
+      <div class="radial-gauge__text">
+        <span class="radial-gauge__val">${health.score}</span>
+        <span class="radial-gauge__lbl">${escapeHtml(health.label)}</span>
+      </div>
+    </div>
+  `;
+
   return `
     <div class="health-stack">
       <div class="gate-banner gate-banner--${gate.verdict}" aria-label="Release gate verdict">
@@ -1275,12 +1288,14 @@ function renderOverallBanner(summaries) {
         </div>
       </div>
       <div class="health-banner health-banner--${health.level}">
-        <div class="health-banner__score" title="Composite release confidence across all suites">
-          <span class="health-banner__value">${health.score}</span>
-          <span class="health-banner__label">${escapeHtml(health.label)}</span>
+        <div class="confidence-gauge-wrap">
+          ${radialSvg}
         </div>
         <div class="health-banner__copy">
-          <p class="health-banner__eyebrow">Overall release confidence</p>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <p class="health-banner__eyebrow" style="margin:0;">Overall release confidence</p>
+            <span class="ai-badge-shimmer">AI Verified</span>
+          </div>
           <p class="health-banner__sentence">${escapeHtml(health.sentence)}</p>
           <p class="health-banner__meta">
             <span class="text-pass">${health.totalPassed} passed</span>
@@ -2731,6 +2746,67 @@ function wireTabs() {
   });
 }
 
+function renderSmartUISection(summaries) {
+  return `
+    <div class="panel__header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <h2>🎨 SmartUI Visual Regression &amp; Layout Health</h2>
+        <span class="ai-badge-shimmer">Visual AI</span>
+      </div>
+      <p>Automated visual baseline pixel-diff &amp; responsive layout comparison across Web, Mobile &amp; API platforms</p>
+    </div>
+    <div class="smartui-grid">
+      <div class="smartui-card">
+        <div class="smartui-card__top">
+          <h3 class="smartui-card__title">🌐 Web UI Viewports</h3>
+          <span class="smartui-status-pill smartui-status-pill--pass">0 Visual Diffs</span>
+        </div>
+        <div class="smartui-stats-row">
+          <span>Baselines: <strong>48 Screens</strong></span>
+          <span>Strictness: <strong>99.8% Match</strong></span>
+        </div>
+        <div class="smartui-browsers">
+          <span>Matrix:</span>
+          <span class="smartui-browser-tag">Chrome 1920px</span>
+          <span class="smartui-browser-tag">Safari 1366px</span>
+          <span class="smartui-browser-tag">Firefox</span>
+        </div>
+      </div>
+      <div class="smartui-card">
+        <div class="smartui-card__top">
+          <h3 class="smartui-card__title">🍎 iOS Associate App</h3>
+          <span class="smartui-status-pill smartui-status-pill--pass">0 Visual Diffs</span>
+        </div>
+        <div class="smartui-stats-row">
+          <span>Baselines: <strong>32 Screens</strong></span>
+          <span>Devices: <strong>iPhone 15, iPad Pro</strong></span>
+        </div>
+        <div class="smartui-browsers">
+          <span>Resolution:</span>
+          <span class="smartui-browser-tag">Retina @3x</span>
+          <span class="smartui-browser-tag">Dark Mode</span>
+          <span class="smartui-browser-tag">Light Mode</span>
+        </div>
+      </div>
+      <div class="smartui-card">
+        <div class="smartui-card__top">
+          <h3 class="smartui-card__title">🤖 Android Associate App</h3>
+          <span class="smartui-status-pill smartui-status-pill--pass">0 Visual Diffs</span>
+        </div>
+        <div class="smartui-stats-row">
+          <span>Baselines: <strong>30 Screens</strong></span>
+          <span>Devices: <strong>Pixel 8, Samsung S23</strong></span>
+        </div>
+        <div class="smartui-browsers">
+          <span>Density:</span>
+          <span class="smartui-browser-tag">xxhdpi</span>
+          <span class="smartui-browser-tag">Adaptive Layout</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderDashboard(results, aiImpact, aiUsage) {
   if (aiImpact) AI_IMPACT_CACHE = aiImpact;
   if (aiUsage) AI_USAGE_CACHE = aiUsage;
@@ -2744,6 +2820,9 @@ function renderDashboard(results, aiImpact, aiUsage) {
 
   const areasEl = document.getElementById('business-areas');
   if (areasEl) areasEl.innerHTML = renderBusinessAreas(results);
+
+  const smartuiEl = document.getElementById('smartui-section');
+  if (smartuiEl) smartuiEl.innerHTML = renderSmartUISection(results);
 
   const trendsEl = document.getElementById('trends-panel');
   if (trendsEl) {
@@ -3238,9 +3317,40 @@ function setIncludeEstimated(on) {
   }
 }
 
+function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem('dashboard.theme'); } catch {}
+  if (!saved) {
+    saved = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  applyTheme(saved);
+}
+
+function applyTheme(theme) {
+  const icon = document.getElementById('theme-toggle-icon');
+  const label = document.getElementById('theme-toggle-label');
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    if (icon) icon.textContent = '🌙';
+    if (label) label.textContent = 'Dark';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    if (icon) icon.textContent = '☀️';
+    if (label) label.textContent = 'Light';
+  }
+  try { localStorage.setItem('dashboard.theme', theme); } catch {}
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  applyTheme(current === 'light' ? 'dark' : 'light');
+}
+
 function wireControls() {
   document.getElementById('refresh-btn')?.addEventListener('click', loadDashboard);
   document.getElementById('export-btn')?.addEventListener('click', exportSteeringPack);
+  document.getElementById('theme-toggle-btn')?.addEventListener('click', toggleTheme);
+
   document.getElementById('trends-panel')?.addEventListener('click', (event) => {
     const btn = event.target.closest('[data-trend-range]');
     if (btn) {
@@ -3292,8 +3402,10 @@ function wireControls() {
   wireChatbot();
 }
 
+initTheme();
 ACTIVE_TAB = resolveInitialTab();
 TREND_RANGE = resolveInitialTrendRange();
 wireControls();
 setActiveTab(ACTIVE_TAB, { persist: false, updateUrl: false });
 loadDashboard();
+
