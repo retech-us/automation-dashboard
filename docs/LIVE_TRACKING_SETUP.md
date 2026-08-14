@@ -80,8 +80,8 @@ public class LiveTestNGListener implements ITestListener, ISuiteListener {
     }
 
     private void emitProgress(String status, String details) {
-        int t = total.get();
         int c = completed.get();
+        int t = Math.max(total.get(), c);
         int p = passed.get();
         int f = failed.get();
         int s = skipped.get();
