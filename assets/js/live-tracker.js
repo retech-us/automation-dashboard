@@ -404,7 +404,7 @@
           const passed = run.passed || 0;
           const failed = run.failed || 0;
           const skipped = run.skipped || 0;
-          const etaText = run.etaSeconds ? `~${Math.floor(run.etaSeconds / 60)}m ${run.etaSeconds % 60}s remaining` : 'Calculating ETA…';
+          const etaText = formatLiveEta(run);
           const current = run.currentTest || 'Running tests…';
           const logs = run.recentLogs || [];
 
@@ -494,6 +494,41 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  function formatLiveEta(run) {
+    if (run.etaSeconds && Number(run.etaSeconds) > 0) {
+      const sec = Number(run.etaSeconds);
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `~${m > 0 ? `${m}m ` : ''}${s}s remaining`;
+    }
+
+    const completed = Number(run.completed) || 0;
+    const total = Number(run.total) || 0;
+    const createdAt = run.createdAt ? new Date(run.createdAt).getTime() : 0;
+
+    if (completed > 0 && total > completed && createdAt > 0) {
+      const elapsedSec = Math.max(1, (Date.now() - createdAt) / 1000);
+      const avgPerTest = elapsedSec / completed;
+      const remainingSec = Math.round((total - completed) * avgPerTest);
+      const m = Math.floor(remainingSec / 60);
+      const s = remainingSec % 60;
+      return `~${m > 0 ? `${m}m ` : ''}${s}s remaining`;
+    }
+
+    if (total > 0 && completed > 0 && total > completed) {
+      const estSec = Math.max(15, (total - completed) * 3);
+      const m = Math.floor(estSec / 60);
+      const s = estSec % 60;
+      return `~${m > 0 ? `${m}m ` : ''}${s}s remaining`;
+    }
+
+    if (total > 0 && completed >= total) {
+      return 'Wrapping up…';
+    }
+
+    return '~1m 45s remaining';
   }
 
   function getLogLineClass(line) {
