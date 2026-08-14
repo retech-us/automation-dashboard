@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-08-14T14:20:30Z",
+  "updatedAt": "2026-08-14T14:25:30Z",
   "status": "RUNNING",
-  "activeRuns": 3,
+  "activeRuns": 4,
   "web": {
     "status": "RUNNING",
     "runId": 31808656132,
@@ -10,11 +10,11 @@
     "htmlUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31808656132",
     "currentTest": "sequential-only-tests & parallel-testng-tests in progress",
     "total": 65,
-    "completed": 18,
-    "passed": 17,
+    "completed": 24,
+    "passed": 23,
     "failed": 1,
     "skipped": 0,
-    "percent": 27.7,
+    "percent": 36.9,
     "createdAt": "2026-08-14T14:16:02Z",
     "recentLogs": [
       "[INFO] Executing Web Regression Suite in parallel mode",
@@ -31,16 +31,37 @@
     "htmlUrl": "https://github.com/retech-us/retech-api-automation/actions/runs/31808956236",
     "currentTest": "Run API Tests (Parallel Execution Enabled)",
     "total": 48,
-    "completed": 12,
-    "passed": 12,
+    "completed": 19,
+    "passed": 19,
     "failed": 0,
     "skipped": 0,
-    "percent": 25.0,
+    "percent": 39.5,
     "createdAt": "2026-08-14T14:19:51Z",
     "recentLogs": [
       "[INFO] Set up JDK 22 and Maven runner completed",
       "[QA_LIVE_PROGRESS] UserAuthApiTest#testTokenGeneration PASSED",
-      "[QA_LIVE_PROGRESS] StoreInventoryApiTest#testFetchInventoryByStoreId RUNNING"
+      "[QA_LIVE_PROGRESS] StoreInventoryApiTest#testFetchInventoryByStoreId PASSED",
+      "[QA_LIVE_PROGRESS] OrderFulfillmentApiTest#testCreateOrder RUNNING"
+    ]
+  },
+  "mobile-ios": {
+    "status": "RUNNING",
+    "runId": 31808644144,
+    "runNumber": 31808644144,
+    "workflowName": "Mobile Tests – Android & iOS Parallel",
+    "htmlUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31808644144",
+    "currentTest": "Mobile ios · capture in progress",
+    "total": 40,
+    "completed": 11,
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0,
+    "percent": 27.5,
+    "createdAt": "2026-08-14T14:16:02Z",
+    "recentLogs": [
+      "[INFO] iOS Simulator initialized with Appium XCUITest driver",
+      "[QA_LIVE_PROGRESS] IosBarcodeCaptureTest#testScanItem PASSED",
+      "[QA_LIVE_PROGRESS] IosPriceCheckTest#testLookupPriceByBarcode RUNNING"
     ]
   },
   "mobile-android": {
@@ -51,16 +72,17 @@
     "htmlUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/31808644144",
     "currentTest": "Mobile android · capture in progress",
     "total": 40,
-    "completed": 8,
-    "passed": 8,
+    "completed": 14,
+    "passed": 14,
     "failed": 0,
     "skipped": 0,
-    "percent": 20.0,
+    "percent": 35.0,
     "createdAt": "2026-08-14T14:16:01Z",
     "recentLogs": [
       "[INFO] Decoded auth.json and initialized Appium session",
       "[QA_LIVE_PROGRESS] PriceTagCaptureTest#testBarcodeScanner PASSED",
-      "[QA_LIVE_PROGRESS] ShelfAuditTest#testOosDetection RUNNING"
+      "[QA_LIVE_PROGRESS] ShelfAuditTest#testOosDetection PASSED",
+      "[QA_LIVE_PROGRESS] AndroidInventoryTest#testSyncWithCloud RUNNING"
     ]
   }
 }
