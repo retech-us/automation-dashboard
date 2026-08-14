@@ -3352,6 +3352,67 @@ function toggleTheme() {
 window.toggleTheme = toggleTheme;
 window.applyTheme = applyTheme;
 
+function wireTokenModal() {
+  const modal = document.getElementById('token-modal');
+  const tokenBtn = document.getElementById('token-btn');
+  const input = document.getElementById('gh-token-input');
+  const saveBtn = document.getElementById('token-save-btn');
+  const clearBtn = document.getElementById('token-clear-btn');
+  const cancelBtn = document.getElementById('token-cancel-btn');
+  const closeX = document.getElementById('token-close-x');
+
+  if (!modal || !tokenBtn) return;
+
+  const updateBtnState = () => {
+    const token = localStorage.getItem('qa_dashboard_github_token') || localStorage.getItem('dashboard.githubToken');
+    if (token) {
+      tokenBtn.innerHTML = '🔑 Live Connected';
+      tokenBtn.style.color = '#10b981';
+      tokenBtn.style.borderColor = '#10b981';
+    } else {
+      tokenBtn.innerHTML = '🔑 Live Sync';
+      tokenBtn.style.color = '';
+      tokenBtn.style.borderColor = '';
+    }
+  };
+
+  updateBtnState();
+
+  tokenBtn.addEventListener('click', () => {
+    const existing = localStorage.getItem('qa_dashboard_github_token') || localStorage.getItem('dashboard.githubToken') || '';
+    if (input) input.value = existing;
+    modal.showModal();
+  });
+
+  const closeModal = () => modal.close();
+  cancelBtn?.addEventListener('click', closeModal);
+  closeX?.addEventListener('click', closeModal);
+
+  saveBtn?.addEventListener('click', () => {
+    const val = (input?.value || '').trim();
+    if (val) {
+      localStorage.setItem('qa_dashboard_github_token', val);
+      localStorage.setItem('dashboard.githubToken', val);
+    }
+    updateBtnState();
+    closeModal();
+    if (window.LiveTracker && typeof window.LiveTracker.checkAll === 'function') {
+      window.LiveTracker.checkAll();
+    }
+  });
+
+  clearBtn?.addEventListener('click', () => {
+    localStorage.removeItem('qa_dashboard_github_token');
+    localStorage.removeItem('dashboard.githubToken');
+    if (input) input.value = '';
+    updateBtnState();
+    closeModal();
+    if (window.LiveTracker && typeof window.LiveTracker.checkAll === 'function') {
+      window.LiveTracker.checkAll();
+    }
+  });
+}
+
 function wireControls() {
   document.getElementById('refresh-btn')?.addEventListener('click', loadDashboard);
   document.getElementById('export-btn')?.addEventListener('click', exportSteeringPack);
@@ -3377,6 +3438,7 @@ function wireControls() {
 
   wireTabs();
   wireChatbot();
+  wireTokenModal();
 }
 
 initTheme();

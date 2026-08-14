@@ -3739,6 +3739,117 @@ code {
   box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.45), 0 0 26px rgba(59, 130, 246, 0.25);
 }
 
+/* Token Settings Modal */
+.token-modal {
+  border: none;
+  border-radius: 16px;
+  background: transparent;
+  padding: 0;
+  max-width: 520px;
+  width: 90vw;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+}
+
+.token-modal::backdrop {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+.token-modal__box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  color: var(--text);
+}
+
+[data-theme="light"] .token-modal__box {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #0f172a;
+}
+
+.token-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.token-modal__header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.token-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.token-close-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.token-modal__desc {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+[data-theme="light"] .token-modal__desc {
+  color: #475569;
+}
+
+.token-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.token-field label {
+  font-size: 0.85rem;
+}
+
+.token-field input {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: monospace;
+}
+
+[data-theme="light"] .token-field input {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #0f172a;
+}
+
+.token-field small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+[data-theme="light"] .token-field small {
+  color: #64748b;
+}
+
+.token-modal__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
 
 
 
