@@ -2119,14 +2119,14 @@ function seriesStats(values) {
   return { latest, first, avg, best, worst, delta, dir, samples: nums.length };
 }
 
-function buildTrendPath(values, width, height, padX, padY, yMin = 0, yMax = 100) {
-  const usableW = width - padX * 2;
+function buildTrendPath(values, width, height, padXLeft, padXRight, padY, yMin = 0, yMax = 100) {
+  const usableW = width - padXLeft - padXRight;
   const usableH = height - padY * 2;
   const span = Math.max(1, yMax - yMin);
   const pts = [];
   for (let i = 0; i < values.length; i++) {
     if (values[i] == null) continue;
-    const x = padX + (values.length === 1 ? usableW / 2 : (i / (values.length - 1)) * usableW);
+    const x = padXLeft + (values.length === 1 ? usableW / 2 : (i / (values.length - 1)) * usableW);
     const y = padY + (1 - (values[i] - yMin) / span) * usableH;
     pts.push({ x, y, v: values[i], i });
   }
@@ -2164,13 +2164,15 @@ function trendLineDefs() {
 }
 
 function renderTrendChartSvg(agg) {
-  const width = 1120;
+  const width = 1200;
   const height = 230;
-  const padX = 44;
+  const padXLeft = 44;
+  const padXRight = 115; // Generous space so right-edge labels are never clipped
   const padY = 26;
   const yMin = 0;
   const yMax = 100;
   const lines = trendLineDefs();
+  const usableW = width - padXLeft - padXRight;
   const usableH = height - padY * 2;
 
   const yTicks = [0, 25, 50, 70, 85, 100];
@@ -2178,35 +2180,35 @@ function renderTrendChartSvg(agg) {
     const y = padY + (1 - (pct - yMin) / (yMax - yMin)) * usableH;
     const guide = pct === 70 || pct === 85;
     return `
-      <line x1="${padX}" y1="${y}" x2="${width - padX}" y2="${y}" class="chart-grid ${guide ? 'chart-grid--guide' : ''}" />
-      <text x="${padX - 8}" y="${y + 3}" class="chart-axis">${pct}%</text>`;
+      <line x1="${padXLeft}" y1="${y}" x2="${width - padXRight}" y2="${y}" class="chart-grid ${guide ? 'chart-grid--guide' : ''}" />
+      <text x="${padXLeft - 8}" y="${y + 3}" class="chart-axis">${pct}%</text>`;
   }).join('');
 
   const guideNotes = `
-    <text x="${width - padX}" y="${padY + (1 - (85 - yMin) / (yMax - yMin)) * usableH - 5}" class="chart-guide-label" text-anchor="end">High ≥ 85%</text>
-    <text x="${width - padX}" y="${padY + (1 - (70 - yMin) / (yMax - yMin)) * usableH - 5}" class="chart-guide-label chart-guide-label--watch" text-anchor="end">Watch ≥ 70%</text>`;
+    <text x="${width - padXRight - 6}" y="${padY + (1 - (85 - yMin) / (yMax - yMin)) * usableH - 5}" class="chart-guide-label" text-anchor="end">High ≥ 85%</text>
+    <text x="${width - padXRight - 6}" y="${padY + (1 - (70 - yMin) / (yMax - yMin)) * usableH - 5}" class="chart-guide-label chart-guide-label--watch" text-anchor="end">Watch ≥ 70%</text>`;
 
   const labelStep = Math.max(1, Math.ceil(agg.labels.length / 6));
   const xLabels = agg.labels.map((label, i) => {
     if (i % labelStep !== 0 && i !== agg.labels.length - 1) return '';
-    const x = padX + (agg.labels.length === 1 ? (width - padX * 2) / 2 : (i / (agg.labels.length - 1)) * (width - padX * 2));
+    const x = padXLeft + (agg.labels.length === 1 ? usableW / 2 : (i / (agg.labels.length - 1)) * usableW);
     return `<text x="${x}" y="${height - 8}" class="chart-xlabel">${escapeHtml(label)}</text>`;
   }).join('');
 
   const endMeta = lines.map((line) => {
-    const { pts } = buildTrendPath(agg.series[line.id] || [], width, height, padX, padY, yMin, yMax);
+    const { pts } = buildTrendPath(agg.series[line.id] || [], width, height, padXLeft, padXRight, padY, yMin, yMax);
     const last = pts[pts.length - 1];
     return last ? { id: line.id, color: line.color, x: last.x, y: last.y, v: last.v } : null;
   }).filter(Boolean).sort((a, b) => a.y - b.y);
 
   for (let i = 1; i < endMeta.length; i++) {
     const gap = endMeta[i].y - endMeta[i - 1].y;
-    if (gap < 12) endMeta[i].y = endMeta[i - 1].y + 12;
+    if (gap < 14) endMeta[i].y = endMeta[i - 1].y + 14;
   }
   const endY = Object.fromEntries(endMeta.map((e) => [e.id, e.y]));
 
   const paths = lines.map((line, seriesIndex) => {
-    const { d, area, pts } = buildTrendPath(agg.series[line.id] || [], width, height, padX, padY, yMin, yMax);
+    const { d, area, pts } = buildTrendPath(agg.series[line.id] || [], width, height, padXLeft, padXRight, padY, yMin, yMax);
     if (!d) return '';
     const areaEl = line.area
       ? `<path d="${area}" class="chart-area" fill="url(#overallGlow)" opacity="0.35" />`
@@ -2229,7 +2231,7 @@ function renderTrendChartSvg(agg) {
     const last = pts[pts.length - 1];
     const labelY = last ? (endY[line.id] ?? last.y) : null;
     const endLabel = last
-      ? `<text class="chart-end-label" x="${Math.min(width - 6, last.x + 8)}" y="${labelY + 3}" fill="${line.color}">${escapeHtml(line.label)} ${formatPct(last.v)}</text>`
+      ? `<text class="chart-end-label" x="${last.x + 9}" y="${labelY + 3}" fill="${line.color}">${escapeHtml(line.label)} ${formatPct(last.v)}</text>`
       : '';
     const liveRing = last
       ? `<circle class="chart-live-ring" cx="${last.x}" cy="${last.y}" r="7" fill="none" stroke="${line.color}" />`
@@ -2245,8 +2247,8 @@ function renderTrendChartSvg(agg) {
   }).join('');
 
   const hitZones = (agg.labels || []).map((_, i) => {
-    const x = padX + (agg.labels.length === 1 ? (width - padX * 2) / 2 : (i / (agg.labels.length - 1)) * (width - padX * 2));
-    const half = agg.labels.length <= 1 ? (width - padX * 2) / 2 : ((width - padX * 2) / (agg.labels.length - 1)) / 2;
+    const x = padXLeft + (agg.labels.length === 1 ? usableW / 2 : (i / (agg.labels.length - 1)) * usableW);
+    const half = agg.labels.length <= 1 ? usableW / 2 : (usableW / (agg.labels.length - 1)) / 2;
     return `<rect class="chart-hit" data-idx="${i}" x="${x - half}" y="${padY}" width="${Math.max(12, half * 2)}" height="${usableH}" fill="transparent" />`;
   }).join('');
 
@@ -2256,7 +2258,7 @@ function renderTrendChartSvg(agg) {
     series: agg.series,
     totals: agg.totals,
     lines: lines.map((l) => ({ id: l.id, label: l.label, color: l.color })),
-    chartBox: { padX, padY, width, height, usableW: width - padX * 2, usableH },
+    chartBox: { padXLeft, padXRight, padY, width, height, usableW, usableH },
   });
   const payloadAttr = escapeHtml(payloadRaw);
 
