@@ -645,6 +645,16 @@ def main() -> int:
         )
     append_automation_history(out_dir, payloads)
     fetch_ai_usage(out_dir, payloads)
+
+    live_status_path = out_dir / "live-status.json"
+    if not live_status_path.exists():
+        live_status_doc = {
+            "updatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "status": "IDLE",
+            "activeRuns": 0,
+        }
+        live_status_path.write_text(json.dumps(live_status_doc, indent=2) + "\n", encoding="utf-8")
+
     return 0
 
 

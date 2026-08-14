@@ -60,30 +60,8 @@
     }
 
     async checkRepoRuns(repoCfg) {
-      // Check local live status from dashboard data
-      try {
-        const localResp = await fetch(`data/live-status.json?_t=${Date.now()}`);
-        if (localResp.ok) {
-          const liveData = await localResp.json();
-          if (liveData && liveData[repoCfg.key] && (liveData[repoCfg.key].status === 'RUNNING' || liveData[repoCfg.key].status === 'in_progress')) {
-            return {
-              repoKey: repoCfg.key,
-              label: repoCfg.label,
-              icon: repoCfg.icon,
-              repo: repoCfg.repo,
-              ...liveData[repoCfg.key]
-            };
-          }
-        }
-      } catch (e) {
-        // ignore
-      }
-
-      // Check GitHub Actions directly if token is available
       const token = this.getToken();
-      if (!token) {
-        return null;
-      }
+      if (!token) return null;
 
       const url = `https://api.github.com/repos/${repoCfg.repo}/actions/runs?status=in_progress&per_page=3`;
       try {
@@ -127,7 +105,6 @@
         runInfo.jobName = runningJob.name;
         runInfo.steps = runningJob.steps || [];
 
-        // Attempt to fetch raw log stream for running job if token is available
         if (this.getToken()) {
           const logsUrl = `https://api.github.com/repos/${runInfo.repo}/actions/jobs/${runningJob.id}/logs`;
           const logResp = await fetch(logsUrl, { headers: this.getHeaders() });
@@ -138,7 +115,6 @@
         }
         return runInfo;
       } catch (err) {
-        console.warn(`[LiveTracker] Failed to fetch job details for run ${runInfo.runId}:`, err);
         return runInfo;
       }
     }
@@ -179,14 +155,12 @@
         runInfo.skipped = Number(latestProgress.skipped) || 0;
         runInfo.percent = runInfo.total > 0 ? ((runInfo.completed / runInfo.total) * 100) : 0;
       } else {
-        // Fallback: estimate from job steps
         const completedSteps = (runInfo.steps || []).filter(s => s.status === 'completed').length;
         const totalSteps = Math.max((runInfo.steps || []).length, 1);
         runInfo.currentTest = (runInfo.steps || []).find(s => s.status === 'in_progress')?.name || 'Running test step...';
         runInfo.percent = Math.round((completedSteps / totalSteps) * 100);
       }
 
-      // Calculate ETA
       const elapsedSec = (Date.now() - new Date(runInfo.createdAt).getTime()) / 1000;
       if (runInfo.completed && runInfo.total && runInfo.completed > 0) {
         const remaining = runInfo.total - runInfo.completed;
@@ -199,11 +173,39 @@
       if (this.isSimulated) return;
       const detected = new Map();
 
-      for (const repoCfg of REPO_REGISTRY) {
-        const runInfo = await this.checkRepoRuns(repoCfg);
-        if (runInfo) {
-          await this.fetchJobAndLogs(runInfo);
-          detected.set(repoCfg.key, runInfo);
+      // 1. Single fetch to local live status snapshot
+      try {
+        const localResp = await fetch(`data/live-status.json?_t=${Date.now()}`);
+        if (localResp.ok) {
+          const liveData = await localResp.json();
+          if (liveData && typeof liveData === 'object') {
+            for (const repoCfg of REPO_REGISTRY) {
+              const run = liveData[repoCfg.key];
+              if (run && (run.status === 'RUNNING' || run.status === 'in_progress')) {
+                detected.set(repoCfg.key, {
+                  repoKey: repoCfg.key,
+                  label: repoCfg.label,
+                  icon: repoCfg.icon,
+                  repo: repoCfg.repo,
+                  ...run
+                });
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // 2. Direct API check if token exists
+      const token = this.getToken();
+      if (token && detected.size === 0) {
+        for (const repoCfg of REPO_REGISTRY) {
+          const runInfo = await this.checkRepoRuns(repoCfg);
+          if (runInfo) {
+            await this.fetchJobAndLogs(runInfo);
+            detected.set(repoCfg.key, runInfo);
+          }
         }
       }
 
