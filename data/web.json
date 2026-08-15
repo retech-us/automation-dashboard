@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-08-14T18:24:41Z",
-  "durationMs": 14641268,
+  "finishedAt": "2026-08-15T11:13:54Z",
+  "durationMs": 11914487,
   "summary": {
     "total": 112,
-    "passed": 62,
-    "failed": 3,
-    "broken": 38,
+    "passed": 61,
+    "failed": 5,
+    "broken": 36,
     "skipped": 9
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31872649595",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/31873027437",
   "topFailures": [
     {
       "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
@@ -68,25 +68,17 @@
     {
       "name": "Submit correction action by subuser, train by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:143",
-      "status": "failed",
-      "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [072036786869",
-      "feature": "Verify Approval AI tab Products approvals"
-    },
-    {
-      "name": "Submit exception action by subuser, approved by superuser and verify history tab",
-      "fullName": "src/test/resources/features/ApprovalAi.feature:31",
       "status": "broken",
       "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:31'",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:143'",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
       "name": "Submit exception action by subuser, approved by superuser and verify price tag history tab",
       "fullName": "src/test/resources/features/PriceTags.feature:34",
       "status": "broken",
-      "category": "data",
-      "reason": "Test data validation failed in 'src/test/resources/features/PriceTags.feature:34': Price Tags approval tab not found after Approval AI navigation",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/PriceTags.feature:34': Element 'PriceTagPageObject:Price Tag Finish Button' not found: AI heal was rejected by validation (Tag mismatch. expected=button actual=sl-scan-price-tags) and declared locators did not match.",
       "feature": "Verify price tag corrections and approvals"
     },
     {
@@ -96,29 +88,36 @@
       "category": "locator",
       "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:45': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI Exception Tab",
       "feature": "Verify Approval AI tab Products approvals"
+    },
+    {
+      "name": "Submit exception action by subuser, rejected by superuser and verify price tag history tab",
+      "fullName": "src/test/resources/features/PriceTags.feature:47",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/PriceTags.feature:47': Element 'PriceTagPageObject:Price Tag Finish Button' not found: AI heal was rejected by validation (Tag mismatch. expected=button actual=sl-scan-price-tags) and declared locators did not match.",
+      "feature": "Verify price tag corrections and approvals"
     }
   ],
   "failureCategories": {
-    "login": 2,
-    "locator": 9,
+    "login": 8,
+    "locator": 10,
     "timeout": 7,
-    "data": 6,
     "assertion": 3,
-    "unknown": 14
+    "unknown": 13
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
     "total": 112,
-    "passed": 62,
+    "passed": 61,
     "review": 41,
     "skipped": 9
   },
   "historyTrend": [
     {
-      "passPct": 100.0,
-      "total": 1,
-      "failed": 0
+      "passPct": 54.5,
+      "total": 112,
+      "failed": 41
     },
     {
       "passPct": 35.1,
@@ -127,7 +126,7 @@
     }
   ],
   "branch": "develop",
-  "commit": "e7dc24d",
+  "commit": "53896bf",
   "environment": "CI",
   "instance": "epsilon",
   "browser": "Chrome",
@@ -136,21 +135,21 @@
   "jobs": [
     {
       "name": "scan-tests",
-      "status": "cancelled"
+      "status": "failure"
     },
     {
       "name": "sequential-only-tests",
-      "status": "cancelled"
+      "status": "failure"
     },
     {
       "name": "hybrid-tests",
-      "status": "cancelled"
+      "status": "failure"
     },
     {
       "name": "parallel-tests",
-      "status": "cancelled"
+      "status": "failure"
     }
   ],
-  "runId": "31872649595",
-  "runNumber": 1024
+  "runId": "31873027437",
+  "runNumber": 1025
 }
