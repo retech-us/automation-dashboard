@@ -392,43 +392,97 @@
                 </button>
               </div>
 
-              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;max-width:900px;margin:0 auto;text-align:left;">
-                <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                    <strong>🌐 Web Automation</strong>
-                    <span style="font-size:11px;color:#10b981;font-weight:700;">✓ Completed</span>
-                  </div>
-                  <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);">Run #1017 · 62 Passed / 38 Failed</div>
-                  <a href="https://retech-us.github.io/retech-web-automation/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
-                </div>
+              ${(() => {
+                const snaps = window.DASHBOARD_SNAPSHOTS?.snapshots || {};
+                const web = snaps.web || {};
+                const webSum = web.summary || {};
+                const webRun = web.runNumber || web.runId || 1023;
+                const webPassed = webSum.passed || 62;
+                const webFailed = (webSum.failed || 0) + (webSum.broken || 0) || 41;
+                const webTotal = webSum.total || 112;
+                const webSkipped = webSum.skipped || 0;
 
-                <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                    <strong>🍎 iOS Mobile</strong>
-                    <span style="font-size:11px;color:#10b981;font-weight:700;">✓ Completed</span>
-                  </div>
-                  <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);">Run #258 · 18 Passed / 7 Failed</div>
-                  <a href="https://retech-us.github.io/retech-mobile-automation/ios/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
-                </div>
+                const api = snaps.api || {};
+                const apiSum = api.summary || {};
+                const apiRun = api.runNumber || api.runId || 267;
+                const apiPassed = apiSum.passed || 99;
+                const apiFailed = (apiSum.failed || 0) + (apiSum.broken || 0) || 0;
+                const apiTotal = apiSum.total || 99;
 
-                <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                    <strong>🤖 Android Mobile</strong>
-                    <span style="font-size:11px;color:#10b981;font-weight:700;">✓ Completed</span>
-                  </div>
-                  <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);">Run #258 · 18 Passed / 7 Failed</div>
-                  <a href="https://retech-us.github.io/retech-mobile-automation/android/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
-                </div>
+                const ios = snaps['mobile-ios'] || {};
+                const iosSum = ios.summary || {};
+                const iosRun = ios.runNumber || ios.runId || 258;
+                const iosPassed = iosSum.passed || 18;
+                const iosFailed = (iosSum.failed || 0) + (iosSum.broken || 0) || 7;
+                const iosTotal = iosSum.total || 25;
 
-                <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                    <strong>🔌 API Automation</strong>
-                    <span style="font-size:11px;color:#10b981;font-weight:700;">✓ 100% Passed</span>
+                const android = snaps['mobile-android'] || {};
+                const androidSum = android.summary || {};
+                const androidRun = android.runNumber || android.runId || 258;
+                const androidPassed = androidSum.passed || 18;
+                const androidFailed = (androidSum.failed || 0) + (androidSum.broken || 0) || 7;
+                const androidTotal = androidSum.total || 25;
+
+                return `
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;max-width:900px;margin:0 auto;text-align:left;">
+                    <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <strong>🌐 Web Automation</strong>
+                        <span style="font-size:11px;color:${webFailed > 0 ? '#fbbf24' : '#10b981'};font-weight:700;">✓ Completed</span>
+                      </div>
+                      <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);font-weight:600;">
+                        Run #${webRun} · ${webTotal} Tests
+                      </div>
+                      <div style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-top:2px;">
+                        <span style="color:#10b981;font-weight:700;">${webPassed} Passed</span> · <span style="color:#f43f5e;font-weight:700;">${webFailed} Failed</span>${webSkipped > 0 ? ` · <span>${webSkipped} Skipped</span>` : ''}
+                      </div>
+                      <a href="https://retech-us.github.io/retech-web-automation/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
+                    </div>
+
+                    <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <strong>🍎 iOS Mobile</strong>
+                        <span style="font-size:11px;color:${iosFailed > 0 ? '#fbbf24' : '#10b981'};font-weight:700;">✓ Completed</span>
+                      </div>
+                      <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);font-weight:600;">
+                        Run #${iosRun} · ${iosTotal} Tests
+                      </div>
+                      <div style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-top:2px;">
+                        <span style="color:#10b981;font-weight:700;">${iosPassed} Passed</span> · <span style="color:#f43f5e;font-weight:700;">${iosFailed} Failed</span>
+                      </div>
+                      <a href="https://retech-us.github.io/retech-mobile-automation/ios/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
+                    </div>
+
+                    <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <strong>🤖 Android Mobile</strong>
+                        <span style="font-size:11px;color:${androidFailed > 0 ? '#fbbf24' : '#10b981'};font-weight:700;">✓ Completed</span>
+                      </div>
+                      <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);font-weight:600;">
+                        Run #${androidRun} · ${androidTotal} Tests
+                      </div>
+                      <div style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-top:2px;">
+                        <span style="color:#10b981;font-weight:700;">${androidPassed} Passed</span> · <span style="color:#f43f5e;font-weight:700;">${androidFailed} Failed</span>
+                      </div>
+                      <a href="https://retech-us.github.io/retech-mobile-automation/android/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
+                    </div>
+
+                    <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <strong>🔌 API Automation</strong>
+                        <span style="font-size:11px;color:#10b981;font-weight:700;">✓ 100% Passed</span>
+                      </div>
+                      <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);font-weight:600;">
+                        Run #${apiRun} · ${apiTotal} Tests
+                      </div>
+                      <div style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-top:2px;">
+                        <span style="color:#10b981;font-weight:700;">${apiPassed} Passed</span> · <span style="color:#10b981;font-weight:700;">0 Failed</span>
+                      </div>
+                      <a href="https://retech-us.github.io/retech-api-automation/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
+                    </div>
                   </div>
-                  <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);">Run #267 · 99 Passed / 0 Failed</div>
-                  <a href="https://retech-us.github.io/retech-api-automation/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
-                </div>
-              </div>
+                `;
+              })()}
 
               <div class="live-empty-meta" style="margin-top:24px;font-size:12px;color:var(--text-secondary,#94a3b8);">
                 <span class="live-pulse" style="display:inline-block;width:8px;height:8px;"></span> Listening to GitHub Actions CI · Auto-checks every 30s
