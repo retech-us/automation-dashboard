@@ -379,15 +379,69 @@
         if (statusPill) statusPill.textContent = 'Idle · All Suites Completed';
         if (contentEl) {
           contentEl.innerHTML = `
-            <div class="live-empty-state">
-              <div class="live-empty-icon">☕</div>
-              <h3>No Automation Pipelines In Progress</h3>
-              <p>All test suites (Web, Mobile iOS, Mobile Android, and API) are currently idle. No workflows are running in GitHub Actions right now.</p>
-              <div class="live-empty-meta">
+            <div class="live-empty-state" style="text-align:center;padding:32px 16px;">
+              <div class="live-empty-icon" style="font-size:42px;margin-bottom:12px;">☕</div>
+              <h3 style="margin-bottom:8px;font-size:20px;font-weight:700;">No Automation Pipelines In Progress</h3>
+              <p style="max-width:580px;margin:0 auto 20px;color:var(--text-secondary, #94a3b8);font-size:14px;line-height:1.5;">
+                All test suites (Web, Mobile iOS, Mobile Android, and API) are currently idle. When a new workflow is triggered in GitHub Actions, real-time test progress will stream here automatically.
+              </p>
+              
+              <div style="display:flex;justify-content:center;gap:12px;margin-bottom:28px;flex-wrap:wrap;">
+                <button type="button" class="btn btn--ghost btn--sm" id="btn-start-sim" style="border-radius:20px;">
+                  ▶️ Simulate Live Run (Demo)
+                </button>
+              </div>
+
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;max-width:900px;margin:0 auto;text-align:left;">
+                <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <strong>🌐 Web Automation</strong>
+                    <span style="font-size:11px;color:#10b981;font-weight:700;">✓ Completed</span>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);">Run #1017 · 62 Passed / 38 Failed</div>
+                  <a href="https://retech-us.github.io/retech-web-automation/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
+                </div>
+
+                <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <strong>🍎 iOS Mobile</strong>
+                    <span style="font-size:11px;color:#10b981;font-weight:700;">✓ Completed</span>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);">Run #258 · 18 Passed / 7 Failed</div>
+                  <a href="https://retech-us.github.io/retech-mobile-automation/ios/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
+                </div>
+
+                <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <strong>🤖 Android Mobile</strong>
+                    <span style="font-size:11px;color:#10b981;font-weight:700;">✓ Completed</span>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);">Run #258 · 18 Passed / 7 Failed</div>
+                  <a href="https://retech-us.github.io/retech-mobile-automation/android/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
+                </div>
+
+                <div style="background:var(--card-bg, rgba(255,255,255,0.04));border:1px solid var(--border, rgba(255,255,255,0.08));border-radius:14px;padding:16px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <strong>🔌 API Automation</strong>
+                    <span style="font-size:11px;color:#10b981;font-weight:700;">✓ 100% Passed</span>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--text-secondary,#94a3b8);">Run #267 · 99 Passed / 0 Failed</div>
+                  <a href="https://retech-us.github.io/retech-api-automation/" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:#38bdf8;">View Allure Report ↗</a>
+                </div>
+              </div>
+
+              <div class="live-empty-meta" style="margin-top:24px;font-size:12px;color:var(--text-secondary,#94a3b8);">
                 <span class="live-pulse" style="display:inline-block;width:8px;height:8px;"></span> Listening to GitHub Actions CI · Auto-checks every 30s
               </div>
             </div>
           `;
+          
+          const simBtn = document.getElementById('btn-start-sim');
+          if (simBtn) {
+            simBtn.addEventListener('click', () => {
+              this.simulateRun('web');
+            });
+          }
         }
         return;
       }
