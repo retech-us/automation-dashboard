@@ -386,11 +386,7 @@
                 All test suites (Web, Mobile iOS, Mobile Android, and API) are currently idle. When a new workflow is triggered in GitHub Actions, real-time test progress will stream here automatically.
               </p>
               
-              <div style="display:flex;justify-content:center;gap:12px;margin-bottom:28px;flex-wrap:wrap;">
-                <button type="button" class="btn btn--ghost btn--sm" id="btn-start-sim" style="border-radius:20px;">
-                  ▶️ Simulate Live Run (Demo)
-                </button>
-              </div>
+
 
               ${(() => {
                 const snaps = window.DASHBOARD_SNAPSHOTS?.snapshots || {};
@@ -490,12 +486,7 @@
             </div>
           `;
           
-          const simBtn = document.getElementById('btn-start-sim');
-          if (simBtn) {
-            simBtn.addEventListener('click', () => {
-              this.simulateRun('web');
-            });
-          }
+
         }
         return;
       }
@@ -526,7 +517,7 @@
                   <span class="live-workflow">${escapeHtml(run.workflowName || '')}</span>
                 </div>
                 <div class="live-card__actions">
-                  ${this.isSimulated ? `<button type="button" class="btn btn--ghost btn--sm" id="btn-stop-sim">Stop demo</button>` : ''}
+                  
                   <a href="${run.htmlUrl}" target="_blank" rel="noopener noreferrer" class="btn btn--ghost btn--sm">
                     View in GitHub Actions ↗
                   </a>
