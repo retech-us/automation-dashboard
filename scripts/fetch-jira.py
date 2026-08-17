@@ -121,45 +121,56 @@ def fetch_jira_live():
 
     for jql in jql_candidates:
         print(f"[Jira Fetcher] Querying JQL: {jql}")
-        endpoints = [
-            # 1. POST /rest/api/3/search/jql
-            {
+        page_size = 100
+        start_at = 0
+        all_jql_issues = []
+        next_token = None
+
+        while True:
+            ep_post = {
                 "url": f"{JIRA_BASE_URL}/rest/api/3/search/jql",
                 "method": "POST",
-                "body": {"jql": jql, "maxResults": 100, "fields": fields_list}
-            },
-            # 2. GET /rest/api/3/search/jql
-            {
-                "url": f"{JIRA_BASE_URL}/rest/api/3/search/jql?jql={urllib.parse.quote(jql)}&maxResults=100&fields={','.join(fields_list)}",
+                "body": {"jql": jql, "maxResults": page_size, "fields": fields_list, "startAt": start_at}
+            }
+            ep_get = {
+                "url": f"{JIRA_BASE_URL}/rest/api/3/search/jql?jql={urllib.parse.quote(jql)}&maxResults={page_size}&startAt={start_at}&fields={','.join(fields_list)}",
                 "method": "GET",
                 "body": None
             }
-        ]
+            if next_token:
+                ep_post["body"]["nextPageToken"] = next_token
 
-        for ep in endpoints:
-            try:
-                data = make_jira_request(ep["url"], method=ep["method"], body_dict=ep["body"], headers=headers)
-                if data:
-                    issues_found = data.get("issues") or data.get("values") or data.get("results") or []
-                    print(f"[Jira Fetcher] {ep['method']} {ep['url'][:55]}... -> {len(issues_found)} issues found")
-                    if len(issues_found) > 0:
-                        raw_issues = issues_found
-                        executed_jql = jql
-                        break
-            except urllib.error.HTTPError as err:
-                err_content = ""
+            data = None
+            for ep in [ep_post, ep_get]:
                 try:
-                    err_content = err.read().decode("utf-8")
-                except Exception:
+                    data = make_jira_request(ep["url"], method=ep["method"], body_dict=ep["body"], headers=headers)
+                    if data:
+                        break
+                except Exception as ex:
                     pass
-                print(f"[Jira Fetcher] HTTP {err.code} on [{jql}]: {err_content}")
-            except Exception as ex:
-                print(f"[Jira Fetcher] Error on [{jql}]: {ex}")
 
-        if len(raw_issues) > 0:
+            if not data:
+                break
+
+            page_issues = data.get("issues") or data.get("values") or data.get("results") or []
+            print(f"[Jira Fetcher] Page at startAt={start_at} -> {len(page_issues)} issues found")
+            if not page_issues:
+                break
+
+            all_jql_issues.extend(page_issues)
+            total = data.get("total", len(all_jql_issues))
+            next_token = data.get("nextPageToken")
+
+            start_at += len(page_issues)
+            if start_at >= total or len(page_issues) < page_size or len(all_jql_issues) >= 1000:
+                break
+
+        if len(all_jql_issues) > 0:
+            raw_issues = all_jql_issues
+            executed_jql = jql
             break
 
-    print(f"[Jira Fetcher] Final issue count retrieved: {len(raw_issues)}")
+    print(f"[Jira Fetcher] Total issues retrieved across all pages: {len(raw_issues)}")
 
     issues = []
     by_priority = {"Highest": 0, "High": 0, "Medium": 0, "Low": 0, "Lowest": 0}
@@ -228,7 +239,11 @@ def fetch_jira_live():
 
         # Status counts
         by_status[status_name] = by_status.get(status_name, 0) + 1
-        if status_category == "done" or status_name.lower() in ["closed", "done", "resolved"]:
+        s_lower = status_name.lower()
+        is_code_review = "code review" in s_lower or "pr review" in s_lower or "peer review" in s_lower or s_lower == "in review" or s_lower == "review"
+        is_qa_stat = ("qa" in s_lower or "testing" in s_lower or "verified" in s_lower) and not is_code_review
+
+        if status_category == "done" or s_lower in ["closed", "done", "resolved"]:
             done_count += 1
             updated_str = fields.get("updated", "")
             if updated_str:
@@ -238,9 +253,9 @@ def fetch_jira_live():
                         resolved_this_week += 1
                 except Exception:
                     pass
-        elif any(k in status_name.lower() for k in ["qa", "review", "testing", "verified"]):
+        elif is_qa_stat:
             in_qa_count += 1
-        elif status_category == "indeterminate" or any(k in status_name.lower() for k in ["progress", "dev"]):
+        elif status_category == "indeterminate" or any(k in s_lower for k in ["progress", "dev", "review", "working", "draft"]):
             in_prog_count += 1
         else:
             open_count += 1
