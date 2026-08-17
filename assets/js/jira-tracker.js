@@ -83,10 +83,6 @@
     }
 
     async init() {
-      if (this.initialized && this.data) {
-        this.render();
-        return;
-      }
       await this.loadData();
       this.render();
       this.initialized = true;
@@ -100,7 +96,10 @@
       try {
         const res = await fetch(`data/jira.json?_=${Date.now()}`);
         if (res.ok) {
-          this.data = await res.json();
+          const freshData = await res.json();
+          if (freshData && (Array.isArray(freshData) || (freshData.issues && Array.isArray(freshData.issues)))) {
+            this.data = freshData;
+          }
         }
       } catch (err) {
         console.warn('[Jira Tracker] Could not fetch fresh data/jira.json:', err);
@@ -501,19 +500,46 @@
       const headerActions = document.getElementById('jira-header-actions');
       if (!container) return;
 
-      if (!this.data) {
-        container.innerHTML = `
-          <div class="jira-empty-state">
-            <div class="jira-empty-icon">⏳</div>
-            <h3>No Jira Data Available Yet</h3>
-            <p>Jira data will appear here once the scheduled sync runs or workflow is triggered.</p>
-          </div>
-        `;
-        if (statusPill) statusPill.textContent = 'No Data';
-        return;
+      if (!this.data && window.DASHBOARD_SNAPSHOTS?.snapshots?.jira) {
+        this.data = window.DASHBOARD_SNAPSHOTS.snapshots.jira;
       }
 
-      const { summary = {}, issues = [], jiraUrl, projectKey, status, lastUpdated, filterOptions = {}, lastError } = this.data;
+      let issues = [];
+      let filterOptions = {};
+      let summary = {};
+      let jiraUrl = '';
+      let projectKey = '';
+      let status = 'live';
+      let lastUpdated = '';
+      let lastError = '';
+
+      if (Array.isArray(this.data)) {
+        issues = this.data;
+      } else if (this.data && typeof this.data === 'object') {
+        issues = Array.isArray(this.data.issues) ? this.data.issues : (Array.isArray(this.data.results) ? this.data.results : []);
+        filterOptions = this.data.filterOptions || {};
+        summary = this.data.summary || {};
+        jiraUrl = this.data.jiraUrl || '';
+        projectKey = this.data.projectKey || '';
+        status = this.data.status || 'live';
+        lastUpdated = this.data.lastUpdated || '';
+        lastError = this.data.lastError || '';
+      }
+
+      if (!this.data || (!Array.isArray(this.data) && (!this.data.issues || this.data.issues.length === 0) && (!this.data.summary || !this.data.summary.totalDefects))) {
+        if (issues.length === 0 && !status) {
+          container.innerHTML = `
+            <div class="jira-empty-state">
+              <div class="jira-empty-icon">⏳</div>
+              <h3>No Jira Data Available Yet</h3>
+              <p>Jira data will appear here once the scheduled sync runs or workflow is triggered.</p>
+            </div>
+          `;
+          if (statusPill) statusPill.textContent = 'No Data';
+          return;
+        }
+      }
+
       const filtered = this.filterAndSortIssues(issues);
       const isLive = status === 'live';
       const isError = status === 'error';
@@ -1353,4 +1379,18 @@
   }
 
   window.JiraTracker = new JiraTracker();
+
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('jira-content')) {
+          window.JiraTracker.init();
+        }
+      });
+    } else {
+      if (document.getElementById('jira-content')) {
+        window.JiraTracker.init();
+      }
+    }
+  }
 })(window);
