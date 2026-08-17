@@ -56,6 +56,7 @@
       this.filters = {
         kpi: 'all',          // 'all', 'blockers', 'progress', 'qa', 'resolved'
         project: 'all',
+        epic: 'all',
         fixVersion: 'all',
         type: 'all',
         assignee: 'all',
@@ -196,14 +197,23 @@
           return false;
         }
 
+        // Epic Filter
+        if (this.filters.epic !== 'all' && issue.epic !== this.filters.epic) {
+          return false;
+        }
+
         // Fix Version Filter
         if (this.filters.fixVersion !== 'all' && issue.fixVersion !== this.filters.fixVersion) {
           return false;
         }
 
-        // Ticket Type Filter
-        if (this.filters.type !== 'all' && issue.type !== this.filters.type) {
-          return false;
+        // Ticket Type Filter (case-insensitive)
+        if (this.filters.type !== 'all') {
+          const tIssue = (issue.type || '').toLowerCase().trim();
+          const tFilter = (this.filters.type || '').toLowerCase().trim();
+          if (tIssue !== tFilter) {
+            return false;
+          }
         }
 
         // Assignee Filter
@@ -292,6 +302,7 @@
       let count = 0;
       if (this.filters.kpi !== 'all') count++;
       if (this.filters.project !== 'all') count++;
+      if (this.filters.epic !== 'all') count++;
       if (this.filters.fixVersion !== 'all') count++;
       if (this.filters.type !== 'all') count++;
       if (this.filters.assignee !== 'all') count++;
@@ -307,6 +318,7 @@
       this.filters = {
         kpi: 'all',
         project: 'all',
+        epic: 'all',
         fixVersion: 'all',
         type: 'all',
         assignee: 'all',
@@ -442,11 +454,13 @@
       const projects = filterOptions.projects || Array.from(new Set(issues.map(i => i.project || i.projectKey).filter(Boolean)));
       const fixVersions = filterOptions.fixVersions || Array.from(new Set(issues.map(i => i.fixVersion).filter(Boolean)));
       
-      // Ensure 'Epic' and other types are captured
-      let types = filterOptions.types || Array.from(new Set(issues.map(i => i.type).filter(Boolean)));
-      if (issues.some(i => (i.type || '').toLowerCase() === 'epic') && !types.includes('Epic')) {
-        types.unshift('Epic');
-      }
+      // Guarantee standard Ticket Types including Epic
+      const standardTypes = ['Epic', 'Story', 'Bug', 'Task', 'Sub-task'];
+      const rawTypes = ['Epic'].concat(filterOptions.types || []).concat(issues.map(i => i.type).filter(Boolean)).concat(standardTypes);
+      const types = Array.from(new Set(rawTypes)).filter(Boolean);
+
+      // Extract unique parent Epics
+      const epics = Array.from(new Set(issues.map(i => i.epic).filter(e => e && e !== 'None' && !e.toLowerCase().includes('undefined'))));
 
       const assignees = filterOptions.assignees || Array.from(new Set(issues.map(i => i.assignee).filter(Boolean)));
       const testers = filterOptions.testers || Array.from(new Set(issues.map(i => i.tester || i.reporter).filter(Boolean)));
@@ -492,7 +506,68 @@
         color: COMPONENT_COLORS[idx % COMPONENT_COLORS.length]
       })).sort((a, b) => b.count - a.count);
 
-      // --- 4. Compute Sprint & Milestone Delivery Progress ---
+      // --- 4. Compute Dynamic KPI Metrics based on Active Filters ---
+      const activeNonKpiFilters = (
+        this.filters.project !== 'all' ||
+        this.filters.epic !== 'all' ||
+        this.filters.fixVersion !== 'all' ||
+        this.filters.type !== 'all' ||
+        this.filters.assignee !== 'all' ||
+        this.filters.tester !== 'all' ||
+        this.filters.priority !== 'all' ||
+        this.filters.status !== 'all' ||
+        this.filters.component !== 'all' ||
+        (this.filters.searchQuery && this.filters.searchQuery.trim() !== '')
+      );
+
+      const baseForKpi = activeNonKpiFilters ? issues.filter(i => {
+        if (this.filters.project !== 'all' && (i.project !== this.filters.project && i.projectKey !== this.filters.project)) return false;
+        if (this.filters.epic !== 'all' && i.epic !== this.filters.epic) return false;
+        if (this.filters.fixVersion !== 'all' && i.fixVersion !== this.filters.fixVersion) return false;
+        if (this.filters.type !== 'all' && (i.type || '').toLowerCase() !== this.filters.type.toLowerCase()) return false;
+        if (this.filters.assignee !== 'all' && i.assignee !== this.filters.assignee) return false;
+        if (this.filters.tester !== 'all' && (i.tester !== this.filters.tester && i.reporter !== this.filters.tester)) return false;
+        if (this.filters.priority !== 'all' && i.priority !== this.filters.priority) return false;
+        if (this.filters.status !== 'all' && i.status !== this.filters.status) return false;
+        if (this.filters.component !== 'all' && i.component !== this.filters.component) return false;
+        if (this.filters.searchQuery.trim()) {
+          const q = this.filters.searchQuery.toLowerCase();
+          const matchKey = (i.key || '').toLowerCase().includes(q);
+          const matchSum = (i.summary || '').toLowerCase().includes(q);
+          const matchAss = (i.assignee || '').toLowerCase().includes(q);
+          const matchTest = (i.tester || '').toLowerCase().includes(q);
+          const matchProj = (i.project || '').toLowerCase().includes(q);
+          const matchVer = (i.fixVersion || '').toLowerCase().includes(q);
+          const matchEpic = (i.epic || '').toLowerCase().includes(q);
+          const matchType = (i.type || '').toLowerCase().includes(q);
+          const matchComp = (i.component || '').toLowerCase().includes(q);
+          const matchLabels = (i.labels || []).some(l => l.toLowerCase().includes(q));
+          if (!matchKey && !matchSum && !matchAss && !matchTest && !matchProj && !matchVer && !matchEpic && !matchType && !matchComp && !matchLabels) return false;
+        }
+        return true;
+      }) : issues;
+
+      const dynamicKpiTotal = baseForKpi.length;
+      const dynamicKpiBlockers = baseForKpi.filter(i => {
+        const p = (i.priority || '').toLowerCase();
+        return p.includes('highest') || p.includes('blocker') || p.includes('p0');
+      }).length;
+      const dynamicKpiInProgress = baseForKpi.filter(i => {
+        const s = (i.status || '').toLowerCase();
+        const cat = (i.statusCategory || '').toLowerCase();
+        return (cat === 'indeterminate' || s.includes('progress') || s.includes('dev')) && !s.includes('qa') && !s.includes('testing') && !s.includes('review');
+      }).length;
+      const dynamicKpiInQa = baseForKpi.filter(i => {
+        const s = (i.status || '').toLowerCase();
+        return s.includes('qa') || s.includes('testing') || s.includes('review') || s.includes('verified');
+      }).length;
+      const dynamicKpiResolved = baseForKpi.filter(i => {
+        const s = (i.status || '').toLowerCase();
+        const cat = (i.statusCategory || '').toLowerCase();
+        return cat === 'done' || ['closed', 'done', 'resolved'].includes(s);
+      }).length;
+
+      // --- 5. Compute Sprint & Milestone Delivery Progress ---
       const doneCount = filtered.filter(i => (i.statusCategory || '').toLowerCase() === 'done' || ['closed', 'done', 'resolved'].includes((i.status || '').toLowerCase())).length;
       const inQaCount = filtered.filter(i => {
         const s = (i.status || '').toLowerCase();
@@ -510,7 +585,7 @@
       const devPct = filtered.length ? Math.round((inDevCount / filtered.length) * 100) : 0;
       const todoPct = filtered.length ? Math.max(0, 100 - donePct - qaPct - devPct) : 0;
 
-      // --- 5. Compute Defect vs Story Ratio (Quality Index) ---
+      // --- 6. Compute Defect vs Story Ratio (Quality Index) ---
       const bugCount = filtered.filter(i => {
         const t = (i.type || '').toLowerCase();
         return t.includes('bug') || t.includes('defect') || t.includes('incident');
@@ -553,35 +628,35 @@
       }
 
       container.innerHTML = `
-        <!-- KPI Metrics Grid -->
+        <!-- KPI Metrics Grid (100% Dynamically Reactive) -->
         <div class="jira-kpi-grid">
           <div class="jira-kpi-card ${this.filters.kpi === 'all' ? 'jira-kpi-card--active' : ''}" data-kpi="all">
             <div class="jira-kpi-label">Tracked Work Items</div>
-            <div class="jira-kpi-val">${summary.totalDefects || issues.length}</div>
-            <div class="jira-kpi-sub">Total active &amp; tracked</div>
+            <div class="jira-kpi-val">${dynamicKpiTotal}</div>
+            <div class="jira-kpi-sub">Total in filtered scope</div>
           </div>
 
           <div class="jira-kpi-card jira-kpi-card--blocker ${this.filters.kpi === 'blockers' ? 'jira-kpi-card--active' : ''}" data-kpi="blockers">
             <div class="jira-kpi-label">🚨 Critical Blockers</div>
-            <div class="jira-kpi-val" style="color:var(--fail);">${summary.blockers || 0}</div>
+            <div class="jira-kpi-val" style="color:var(--fail);">${dynamicKpiBlockers}</div>
             <div class="jira-kpi-sub">Highest / P0 Priority</div>
           </div>
 
           <div class="jira-kpi-card ${this.filters.kpi === 'progress' ? 'jira-kpi-card--active' : ''}" data-kpi="progress">
             <div class="jira-kpi-label">⚡ In Progress</div>
-            <div class="jira-kpi-val" style="color:var(--warn);">${summary.inProgress || 0}</div>
+            <div class="jira-kpi-val" style="color:var(--warn);">${dynamicKpiInProgress}</div>
             <div class="jira-kpi-sub">Active developer fixes</div>
           </div>
 
           <div class="jira-kpi-card ${this.filters.kpi === 'qa' ? 'jira-kpi-card--active' : ''}" data-kpi="qa">
             <div class="jira-kpi-label">🔍 Ready for QA</div>
-            <div class="jira-kpi-val" style="color:#38bdf8;">${summary.inQa || 0}</div>
+            <div class="jira-kpi-val" style="color:#38bdf8;">${dynamicKpiInQa}</div>
             <div class="jira-kpi-sub">Ready for test verification</div>
           </div>
 
           <div class="jira-kpi-card ${this.filters.kpi === 'resolved' ? 'jira-kpi-card--active' : ''}" data-kpi="resolved">
             <div class="jira-kpi-label">✅ Resolved Recently</div>
-            <div class="jira-kpi-val" style="color:var(--pass);">${summary.resolvedThisWeek || summary.resolvedTotal || 0}</div>
+            <div class="jira-kpi-val" style="color:var(--pass);">${dynamicKpiResolved}</div>
             <div class="jira-kpi-sub">Closed / Verified</div>
           </div>
         </div>
@@ -800,7 +875,16 @@
               <label>🏷️ Ticket Type</label>
               <select class="jira-select" id="filter-type">
                 <option value="all">All Ticket Types</option>
-                ${types.map(t => `<option value="${this.escapeHtml(t)}" ${this.filters.type === t ? 'selected' : ''}>${this.escapeHtml(t)}</option>`).join('')}
+                ${types.map(t => `<option value="${this.escapeHtml(t)}" ${this.filters.type.toLowerCase() === t.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(t)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Epic / Feature Filter -->
+            <div class="jira-filter-field">
+              <label>⚡ Epic / Feature</label>
+              <select class="jira-select" id="filter-epic">
+                <option value="all">All Epics</option>
+                ${epics.map(e => `<option value="${this.escapeHtml(e)}" ${this.filters.epic === e ? 'selected' : ''}>${this.escapeHtml(e)}</option>`).join('')}
               </select>
             </div>
 
@@ -992,6 +1076,7 @@
       };
 
       bindSelect('filter-project', 'project');
+      bindSelect('filter-epic', 'epic');
       bindSelect('filter-status', 'status');
       bindSelect('filter-fix-version', 'fixVersion');
       bindSelect('filter-type', 'type');
