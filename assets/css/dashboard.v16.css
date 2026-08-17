@@ -3850,6 +3850,431 @@ code {
   gap: 12px;
 }
 
+/* ==========================================================================
+   JIRA QUALITY & DEFECT TRACKER STYLES
+   ========================================================================== */
+
+.jira-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.jira-kpi-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.jira-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.3);
+}
+
+.jira-kpi-card--active {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.jira-kpi-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.jira-kpi-val {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+  font-family: var(--display);
+}
+
+.jira-kpi-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+[data-theme="light"] .jira-kpi-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .jira-kpi-card:hover {
+  border-color: #2563eb;
+  box-shadow: 0 8px 20px -2px rgba(37, 99, 235, 0.12);
+}
+
+[data-theme="light"] .jira-kpi-card--active {
+  background: rgba(37, 99, 235, 0.06);
+  border-color: #2563eb;
+}
+
+/* Toolbar */
+.jira-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.jira-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.jira-chip {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.jira-chip:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.jira-chip--active {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+[data-theme="light"] .jira-chip {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #475569;
+}
+
+[data-theme="light"] .jira-chip:hover {
+  color: #0f172a;
+  background: #e2e8f0;
+}
+
+[data-theme="light"] .jira-chip--active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+.jira-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.jira-select {
+  padding: 7px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+}
+
+[data-theme="light"] .jira-select {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #0f172a;
+}
+
+.jira-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.jira-search-input {
+  padding: 7px 30px 7px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  width: 240px;
+  outline: none;
+  transition: width 0.2s ease, border-color 0.2s ease;
+}
+
+.jira-search-input:focus {
+  width: 280px;
+  border-color: #3b82f6;
+}
+
+[data-theme="light"] .jira-search-input {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #0f172a;
+}
+
+.jira-search-clear {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+}
+
+/* Table */
+.jira-table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.jira-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.jira-table th {
+  padding: 12px 16px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+[data-theme="light"] .jira-table th {
+  background: #f8fafc;
+  color: #475569;
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+.jira-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--text);
+}
+
+[data-theme="light"] .jira-table td {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+.jira-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="light"] .jira-table tr:hover td {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.jira-issue-key {
+  font-family: monospace;
+  font-weight: 700;
+  color: #60a5fa;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.jira-issue-key:hover {
+  text-decoration: underline;
+  color: #93c5fd;
+}
+
+[data-theme="light"] .jira-issue-key {
+  color: #2563eb;
+}
+
+.jira-summary-link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.jira-summary-link:hover {
+  color: #60a5fa;
+}
+
+[data-theme="light"] .jira-summary-link:hover {
+  color: #2563eb;
+}
+
+.jira-labels-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.jira-label-tag {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+[data-theme="light"] .jira-label-tag {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #64748b;
+}
+
+.jira-component-tag {
+  display: inline-block;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+[data-theme="light"] .jira-component-tag {
+  background: #f1f5f9;
+  color: #334155;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Priority Badges */
+.jira-priority-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.jira-priority--highest {
+  background: rgba(244, 63, 94, 0.18);
+  color: #f43f5e;
+  border: 1px solid rgba(244, 63, 94, 0.35);
+}
+
+.jira-priority--high {
+  background: rgba(249, 115, 22, 0.18);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
+.jira-priority--medium {
+  background: rgba(245, 158, 11, 0.18);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.jira-priority--low,
+.jira-priority--lowest {
+  background: rgba(100, 116, 139, 0.18);
+  color: #94a3b8;
+  border: 1px solid rgba(100, 116, 139, 0.35);
+}
+
+/* Status Pills */
+.jira-status-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.jira-status--open {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+}
+
+[data-theme="light"] .jira-status--open {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.jira-status--prog {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+.jira-status--qa {
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+}
+
+.jira-status--done {
+  background: rgba(16, 185, 129, 0.18);
+  color: #10b981;
+}
+
+/* Assignee */
+.jira-assignee-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jira-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.jira-avatar-placeholder {
+  font-size: 0.85rem;
+}
+
+.jira-assignee-name {
+  font-size: 0.82rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+[data-theme="light"] .jira-assignee-name {
+  color: #475569;
+}
+
+.jira-empty-state {
+  text-align: center;
+  padding: 50px 20px;
+}
+
+.jira-empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+
 
 
 

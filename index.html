@@ -94,6 +94,7 @@
       <button type="button" class="tab-btn" role="tab" id="tab-trends" data-tab="trends" aria-controls="panel-trends" aria-selected="false">Trends</button>
       <button type="button" class="tab-btn" role="tab" id="tab-ai" data-tab="ai" aria-controls="panel-ai" aria-selected="false">AI usage</button>
       <button type="button" class="tab-btn" role="tab" id="tab-suites" data-tab="suites" aria-controls="panel-suites" aria-selected="false">Suite details</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-jira" data-tab="jira" aria-controls="panel-jira" aria-selected="false">🎯 Jira Defects</button>
       <button type="button" class="tab-btn" role="tab" id="tab-live" data-tab="live" aria-controls="panel-live" aria-selected="false">
         <span class="live-pulse-dot" id="live-tab-dot" hidden></span> Live Run
       </button>
@@ -130,6 +131,22 @@
 
     <div id="panel-suites" class="tab-panel" role="tabpanel" aria-labelledby="tab-suites" hidden>
       <section class="cards" id="repo-cards" aria-label="Automation repositories"></section>
+    </div>
+
+    <div id="panel-jira" class="tab-panel" role="tabpanel" aria-labelledby="tab-jira" hidden>
+      <section class="panel" id="jira-panel-wrapper">
+        <div class="panel__header">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <h2>🎯 Jira Quality &amp; Defect Traceability</h2>
+              <span id="jira-status-pill" class="meta-pill">Syncing Jira…</span>
+            </div>
+            <div id="jira-header-actions" style="display:flex;gap:8px;align-items:center;"></div>
+          </div>
+          <p>Live defect lifecycle, blocker tracking, and automation-linked issue status from Jira</p>
+        </div>
+        <div id="jira-content" style="padding:24px;"></div>
+      </section>
     </div>
 
     <div id="panel-live" class="tab-panel" role="tabpanel" aria-labelledby="tab-live" hidden>
@@ -212,6 +229,7 @@
 
   <script src="assets/bootstrap.js?v=20260814i"></script>
   <script src="assets/js/live-tracker.js?v=20260814i"></script>
+  <script src="assets/js/jira-tracker.js?v=20260814i"></script>
   <script src="assets/js/app.v16.js?v=20260814i"></script>
 </body>
 </html>
