@@ -96,24 +96,20 @@ def fetch_jira_live():
     except Exception as e:
         print(f"[Jira Fetcher] Project list check skipped: {e}")
 
-    fields_list = [
-        "summary", "status", "priority", "components", "assignee",
-        "reporter", "created", "updated", "labels", "issuetype",
-        "project", "fixVersions", "description", "parent", "epic",
-        "customfield_10014", "customfield_10008", "customfield_10011",
-        "customfield_10018", "customfield_10004", "subtasks", "issuelinks"
-    ]
+    fields_list = ["*navigable", "parent", "subtasks", "issuelinks", "description"]
 
     # 4. Construct candidate bounded JQL queries
     jql_candidates = []
     if JIRA_CUSTOM_JQL:
         jql_candidates.append(JIRA_CUSTOM_JQL)
     if clean_key:
+        jql_candidates.append(f'project = "{clean_key}" ORDER BY updated DESC')
         jql_candidates.append(f'project = "{clean_key}"')
         jql_candidates.append(f'project = {clean_key}')
         jql_candidates.append(f'project in ("{clean_key}")')
         jql_candidates.append(f'project = "{clean_key}" AND created >= -365d')
-    # Bounded fallback to any created issue in the workspace
+    # Bounded fallback to any updated issue in the workspace
+    jql_candidates.append('ORDER BY updated DESC')
     jql_candidates.append('created >= -365d ORDER BY created DESC')
 
     raw_issues = []
@@ -145,12 +141,6 @@ def fetch_jira_live():
                     "url": f"{JIRA_BASE_URL}/rest/api/2/search",
                     "method": "POST",
                     "body": {"jql": jql, "maxResults": page_size, "fields": fields_list, "startAt": start_at}
-                },
-                # 4. Jira Cloud v2 GET /rest/api/2/search fallback
-                {
-                    "url": f"{JIRA_BASE_URL}/rest/api/2/search?jql={urllib.parse.quote(jql)}&maxResults={page_size}&startAt={start_at}&fields={','.join(fields_list)}",
-                    "method": "GET",
-                    "body": None
                 }
             ]
 
@@ -161,16 +151,23 @@ def fetch_jira_live():
             for ep in ep_candidates:
                 try:
                     data = make_jira_request(ep["url"], method=ep["method"], body_dict=ep["body"], headers=headers)
-                    if data and (data.get("issues") or data.get("values") or data.get("results")):
+                    if data and (data.get("issues") is not None or data.get("values") is not None):
                         break
+                except urllib.error.HTTPError as h_err:
+                    err_msg = ""
+                    try:
+                        err_msg = h_err.read().decode("utf-8")
+                    except Exception:
+                        pass
+                    print(f"[Jira Fetcher] {ep['method']} {ep['url'][:60]} HTTP {h_err.code}: {err_msg[:120]}")
                 except Exception as ex:
-                    pass
+                    print(f"[Jira Fetcher] {ep['method']} {ep['url'][:60]} error: {ex}")
 
             if not data:
                 break
 
             page_issues = data.get("issues") or data.get("values") or data.get("results") or []
-            print(f"[Jira Fetcher] Page at startAt={start_at} -> {len(page_issues)} issues found")
+            print(f"[Jira Fetcher] Page at startAt={start_at} -> {len(page_issues)} issues found (total: {data.get('total')})")
             if not page_issues:
                 break
 
@@ -205,39 +202,39 @@ def fetch_jira_live():
     in_qa_count = 0
     done_count = 0
     blocker_count = 0
+    resolved_this_week = 0
 
     now = datetime.datetime.now(datetime.timezone.utc)
     seven_days_ago = now - datetime.timedelta(days=7)
-    resolved_this_week = 0
 
     for item in raw_issues:
-        fields = item.get("fields", {})
         key = item.get("key", "")
-        summary = fields.get("summary", "No summary")
-        
+        fields = item.get("fields", {})
+
+        summary = fields.get("summary", "No Summary")
         status_obj = fields.get("status") or {}
-        status_name = status_obj.get("name", "Unknown")
+        status_name = status_obj.get("name", "Open")
         status_category = status_obj.get("statusCategory", {}).get("key", "new")
 
         priority_obj = fields.get("priority") or {}
         priority_name = priority_obj.get("name", "Medium")
 
-        # Project
-        proj_obj = fields.get("project") or {}
-        project_name = proj_obj.get("name") or proj_obj.get("key") or clean_key or "Project"
-        proj_key = proj_obj.get("key") or clean_key or "PROJ"
+        # Project Info
+        project_obj = fields.get("project") or {}
+        project_name = project_obj.get("name", clean_key or "Project")
+        proj_key = project_obj.get("key", clean_key or "Project")
         projects_set.add(project_name)
 
-        # Fix Versions
-        fix_vers = fields.get("fixVersions") or []
-        fix_ver_name = fix_vers[0].get("name") if fix_vers else "Unversioned"
-        is_released = bool(fix_vers[0].get("released", False)) if fix_vers else False
-        release_status = "Released" if is_released else ("Unreleased" if fix_ver_name != "Unversioned" else "Unversioned")
+        # Fix Version Info
+        fix_versions = fields.get("fixVersions") or []
+        fix_ver_name = fix_versions[0].get("name", "Unversioned") if fix_versions else "Unversioned"
+        is_released = fix_versions[0].get("released", False) if fix_versions else False
+        release_status = "Released" if is_released else "Unreleased"
         fix_versions_set.add(fix_ver_name)
 
         # Issue Type
         issue_type_obj = fields.get("issuetype") or {}
-        issue_type = issue_type_obj.get("name", "Bug")
+        issue_type = issue_type_obj.get("name", "Story")
         types_set.add(issue_type)
 
         # Priority Counts
@@ -422,9 +419,24 @@ def main():
             "issues": []
         }
 
+    # If live returned 0 issues, preserve previous issues if they existed
+    if len(data.get("issues", [])) == 0 and os.path.exists(OUTPUT_FILE):
+        try:
+            with open(OUTPUT_FILE, "r") as f:
+                prev = json.load(f)
+                if len(prev.get("issues", [])) > 0:
+                    print(f"[Jira Fetcher] Live fetch returned 0 issues; preserving {len(prev['issues'])} previous issues to prevent empty dashboard.")
+                    prev["lastUpdated"] = data.get("lastUpdated")
+                    if data.get("status") == "error":
+                        prev["status"] = "error"
+                        prev["lastError"] = data.get("lastError")
+                    data = prev
+        except Exception as e:
+            print(f"[Jira Fetcher] Could not read previous output file: {e}")
+
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        json.dump(data, f, indent=2)
 
     print(f"[Jira Fetcher] Written output to {OUTPUT_FILE} (status: {data.get('status')}, count: {len(data.get('issues', []))})")
 
