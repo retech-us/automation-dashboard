@@ -1,0 +1,17 @@
+[Unit]
+Description=Automation Dashboard Real-Time CI Live Sync Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/var/www/automation-dashboard
+ExecStart=/usr/bin/python3 /var/www/automation-dashboard/scripts/poll-live-ci.py
+Restart=always
+RestartSec=10
+EnvironmentFile=-/var/www/automation-dashboard/.env
+StandardOutput=append:/var/log/dashboard-live.log
+StandardError=append:/var/log/dashboard-live.log
+
+[Install]
+WantedBy=multi-user.target
