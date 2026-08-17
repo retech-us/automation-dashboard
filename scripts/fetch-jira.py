@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Fetch live Jira defects and quality metrics for the Store Intell QA Automation Dashboard.
-Queries real Jira projects via Atlassian REST API (/rest/api/3/search/jql) with smart fallbacks.
+Queries real Jira projects via Atlassian REST API (/rest/api/3/search/jql) with deep diagnostics.
 """
 
 import os
@@ -55,39 +55,57 @@ def fetch_jira_live():
         "User-Agent": "StoreIntell-QADashboard/1.0"
     }
 
-    # Diagnostic check: Discover accessible projects for this Jira user
+    # 1. Identity Check: Who does Jira recognize this API token as?
+    try:
+        myself = make_jira_request(f"{JIRA_BASE_URL}/rest/api/3/myself", headers=headers)
+        print(f"[Jira Fetcher] Authenticated Identity: {myself.get('displayName')} | Email: {myself.get('emailAddress')} | Active: {myself.get('active')} | AccountId: {myself.get('accountId')}")
+    except Exception as e:
+        print(f"[Jira Fetcher] User identity check warning: {e}")
+
+    # 2. Project Access Check: Check specific project directly
+    clean_key = JIRA_PROJECT_KEY.strip('"\'')
+    if clean_key:
+        try:
+            proj = make_jira_request(f"{JIRA_BASE_URL}/rest/api/3/project/{clean_key}", headers=headers)
+            print(f"[Jira Fetcher] Direct Project Check '{clean_key}': FOUND (Name: {proj.get('name')}, ID: {proj.get('id')})")
+        except urllib.error.HTTPError as pe:
+            err_body = pe.read().decode('utf-8') if hasattr(pe, 'read') else ''
+            print(f"[Jira Fetcher] Direct Project Check '{clean_key}' returned HTTP {pe.code}: {err_body}")
+        except Exception as pe:
+            print(f"[Jira Fetcher] Direct Project Check '{clean_key}' failed: {pe}")
+
+    # 3. List all accessible projects
     try:
         projects_data = make_jira_request(f"{JIRA_BASE_URL}/rest/api/3/project", headers=headers)
         if isinstance(projects_data, list):
             avail_projs = [f"{p.get('key')} ({p.get('name')})" for p in projects_data]
-            print(f"[Jira Fetcher] Accessible Jira Projects ({len(projects_data)}): {', '.join(avail_projs)}")
+            print(f"[Jira Fetcher] Accessible Projects via list API ({len(projects_data)}): {', '.join(avail_projs) if avail_projs else 'None'}")
     except Exception as e:
-        print(f"[Jira Fetcher] Note: Project list check skipped ({e})")
+        print(f"[Jira Fetcher] Project list check skipped: {e}")
 
-    # Determine JQL queries to try
     fields_list = [
         "summary", "status", "priority", "components", "assignee",
         "reporter", "created", "updated", "labels", "issuetype",
         "project", "fixVersions", "description"
     ]
 
+    # 4. Construct candidate bounded JQL queries
     jql_candidates = []
     if JIRA_CUSTOM_JQL:
         jql_candidates.append(JIRA_CUSTOM_JQL)
-    if JIRA_PROJECT_KEY:
-        # Try exact key, unquoted key, and key case-insensitive
-        clean_key = JIRA_PROJECT_KEY.strip('"\'')
-        jql_candidates.append(f'project = "{clean_key}" ORDER BY created DESC')
-        jql_candidates.append(f'project = {clean_key} ORDER BY created DESC')
-        jql_candidates.append(f'project in ("{clean_key}") ORDER BY created DESC')
-    # Fallback to all accessible issues
-    jql_candidates.append('ORDER BY created DESC')
+    if clean_key:
+        jql_candidates.append(f'project = "{clean_key}"')
+        jql_candidates.append(f'project = {clean_key}')
+        jql_candidates.append(f'project in ("{clean_key}")')
+        jql_candidates.append(f'project = "{clean_key}" AND created >= -365d')
+    # Bounded fallback to any created issue in the workspace
+    jql_candidates.append('created >= -365d ORDER BY created DESC')
 
     raw_issues = []
     executed_jql = ""
 
     for jql in jql_candidates:
-        print(f"[Jira Fetcher] Testing JQL: {jql}")
+        print(f"[Jira Fetcher] Querying JQL: {jql}")
         endpoints = [
             # 1. POST /rest/api/3/search/jql
             {
@@ -100,12 +118,6 @@ def fetch_jira_live():
                 "url": f"{JIRA_BASE_URL}/rest/api/3/search/jql?jql={urllib.parse.quote(jql)}&maxResults=100&fields={','.join(fields_list)}",
                 "method": "GET",
                 "body": None
-            },
-            # 3. POST /rest/api/2/search/jql
-            {
-                "url": f"{JIRA_BASE_URL}/rest/api/2/search/jql",
-                "method": "POST",
-                "body": {"jql": jql, "maxResults": 100, "fields": fields_list}
             }
         ]
 
@@ -113,9 +125,8 @@ def fetch_jira_live():
             try:
                 data = make_jira_request(ep["url"], method=ep["method"], body_dict=ep["body"], headers=headers)
                 if data:
-                    # Check all possible issue container keys in Atlassian responses
                     issues_found = data.get("issues") or data.get("values") or data.get("results") or []
-                    print(f"[Jira Fetcher] Endpoint {ep['method']} {ep['url'][:60]}... returned {len(issues_found)} issues. Response keys: {list(data.keys())}")
+                    print(f"[Jira Fetcher] {ep['method']} {ep['url'][:55]}... -> {len(issues_found)} issues found")
                     if len(issues_found) > 0:
                         raw_issues = issues_found
                         executed_jql = jql
@@ -126,14 +137,14 @@ def fetch_jira_live():
                     err_content = err.read().decode("utf-8")
                 except Exception:
                     pass
-                print(f"[Jira Fetcher] HTTP {err.code} on JQL [{jql}]: {err_content}")
+                print(f"[Jira Fetcher] HTTP {err.code} on [{jql}]: {err_content}")
             except Exception as ex:
-                print(f"[Jira Fetcher] Error on JQL [{jql}]: {ex}")
+                print(f"[Jira Fetcher] Error on [{jql}]: {ex}")
 
         if len(raw_issues) > 0:
             break
 
-    print(f"[Jira Fetcher] Total real Jira issues retrieved: {len(raw_issues)}")
+    print(f"[Jira Fetcher] Final issue count retrieved: {len(raw_issues)}")
 
     issues = []
     by_priority = {"Highest": 0, "High": 0, "Medium": 0, "Low": 0, "Lowest": 0}
@@ -163,15 +174,15 @@ def fetch_jira_live():
         
         status_obj = fields.get("status") or {}
         status_name = status_obj.get("name", "Unknown")
-        status_category = status_obj.get("statusCategory", {}).get("key", "new") # new, indeterminate, done
+        status_category = status_obj.get("statusCategory", {}).get("key", "new")
 
         priority_obj = fields.get("priority") or {}
         priority_name = priority_obj.get("name", "Medium")
 
         # Project
         proj_obj = fields.get("project") or {}
-        project_name = proj_obj.get("name") or proj_obj.get("key") or JIRA_PROJECT_KEY or "Project"
-        proj_key = proj_obj.get("key") or JIRA_PROJECT_KEY or "PROJ"
+        project_name = proj_obj.get("name") or proj_obj.get("key") or clean_key or "Project"
+        proj_key = proj_obj.get("key") or clean_key or "PROJ"
         projects_set.add(project_name)
 
         # Fix Versions
@@ -226,8 +237,6 @@ def fetch_jira_live():
         # Tester / Reporter
         reporter_obj = fields.get("reporter")
         tester_name = reporter_obj.get("displayName", "Unknown") if reporter_obj else "Unknown"
-        
-        # Check customfields for QA/Tester if available
         for k, v in fields.items():
             if k.startswith("customfield_") and isinstance(v, dict) and "displayName" in v:
                 if any(term in k.lower() for term in ["tester", "qa", "verified"]):
@@ -259,7 +268,7 @@ def fetch_jira_live():
         "status": "live",
         "lastUpdated": now.isoformat(),
         "jiraUrl": JIRA_BASE_URL,
-        "projectKey": JIRA_PROJECT_KEY,
+        "projectKey": clean_key or JIRA_PROJECT_KEY,
         "executedJql": executed_jql,
         "summary": {
             "totalDefects": len(issues),
