@@ -3422,7 +3422,27 @@ function wireTokenModal() {
 }
 
 function wireControls() {
-  document.getElementById('refresh-btn')?.addEventListener('click', loadDashboard);
+  document.getElementById('refresh-btn')?.addEventListener('click', async () => {
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = 'Refreshing…';
+    }
+    try {
+      await loadDashboard();
+      if (window.JiraTracker && typeof window.JiraTracker.init === 'function') {
+        await window.JiraTracker.init();
+      }
+      if (window.LiveTracker && typeof window.LiveTracker.checkAll === 'function') {
+        await window.LiveTracker.checkAll();
+      }
+    } finally {
+      if (refreshBtn) {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = 'Refresh';
+      }
+    }
+  });
   document.getElementById('export-btn')?.addEventListener('click', exportSteeringPack);
   document.getElementById('theme-toggle-btn')?.addEventListener('click', toggleTheme);
 
