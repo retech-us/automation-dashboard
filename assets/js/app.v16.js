@@ -249,11 +249,19 @@ function parseEnvironment(widget) {
 }
 
 async function fetchGithubRun(repoName, workflowHint) {
+  const token = (function() {
+    try { return localStorage.getItem('dashboard.githubToken') || ''; } catch { return ''; }
+  })();
+  if (!token) return null; // Skip unauthenticated calls to private GitHub APIs to prevent 404s
+
   const url = `https://api.github.com/repos/${repoName}/actions/runs?per_page=20&status=completed`;
   try {
     const response = await fetch(url, {
       cache: 'no-store',
-      headers: { Accept: 'application/vnd.github+json' },
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`
+      },
     });
     if (!response.ok) return null;
     const data = await response.json();
@@ -323,15 +331,7 @@ function mergeWidgets(widgets) {
 
 async function fetchMobileWidget(config) {
   const primary = await fetchJson(config.widgetUrl);
-  if (primary?.statistic?.total > 0) return primary;
-
-  const widgets = [];
-  if (primary?.statistic) widgets.push(primary);
-  for (let batch = 1; batch <= 5; batch++) {
-    const w = await fetchJson(`${config.reportUrl}batch-${batch}/widgets/summary.json`);
-    if (w?.statistic?.total > 0) widgets.push(w);
-  }
-  return mergeWidgets(widgets) || primary;
+  return primary;
 }
 
 function computeCounts(summary) {
