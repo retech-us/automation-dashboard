@@ -1,7 +1,7 @@
 /**
- * Jira Quality & Work Delivery Tracker for Store Intell QA Dashboard.
+ * Jira Quality & Sprint Delivery Tracker for Store Intell QA Dashboard.
  * Supports dynamic interactive pie/donut charts, Ticket Type / Epic tracking,
- * multi-axis filtering, Created + Updated date tracking, and CSV export.
+ * multi-axis filtering at the top, Created + Updated dates, and CSV export.
  */
 
 (function (window) {
@@ -56,7 +56,6 @@
       this.filters = {
         kpi: 'all',          // 'all', 'blockers', 'progress', 'qa', 'resolved'
         project: 'all',
-        epic: 'all',
         fixVersion: 'all',
         type: 'all',
         assignee: 'all',
@@ -173,6 +172,32 @@
       return '#94a3b8';
     }
 
+    matchesTicketType(issue, filterType) {
+      if (!filterType || filterType === 'all') return true;
+      const tIssue = (issue.type || '').toLowerCase().trim();
+      const tFilter = filterType.toLowerCase().trim();
+
+      if (tFilter === 'epic') {
+        const isDirectEpic = tIssue.includes('epic');
+        const hasEpicTag = issue.epic && issue.epic !== 'None';
+        const isLabeledEpic = (issue.labels || []).some(l => l.toLowerCase().includes('epic'));
+        return isDirectEpic || hasEpicTag || isLabeledEpic;
+      }
+      if (tFilter === 'bug') {
+        return tIssue.includes('bug') || tIssue.includes('defect') || tIssue.includes('incident');
+      }
+      if (tFilter === 'story') {
+        return tIssue.includes('story') || tIssue.includes('feature');
+      }
+      if (tFilter === 'task') {
+        return tIssue.includes('task') && !tIssue.includes('sub');
+      }
+      if (tFilter.includes('sub')) {
+        return tIssue.includes('sub');
+      }
+      return tIssue === tFilter;
+    }
+
     filterAndSortIssues(issues) {
       // 1. Filtering
       let filtered = issues.filter((issue) => {
@@ -185,7 +210,7 @@
           if (!s.includes('progress') && !s.includes('dev')) return false;
         } else if (this.filters.kpi === 'qa') {
           const s = (issue.status || '').toLowerCase();
-          if (!s.includes('qa') && !s.includes('review') && !s.includes('testing')) return false;
+          if (!s.includes('qa') && !s.includes('review') && !s.includes('testing') && !s.includes('verified')) return false;
         } else if (this.filters.kpi === 'resolved') {
           const s = (issue.statusCategory || '').toLowerCase();
           const sn = (issue.status || '').toLowerCase();
@@ -193,68 +218,74 @@
         }
 
         // Project Filter
-        if (this.filters.project !== 'all' && (issue.project !== this.filters.project && issue.projectKey !== this.filters.project)) {
-          return false;
-        }
-
-        // Epic Filter
-        if (this.filters.epic !== 'all' && issue.epic !== this.filters.epic) {
-          return false;
+        if (this.filters.project !== 'all') {
+          const pIssue = (issue.project || issue.projectKey || '').toLowerCase();
+          const pFilter = this.filters.project.toLowerCase();
+          if (pIssue !== pFilter && !pIssue.includes(pFilter)) return false;
         }
 
         // Fix Version Filter
-        if (this.filters.fixVersion !== 'all' && issue.fixVersion !== this.filters.fixVersion) {
-          return false;
+        if (this.filters.fixVersion !== 'all') {
+          const vIssue = (issue.fixVersion || 'Unversioned').toLowerCase();
+          const vFilter = this.filters.fixVersion.toLowerCase();
+          if (vIssue !== vFilter) return false;
         }
 
-        // Ticket Type Filter (case-insensitive)
-        if (this.filters.type !== 'all') {
-          const tIssue = (issue.type || '').toLowerCase().trim();
-          const tFilter = (this.filters.type || '').toLowerCase().trim();
-          if (tIssue !== tFilter) {
-            return false;
-          }
+        // Ticket Type Filter (Smart matching for Epic, Story, Bug, Task, Sub-task)
+        if (!this.matchesTicketType(issue, this.filters.type)) {
+          return false;
         }
 
         // Assignee Filter
-        if (this.filters.assignee !== 'all' && issue.assignee !== this.filters.assignee) {
-          return false;
+        if (this.filters.assignee !== 'all') {
+          const aIssue = (issue.assignee || 'Unassigned').toLowerCase();
+          const aFilter = this.filters.assignee.toLowerCase();
+          if (aIssue !== aFilter) return false;
         }
 
         // Tester Filter
-        if (this.filters.tester !== 'all' && (issue.tester !== this.filters.tester && issue.reporter !== this.filters.tester)) {
-          return false;
+        if (this.filters.tester !== 'all') {
+          const tIssue = (issue.tester || issue.reporter || 'Unknown').toLowerCase();
+          const tFilter = this.filters.tester.toLowerCase();
+          if (tIssue !== tFilter && !(issue.reporter || '').toLowerCase().includes(tFilter)) return false;
         }
 
         // Priority Filter
-        if (this.filters.priority !== 'all' && issue.priority !== this.filters.priority) {
-          return false;
+        if (this.filters.priority !== 'all') {
+          const prIssue = (issue.priority || 'Medium').toLowerCase();
+          const prFilter = this.filters.priority.toLowerCase();
+          if (prIssue !== prFilter) return false;
         }
 
         // Status Filter
-        if (this.filters.status !== 'all' && issue.status !== this.filters.status) {
-          return false;
+        if (this.filters.status !== 'all') {
+          const stIssue = (issue.status || '').toLowerCase();
+          const stFilter = this.filters.status.toLowerCase();
+          if (stIssue !== stFilter) return false;
         }
 
         // Component Filter
-        if (this.filters.component !== 'all' && issue.component !== this.filters.component) {
-          return false;
+        if (this.filters.component !== 'all') {
+          const cIssue = (issue.component || 'General').toLowerCase();
+          const cFilter = this.filters.component.toLowerCase();
+          if (cIssue !== cFilter) return false;
         }
 
         // Search Query
-        if (this.filters.searchQuery.trim()) {
-          const q = this.filters.searchQuery.toLowerCase();
+        if (this.filters.searchQuery && this.filters.searchQuery.trim()) {
+          const q = this.filters.searchQuery.toLowerCase().trim();
           const matchKey = (issue.key || '').toLowerCase().includes(q);
           const matchSum = (issue.summary || '').toLowerCase().includes(q);
           const matchAss = (issue.assignee || '').toLowerCase().includes(q);
           const matchTest = (issue.tester || '').toLowerCase().includes(q);
-          const matchProj = (issue.project || '').toLowerCase().includes(q);
+          const matchRep = (issue.reporter || '').toLowerCase().includes(q);
+          const matchProj = (issue.project || issue.projectKey || '').toLowerCase().includes(q);
           const matchVer = (issue.fixVersion || '').toLowerCase().includes(q);
           const matchEpic = (issue.epic || '').toLowerCase().includes(q);
           const matchType = (issue.type || '').toLowerCase().includes(q);
           const matchComp = (issue.component || '').toLowerCase().includes(q);
           const matchLabels = (issue.labels || []).some(l => l.toLowerCase().includes(q));
-          if (!matchKey && !matchSum && !matchAss && !matchTest && !matchProj && !matchVer && !matchEpic && !matchType && !matchComp && !matchLabels) {
+          if (!matchKey && !matchSum && !matchAss && !matchTest && !matchRep && !matchProj && !matchVer && !matchEpic && !matchType && !matchComp && !matchLabels) {
             return false;
           }
         }
@@ -302,7 +333,6 @@
       let count = 0;
       if (this.filters.kpi !== 'all') count++;
       if (this.filters.project !== 'all') count++;
-      if (this.filters.epic !== 'all') count++;
       if (this.filters.fixVersion !== 'all') count++;
       if (this.filters.type !== 'all') count++;
       if (this.filters.assignee !== 'all') count++;
@@ -310,7 +340,7 @@
       if (this.filters.priority !== 'all') count++;
       if (this.filters.status !== 'all') count++;
       if (this.filters.component !== 'all') count++;
-      if (this.filters.searchQuery.trim()) count++;
+      if (this.filters.searchQuery && this.filters.searchQuery.trim()) count++;
       return count;
     }
 
@@ -318,7 +348,6 @@
       this.filters = {
         kpi: 'all',
         project: 'all',
-        epic: 'all',
         fixVersion: 'all',
         type: 'all',
         assignee: 'all',
@@ -396,7 +425,7 @@
         const strokeDash = `${fraction * circumference} ${circumference}`;
         const strokeOffset = -currentOffset;
         currentOffset += fraction * circumference;
-        const isSelected = this.filters[filterKey] === slice.label;
+        const isSelected = (this.filters[filterKey] || '').toLowerCase() === slice.label.toLowerCase();
 
         return `
           <circle class="jira-donut-slice ${isSelected ? 'jira-donut-slice--active' : ''}"
@@ -450,17 +479,13 @@
       const isError = status === 'error';
       const activeFilterCount = this.countActiveFilters();
 
-      // Extract unique lists dynamically (including Epics & Ticket Types)
+      // Extract unique lists dynamically (guaranteeing standard Ticket Types)
       const projects = filterOptions.projects || Array.from(new Set(issues.map(i => i.project || i.projectKey).filter(Boolean)));
       const fixVersions = filterOptions.fixVersions || Array.from(new Set(issues.map(i => i.fixVersion).filter(Boolean)));
       
-      // Guarantee standard Ticket Types including Epic
       const standardTypes = ['Epic', 'Story', 'Bug', 'Task', 'Sub-task'];
       const rawTypes = ['Epic'].concat(filterOptions.types || []).concat(issues.map(i => i.type).filter(Boolean)).concat(standardTypes);
       const types = Array.from(new Set(rawTypes)).filter(Boolean);
-
-      // Extract unique parent Epics
-      const epics = Array.from(new Set(issues.map(i => i.epic).filter(e => e && e !== 'None' && !e.toLowerCase().includes('undefined'))));
 
       const assignees = filterOptions.assignees || Array.from(new Set(issues.map(i => i.assignee).filter(Boolean)));
       const testers = filterOptions.testers || Array.from(new Set(issues.map(i => i.tester || i.reporter).filter(Boolean)));
@@ -494,10 +519,11 @@
         color: this.getPriorityColor(label)
       })).sort((a, b) => this.getPriorityRank(b.label) - this.getPriorityRank(a.label));
 
-      // --- 3. Compute Dynamic Ticket Type / Epic Distribution ---
+      // --- 3. Compute Dynamic Ticket Type Distribution ---
       const typeCounts = {};
       filtered.forEach((i) => {
-        const t = i.type || 'Story';
+        let t = i.type || 'Story';
+        if (i.epic && i.epic !== 'None' && (i.type || '').toLowerCase() === 'epic') t = 'Epic';
         typeCounts[t] = (typeCounts[t] || 0) + 1;
       });
       const typeSlices = Object.entries(typeCounts).map(([label, count], idx) => ({
@@ -509,7 +535,6 @@
       // --- 4. Compute Dynamic KPI Metrics based on Active Filters ---
       const activeNonKpiFilters = (
         this.filters.project !== 'all' ||
-        this.filters.epic !== 'all' ||
         this.filters.fixVersion !== 'all' ||
         this.filters.type !== 'all' ||
         this.filters.assignee !== 'all' ||
@@ -521,28 +546,32 @@
       );
 
       const baseForKpi = activeNonKpiFilters ? issues.filter(i => {
-        if (this.filters.project !== 'all' && (i.project !== this.filters.project && i.projectKey !== this.filters.project)) return false;
-        if (this.filters.epic !== 'all' && i.epic !== this.filters.epic) return false;
-        if (this.filters.fixVersion !== 'all' && i.fixVersion !== this.filters.fixVersion) return false;
-        if (this.filters.type !== 'all' && (i.type || '').toLowerCase() !== this.filters.type.toLowerCase()) return false;
-        if (this.filters.assignee !== 'all' && i.assignee !== this.filters.assignee) return false;
-        if (this.filters.tester !== 'all' && (i.tester !== this.filters.tester && i.reporter !== this.filters.tester)) return false;
-        if (this.filters.priority !== 'all' && i.priority !== this.filters.priority) return false;
-        if (this.filters.status !== 'all' && i.status !== this.filters.status) return false;
-        if (this.filters.component !== 'all' && i.component !== this.filters.component) return false;
-        if (this.filters.searchQuery.trim()) {
-          const q = this.filters.searchQuery.toLowerCase();
+        if (this.filters.project !== 'all') {
+          const pIssue = (i.project || i.projectKey || '').toLowerCase();
+          const pFilter = this.filters.project.toLowerCase();
+          if (pIssue !== pFilter && !pIssue.includes(pFilter)) return false;
+        }
+        if (this.filters.fixVersion !== 'all' && (i.fixVersion || 'Unversioned').toLowerCase() !== this.filters.fixVersion.toLowerCase()) return false;
+        if (!this.matchesTicketType(i, this.filters.type)) return false;
+        if (this.filters.assignee !== 'all' && (i.assignee || 'Unassigned').toLowerCase() !== this.filters.assignee.toLowerCase()) return false;
+        if (this.filters.tester !== 'all' && (i.tester || i.reporter || 'Unknown').toLowerCase() !== this.filters.tester.toLowerCase() && !(i.reporter || '').toLowerCase().includes(this.filters.tester.toLowerCase())) return false;
+        if (this.filters.priority !== 'all' && (i.priority || 'Medium').toLowerCase() !== this.filters.priority.toLowerCase()) return false;
+        if (this.filters.status !== 'all' && (i.status || '').toLowerCase() !== this.filters.status.toLowerCase()) return false;
+        if (this.filters.component !== 'all' && (i.component || 'General').toLowerCase() !== this.filters.component.toLowerCase()) return false;
+        if (this.filters.searchQuery && this.filters.searchQuery.trim()) {
+          const q = this.filters.searchQuery.toLowerCase().trim();
           const matchKey = (i.key || '').toLowerCase().includes(q);
           const matchSum = (i.summary || '').toLowerCase().includes(q);
           const matchAss = (i.assignee || '').toLowerCase().includes(q);
           const matchTest = (i.tester || '').toLowerCase().includes(q);
-          const matchProj = (i.project || '').toLowerCase().includes(q);
+          const matchRep = (i.reporter || '').toLowerCase().includes(q);
+          const matchProj = (i.project || i.projectKey || '').toLowerCase().includes(q);
           const matchVer = (i.fixVersion || '').toLowerCase().includes(q);
           const matchEpic = (i.epic || '').toLowerCase().includes(q);
           const matchType = (i.type || '').toLowerCase().includes(q);
           const matchComp = (i.component || '').toLowerCase().includes(q);
           const matchLabels = (i.labels || []).some(l => l.toLowerCase().includes(q));
-          if (!matchKey && !matchSum && !matchAss && !matchTest && !matchProj && !matchVer && !matchEpic && !matchType && !matchComp && !matchLabels) return false;
+          if (!matchKey && !matchSum && !matchAss && !matchTest && !matchRep && !matchProj && !matchVer && !matchEpic && !matchType && !matchComp && !matchLabels) return false;
         }
         return true;
       }) : issues;
@@ -628,6 +657,107 @@
       }
 
       container.innerHTML = `
+        <!-- Comprehensive Multi-Filter Bar (At Top) -->
+        <div class="jira-filter-section">
+          <div class="jira-filter-header">
+            <div class="jira-filter-title">
+              <span>⚡ Filters &amp; Sorting</span>
+              <span class="jira-filter-count-badge">${filtered.length} of ${issues.length} shown</span>
+              ${activeFilterCount > 0 ? `<button type="button" class="jira-clear-btn" id="jira-btn-clear-filters">✕ Clear Filters (${activeFilterCount})</button>` : ''}
+            </div>
+            
+            <div class="jira-sort-control">
+              <label for="jira-sort-select">Sort By:</label>
+              <select id="jira-sort-select" class="jira-select">
+                <option value="updated-desc" ${this.sort.field === 'updated' && this.sort.dir === 'desc' ? 'selected' : ''}>Updated Date (Recently Updated)</option>
+                <option value="updated-asc" ${this.sort.field === 'updated' && this.sort.dir === 'asc' ? 'selected' : ''}>Updated Date (Oldest Updated)</option>
+                <option value="created-desc" ${this.sort.field === 'created' && this.sort.dir === 'desc' ? 'selected' : ''}>Created Date (Newest First)</option>
+                <option value="created-asc" ${this.sort.field === 'created' && this.sort.dir === 'asc' ? 'selected' : ''}>Created Date (Oldest First)</option>
+                <option value="priority-desc" ${this.sort.field === 'priority' && this.sort.dir === 'desc' ? 'selected' : ''}>Priority (Highest → Lowest)</option>
+                <option value="priority-asc" ${this.sort.field === 'priority' && this.sort.dir === 'asc' ? 'selected' : ''}>Priority (Lowest → Highest)</option>
+                <option value="key-asc" ${this.sort.field === 'key' && this.sort.dir === 'asc' ? 'selected' : ''}>Ticket Key (A → Z)</option>
+                <option value="type-asc" ${this.sort.field === 'type' && this.sort.dir === 'asc' ? 'selected' : ''}>Ticket Type (A → Z)</option>
+                <option value="fixVersion-desc" ${this.sort.field === 'fixVersion' && this.sort.dir === 'desc' ? 'selected' : ''}>Fix Version</option>
+                <option value="assignee-asc" ${this.sort.field === 'assignee' && this.sort.dir === 'asc' ? 'selected' : ''}>Assignee Name</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="jira-filter-grid">
+            <!-- Project Filter -->
+            <div class="jira-filter-field">
+              <label>📁 Project</label>
+              <select class="jira-select" id="filter-project">
+                <option value="all">All Projects</option>
+                ${projects.map(p => `<option value="${this.escapeHtml(p)}" ${(this.filters.project || '').toLowerCase() === p.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(p)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="jira-filter-field">
+              <label>🔄 Status</label>
+              <select class="jira-select" id="filter-status">
+                <option value="all">All Statuses</option>
+                ${allStatuses.map(s => `<option value="${this.escapeHtml(s)}" ${(this.filters.status || '').toLowerCase() === s.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(s)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Priority Filter -->
+            <div class="jira-filter-field">
+              <label>📶 Priority</label>
+              <select class="jira-select" id="filter-priority">
+                <option value="all">All Priorities</option>
+                ${priorities.map(pr => `<option value="${this.escapeHtml(pr)}" ${(this.filters.priority || '').toLowerCase() === pr.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(pr)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Ticket Type Filter (Epic, Story, Bug, Task, Sub-task) -->
+            <div class="jira-filter-field">
+              <label>🏷️ Ticket Type</label>
+              <select class="jira-select" id="filter-type">
+                <option value="all">All Ticket Types</option>
+                ${types.map(t => `<option value="${this.escapeHtml(t)}" ${(this.filters.type || '').toLowerCase() === t.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(t)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Fix Version Filter -->
+            <div class="jira-filter-field">
+              <label>🎯 Fix Version</label>
+              <select class="jira-select" id="filter-fix-version">
+                <option value="all">All Versions</option>
+                ${fixVersions.map(v => `<option value="${this.escapeHtml(v)}" ${(this.filters.fixVersion || '').toLowerCase() === v.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(v)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Assignee Filter -->
+            <div class="jira-filter-field">
+              <label>👤 Assignee (Dev)</label>
+              <select class="jira-select" id="filter-assignee">
+                <option value="all">All Assignees</option>
+                ${assignees.map(a => `<option value="${this.escapeHtml(a)}" ${(this.filters.assignee || '').toLowerCase() === a.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(a)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Tester / QA Filter -->
+            <div class="jira-filter-field">
+              <label>🧪 Tester / QA</label>
+              <select class="jira-select" id="filter-tester">
+                <option value="all">All Testers</option>
+                ${testers.map(t => `<option value="${this.escapeHtml(t)}" ${(this.filters.tester || '').toLowerCase() === t.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(t)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Search Field -->
+            <div class="jira-filter-field jira-filter-field--search">
+              <label>🔍 Live Search</label>
+              <div class="jira-search-wrapper">
+                <input type="text" id="jira-search-input" class="jira-search-input" placeholder="Search key, summary, epic, label, assignee..." value="${this.escapeHtml(this.filters.searchQuery)}" />
+                ${this.filters.searchQuery ? `<button type="button" id="jira-search-clear" class="jira-search-clear">✕</button>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- KPI Metrics Grid (100% Dynamically Reactive) -->
         <div class="jira-kpi-grid">
           <div class="jira-kpi-card ${this.filters.kpi === 'all' ? 'jira-kpi-card--active' : ''}" data-kpi="all">
@@ -748,7 +878,7 @@
               <div class="jira-chart-legend">
                 ${statusSlices.map(s => {
                   const pct = filtered.length ? Math.round((s.count / filtered.length) * 100) : 0;
-                  const isAct = this.filters.status === s.label;
+                  const isAct = (this.filters.status || '').toLowerCase() === s.label.toLowerCase();
                   return `
                     <div class="jira-legend-item ${isAct ? 'jira-legend-item--active' : ''}" data-filter-key="status" data-filter-val="${this.escapeHtml(s.label)}">
                       <span class="jira-legend-dot" style="background:${s.color};"></span>
@@ -775,7 +905,7 @@
               <div class="jira-chart-legend">
                 ${prioritySlices.map(p => {
                   const pct = filtered.length ? Math.round((p.count / filtered.length) * 100) : 0;
-                  const isAct = this.filters.priority === p.label;
+                  const isAct = (this.filters.priority || '').toLowerCase() === p.label.toLowerCase();
                   return `
                     <div class="jira-legend-item ${isAct ? 'jira-legend-item--active' : ''}" data-filter-key="priority" data-filter-val="${this.escapeHtml(p.label)}">
                       <span class="jira-legend-dot" style="background:${p.color};"></span>
@@ -788,7 +918,7 @@
             </div>
           </div>
 
-          <!-- Chart 3: Ticket Type & Epic Breakdown -->
+          <!-- Chart 3: Ticket Type Breakdown -->
           <div class="jira-chart-card">
             <div class="jira-chart-card__header">
               <div>
@@ -802,7 +932,7 @@
               <div class="jira-chart-legend">
                 ${typeSlices.map(t => {
                   const pct = filtered.length ? Math.round((t.count / filtered.length) * 100) : 0;
-                  const isAct = this.filters.type === t.label;
+                  const isAct = (this.filters.type || '').toLowerCase() === t.label.toLowerCase();
                   return `
                     <div class="jira-legend-item ${isAct ? 'jira-legend-item--active' : ''}" data-filter-key="type" data-filter-val="${this.escapeHtml(t.label)}">
                       <span class="jira-legend-dot" style="background:${t.color};"></span>
@@ -811,116 +941,6 @@
                     </div>
                   `;
                 }).join('')}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Comprehensive Multi-Filter Bar -->
-        <div class="jira-filter-section">
-          <div class="jira-filter-header">
-            <div class="jira-filter-title">
-              <span>⚡ Filters &amp; Sorting</span>
-              <span class="jira-filter-count-badge">${filtered.length} of ${issues.length} shown</span>
-              ${activeFilterCount > 0 ? `<button type="button" class="jira-clear-btn" id="jira-btn-clear-filters">✕ Clear Filters (${activeFilterCount})</button>` : ''}
-            </div>
-            
-            <div class="jira-sort-control">
-              <label for="jira-sort-select">Sort By:</label>
-              <select id="jira-sort-select" class="jira-select">
-                <option value="updated-desc" ${this.sort.field === 'updated' && this.sort.dir === 'desc' ? 'selected' : ''}>Updated Date (Recently Updated)</option>
-                <option value="updated-asc" ${this.sort.field === 'updated' && this.sort.dir === 'asc' ? 'selected' : ''}>Updated Date (Oldest Updated)</option>
-                <option value="created-desc" ${this.sort.field === 'created' && this.sort.dir === 'desc' ? 'selected' : ''}>Created Date (Newest First)</option>
-                <option value="created-asc" ${this.sort.field === 'created' && this.sort.dir === 'asc' ? 'selected' : ''}>Created Date (Oldest First)</option>
-                <option value="priority-desc" ${this.sort.field === 'priority' && this.sort.dir === 'desc' ? 'selected' : ''}>Priority (Highest → Lowest)</option>
-                <option value="priority-asc" ${this.sort.field === 'priority' && this.sort.dir === 'asc' ? 'selected' : ''}>Priority (Lowest → Highest)</option>
-                <option value="key-asc" ${this.sort.field === 'key' && this.sort.dir === 'asc' ? 'selected' : ''}>Ticket Key (A → Z)</option>
-                <option value="type-asc" ${this.sort.field === 'type' && this.sort.dir === 'asc' ? 'selected' : ''}>Ticket Type (A → Z)</option>
-                <option value="fixVersion-desc" ${this.sort.field === 'fixVersion' && this.sort.dir === 'desc' ? 'selected' : ''}>Fix Version</option>
-                <option value="assignee-asc" ${this.sort.field === 'assignee' && this.sort.dir === 'asc' ? 'selected' : ''}>Assignee Name</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="jira-filter-grid">
-            <!-- Project Filter -->
-            <div class="jira-filter-field">
-              <label>📁 Project</label>
-              <select class="jira-select" id="filter-project">
-                <option value="all">All Projects</option>
-                ${projects.map(p => `<option value="${this.escapeHtml(p)}" ${this.filters.project === p ? 'selected' : ''}>${this.escapeHtml(p)}</option>`).join('')}
-              </select>
-            </div>
-
-            <!-- Status Filter -->
-            <div class="jira-filter-field">
-              <label>🔄 Status</label>
-              <select class="jira-select" id="filter-status">
-                <option value="all">All Statuses</option>
-                ${allStatuses.map(s => `<option value="${this.escapeHtml(s)}" ${this.filters.status === s ? 'selected' : ''}>${this.escapeHtml(s)}</option>`).join('')}
-              </select>
-            </div>
-
-            <!-- Priority Filter -->
-            <div class="jira-filter-field">
-              <label>📶 Priority</label>
-              <select class="jira-select" id="filter-priority">
-                <option value="all">All Priorities</option>
-                ${priorities.map(pr => `<option value="${this.escapeHtml(pr)}" ${this.filters.priority === pr ? 'selected' : ''}>${this.escapeHtml(pr)}</option>`).join('')}
-              </select>
-            </div>
-
-            <!-- Ticket Type Filter (Formerly Issue Type) -->
-            <div class="jira-filter-field">
-              <label>🏷️ Ticket Type</label>
-              <select class="jira-select" id="filter-type">
-                <option value="all">All Ticket Types</option>
-                ${types.map(t => `<option value="${this.escapeHtml(t)}" ${this.filters.type.toLowerCase() === t.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(t)}</option>`).join('')}
-              </select>
-            </div>
-
-            <!-- Epic / Feature Filter -->
-            <div class="jira-filter-field">
-              <label>⚡ Epic / Feature</label>
-              <select class="jira-select" id="filter-epic">
-                <option value="all">All Epics</option>
-                ${epics.map(e => `<option value="${this.escapeHtml(e)}" ${this.filters.epic === e ? 'selected' : ''}>${this.escapeHtml(e)}</option>`).join('')}
-              </select>
-            </div>
-
-            <!-- Fix Version Filter -->
-            <div class="jira-filter-field">
-              <label>🎯 Fix Version</label>
-              <select class="jira-select" id="filter-fix-version">
-                <option value="all">All Versions</option>
-                ${fixVersions.map(v => `<option value="${this.escapeHtml(v)}" ${this.filters.fixVersion === v ? 'selected' : ''}>${this.escapeHtml(v)}</option>`).join('')}
-              </select>
-            </div>
-
-            <!-- Assignee Filter -->
-            <div class="jira-filter-field">
-              <label>👤 Assignee (Dev)</label>
-              <select class="jira-select" id="filter-assignee">
-                <option value="all">All Assignees</option>
-                ${assignees.map(a => `<option value="${this.escapeHtml(a)}" ${this.filters.assignee === a ? 'selected' : ''}>${this.escapeHtml(a)}</option>`).join('')}
-              </select>
-            </div>
-
-            <!-- Tester / QA Filter -->
-            <div class="jira-filter-field">
-              <label>🧪 Tester / QA</label>
-              <select class="jira-select" id="filter-tester">
-                <option value="all">All Testers</option>
-                ${testers.map(t => `<option value="${this.escapeHtml(t)}" ${this.filters.tester === t ? 'selected' : ''}>${this.escapeHtml(t)}</option>`).join('')}
-              </select>
-            </div>
-
-            <!-- Search Field -->
-            <div class="jira-filter-field jira-filter-field--search">
-              <label>🔍 Live Search</label>
-              <div class="jira-search-wrapper">
-                <input type="text" id="jira-search-input" class="jira-search-input" placeholder="Search key, summary, epic, label..." value="${this.escapeHtml(this.filters.searchQuery)}" />
-                ${this.filters.searchQuery ? `<button type="button" id="jira-search-clear" class="jira-search-clear">✕</button>` : ''}
               </div>
             </div>
           </div>
@@ -1058,7 +1078,7 @@
           const key = el.getAttribute('data-filter-key');
           const val = el.getAttribute('data-filter-val');
           if (key && val) {
-            this.filters[key] = (this.filters[key] === val) ? 'all' : val;
+            this.filters[key] = (this.filters[key] || '').toLowerCase() === val.toLowerCase() ? 'all' : val;
             this.render();
           }
         });
@@ -1076,7 +1096,6 @@
       };
 
       bindSelect('filter-project', 'project');
-      bindSelect('filter-epic', 'epic');
       bindSelect('filter-status', 'status');
       bindSelect('filter-fix-version', 'fixVersion');
       bindSelect('filter-type', 'type');
