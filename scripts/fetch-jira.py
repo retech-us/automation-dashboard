@@ -26,12 +26,25 @@ JIRA_CUSTOM_JQL = os.environ.get("JIRA_JQL", "").strip()
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "jira.json")
 
 
-def make_jira_request(url, method="GET", body_dict=None, headers=None):
-    """Execute authenticated request to Jira API."""
+def make_jira_request(url, method="GET", body_dict=None, headers=None, fallback_bearer=True):
+    """Execute authenticated request to Jira API with automatic Basic/Bearer fallback."""
     data_bytes = json.dumps(body_dict).encode("utf-8") if body_dict else None
     req = urllib.request.Request(url, data=data_bytes, headers=headers, method=method)
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as err:
+        if err.code == 401 and fallback_bearer and JIRA_API_TOKEN:
+            # If Basic Auth returned 401, retry with Bearer Auth
+            bearer_headers = dict(headers)
+            bearer_headers["Authorization"] = f"Bearer {JIRA_API_TOKEN}"
+            req_bearer = urllib.request.Request(url, data=data_bytes, headers=bearer_headers, method=method)
+            try:
+                with urllib.request.urlopen(req_bearer, timeout=30) as resp2:
+                    return json.loads(resp2.read().decode("utf-8"))
+            except Exception:
+                pass
+        raise
 
 
 def fetch_jira_live():
