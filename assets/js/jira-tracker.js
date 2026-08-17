@@ -62,7 +62,7 @@
       this.filters = {
         kpi: 'all',          // 'all', 'blockers', 'progress', 'qa', 'resolved'
         project: 'all',
-        releaseStatus: 'all', // 'all', 'unreleased', 'released'
+        releaseStatus: 'unreleased', // default to Unreleased versions
         fixVersion: 'all',
         versionSearch: '',
         type: 'all',
@@ -386,7 +386,7 @@
       let count = 0;
       if (this.filters.kpi !== 'all') count++;
       if (this.filters.project !== 'all') count++;
-      if (this.filters.releaseStatus !== 'all') count++;
+      if (this.filters.releaseStatus !== 'unreleased') count++;
       if (this.filters.fixVersion !== 'all') count++;
       if (this.filters.versionSearch && this.filters.versionSearch.trim()) count++;
       if (this.filters.type !== 'all') count++;
@@ -403,7 +403,7 @@
       this.filters = {
         kpi: 'all',
         project: 'all',
-        releaseStatus: 'all',
+        releaseStatus: 'unreleased',
         fixVersion: 'all',
         versionSearch: '',
         type: 'all',
