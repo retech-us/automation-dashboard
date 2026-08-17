@@ -1,7 +1,7 @@
 /**
  * Jira Quality & Sprint Delivery Tracker for Store Intell QA Dashboard.
  * Supports dynamic interactive pie/donut charts, Ticket Type / Epic tracking,
- * multi-axis filtering at the top, Created + Updated dates, and CSV export.
+ * Fix Version filtering with Released & Unreleased states, Created + Updated dates, and CSV export.
  */
 
 (function (window) {
@@ -56,7 +56,7 @@
       this.filters = {
         kpi: 'all',          // 'all', 'blockers', 'progress', 'qa', 'resolved'
         project: 'all',
-        fixVersion: 'all',
+        fixVersion: 'all',   // 'all', 'released', 'unreleased', 'unversioned', or specific version string
         type: 'all',
         assignee: 'all',
         tester: 'all',
@@ -174,19 +174,19 @@
 
     matchesTicketType(issue, filterType) {
       if (!filterType || filterType === 'all') return true;
-      const tIssue = (issue.type || '').toLowerCase().trim();
+      const tIssue = (issue.type || issue.issuetype || '').toLowerCase().trim();
       const tFilter = filterType.toLowerCase().trim();
 
       if (tFilter === 'epic') {
         const isDirectEpic = tIssue.includes('epic');
-        const hasEpicTag = issue.epic && issue.epic !== 'None';
-        const isLabeledEpic = (issue.labels || []).some(l => l.toLowerCase().includes('epic'));
+        const hasEpicTag = Boolean(issue.epic && issue.epic !== 'None' && !issue.epic.toLowerCase().includes('undefined'));
+        const isLabeledEpic = Boolean(issue.labels && issue.labels.some(l => l.toLowerCase().includes('epic')));
         return isDirectEpic || hasEpicTag || isLabeledEpic;
       }
-      if (tFilter === 'bug') {
+      if (tFilter === 'bug' || tFilter === 'defect') {
         return tIssue.includes('bug') || tIssue.includes('defect') || tIssue.includes('incident');
       }
-      if (tFilter === 'story') {
+      if (tFilter === 'story' || tFilter === 'feature') {
         return tIssue.includes('story') || tIssue.includes('feature');
       }
       if (tFilter === 'task') {
@@ -195,7 +195,25 @@
       if (tFilter.includes('sub')) {
         return tIssue.includes('sub');
       }
-      return tIssue === tFilter;
+      return tIssue === tFilter || tIssue.includes(tFilter) || tFilter.includes(tIssue);
+    }
+
+    matchesFixVersion(issue, filterVersion) {
+      if (!filterVersion || filterVersion === 'all') return true;
+      const fv = filterVersion.toLowerCase().trim();
+      const issueFv = (issue.fixVersion || 'Unversioned').toLowerCase().trim();
+      const isRel = Boolean(issue.isReleased || (issue.releaseStatus && issue.releaseStatus.toLowerCase() === 'released') || issueFv.includes('released'));
+
+      if (fv === 'released') {
+        return isRel;
+      }
+      if (fv === 'unreleased') {
+        return !isRel && issueFv !== 'unversioned';
+      }
+      if (fv === 'unversioned') {
+        return issueFv === 'unversioned' || !issue.fixVersion;
+      }
+      return issueFv === fv || issueFv.includes(fv);
     }
 
     filterAndSortIssues(issues) {
@@ -224,11 +242,9 @@
           if (pIssue !== pFilter && !pIssue.includes(pFilter)) return false;
         }
 
-        // Fix Version Filter
-        if (this.filters.fixVersion !== 'all') {
-          const vIssue = (issue.fixVersion || 'Unversioned').toLowerCase();
-          const vFilter = this.filters.fixVersion.toLowerCase();
-          if (vIssue !== vFilter) return false;
+        // Fix Version & Release/Unreleased Filter
+        if (!this.matchesFixVersion(issue, this.filters.fixVersion)) {
+          return false;
         }
 
         // Ticket Type Filter (Smart matching for Epic, Story, Bug, Task, Sub-task)
@@ -365,7 +381,7 @@
         alert('No Jira tickets to export.');
         return;
       }
-      const headers = ['Key', 'Ticket Type', 'Priority', 'Summary', 'Project', 'Fix Version', 'Epic', 'Status', 'Assignee', 'Tester', 'Created', 'Updated', 'URL'];
+      const headers = ['Key', 'Ticket Type', 'Priority', 'Summary', 'Project', 'Fix Version', 'Release Status', 'Epic', 'Status', 'Assignee', 'Tester', 'Created', 'Updated', 'URL'];
       const rows = filteredIssues.map(i => [
         `"${i.key || ''}"`,
         `"${i.type || ''}"`,
@@ -373,6 +389,7 @@
         `"${(i.summary || '').replace(/"/g, '""')}"`,
         `"${i.project || ''}"`,
         `"${i.fixVersion || ''}"`,
+        `"${i.releaseStatus || (i.isReleased ? 'Released' : 'Unreleased')}"`,
         `"${(i.epic || '').replace(/"/g, '""')}"`,
         `"${i.status || ''}"`,
         `"${i.assignee || ''}"`,
@@ -479,13 +496,24 @@
       const isError = status === 'error';
       const activeFilterCount = this.countActiveFilters();
 
-      // Extract unique lists dynamically (guaranteeing standard Ticket Types)
+      // Extract unique lists dynamically
       const projects = filterOptions.projects || Array.from(new Set(issues.map(i => i.project || i.projectKey).filter(Boolean)));
       const fixVersions = filterOptions.fixVersions || Array.from(new Set(issues.map(i => i.fixVersion).filter(Boolean)));
       
+      // Fix version counts
+      const unreleasedCount = issues.filter(i => !i.isReleased && (i.releaseStatus || '').toLowerCase() !== 'released' && (i.fixVersion || 'Unversioned').toLowerCase() !== 'unversioned' && !((i.fixVersion || '').toLowerCase().includes('released'))).length;
+      const releasedCount = issues.filter(i => i.isReleased || (i.releaseStatus || '').toLowerCase() === 'released' || (i.fixVersion || '').toLowerCase().includes('released')).length;
+      const unversionedCount = issues.filter(i => !i.fixVersion || (i.fixVersion || '').toLowerCase() === 'unversioned').length;
+
       const standardTypes = ['Epic', 'Story', 'Bug', 'Task', 'Sub-task'];
       const rawTypes = ['Epic'].concat(filterOptions.types || []).concat(issues.map(i => i.type).filter(Boolean)).concat(standardTypes);
       const types = Array.from(new Set(rawTypes)).filter(Boolean);
+
+      // Compute counts per type in dataset
+      const typeOptionCounts = {};
+      types.forEach(t => {
+        typeOptionCounts[t] = issues.filter(i => this.matchesTicketType(i, t)).length;
+      });
 
       const assignees = filterOptions.assignees || Array.from(new Set(issues.map(i => i.assignee).filter(Boolean)));
       const testers = filterOptions.testers || Array.from(new Set(issues.map(i => i.tester || i.reporter).filter(Boolean)));
@@ -551,7 +579,7 @@
           const pFilter = this.filters.project.toLowerCase();
           if (pIssue !== pFilter && !pIssue.includes(pFilter)) return false;
         }
-        if (this.filters.fixVersion !== 'all' && (i.fixVersion || 'Unversioned').toLowerCase() !== this.filters.fixVersion.toLowerCase()) return false;
+        if (!this.matchesFixVersion(i, this.filters.fixVersion)) return false;
         if (!this.matchesTicketType(i, this.filters.type)) return false;
         if (this.filters.assignee !== 'all' && (i.assignee || 'Unassigned').toLowerCase() !== this.filters.assignee.toLowerCase()) return false;
         if (this.filters.tester !== 'all' && (i.tester || i.reporter || 'Unknown').toLowerCase() !== this.filters.tester.toLowerCase() && !(i.reporter || '').toLowerCase().includes(this.filters.tester.toLowerCase())) return false;
@@ -688,8 +716,11 @@
             <div class="jira-filter-field">
               <label>📁 Project</label>
               <select class="jira-select" id="filter-project">
-                <option value="all">All Projects</option>
-                ${projects.map(p => `<option value="${this.escapeHtml(p)}" ${(this.filters.project || '').toLowerCase() === p.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(p)}</option>`).join('')}
+                <option value="all">All Projects (${issues.length})</option>
+                ${projects.map(p => {
+                  const pCount = issues.filter(i => (i.project || i.projectKey || '').toLowerCase() === p.toLowerCase() || (i.project || i.projectKey || '').toLowerCase().includes(p.toLowerCase())).length;
+                  return `<option value="${this.escapeHtml(p)}" ${(this.filters.project || '').toLowerCase() === p.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(p)} (${pCount})</option>`;
+                }).join('')}
               </select>
             </div>
 
@@ -697,8 +728,11 @@
             <div class="jira-filter-field">
               <label>🔄 Status</label>
               <select class="jira-select" id="filter-status">
-                <option value="all">All Statuses</option>
-                ${allStatuses.map(s => `<option value="${this.escapeHtml(s)}" ${(this.filters.status || '').toLowerCase() === s.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(s)}</option>`).join('')}
+                <option value="all">All Statuses (${issues.length})</option>
+                ${allStatuses.map(s => {
+                  const sCount = issues.filter(i => (i.status || '').toLowerCase() === s.toLowerCase()).length;
+                  return `<option value="${this.escapeHtml(s)}" ${(this.filters.status || '').toLowerCase() === s.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(s)} (${sCount})</option>`;
+                }).join('')}
               </select>
             </div>
 
@@ -706,8 +740,11 @@
             <div class="jira-filter-field">
               <label>📶 Priority</label>
               <select class="jira-select" id="filter-priority">
-                <option value="all">All Priorities</option>
-                ${priorities.map(pr => `<option value="${this.escapeHtml(pr)}" ${(this.filters.priority || '').toLowerCase() === pr.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(pr)}</option>`).join('')}
+                <option value="all">All Priorities (${issues.length})</option>
+                ${priorities.map(pr => {
+                  const prCount = issues.filter(i => (i.priority || 'Medium').toLowerCase() === pr.toLowerCase()).length;
+                  return `<option value="${this.escapeHtml(pr)}" ${(this.filters.priority || '').toLowerCase() === pr.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(pr)} (${prCount})</option>`;
+                }).join('')}
               </select>
             </div>
 
@@ -715,17 +752,26 @@
             <div class="jira-filter-field">
               <label>🏷️ Ticket Type</label>
               <select class="jira-select" id="filter-type">
-                <option value="all">All Ticket Types</option>
-                ${types.map(t => `<option value="${this.escapeHtml(t)}" ${(this.filters.type || '').toLowerCase() === t.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(t)}</option>`).join('')}
+                <option value="all">All Ticket Types (${issues.length})</option>
+                ${types.map(t => {
+                  const tCount = typeOptionCounts[t] || 0;
+                  return `<option value="${this.escapeHtml(t)}" ${(this.filters.type || '').toLowerCase() === t.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(t)} (${tCount})</option>`;
+                }).join('')}
               </select>
             </div>
 
-            <!-- Fix Version Filter -->
+            <!-- Fix Version Filter with Released & Unreleased Categories -->
             <div class="jira-filter-field">
-              <label>🎯 Fix Version</label>
+              <label>🎯 Fix Version &amp; Release</label>
               <select class="jira-select" id="filter-fix-version">
-                <option value="all">All Versions</option>
-                ${fixVersions.map(v => `<option value="${this.escapeHtml(v)}" ${(this.filters.fixVersion || '').toLowerCase() === v.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(v)}</option>`).join('')}
+                <option value="all">All Versions (${issues.length})</option>
+                <option value="unreleased" ${this.filters.fixVersion === 'unreleased' ? 'selected' : ''}>⏳ Unreleased / Active (${unreleasedCount})</option>
+                <option value="released" ${this.filters.fixVersion === 'released' ? 'selected' : ''}>🚀 Released Versions (${releasedCount})</option>
+                <option value="unversioned" ${this.filters.fixVersion === 'unversioned' ? 'selected' : ''}>❓ Unversioned (${unversionedCount})</option>
+                ${fixVersions.map(v => {
+                  const vCount = issues.filter(i => (i.fixVersion || 'Unversioned').toLowerCase() === v.toLowerCase()).length;
+                  return `<option value="${this.escapeHtml(v)}" ${(this.filters.fixVersion || '').toLowerCase() === v.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(v)} (${vCount})</option>`;
+                }).join('')}
               </select>
             </div>
 
@@ -733,8 +779,11 @@
             <div class="jira-filter-field">
               <label>👤 Assignee (Dev)</label>
               <select class="jira-select" id="filter-assignee">
-                <option value="all">All Assignees</option>
-                ${assignees.map(a => `<option value="${this.escapeHtml(a)}" ${(this.filters.assignee || '').toLowerCase() === a.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(a)}</option>`).join('')}
+                <option value="all">All Assignees (${issues.length})</option>
+                ${assignees.map(a => {
+                  const aCount = issues.filter(i => (i.assignee || 'Unassigned').toLowerCase() === a.toLowerCase()).length;
+                  return `<option value="${this.escapeHtml(a)}" ${(this.filters.assignee || '').toLowerCase() === a.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(a)} (${aCount})</option>`;
+                }).join('')}
               </select>
             </div>
 
@@ -742,8 +791,11 @@
             <div class="jira-filter-field">
               <label>🧪 Tester / QA</label>
               <select class="jira-select" id="filter-tester">
-                <option value="all">All Testers</option>
-                ${testers.map(t => `<option value="${this.escapeHtml(t)}" ${(this.filters.tester || '').toLowerCase() === t.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(t)}</option>`).join('')}
+                <option value="all">All Testers (${issues.length})</option>
+                ${testers.map(t => {
+                  const tCount = issues.filter(i => (i.tester || i.reporter || 'Unknown').toLowerCase() === t.toLowerCase() || (i.reporter || '').toLowerCase().includes(t.toLowerCase())).length;
+                  return `<option value="${this.escapeHtml(t)}" ${(this.filters.tester || '').toLowerCase() === t.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(t)} (${tCount})</option>`;
+                }).join('')}
               </select>
             </div>
 
@@ -970,7 +1022,7 @@
                   ${this.renderSortHeader('priority', 'Priority', '95px')}
                   ${this.renderSortHeader('summary', 'Summary & Epic')}
                   ${this.renderSortHeader('project', 'Project', '130px')}
-                  ${this.renderSortHeader('fixVersion', 'Fix Version', '105px')}
+                  ${this.renderSortHeader('fixVersion', 'Fix Version', '125px')}
                   ${this.renderSortHeader('status', 'Status', '120px')}
                   ${this.renderSortHeader('assignee', 'Assignee', '135px')}
                   ${this.renderSortHeader('tester', 'Tester / QA', '135px')}
@@ -982,6 +1034,8 @@
                 ${filtered.map(issue => {
                   const isStale = (issue.staleDays || 0) > 14 && (issue.statusCategory || '').toLowerCase() !== 'done';
                   const isEpic = (issue.type || '').toLowerCase() === 'epic';
+                  const isReleased = Boolean(issue.isReleased || (issue.releaseStatus && issue.releaseStatus.toLowerCase() === 'released') || (issue.fixVersion || '').toLowerCase().includes('released'));
+                  
                   return `
                     <tr>
                       <td>
@@ -1015,7 +1069,9 @@
                         <span class="jira-project-tag">${this.escapeHtml(issue.project || issue.projectKey || 'Project')}</span>
                       </td>
                       <td>
-                        <span class="jira-version-badge">${this.escapeHtml(issue.fixVersion || 'Unversioned')}</span>
+                        <span class="jira-version-badge ${isReleased ? 'jira-version-badge--released' : ''}" style="${isReleased ? 'background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);' : ''}">
+                          ${isReleased ? '🚀 ' : ''}${this.escapeHtml(issue.fixVersion || 'Unversioned')}
+                        </span>
                       </td>
                       <td>
                         <span class="jira-status-pill ${this.getStatusBadgeClass(issue.statusCategory, issue.status)}">
@@ -1079,6 +1135,7 @@
           const val = el.getAttribute('data-filter-val');
           if (key && val) {
             this.filters[key] = (this.filters[key] || '').toLowerCase() === val.toLowerCase() ? 'all' : val;
+            this.filters.kpi = 'all'; // Clear KPI card lock
             this.render();
           }
         });
@@ -1090,6 +1147,7 @@
         if (el) {
           el.addEventListener('change', (e) => {
             this.filters[filterKey] = e.target.value;
+            this.filters.kpi = 'all'; // Clear KPI card lock so dropdown filter takes precedence
             this.render();
           });
         }
