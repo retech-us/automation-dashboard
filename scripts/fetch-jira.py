@@ -127,24 +127,41 @@ def fetch_jira_live():
         next_token = None
 
         while True:
-            ep_post = {
-                "url": f"{JIRA_BASE_URL}/rest/api/3/search/jql",
-                "method": "POST",
-                "body": {"jql": jql, "maxResults": page_size, "fields": fields_list, "startAt": start_at}
-            }
-            ep_get = {
-                "url": f"{JIRA_BASE_URL}/rest/api/3/search/jql?jql={urllib.parse.quote(jql)}&maxResults={page_size}&startAt={start_at}&fields={','.join(fields_list)}",
-                "method": "GET",
-                "body": None
-            }
+            ep_candidates = [
+                # 1. Standard Jira Cloud v3 POST /rest/api/3/search
+                {
+                    "url": f"{JIRA_BASE_URL}/rest/api/3/search",
+                    "method": "POST",
+                    "body": {"jql": jql, "maxResults": page_size, "fields": fields_list, "startAt": start_at}
+                },
+                # 2. Standard Jira Cloud v3 GET /rest/api/3/search
+                {
+                    "url": f"{JIRA_BASE_URL}/rest/api/3/search?jql={urllib.parse.quote(jql)}&maxResults={page_size}&startAt={start_at}&fields={','.join(fields_list)}",
+                    "method": "GET",
+                    "body": None
+                },
+                # 3. Jira Cloud v2 POST /rest/api/2/search fallback
+                {
+                    "url": f"{JIRA_BASE_URL}/rest/api/2/search",
+                    "method": "POST",
+                    "body": {"jql": jql, "maxResults": page_size, "fields": fields_list, "startAt": start_at}
+                },
+                # 4. Jira Cloud v2 GET /rest/api/2/search fallback
+                {
+                    "url": f"{JIRA_BASE_URL}/rest/api/2/search?jql={urllib.parse.quote(jql)}&maxResults={page_size}&startAt={start_at}&fields={','.join(fields_list)}",
+                    "method": "GET",
+                    "body": None
+                }
+            ]
+
             if next_token:
-                ep_post["body"]["nextPageToken"] = next_token
+                ep_candidates[0]["body"]["nextPageToken"] = next_token
 
             data = None
-            for ep in [ep_post, ep_get]:
+            for ep in ep_candidates:
                 try:
                     data = make_jira_request(ep["url"], method=ep["method"], body_dict=ep["body"], headers=headers)
-                    if data:
+                    if data and (data.get("issues") or data.get("values") or data.get("results")):
                         break
                 except Exception as ex:
                     pass
