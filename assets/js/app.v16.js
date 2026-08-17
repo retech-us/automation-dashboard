@@ -3453,6 +3453,7 @@ initTheme();
 ACTIVE_TAB = resolveInitialTab();
 TREND_RANGE = resolveInitialTrendRange();
 wireControls();
-setActiveTab(ACTIVE_TAB, { persist: false, updateUrl: false });
-loadDashboard();
+if (!window.AuthGate || window.AuthGate.isAuthenticated()) {
+  loadDashboard();
+}
 

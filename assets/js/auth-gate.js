@@ -7,7 +7,10 @@
   'use strict';
 
   const AUTH_STORAGE_KEY = 'dashboard.auth_session';
+  const ATTEMPTS_KEY = 'dashboard.auth_attempts';
   const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days session
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes lockout
 
   // Allowed SHA-256 hashes:
   // 1. RetechQA2026!  -> ce77f54ddf439389a8401a88c0e2ce3699afc983851585d5c7de898e134702e6
@@ -29,6 +32,35 @@
     constructor() {
       this.isUnlocked = false;
       this.init();
+    }
+
+    getLockoutInfo() {
+      try {
+        const raw = sessionStorage.getItem(ATTEMPTS_KEY);
+        if (!raw) return { count: 0, lockUntil: 0 };
+        const parsed = JSON.parse(raw);
+        return { count: parsed.count || 0, lockUntil: parsed.lockUntil || 0 };
+      } catch {
+        return { count: 0, lockUntil: 0 };
+      }
+    }
+
+    recordFailedAttempt() {
+      const info = this.getLockoutInfo();
+      info.count += 1;
+      if (info.count >= MAX_ATTEMPTS) {
+        info.lockUntil = Date.now() + LOCKOUT_MS;
+      }
+      try {
+        sessionStorage.setItem(ATTEMPTS_KEY, JSON.stringify(info));
+      } catch {}
+      return info;
+    }
+
+    clearFailedAttempts() {
+      try {
+        sessionStorage.removeItem(ATTEMPTS_KEY);
+      } catch {}
     }
 
     isAuthenticated() {
@@ -85,9 +117,14 @@
       }
 
       const mainContent = document.querySelector('.main-content');
+      const siteChrome = document.querySelector('.site-chrome');
       if (mainContent) {
         mainContent.style.display = '';
         mainContent.style.visibility = 'visible';
+      }
+      if (siteChrome) {
+        siteChrome.style.display = '';
+        siteChrome.style.visibility = 'visible';
       }
 
       this.injectLockHeaderButton();
@@ -116,8 +153,12 @@
 
     renderLockScreen() {
       const mainContent = document.querySelector('.main-content');
+      const siteChrome = document.querySelector('.site-chrome');
       if (mainContent) {
         mainContent.style.display = 'none';
+      }
+      if (siteChrome) {
+        siteChrome.style.display = 'none';
       }
 
       const existing = document.getElementById('auth-gate-overlay');
@@ -149,9 +190,7 @@
               <button type="button" id="auth-toggle-visibility" class="auth-visibility-btn" title="Show/Hide Passkey">👁️</button>
             </div>
             
-            <div id="auth-error-msg" class="auth-error-msg" style="display:none;">
-              ⚠️ Incorrect passkey. Please check with your QA lead.
-            </div>
+            <div id="auth-error-msg" class="auth-error-msg" style="display:none;"></div>
 
             <button type="submit" id="auth-submit-btn" class="auth-submit-btn">
               Unlock Dashboard ⚡
@@ -181,12 +220,33 @@
         });
       }
 
-      // Handle form submission
+      // Check lockout status
       const form = document.getElementById('auth-gate-form');
       const submitBtn = document.getElementById('auth-submit-btn');
       const errorMsg = document.getElementById('auth-error-msg');
 
+      const lockout = this.getLockoutInfo();
+      if (lockout.lockUntil > Date.now()) {
+        const remainingMin = Math.ceil((lockout.lockUntil - Date.now()) / 60000);
+        submitBtn.disabled = true;
+        passInput.disabled = true;
+        if (errorMsg) {
+          errorMsg.style.display = 'block';
+          errorMsg.textContent = `⛔ Too many failed attempts. Locked for ${remainingMin} minute(s).`;
+        }
+      }
+
       const handleUnlock = async () => {
+        const currentLock = this.getLockoutInfo();
+        if (currentLock.lockUntil > Date.now()) {
+          const remainingMin = Math.ceil((currentLock.lockUntil - Date.now()) / 60000);
+          if (errorMsg) {
+            errorMsg.style.display = 'block';
+            errorMsg.textContent = `⛔ Too many failed attempts. Locked for ${remainingMin} minute(s).`;
+          }
+          return;
+        }
+
         const pass = (passInput.value || '').trim();
         if (!pass) return;
 
@@ -196,6 +256,7 @@
 
         const hash = await sha256Hex(pass);
         if (VALID_HASHES.includes(hash)) {
+          this.clearFailedAttempts();
           this.saveSession(hash);
           this.isUnlocked = true;
           this.revealDashboard();
@@ -203,9 +264,24 @@
           if (window.JiraTracker && typeof window.JiraTracker.init === 'function') window.JiraTracker.init();
           if (window.LiveTracker && typeof window.LiveTracker.checkAll === 'function') window.LiveTracker.checkAll();
         } else {
+          const attemptInfo = this.recordFailedAttempt();
           submitBtn.disabled = false;
           submitBtn.textContent = 'Unlock Dashboard ⚡';
-          if (errorMsg) errorMsg.style.display = 'block';
+          
+          if (attemptInfo.lockUntil > Date.now()) {
+            passInput.disabled = true;
+            submitBtn.disabled = true;
+            if (errorMsg) {
+              errorMsg.style.display = 'block';
+              errorMsg.textContent = `⛔ 5 failed attempts reached. Form locked for 15 minutes.`;
+            }
+          } else {
+            const remaining = MAX_ATTEMPTS - attemptInfo.count;
+            if (errorMsg) {
+              errorMsg.style.display = 'block';
+              errorMsg.textContent = `⚠️ Incorrect passkey. ${remaining} attempt(s) remaining.`;
+            }
+          }
           
           const card = document.querySelector('.auth-gate-card');
           if (card) {
