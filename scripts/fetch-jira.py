@@ -48,15 +48,11 @@ def fetch_jira_live():
 
     print(f"[Jira Fetcher] Executing JQL: {jql}")
 
-    # Build search URL with maximum fields
-    params = {
-        "jql": jql,
-        "maxResults": 100,
-        "fields": "summary,status,priority,components,assignee,reporter,created,updated,labels,issuetype,project,fixVersions,description"
-    }
-    query_string = urllib.parse.urlencode(params)
-    api_url_v3 = f"{JIRA_BASE_URL}/rest/api/3/search?{query_string}"
-    api_url_v2 = f"{JIRA_BASE_URL}/rest/api/2/search?{query_string}"
+    fields_list = [
+        "summary", "status", "priority", "components", "assignee",
+        "reporter", "created", "updated", "labels", "issuetype",
+        "project", "fixVersions", "description"
+    ]
 
     auth_str = f"{JIRA_USER_EMAIL}:{JIRA_API_TOKEN}"
     b64_auth = base64.b64encode(auth_str.encode("utf-8")).decode("utf-8")
@@ -68,34 +64,60 @@ def fetch_jira_live():
         "User-Agent": "StoreIntell-QADashboard/1.0"
     }
 
+    # Atlassian CHANGE-2046: /rest/api/3/search was replaced with /rest/api/3/search/jql
+    endpoints = [
+        # 1. New POST /rest/api/3/search/jql (Standard modern Jira Cloud API)
+        {
+            "url": f"{JIRA_BASE_URL}/rest/api/3/search/jql",
+            "method": "POST",
+            "body": json.dumps({"jql": jql, "maxResults": 100, "fields": fields_list}).encode("utf-8")
+        },
+        # 2. New GET /rest/api/3/search/jql
+        {
+            "url": f"{JIRA_BASE_URL}/rest/api/3/search/jql?jql={urllib.parse.quote(jql)}&maxResults=100&fields={','.join(fields_list)}",
+            "method": "GET",
+            "body": None
+        },
+        # 3. POST /rest/api/2/search/jql
+        {
+            "url": f"{JIRA_BASE_URL}/rest/api/2/search/jql",
+            "method": "POST",
+            "body": json.dumps({"jql": jql, "maxResults": 100, "fields": fields_list}).encode("utf-8")
+        },
+        # 4. Fallback legacy POST /rest/api/3/search
+        {
+            "url": f"{JIRA_BASE_URL}/rest/api/3/search",
+            "method": "POST",
+            "body": json.dumps({"jql": jql, "maxResults": 100, "fields": fields_list}).encode("utf-8")
+        }
+    ]
+
     data = None
-    try:
-        print(f"[Jira Fetcher] Requesting Jira API v3: {api_url_v3}")
-        req = urllib.request.Request(api_url_v3, headers=headers)
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        error_body = ""
+    last_error = ""
+
+    for ep in endpoints:
         try:
-            error_body = e.read().decode("utf-8")
-        except Exception:
-            pass
-        print(f"[Jira Fetcher] API v3 returned HTTP {e.code}: {error_body}")
-        
-        # Fallback to API v2
-        print(f"[Jira Fetcher] Retrying with API v2: {api_url_v2}")
-        try:
-            req_v2 = urllib.request.Request(api_url_v2, headers=headers)
-            with urllib.request.urlopen(req_v2, timeout=30) as resp_v2:
-                data = json.loads(resp_v2.read().decode("utf-8"))
-        except urllib.error.HTTPError as e2:
-            error_body_v2 = ""
+            print(f"[Jira Fetcher] Trying {ep['method']} {ep['url']} ...")
+            req = urllib.request.Request(ep['url'], data=ep['body'], headers=headers, method=ep['method'])
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                if data and "issues" in data:
+                    print(f"[Jira Fetcher] Success via {ep['method']} {ep['url']}")
+                    break
+        except urllib.error.HTTPError as e:
+            err_text = ""
             try:
-                error_body_v2 = e2.read().decode("utf-8")
+                err_text = e.read().decode("utf-8")
             except Exception:
                 pass
-            print(f"[Jira Fetcher] API v2 returned HTTP {e2.code}: {error_body_v2}")
-            raise RuntimeError(f"Jira API request failed (HTTP {e2.code}): {error_body_v2 or str(e2)}")
+            print(f"[Jira Fetcher] Endpoint returned HTTP {e.code}: {err_text}")
+            last_error = f"HTTP {e.code}: {err_text or e.reason}"
+        except Exception as e:
+            print(f"[Jira Fetcher] Endpoint failed: {e}")
+            last_error = str(e)
+
+    if not data or "issues" not in data:
+        raise RuntimeError(f"All Jira search endpoints failed. Last error: {last_error}")
 
     raw_issues = data.get("issues", [])
     print(f"[Jira Fetcher] Successfully retrieved {len(raw_issues)} real issues from Jira Project '{JIRA_PROJECT_KEY}'.")
