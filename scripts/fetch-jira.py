@@ -201,6 +201,8 @@ def fetch_jira_live():
         # Fix Versions
         fix_vers = fields.get("fixVersions") or []
         fix_ver_name = fix_vers[0].get("name") if fix_vers else "Unversioned"
+        is_released = bool(fix_vers[0].get("released", False)) if fix_vers else False
+        release_status = "Released" if is_released else ("Unreleased" if fix_ver_name != "Unversioned" else "Unversioned")
         fix_versions_set.add(fix_ver_name)
 
         # Issue Type
@@ -298,6 +300,8 @@ def fetch_jira_live():
             "project": project_name,
             "projectKey": proj_key,
             "fixVersion": fix_ver_name,
+            "isReleased": is_released,
+            "releaseStatus": release_status,
             "type": issue_type,
             "epic": epic_name or "None",
             "status": status_name,
