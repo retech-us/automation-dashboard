@@ -1,7 +1,7 @@
 /**
  * Jira Quality & Sprint Delivery Tracker for Store Intell QA Dashboard.
  * Supports dynamic interactive pie/donut charts, Ticket Type / Epic tracking,
- * clean multi-axis filtering at the top, Created + Updated dates, and CSV export.
+ * clean multi-axis filtering at the top, Created + Updated dates, pagination, and CSV export.
  */
 
 (function (window) {
@@ -35,6 +35,8 @@
     'ready for qa': '#a855f7',
     'qa': '#a855f7',
     'testing': '#a855f7',
+    'uat': '#06b6d4',
+    'dev complete': '#6366f1',
     'verified': '#a855f7',
     'blocked': '#f43f5e',
     'on hold': '#f43f5e',
@@ -52,7 +54,7 @@
     'lowest': '#94a3b8'
   };
 
-  const COMPONENT_COLORS = ['#3b82f6', '#a855f7', '#10b981', '#f59e0b', '#06b6d4', '#ec4899'];
+  const COMPONENT_COLORS = ['#3b82f6', '#a855f7', '#10b981', '#f59e0b', '#06b6d4', '#ec4899', '#f97316', '#6366f1'];
 
   class JiraTracker {
     constructor() {
@@ -72,6 +74,10 @@
       this.sort = {
         field: 'updated',
         dir: 'desc'
+      };
+      this.pagination = {
+        page: 1,
+        pageSize: 25
       };
       this.initialized = false;
     }
@@ -164,7 +170,8 @@
     getStatusBadgeClass(statusCategory, statusName) {
       const cat = (statusCategory || '').toLowerCase();
       const name = (statusName || '').toLowerCase();
-      if (cat === 'done' || name.includes('closed') || name.includes('resolved')) return 'jira-status--done';
+      if (name.includes('invalid') || name.includes('reject') || name.includes('declined') || name.includes('cancel') || name.includes('won\'t') || name.includes('wont')) return 'jira-status--open';
+      if (cat === 'done' || name.includes('closed') || name.includes('resolved') || name === 'done') return 'jira-status--done';
       if (this.isQaStatus(statusName)) return 'jira-status--qa';
       if (this.isDevStatus(statusName, statusCategory)) return 'jira-status--prog';
       return 'jira-status--open';
@@ -177,6 +184,9 @@
 
     getStatusColor(statusName) {
       const s = (statusName || '').toLowerCase().trim();
+      if (s.includes('invalid') || s.includes('reject') || s.includes('declined') || s.includes('cancel') || s.includes('won\'t') || s.includes('wont')) return '#94a3b8';
+      if (s === 'uat') return '#06b6d4';
+      if (s.includes('dev complete')) return '#6366f1';
       if (this.isQaStatus(statusName)) return '#a855f7';
       if (this.isDevStatus(statusName, 'indeterminate')) return '#fbbf24';
       if (['done', 'closed', 'resolved'].includes(s)) return '#10b981';
@@ -197,7 +207,10 @@
       const tFilter = filterType.toLowerCase().trim();
 
       if (tFilter === 'epic') {
-        return tIssue === 'epic' || tIssue.includes('epic');
+        const isDirectEpic = tIssue === 'epic' || tIssue.includes('epic');
+        const hasEpicParent = Boolean(issue.epic && issue.epic !== 'None' && !issue.epic.toLowerCase().includes('undefined') && !issue.epic.toLowerCase().includes('null'));
+        const hasEpicLabel = Boolean(issue.labels && issue.labels.some(l => l.toLowerCase().includes('epic')));
+        return isDirectEpic || hasEpicParent || hasEpicLabel;
       }
       if (tFilter === 'bug' || tFilter === 'defect') {
         return tIssue === 'bug' || tIssue.includes('bug') || tIssue.includes('defect') || tIssue.includes('incident');
@@ -226,9 +239,10 @@
         } else if (this.filters.kpi === 'qa') {
           if (!this.isQaStatus(issue.status)) return false;
         } else if (this.filters.kpi === 'resolved') {
-          const s = (issue.statusCategory || '').toLowerCase();
-          const sn = (issue.status || '').toLowerCase();
-          if (s !== 'done' && !sn.includes('closed') && !sn.includes('resolved')) return false;
+          const sn = (issue.status || '').toLowerCase().trim();
+          const isInvalid = sn.includes('invalid') || sn.includes('won\'t') || sn.includes('wont') || sn.includes('duplicate') || sn.includes('declined') || sn.includes('cancelled') || sn.includes('rejected');
+          if (isInvalid) return false;
+          if (!['done', 'closed', 'resolved'].includes(sn) && (issue.statusCategory || '').toLowerCase() !== 'done') return false;
         }
 
         // Project Filter
@@ -250,7 +264,7 @@
           return false;
         }
 
-        // Assignee Filter
+        // Assignee Filter (with Unassigned support)
         if (this.filters.assignee !== 'all') {
           const aFilter = this.filters.assignee.toLowerCase().trim();
           const aIssue = (issue.assignee || 'Unassigned').toLowerCase().trim();
@@ -261,12 +275,12 @@
           }
         }
 
-        // Tester Filter
+        // Tester Filter (with Unassigned support)
         if (this.filters.tester !== 'all') {
           const tFilter = this.filters.tester.toLowerCase().trim();
           const tIssue = (issue.tester || 'Unassigned').toLowerCase().trim();
           const rIssue = (issue.reporter || 'Unassigned').toLowerCase().trim();
-          if (tFilter.includes('unassigned') || tFilter.includes('unknown')) {
+          if (tFilter === 'unassigned' || tFilter.includes('unknown')) {
             const isUnassigned = ['unassigned', 'unknown', 'none', '', 'null'].includes(tIssue) && ['unassigned', 'unknown', 'none', '', 'null'].includes(rIssue);
             if (!isUnassigned && tIssue !== 'unassigned' && tIssue !== 'unknown' && tIssue !== '') return false;
           } else {
@@ -281,18 +295,11 @@
           if (prIssue !== prFilter) return false;
         }
 
-        // Status Filter
+        // Status Filter (Exact matching)
         if (this.filters.status !== 'all') {
           const stFilter = this.filters.status.toLowerCase().trim();
           const stIssue = (issue.status || '').toLowerCase().trim();
-          const catIssue = (issue.statusCategory || '').toLowerCase().trim();
-          if (stFilter === 'done' || stFilter === 'closed' || stFilter === 'resolved') {
-            if (catIssue !== 'done' && stIssue !== 'done' && stIssue !== 'closed' && stIssue !== 'resolved' && !stIssue.includes('done') && !stIssue.includes('closed') && !stIssue.includes('resolved')) {
-              return false;
-            }
-          } else {
-            if (stIssue !== stFilter && !stIssue.includes(stFilter)) return false;
-          }
+          if (stIssue !== stFilter) return false;
         }
 
         // Component Filter
@@ -388,6 +395,7 @@
         component: 'all',
         searchQuery: ''
       };
+      this.pagination.page = 1;
       this.render();
     }
 
@@ -518,25 +526,21 @@
       const standardTypes = ['Epic', 'Story', 'Bug', 'Task', 'Sub-task'];
       const types = Array.from(new Set(['Epic'].concat(filterOptions.types || []).concat(issues.map(i => i.type)).concat(standardTypes).filter(Boolean)));
 
-      // Full dynamic extraction of all assignees (including Unassigned)
-      const rawAssignees = [].concat(filterOptions.assignees || []).concat(issues.map(i => i.assignee || 'Unassigned')).filter(Boolean);
-      const hasUnassignedDev = rawAssignees.some(a => (a || '').toLowerCase() === 'unassigned') || issues.some(i => !i.assignee || i.assignee.toLowerCase() === 'unassigned');
-      const uniqueAssigneeSet = new Set(rawAssignees.filter(a => (a || '').toLowerCase() !== 'unassigned'));
-      const sortedNamedAssignees = Array.from(uniqueAssigneeSet).sort((a, b) => a.localeCompare(b));
-      const assignees = hasUnassignedDev ? ['Unassigned', ...sortedNamedAssignees] : sortedNamedAssignees;
+      // Extract all unique assignees alphabetically
+      const assignees = Array.from(new Set(
+        [].concat(filterOptions.assignees || []).concat(issues.map(i => i.assignee)).filter(a => a && a.toLowerCase() !== 'unassigned' && a.toLowerCase() !== 'unknown')
+      )).sort((a, b) => a.localeCompare(b));
 
-      // Full dynamic extraction of all testers & reporters (including Unassigned / Unknown)
-      const rawTesters = [].concat(filterOptions.testers || []).concat(issues.flatMap(i => [i.tester, i.reporter])).filter(Boolean);
-      const hasUnassignedQa = rawTesters.some(t => ['unassigned', 'unknown', 'none'].includes((t || '').toLowerCase())) || issues.some(i => !i.tester || ['unassigned', 'unknown', 'none'].includes(i.tester.toLowerCase()));
-      const uniqueTesterSet = new Set(rawTesters.filter(t => !['unassigned', 'unknown', 'none'].includes((t || '').toLowerCase())));
-      const sortedNamedTesters = Array.from(uniqueTesterSet).sort((a, b) => a.localeCompare(b));
-      const testers = hasUnassignedQa ? ['Unassigned', ...sortedNamedTesters] : sortedNamedTesters;
+      // Extract all unique testers alphabetically
+      const testers = Array.from(new Set(
+        [].concat(filterOptions.testers || []).concat(issues.flatMap(i => [i.tester, i.reporter])).filter(t => t && !['unassigned', 'unknown', 'none'].includes(t.toLowerCase()))
+      )).sort((a, b) => a.localeCompare(b));
 
       const rawStatuses = [].concat(issues.map(i => i.status)).filter(Boolean);
       if (!rawStatuses.some(s => s.toLowerCase() === 'done' || s.toLowerCase() === 'closed')) {
         rawStatuses.push('Done');
       }
-      const allStatuses = Array.from(new Set(rawStatuses));
+      const allStatuses = Array.from(new Set(rawStatuses)).sort((a, b) => a.localeCompare(b));
       const priorities = ['Highest', 'High', 'Medium', 'Low', 'Lowest'];
 
       // --- 1. Compute Dynamic Status Distribution for Filtered Tickets ---
@@ -624,7 +628,7 @@
           const tFilter = this.filters.tester.toLowerCase().trim();
           const tIssue = (i.tester || 'Unassigned').toLowerCase().trim();
           const rIssue = (i.reporter || 'Unassigned').toLowerCase().trim();
-          if (tFilter.includes('unassigned') || tFilter.includes('unknown')) {
+          if (tFilter === 'unassigned' || tFilter.includes('unknown')) {
             const isUnassigned = ['unassigned', 'unknown', 'none', '', 'null'].includes(tIssue) && ['unassigned', 'unknown', 'none', '', 'null'].includes(rIssue);
             if (!isUnassigned && tIssue !== 'unassigned' && tIssue !== 'unknown' && tIssue !== '') return false;
           } else {
@@ -635,14 +639,7 @@
         if (this.filters.status !== 'all') {
           const stFilter = this.filters.status.toLowerCase().trim();
           const stIssue = (i.status || '').toLowerCase().trim();
-          const catIssue = (i.statusCategory || '').toLowerCase().trim();
-          if (stFilter === 'done' || stFilter === 'closed' || stFilter === 'resolved') {
-            if (catIssue !== 'done' && stIssue !== 'done' && stIssue !== 'closed' && stIssue !== 'resolved' && !stIssue.includes('done') && !stIssue.includes('closed') && !stIssue.includes('resolved')) {
-              return false;
-            }
-          } else {
-            if (stIssue !== stFilter && !stIssue.includes(stFilter)) return false;
-          }
+          if (stIssue !== stFilter) return false;
         }
         if (this.filters.component !== 'all' && (i.component || 'General').toLowerCase() !== this.filters.component.toLowerCase()) return false;
         if (this.filters.searchQuery && this.filters.searchQuery.trim()) {
@@ -671,7 +668,9 @@
       const dynamicKpiInProgress = baseForKpi.filter(i => this.isDevStatus(i.status, i.statusCategory)).length;
       const dynamicKpiInQa = baseForKpi.filter(i => this.isQaStatus(i.status)).length;
       const dynamicKpiResolved = baseForKpi.filter(i => {
-        const s = (i.status || '').toLowerCase();
+        const s = (i.status || '').toLowerCase().trim();
+        const isInvalid = s.includes('invalid') || s.includes('won\'t') || s.includes('wont') || s.includes('duplicate') || s.includes('declined') || s.includes('cancelled') || s.includes('rejected');
+        if (isInvalid) return false;
         const cat = (i.statusCategory || '').toLowerCase();
         return cat === 'done' || ['closed', 'done', 'resolved'].includes(s);
       }).length;
@@ -717,6 +716,17 @@
       } else if (defectRatio > 15) {
         qualityBadge = { label: '🟡 Moderate Defect Load (15-30%)', bg: 'rgba(245,158,11,0.15)', color: '#fbbf24' };
       }
+
+      // --- 7. Table Pagination Calculation ---
+      const totalFiltered = filtered.length;
+      const pageSize = this.pagination.pageSize === 'all' ? totalFiltered : Number(this.pagination.pageSize || 25);
+      const totalPages = pageSize === totalFiltered || pageSize === 'all' ? 1 : (Math.ceil(totalFiltered / pageSize) || 1);
+      if (this.pagination.page > totalPages) this.pagination.page = totalPages;
+      if (this.pagination.page < 1) this.pagination.page = 1;
+      
+      const startIdx = (this.pagination.page - 1) * (pageSize === 'all' ? totalFiltered : pageSize);
+      const endIdx = pageSize === 'all' ? totalFiltered : Math.min(startIdx + pageSize, totalFiltered);
+      const paginatedIssues = pageSize === 'all' ? filtered : filtered.slice(startIdx, endIdx);
 
       // Update status pill
       if (statusPill) {
@@ -799,7 +809,7 @@
               </select>
             </div>
 
-            <!-- Ticket Type Filter (Epic, Story, Bug, Task, Sub-task) -->
+            <!-- Ticket Type Filter -->
             <div class="jira-filter-field">
               <label>🏷️ Ticket Type</label>
               <select class="jira-select" id="filter-type">
@@ -817,20 +827,22 @@
               </select>
             </div>
 
-            <!-- Assignee Filter -->
+            <!-- Assignee (Dev) Filter with explicit Unassigned -->
             <div class="jira-filter-field">
               <label>👤 Assignee (Dev)</label>
               <select class="jira-select" id="filter-assignee">
                 <option value="all">All Assignees</option>
+                <option value="Unassigned" ${this.filters.assignee === 'Unassigned' ? 'selected' : ''}>Unassigned</option>
                 ${assignees.map(a => `<option value="${this.escapeHtml(a)}" ${(this.filters.assignee || '').toLowerCase() === a.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(a)}</option>`).join('')}
               </select>
             </div>
 
-            <!-- Tester / QA Filter -->
+            <!-- Tester / QA Filter with explicit Unassigned -->
             <div class="jira-filter-field">
               <label>🧪 Tester / QA</label>
               <select class="jira-select" id="filter-tester">
                 <option value="all">All Testers</option>
+                <option value="Unassigned" ${this.filters.tester === 'Unassigned' ? 'selected' : ''}>Unassigned</option>
                 ${testers.map(t => `<option value="${this.escapeHtml(t)}" ${(this.filters.tester || '').toLowerCase() === t.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(t)}</option>`).join('')}
               </select>
             </div>
@@ -929,10 +941,10 @@
                 <div class="jira-split-metric">
                   <div class="jira-split-labels">
                     <span>✨ Stories &amp; Tasks (Feature Work)</span>
-                    <strong>${storyCount} (${filtered.length ? Math.round((storyCount / filtered.length) * 100) : 0}%)</strong>
+                    <strong>${storyCount} (${milestoneTotal ? Math.round((storyCount / milestoneTotal) * 100) : 0}%)</strong>
                   </div>
                   <div class="jira-split-track">
-                    <div class="jira-split-fill jira-split-fill--story" style="width:${filtered.length ? Math.round((storyCount / filtered.length) * 100) : 0}%;"></div>
+                    <div class="jira-split-fill jira-split-fill--story" style="width:${milestoneTotal ? Math.round((storyCount / milestoneTotal) * 100) : 0}%;"></div>
                   </div>
                 </div>
 
@@ -1034,7 +1046,7 @@
           </div>
         </div>
 
-        <!-- Issues List Table -->
+        <!-- Issues List Table Container -->
         <div class="jira-table-container">
           ${filtered.length === 0 ? `
             <div class="jira-empty-state" style="padding:48px 20px;">
@@ -1067,7 +1079,7 @@
                 </tr>
               </thead>
               <tbody>
-                ${filtered.map(issue => {
+                ${paginatedIssues.map(issue => {
                   const isStale = (issue.staleDays || 0) > 14 && (issue.statusCategory || '').toLowerCase() !== 'done';
                   const isEpic = (issue.type || '').toLowerCase() === 'epic';
                   const isReleased = Boolean(issue.isReleased || (issue.releaseStatus && issue.releaseStatus.toLowerCase() === 'released') || (issue.fixVersion || '').toLowerCase().includes('released'));
@@ -1126,7 +1138,7 @@
                       <td>
                         <div class="jira-assignee-box">
                           <span class="jira-tester-icon">🧪</span>
-                          <span class="jira-assignee-name" title="${this.escapeHtml(issue.tester)}">${this.escapeHtml(issue.tester || 'Unknown')}</span>
+                          <span class="jira-assignee-name" title="${this.escapeHtml(issue.tester)}">${this.escapeHtml(issue.tester || 'Unassigned')}</span>
                         </div>
                       </td>
                       <td>
@@ -1140,6 +1152,38 @@
                 }).join('')}
               </tbody>
             </table>
+
+            <!-- Jira Table Pagination Bar -->
+            <div class="jira-pagination-bar">
+              <div class="jira-pagination-info">
+                Showing <strong>${totalFiltered === 0 ? 0 : startIdx + 1}</strong>–<strong>${endIdx}</strong> of <strong>${totalFiltered}</strong> tickets
+              </div>
+
+              <div class="jira-pagination-controls">
+                <label style="font-size:0.8rem;color:var(--muted);margin-right:6px;">Per page:</label>
+                <select id="jira-page-size-select" class="jira-page-size-select">
+                  <option value="25" ${this.pagination.pageSize == 25 ? 'selected' : ''}>25</option>
+                  <option value="50" ${this.pagination.pageSize == 50 ? 'selected' : ''}>50</option>
+                  <option value="100" ${this.pagination.pageSize == 100 ? 'selected' : ''}>100</option>
+                  <option value="all" ${this.pagination.pageSize === 'all' ? 'selected' : ''}>All</option>
+                </select>
+
+                ${pageSize !== 'all' && totalPages > 1 ? `
+                  <button type="button" class="jira-page-btn" id="jira-page-prev" ${this.pagination.page <= 1 ? 'disabled' : ''}>◀ Prev</button>
+                  ${Array.from({ length: totalPages }, (_, idx) => idx + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - this.pagination.page) <= 2)
+                    .map((p, idx, arr) => {
+                      const prev = arr[idx - 1];
+                      const showEllipsis = prev && p - prev > 1;
+                      return `
+                        ${showEllipsis ? `<span style="padding:0 4px;color:var(--muted);">...</span>` : ''}
+                        <button type="button" class="jira-page-btn ${p === this.pagination.page ? 'jira-page-btn--active' : ''}" data-page="${p}">${p}</button>
+                      `;
+                    }).join('')}
+                  <button type="button" class="jira-page-btn" id="jira-page-next" ${this.pagination.page >= totalPages ? 'disabled' : ''}>Next ▶</button>
+                ` : ''}
+              </div>
+            </div>
           `}
         </div>
       `;
@@ -1162,6 +1206,7 @@
           const kpi = card.getAttribute('data-kpi');
           if (kpi) {
             this.filters.kpi = (this.filters.kpi === kpi && kpi !== 'all') ? 'all' : kpi;
+            this.pagination.page = 1;
             this.render();
           }
         });
@@ -1175,6 +1220,7 @@
           if (key && val) {
             this.filters[key] = (this.filters[key] || '').toLowerCase() === val.toLowerCase() ? 'all' : val;
             this.filters.kpi = 'all'; // Clear KPI card lock
+            this.pagination.page = 1;
             this.render();
           }
         });
@@ -1187,6 +1233,7 @@
           el.addEventListener('change', (e) => {
             this.filters[filterKey] = e.target.value;
             this.filters.kpi = 'all'; // Clear KPI card lock so dropdown filter takes precedence
+            this.pagination.page = 1;
             this.render();
           });
         }
@@ -1207,6 +1254,7 @@
           const [field, dir] = e.target.value.split('-');
           this.sort.field = field;
           this.sort.dir = dir || 'asc';
+          this.pagination.page = 1;
           this.render();
         });
       }
@@ -1222,6 +1270,7 @@
               this.sort.field = field;
               this.sort.dir = (field === 'priority' || field === 'created' || field === 'updated') ? 'desc' : 'asc';
             }
+            this.pagination.page = 1;
             this.render();
           }
         });
@@ -1232,6 +1281,7 @@
       if (searchInput) {
         searchInput.addEventListener('input', (e) => {
           this.filters.searchQuery = e.target.value;
+          this.pagination.page = 1;
           this.render();
           const newEl = document.getElementById('jira-search-input');
           if (newEl) {
@@ -1246,6 +1296,7 @@
       if (searchClear) {
         searchClear.addEventListener('click', () => {
           this.filters.searchQuery = '';
+          this.pagination.page = 1;
           this.render();
         });
       }
@@ -1259,6 +1310,45 @@
       if (emptyReset) {
         emptyReset.addEventListener('click', () => this.resetFilters());
       }
+
+      // Table Pagination Events
+      const pageSizeSelect = document.getElementById('jira-page-size-select');
+      if (pageSizeSelect) {
+        pageSizeSelect.addEventListener('change', (e) => {
+          const val = e.target.value;
+          this.pagination.pageSize = val === 'all' ? 'all' : Number(val);
+          this.pagination.page = 1;
+          this.render();
+        });
+      }
+
+      const prevBtn = document.getElementById('jira-page-prev');
+      if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+          if (this.pagination.page > 1) {
+            this.pagination.page--;
+            this.render();
+          }
+        });
+      }
+
+      const nextBtn = document.getElementById('jira-page-next');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          this.pagination.page++;
+          this.render();
+        });
+      }
+
+      document.querySelectorAll('.jira-page-btn[data-page]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const p = Number(btn.getAttribute('data-page'));
+          if (p && p !== this.pagination.page) {
+            this.pagination.page = p;
+            this.render();
+          }
+        });
+      });
     }
   }
 
