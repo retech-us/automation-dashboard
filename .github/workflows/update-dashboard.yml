@@ -29,6 +29,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 scripts/fetch-summaries.py data
+
+      - name: Fetch Jira quality and defect data
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_JQL: ${{ secrets.JIRA_JQL }}
+        run: |
+          python3 scripts/fetch-jira.py
+
+      - name: Generate static bootstrap snapshot bundle
+        run: |
           python3 scripts/generate-bootstrap.py
 
       - name: Deploy to GitHub Pages

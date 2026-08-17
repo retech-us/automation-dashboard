@@ -12,7 +12,7 @@ const REPO_DISPLAY = {
   api: { icon: '🔌', label: 'API', color: '#f59e0b' },
 };
 
-const DASHBOARD_TABS = ['overview', 'attention', 'trends', 'ai', 'suites', 'live'];
+const DASHBOARD_TABS = ['overview', 'attention', 'trends', 'ai', 'suites', 'jira', 'live'];
 let CURRENT_RESULTS = [];
 let ACTIVE_TAB = 'overview';
 let TREND_RANGE = 'weekly';
@@ -2730,6 +2730,10 @@ function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
   document.querySelectorAll('.tab-panel').forEach((panel) => {
     panel.hidden = panel.id !== `panel-${tab}`;
   });
+
+  if (tab === 'jira' && window.JiraTracker) {
+    window.JiraTracker.init();
+  }
 
   if (persist) {
     try { localStorage.setItem('dashboard.activeTab', tab); } catch { /* ignore */ }
