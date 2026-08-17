@@ -376,13 +376,36 @@
 
       if (this.activeRuns.size === 0) {
         if (tabDot) tabDot.hidden = true;
-        if (statusPill) statusPill.textContent = 'Idle · All Suites Completed';
+        if (statusPill) statusPill.textContent = this.getToken() ? 'Idle · Listening to CI' : 'Idle · Connect Token for Live Stream';
         if (contentEl) {
+          const hasToken = !!this.getToken();
           contentEl.innerHTML = `
             <div class="live-empty-state" style="text-align:center;padding:32px 16px;">
+              ${!hasToken ? `
+                <div class="live-token-connect-box" style="max-width:540px;margin:0 auto 28px;padding:18px 22px;background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.35);border-radius:14px;text-align:left;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <span style="font-size:20px;">🔑</span>
+                    <strong style="color:#38bdf8;font-size:14.5px;">Connect GitHub for Real-Time Streaming</strong>
+                  </div>
+                  <p style="font-size:12px;color:var(--text-secondary,#94a3b8);margin-bottom:12px;line-height:1.45;">
+                    Because <strong>retech-us</strong> automation repositories are private, paste your GitHub Personal Access Token below to stream active test execution in real time.
+                  </p>
+                  <div style="display:flex;gap:8px;">
+                    <input type="password" id="live-token-inline-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border,rgba(255,255,255,0.2));background:rgba(0,0,0,0.3);color:inherit;font-size:13px;" />
+                    <button type="button" class="btn btn--sm" id="btn-save-inline-token" style="white-space:nowrap;background:#0284c7;color:white;font-weight:700;">Connect Stream ⚡</button>
+                  </div>
+                </div>
+              ` : `
+                <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:24px;padding:6px 14px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:20px;font-size:12.5px;">
+                  <span class="live-pulse" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
+                  <span style="color:#10b981;font-weight:700;">Connected to Private GitHub Actions Live Stream</span>
+                  <button type="button" class="btn btn--ghost btn--sm" id="btn-clear-inline-token" style="font-size:11px;padding:2px 8px;margin-left:6px;">Disconnect</button>
+                </div>
+              `}
+
               <div class="live-empty-icon" style="font-size:42px;margin-bottom:12px;">☕</div>
               <h3 style="margin-bottom:8px;font-size:20px;font-weight:700;">No Automation Pipelines In Progress</h3>
-              <p style="max-width:580px;margin:0 auto 20px;color:var(--text-secondary, #94a3b8);font-size:14px;line-height:1.5;">
+              <p style="max-width:580px;margin:0 auto 24px;color:var(--text-secondary, #94a3b8);font-size:14px;line-height:1.5;">
                 All test suites (Web, Mobile iOS, Mobile Android, and API) are currently idle. When a new workflow is triggered in GitHub Actions, real-time test progress will stream here automatically.
               </p>
               
@@ -487,6 +510,38 @@
           `;
           
 
+        }
+          // Attach inline token listeners
+          const saveBtn = document.getElementById('btn-save-inline-token');
+          const tokenInput = document.getElementById('live-token-inline-input');
+          if (saveBtn && tokenInput) {
+            saveBtn.addEventListener('click', () => {
+              const val = tokenInput.value.trim();
+              if (val) {
+                this.setToken(val);
+                this.checkAll();
+              }
+            });
+            tokenInput.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') {
+                const val = tokenInput.value.trim();
+                if (val) {
+                  this.setToken(val);
+                  this.checkAll();
+                }
+              }
+            });
+          }
+
+          const clearBtn = document.getElementById('btn-clear-inline-token');
+          if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+              this.setToken('');
+              this.checkAll();
+            });
+          }
+
+          return;
         }
         return;
       }
