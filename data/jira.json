@@ -1,202 +1,26 @@
 {
-  "status": "sample",
-  "lastUpdated": "2026-08-17T06:46:56.229433+00:00",
+  "status": "error",
+  "lastUpdated": "2026-08-17T06:51:00.265365+00:00",
+  "lastError": "Jira API request failed (HTTP 410): {\"errorMessages\":[\"The requested API has been removed. Please migrate to the /rest/api/3/search/jql API. A full migration guideline is available at https://developer.atlassian.com/changelog/#CHANGE-2046\"],\"errors\":{}}",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "summary": {
-    "totalDefects": 6,
-    "openDefects": 2,
-    "blockers": 2,
-    "inProgress": 2,
-    "inQa": 1,
-    "resolvedThisWeek": 1,
-    "defectDensity": "0.14 defect/test"
+    "totalDefects": 0,
+    "openDefects": 0,
+    "blockers": 0,
+    "inProgress": 0,
+    "inQa": 0,
+    "resolvedThisWeek": 0
   },
-  "byPriority": {
-    "Highest": 2,
-    "High": 2,
-    "Medium": 2,
-    "Low": 0
-  },
-  "byComponent": {
-    "Web Portal": 3,
-    "Mobile iOS": 1,
-    "Mobile Android": 1,
-    "API Backend": 1
-  },
-  "byStatus": {
-    "Open": 2,
-    "In Progress": 2,
-    "In QA / Review": 1,
-    "Done / Closed": 1
-  },
+  "byPriority": {},
+  "byComponent": {},
+  "byStatus": {},
   "filterOptions": {
-    "projects": [
-      "Store Intelligence Backend",
-      "Store Intelligence Mobile",
-      "Store Intelligence Web"
-    ],
-    "fixVersions": [
-      "v16.1.0",
-      "v16.2.0",
-      "v16.2.1",
-      "v16.3.0"
-    ],
-    "types": [
-      "Bug",
-      "Defect"
-    ],
-    "assignees": [
-      "Alex Rivera",
-      "Devin Kumar",
-      "Marcus Vance",
-      "Sarah Chen",
-      "Unassigned"
-    ],
-    "testers": [
-      "Devin Kumar",
-      "Elena Rostova",
-      "Marcus Vance",
-      "Vipin Nair"
-    ]
+    "projects": [],
+    "fixVersions": [],
+    "types": [],
+    "assignees": [],
+    "testers": []
   },
-  "issues": [
-    {
-      "key": "REB3-1042",
-      "summary": "Realogram shelf scanner crash on iOS 18 beta during wide-angle capture",
-      "project": "Store Intelligence Mobile",
-      "projectKey": "REB3",
-      "fixVersion": "v16.3.0",
-      "type": "Bug",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "Mobile iOS",
-      "assignee": "Alex Rivera",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-      "tester": "Elena Rostova",
-      "reporter": "Automation Bot",
-      "created": "2026-08-16T09:14:00.000Z",
-      "updated": "2026-08-17T06:30:00.000Z",
-      "labels": [
-        "automation-failure",
-        "flaky-triage",
-        "p0-blocker"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-1042"
-    },
-    {
-      "key": "REB3-1039",
-      "summary": "Price tag OCR validation endpoint returns HTTP 504 gateway timeout under load",
-      "project": "Store Intelligence Backend",
-      "projectKey": "REB3",
-      "fixVersion": "v16.2.1",
-      "type": "Defect",
-      "status": "Open",
-      "statusCategory": "new",
-      "priority": "Highest",
-      "component": "API Backend",
-      "assignee": "Devin Kumar",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-      "tester": "Vipin Nair",
-      "reporter": "API Regression Suite",
-      "created": "2026-08-15T14:22:00.000Z",
-      "updated": "2026-08-16T11:15:00.000Z",
-      "labels": [
-        "perf-regression",
-        "p0-blocker"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-1039"
-    },
-    {
-      "key": "REB3-1035",
-      "summary": "Product approval review modal layout overflows on resolution 1366x768",
-      "project": "Store Intelligence Web",
-      "projectKey": "REB3",
-      "fixVersion": "v16.2.0",
-      "type": "Bug",
-      "status": "In QA / Review",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "Web Portal",
-      "assignee": "Sarah Chen",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-      "tester": "Vipin Nair",
-      "reporter": "Visual SmartUI",
-      "created": "2026-08-14T16:05:00.000Z",
-      "updated": "2026-08-17T04:20:00.000Z",
-      "labels": [
-        "smartui-diff",
-        "frontend"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-1035"
-    },
-    {
-      "key": "REB3-1028",
-      "summary": "Store associate barcode scanning fails to register consecutive rapid scans",
-      "project": "Store Intelligence Mobile",
-      "projectKey": "REB3",
-      "fixVersion": "v16.3.0",
-      "type": "Bug",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "Mobile Android",
-      "assignee": "Marcus Vance",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-      "tester": "Marcus Vance",
-      "reporter": "Marcus Vance",
-      "created": "2026-08-13T11:40:00.000Z",
-      "updated": "2026-08-16T15:10:00.000Z",
-      "labels": [
-        "android-appium"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-1028"
-    },
-    {
-      "key": "REB3-1022",
-      "summary": "Bulk CSV import silently ignores rows with special UTF-8 characters",
-      "project": "Store Intelligence Web",
-      "projectKey": "REB3",
-      "fixVersion": "v16.2.0",
-      "type": "Defect",
-      "status": "Open",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "Web Portal",
-      "assignee": "Unassigned",
-      "assigneeAvatar": null,
-      "tester": "Elena Rostova",
-      "reporter": "Elena Rostova",
-      "created": "2026-08-12T10:18:00.000Z",
-      "updated": "2026-08-15T08:45:00.000Z",
-      "labels": [
-        "data-pipeline"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-1022"
-    },
-    {
-      "key": "REB3-1018",
-      "summary": "Session timeout redirect loses user's draft task state",
-      "project": "Store Intelligence Web",
-      "projectKey": "REB3",
-      "fixVersion": "v16.1.0",
-      "type": "Bug",
-      "status": "Done / Closed",
-      "statusCategory": "done",
-      "priority": "Medium",
-      "component": "Web Portal",
-      "assignee": "Sarah Chen",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-      "tester": "Devin Kumar",
-      "reporter": "Devin Kumar",
-      "created": "2026-08-10T08:00:00.000Z",
-      "updated": "2026-08-16T18:00:00.000Z",
-      "labels": [
-        "auth-ux"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-1018"
-    }
-  ],
-  "lastError": "HTTP Error 410: Gone"
+  "issues": []
 }
