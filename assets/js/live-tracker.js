@@ -179,6 +179,7 @@
         if (localResp.ok) {
           const liveData = await localResp.json();
           if (liveData && typeof liveData === 'object') {
+            this.liveData = liveData;
             for (const repoCfg of REPO_REGISTRY) {
               const run = liveData[repoCfg.key];
               if (run && (run.status === 'RUNNING' || run.status === 'in_progress')) {
@@ -413,34 +414,40 @@
 
               ${(() => {
                 const snaps = window.DASHBOARD_SNAPSHOTS?.snapshots || {};
-                const web = snaps.web || {};
-                const webSum = web.summary || {};
-                const webRun = web.runNumber || web.runId || 1023;
-                const webPassed = webSum.passed || 62;
-                const webFailed = (webSum.failed || 0) + (webSum.broken || 0) || 41;
-                const webTotal = webSum.total || 112;
-                const webSkipped = webSum.skipped || 0;
+                const live = this.liveData || {};
+                
+                const webLive = live.web || {};
+                const webSnap = snaps.web || {};
+                const webSum = webSnap.summary || {};
+                const webRun = webLive.runNumber || webSnap.runNumber || webSnap.runId || 1017;
+                const webPassed = typeof webLive.passed === 'number' ? webLive.passed : (webSum.passed || 62);
+                const webFailed = typeof webLive.failed === 'number' ? webLive.failed : ((webSum.failed || 0) + (webSum.broken || 0) || 38);
+                const webTotal = typeof webLive.total === 'number' ? webLive.total : (webSum.total || 112);
+                const webSkipped = typeof webLive.skipped === 'number' ? webLive.skipped : (webSum.skipped || 12);
 
-                const api = snaps.api || {};
-                const apiSum = api.summary || {};
-                const apiRun = api.runNumber || api.runId || 267;
-                const apiPassed = apiSum.passed || 99;
-                const apiFailed = (apiSum.failed || 0) + (apiSum.broken || 0) || 0;
-                const apiTotal = apiSum.total || 99;
+                const apiLive = live.api || {};
+                const apiSnap = snaps.api || {};
+                const apiSum = apiSnap.summary || {};
+                const apiRun = apiLive.runNumber || apiSnap.runNumber || apiSnap.runId || 267;
+                const apiPassed = typeof apiLive.passed === 'number' ? apiLive.passed : (apiSum.passed || 99);
+                const apiFailed = typeof apiLive.failed === 'number' ? apiLive.failed : ((apiSum.failed || 0) + (apiSum.broken || 0) || 0);
+                const apiTotal = typeof apiLive.total === 'number' ? apiLive.total : (apiSum.total || 99);
 
-                const ios = snaps['mobile-ios'] || {};
-                const iosSum = ios.summary || {};
-                const iosRun = ios.runNumber || ios.runId || 258;
-                const iosPassed = iosSum.passed || 18;
-                const iosFailed = (iosSum.failed || 0) + (iosSum.broken || 0) || 7;
-                const iosTotal = iosSum.total || 25;
+                const iosLive = live['mobile-ios'] || {};
+                const iosSnap = snaps['mobile-ios'] || {};
+                const iosSum = iosSnap.summary || {};
+                const iosRun = iosLive.runNumber || iosSnap.runNumber || iosSnap.runId || 258;
+                const iosPassed = typeof iosLive.passed === 'number' ? iosLive.passed : (iosSum.passed || 18);
+                const iosFailed = typeof iosLive.failed === 'number' ? iosLive.failed : ((iosSum.failed || 0) + (iosSum.broken || 0) || 7);
+                const iosTotal = typeof iosLive.total === 'number' ? iosLive.total : (iosSum.total || 25);
 
-                const android = snaps['mobile-android'] || {};
-                const androidSum = android.summary || {};
-                const androidRun = android.runNumber || android.runId || 258;
-                const androidPassed = androidSum.passed || 18;
-                const androidFailed = (androidSum.failed || 0) + (androidSum.broken || 0) || 7;
-                const androidTotal = androidSum.total || 25;
+                const androidLive = live['mobile-android'] || {};
+                const androidSnap = snaps['mobile-android'] || {};
+                const androidSum = androidSnap.summary || {};
+                const androidRun = androidLive.runNumber || androidSnap.runNumber || androidSnap.runId || 258;
+                const androidPassed = typeof androidLive.passed === 'number' ? androidLive.passed : (androidSum.passed || 18);
+                const androidFailed = typeof androidLive.failed === 'number' ? androidLive.failed : ((androidSum.failed || 0) + (androidSum.broken || 0) || 7);
+                const androidTotal = typeof androidLive.total === 'number' ? androidLive.total : (androidSum.total || 25);
 
                 return `
                   <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;max-width:900px;margin:0 auto;text-align:left;">
@@ -508,9 +515,7 @@
               </div>
             </div>
           `;
-          
 
-        }
           // Attach inline token listeners
           const saveBtn = document.getElementById('btn-save-inline-token');
           const tokenInput = document.getElementById('live-token-inline-input');
@@ -540,8 +545,6 @@
               this.checkAll();
             });
           }
-
-          return;
         }
         return;
       }
