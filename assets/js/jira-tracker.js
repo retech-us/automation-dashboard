@@ -835,9 +835,12 @@
         statusPill.title = isError && lastError ? `Sync info: ${lastError}` : `Last synchronized: ${lastUpdated ? new Date(lastUpdated).toLocaleString() : 'N/A'}`;
       }
 
-      // Header actions: CSV Export & Direct Jira Link
+      // Header actions: Refresh, CSV Export & Direct Jira Link
       if (headerActions) {
         headerActions.innerHTML = `
+          <button type="button" class="btn btn--ghost" id="jira-btn-refresh" style="font-size:13px;display:inline-flex;align-items:center;gap:6px;" title="Refresh Jira Data">
+            <span>🔄 Refresh Jira</span>
+          </button>
           <button type="button" class="btn btn--ghost" id="jira-btn-export-csv" style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">
             <span>📥 Export CSV</span>
           </button>
@@ -1300,6 +1303,22 @@
     }
 
     wireEvents(currentFilteredIssues) {
+      // Refresh Jira Button
+      const refreshBtn = document.getElementById('jira-btn-refresh');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+          refreshBtn.disabled = true;
+          refreshBtn.innerHTML = '<span>⏳ Syncing…</span>';
+          try {
+            await this.loadData();
+            this.render();
+          } finally {
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '<span>🔄 Refresh Jira</span>';
+          }
+        });
+      }
+
       // CSV Export Button
       const exportBtn = document.getElementById('jira-btn-export-csv');
       if (exportBtn) {
