@@ -127,28 +127,19 @@
         siteChrome.style.visibility = 'visible';
       }
 
-      this.injectLockHeaderButton();
+      this.wireLockHeaderButton();
     }
 
-    injectLockHeaderButton() {
-      if (document.getElementById('btn-auth-lock')) return;
-      const chromeNav = document.querySelector('.site-chrome__nav');
-      if (!chromeNav) return;
-
-      const lockBtn = document.createElement('button');
-      lockBtn.id = 'btn-auth-lock';
-      lockBtn.type = 'button';
-      lockBtn.className = 'btn btn--ghost btn--sm';
-      lockBtn.title = 'Lock Dashboard (Sign Out)';
-      lockBtn.style.cssText = 'font-size:12px;display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;';
-      lockBtn.innerHTML = '🔒 <span class="auth-lock-text">Lock</span>';
-      lockBtn.addEventListener('click', () => {
-        if (confirm('Lock dashboard and sign out?')) {
-          this.lock();
-        }
-      });
-
-      chromeNav.appendChild(lockBtn);
+    wireLockHeaderButton() {
+      const lockBtn = document.getElementById('btn-auth-lock');
+      if (lockBtn && !lockBtn._wired) {
+        lockBtn._wired = true;
+        lockBtn.addEventListener('click', () => {
+          if (confirm('Lock dashboard and sign out?')) {
+            this.lock();
+          }
+        });
+      }
     }
 
     renderLockScreen() {
