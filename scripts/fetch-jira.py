@@ -123,35 +123,44 @@ def fetch_jira_live():
         next_token = None
 
         while True:
+            post_body = {
+                "jql": jql,
+                "maxResults": page_size,
+                "fields": fields_list
+            }
+            if next_token:
+                post_body["nextPageToken"] = next_token
+
+            get_url = f"{JIRA_BASE_URL}/rest/api/3/search/jql?jql={urllib.parse.quote(jql)}&maxResults={page_size}&fields={','.join(fields_list)}"
+            if next_token:
+                get_url += f"&nextPageToken={urllib.parse.quote(next_token)}"
+
             ep_candidates = [
-                # 1. Standard Jira Cloud v3 POST /rest/api/3/search
+                # 1. Jira Cloud v3 POST /rest/api/3/search/jql (Current official API)
                 {
-                    "url": f"{JIRA_BASE_URL}/rest/api/3/search",
+                    "url": f"{JIRA_BASE_URL}/rest/api/3/search/jql",
                     "method": "POST",
-                    "body": {"jql": jql, "maxResults": page_size, "fields": fields_list, "startAt": start_at}
+                    "body": post_body
                 },
-                # 2. Standard Jira Cloud v3 GET /rest/api/3/search
+                # 2. Jira Cloud v3 GET /rest/api/3/search/jql
                 {
-                    "url": f"{JIRA_BASE_URL}/rest/api/3/search?jql={urllib.parse.quote(jql)}&maxResults={page_size}&startAt={start_at}&fields={','.join(fields_list)}",
+                    "url": get_url,
                     "method": "GET",
                     "body": None
                 },
-                # 3. Jira Cloud v2 POST /rest/api/2/search fallback
+                # 3. Jira Cloud v2 POST /rest/api/2/search/jql
                 {
-                    "url": f"{JIRA_BASE_URL}/rest/api/2/search",
+                    "url": f"{JIRA_BASE_URL}/rest/api/2/search/jql",
                     "method": "POST",
-                    "body": {"jql": jql, "maxResults": page_size, "fields": fields_list, "startAt": start_at}
+                    "body": post_body
                 }
             ]
-
-            if next_token:
-                ep_candidates[0]["body"]["nextPageToken"] = next_token
 
             data = None
             for ep in ep_candidates:
                 try:
                     data = make_jira_request(ep["url"], method=ep["method"], body_dict=ep["body"], headers=headers)
-                    if data and (data.get("issues") is not None or data.get("values") is not None):
+                    if data and (data.get("issues") is not None or data.get("values") is not None or data.get("results") is not None):
                         break
                 except urllib.error.HTTPError as h_err:
                     err_msg = ""
@@ -159,24 +168,22 @@ def fetch_jira_live():
                         err_msg = h_err.read().decode("utf-8")
                     except Exception:
                         pass
-                    print(f"[Jira Fetcher] {ep['method']} {ep['url'][:60]} HTTP {h_err.code}: {err_msg[:120]}")
+                    print(f"[Jira Fetcher] {ep['method']} {ep['url'][:65]} HTTP {h_err.code}: {err_msg[:120]}")
                 except Exception as ex:
-                    print(f"[Jira Fetcher] {ep['method']} {ep['url'][:60]} error: {ex}")
+                    print(f"[Jira Fetcher] {ep['method']} {ep['url'][:65]} error: {ex}")
 
             if not data:
                 break
 
             page_issues = data.get("issues") or data.get("values") or data.get("results") or []
-            print(f"[Jira Fetcher] Page at startAt={start_at} -> {len(page_issues)} issues found (total: {data.get('total')})")
+            print(f"[Jira Fetcher] Page retrieved -> {len(page_issues)} issues found (total in Jira: {data.get('total')})")
             if not page_issues:
                 break
 
             all_jql_issues.extend(page_issues)
-            total = data.get("total", len(all_jql_issues))
             next_token = data.get("nextPageToken")
 
-            start_at += len(page_issues)
-            if start_at >= total or len(page_issues) < page_size or len(all_jql_issues) >= 1000:
+            if not next_token or len(page_issues) < page_size or len(all_jql_issues) >= 1000:
                 break
 
         if len(all_jql_issues) > 0:
