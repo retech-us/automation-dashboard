@@ -779,8 +779,14 @@
         return true;
       });
 
-      const milestoneTotal = milestoneIssues.length || issues.length;
-      const doneCount = milestoneIssues.filter(i => (i.statusCategory || '').toLowerCase() === 'done' || ['closed', 'done', 'resolved'].includes((i.status || '').toLowerCase())).length;
+      const milestoneTotal = milestoneIssues.length;
+      const doneCount = milestoneIssues.filter(i => {
+        const s = (i.status || '').toLowerCase().trim();
+        const isInvalid = s.includes('invalid') || s.includes('won\'t') || s.includes('wont') || s.includes('duplicate') || s.includes('declined') || s.includes('cancelled') || s.includes('rejected');
+        if (isInvalid) return false;
+        const cat = (i.statusCategory || '').toLowerCase();
+        return cat === 'done' || ['closed', 'done', 'resolved'].includes(s);
+      }).length;
       const inQaCount = milestoneIssues.filter(i => this.isQaStatus(i.status)).length;
       const inDevCount = milestoneIssues.filter(i => this.isDevStatus(i.status, i.statusCategory)).length;
       const todoCount = Math.max(0, milestoneTotal - doneCount - inQaCount - inDevCount);
