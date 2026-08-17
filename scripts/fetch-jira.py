@@ -304,11 +304,17 @@ def fetch_jira_live():
 
         # Tester / Reporter
         reporter_obj = fields.get("reporter")
-        tester_name = reporter_obj.get("displayName", "Unknown") if reporter_obj else "Unknown"
+        reporter_name = reporter_obj.get("displayName", "Unassigned") if reporter_obj else "Unassigned"
+        tester_name = "Unassigned"
+        found_tester = False
         for k, v in fields.items():
-            if k.startswith("customfield_") and isinstance(v, dict) and "displayName" in v:
-                if any(term in k.lower() for term in ["tester", "qa", "verified"]):
-                    tester_name = v.get("displayName", tester_name)
+            if isinstance(v, dict) and "displayName" in v:
+                if any(term in k.lower() for term in ["tester", "qa", "verified", "test lead", "reviewer"]):
+                    tester_name = v.get("displayName", "Unassigned")
+                    found_tester = True
+                    break
+        if not found_tester and reporter_name != "Unassigned":
+            tester_name = reporter_name
         testers_set.add(tester_name)
 
         issues.append({

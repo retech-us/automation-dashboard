@@ -252,16 +252,26 @@
 
         // Assignee Filter
         if (this.filters.assignee !== 'all') {
-          const aIssue = (issue.assignee || 'Unassigned').toLowerCase();
-          const aFilter = this.filters.assignee.toLowerCase();
-          if (aIssue !== aFilter) return false;
+          const aFilter = this.filters.assignee.toLowerCase().trim();
+          const aIssue = (issue.assignee || 'Unassigned').toLowerCase().trim();
+          if (aFilter === 'unassigned') {
+            if (aIssue !== 'unassigned' && aIssue !== '' && aIssue !== 'none' && aIssue !== 'null') return false;
+          } else {
+            if (aIssue !== aFilter && !aIssue.includes(aFilter)) return false;
+          }
         }
 
         // Tester Filter
         if (this.filters.tester !== 'all') {
-          const tIssue = (issue.tester || issue.reporter || 'Unknown').toLowerCase();
-          const tFilter = this.filters.tester.toLowerCase();
-          if (tIssue !== tFilter && !(issue.reporter || '').toLowerCase().includes(tFilter)) return false;
+          const tFilter = this.filters.tester.toLowerCase().trim();
+          const tIssue = (issue.tester || 'Unassigned').toLowerCase().trim();
+          const rIssue = (issue.reporter || 'Unassigned').toLowerCase().trim();
+          if (tFilter.includes('unassigned') || tFilter.includes('unknown')) {
+            const isUnassigned = ['unassigned', 'unknown', 'none', '', 'null'].includes(tIssue) && ['unassigned', 'unknown', 'none', '', 'null'].includes(rIssue);
+            if (!isUnassigned && tIssue !== 'unassigned' && tIssue !== 'unknown' && tIssue !== '') return false;
+          } else {
+            if (tIssue !== tFilter && !tIssue.includes(tFilter) && rIssue !== tFilter && !rIssue.includes(tFilter)) return false;
+          }
         }
 
         // Priority Filter
@@ -273,9 +283,16 @@
 
         // Status Filter
         if (this.filters.status !== 'all') {
-          const stIssue = (issue.status || '').toLowerCase();
-          const stFilter = this.filters.status.toLowerCase();
-          if (stIssue !== stFilter) return false;
+          const stFilter = this.filters.status.toLowerCase().trim();
+          const stIssue = (issue.status || '').toLowerCase().trim();
+          const catIssue = (issue.statusCategory || '').toLowerCase().trim();
+          if (stFilter === 'done' || stFilter === 'closed' || stFilter === 'resolved') {
+            if (catIssue !== 'done' && stIssue !== 'done' && stIssue !== 'closed' && stIssue !== 'resolved' && !stIssue.includes('done') && !stIssue.includes('closed') && !stIssue.includes('resolved')) {
+              return false;
+            }
+          } else {
+            if (stIssue !== stFilter && !stIssue.includes(stFilter)) return false;
+          }
         }
 
         // Component Filter
@@ -494,17 +511,32 @@
       const isError = status === 'error';
       const activeFilterCount = this.countActiveFilters();
 
-      // Extract unique lists dynamically
-      const projects = filterOptions.projects || Array.from(new Set(issues.map(i => i.project || i.projectKey).filter(Boolean)));
-      const fixVersions = filterOptions.fixVersions || Array.from(new Set(issues.map(i => i.fixVersion).filter(Boolean)));
+      // Extract unique lists dynamically across both filterOptions and actual issue records
+      const projects = Array.from(new Set([].concat(filterOptions.projects || []).concat(issues.map(i => i.project || i.projectKey)).filter(Boolean))).sort();
+      const fixVersions = Array.from(new Set([].concat(filterOptions.fixVersions || []).concat(issues.map(i => i.fixVersion)).filter(Boolean))).sort();
       
       const standardTypes = ['Epic', 'Story', 'Bug', 'Task', 'Sub-task'];
-      const rawTypes = ['Epic'].concat(filterOptions.types || []).concat(issues.map(i => i.type).filter(Boolean)).concat(standardTypes);
-      const types = Array.from(new Set(rawTypes)).filter(Boolean);
+      const types = Array.from(new Set(['Epic'].concat(filterOptions.types || []).concat(issues.map(i => i.type)).concat(standardTypes).filter(Boolean)));
 
-      const assignees = filterOptions.assignees || Array.from(new Set(issues.map(i => i.assignee).filter(Boolean)));
-      const testers = filterOptions.testers || Array.from(new Set(issues.map(i => i.tester || i.reporter).filter(Boolean)));
-      const allStatuses = Array.from(new Set(issues.map(i => i.status).filter(Boolean)));
+      // Full dynamic extraction of all assignees (including Unassigned)
+      const rawAssignees = [].concat(filterOptions.assignees || []).concat(issues.map(i => i.assignee || 'Unassigned')).filter(Boolean);
+      const hasUnassignedDev = rawAssignees.some(a => (a || '').toLowerCase() === 'unassigned') || issues.some(i => !i.assignee || i.assignee.toLowerCase() === 'unassigned');
+      const uniqueAssigneeSet = new Set(rawAssignees.filter(a => (a || '').toLowerCase() !== 'unassigned'));
+      const sortedNamedAssignees = Array.from(uniqueAssigneeSet).sort((a, b) => a.localeCompare(b));
+      const assignees = hasUnassignedDev ? ['Unassigned', ...sortedNamedAssignees] : sortedNamedAssignees;
+
+      // Full dynamic extraction of all testers & reporters (including Unassigned / Unknown)
+      const rawTesters = [].concat(filterOptions.testers || []).concat(issues.flatMap(i => [i.tester, i.reporter])).filter(Boolean);
+      const hasUnassignedQa = rawTesters.some(t => ['unassigned', 'unknown', 'none'].includes((t || '').toLowerCase())) || issues.some(i => !i.tester || ['unassigned', 'unknown', 'none'].includes(i.tester.toLowerCase()));
+      const uniqueTesterSet = new Set(rawTesters.filter(t => !['unassigned', 'unknown', 'none'].includes((t || '').toLowerCase())));
+      const sortedNamedTesters = Array.from(uniqueTesterSet).sort((a, b) => a.localeCompare(b));
+      const testers = hasUnassignedQa ? ['Unassigned', ...sortedNamedTesters] : sortedNamedTesters;
+
+      const rawStatuses = [].concat(issues.map(i => i.status)).filter(Boolean);
+      if (!rawStatuses.some(s => s.toLowerCase() === 'done' || s.toLowerCase() === 'closed')) {
+        rawStatuses.push('Done');
+      }
+      const allStatuses = Array.from(new Set(rawStatuses));
       const priorities = ['Highest', 'High', 'Medium', 'Low', 'Lowest'];
 
       // --- 1. Compute Dynamic Status Distribution for Filtered Tickets ---
@@ -579,10 +611,39 @@
           if (vIssue !== vFilter && !vIssue.includes(vFilter)) return false;
         }
         if (!this.matchesTicketType(i, this.filters.type)) return false;
-        if (this.filters.assignee !== 'all' && (i.assignee || 'Unassigned').toLowerCase() !== this.filters.assignee.toLowerCase()) return false;
-        if (this.filters.tester !== 'all' && (i.tester || i.reporter || 'Unknown').toLowerCase() !== this.filters.tester.toLowerCase() && !(i.reporter || '').toLowerCase().includes(this.filters.tester.toLowerCase())) return false;
+        if (this.filters.assignee !== 'all') {
+          const aFilter = this.filters.assignee.toLowerCase().trim();
+          const aIssue = (i.assignee || 'Unassigned').toLowerCase().trim();
+          if (aFilter === 'unassigned') {
+            if (aIssue !== 'unassigned' && aIssue !== '' && aIssue !== 'none' && aIssue !== 'null') return false;
+          } else {
+            if (aIssue !== aFilter && !aIssue.includes(aFilter)) return false;
+          }
+        }
+        if (this.filters.tester !== 'all') {
+          const tFilter = this.filters.tester.toLowerCase().trim();
+          const tIssue = (i.tester || 'Unassigned').toLowerCase().trim();
+          const rIssue = (i.reporter || 'Unassigned').toLowerCase().trim();
+          if (tFilter.includes('unassigned') || tFilter.includes('unknown')) {
+            const isUnassigned = ['unassigned', 'unknown', 'none', '', 'null'].includes(tIssue) && ['unassigned', 'unknown', 'none', '', 'null'].includes(rIssue);
+            if (!isUnassigned && tIssue !== 'unassigned' && tIssue !== 'unknown' && tIssue !== '') return false;
+          } else {
+            if (tIssue !== tFilter && !tIssue.includes(tFilter) && rIssue !== tFilter && !rIssue.includes(tFilter)) return false;
+          }
+        }
         if (this.filters.priority !== 'all' && (i.priority || 'Medium').toLowerCase() !== this.filters.priority.toLowerCase()) return false;
-        if (this.filters.status !== 'all' && (i.status || '').toLowerCase() !== this.filters.status.toLowerCase()) return false;
+        if (this.filters.status !== 'all') {
+          const stFilter = this.filters.status.toLowerCase().trim();
+          const stIssue = (i.status || '').toLowerCase().trim();
+          const catIssue = (i.statusCategory || '').toLowerCase().trim();
+          if (stFilter === 'done' || stFilter === 'closed' || stFilter === 'resolved') {
+            if (catIssue !== 'done' && stIssue !== 'done' && stIssue !== 'closed' && stIssue !== 'resolved' && !stIssue.includes('done') && !stIssue.includes('closed') && !stIssue.includes('resolved')) {
+              return false;
+            }
+          } else {
+            if (stIssue !== stFilter && !stIssue.includes(stFilter)) return false;
+          }
+        }
         if (this.filters.component !== 'all' && (i.component || 'General').toLowerCase() !== this.filters.component.toLowerCase()) return false;
         if (this.filters.searchQuery && this.filters.searchQuery.trim()) {
           const q = this.filters.searchQuery.toLowerCase().trim();
