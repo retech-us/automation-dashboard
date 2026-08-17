@@ -255,8 +255,12 @@
         // Release Status Filter (Released vs Unreleased)
         if (this.filters.releaseStatus !== 'all') {
           const isRel = issue.isReleased === true || (issue.releaseStatus || '').toLowerCase() === 'released';
-          if (this.filters.releaseStatus === 'released' && !isRel) return false;
-          if (this.filters.releaseStatus === 'unreleased' && isRel) return false;
+          const isUnversioned = !issue.fixVersion || issue.fixVersion === 'Unversioned';
+          if (this.filters.releaseStatus === 'released') {
+            if (!isRel || isUnversioned) return false;
+          } else if (this.filters.releaseStatus === 'unreleased') {
+            if (isRel || isUnversioned) return false;
+          }
         }
 
         // Fix Version Filter
@@ -659,6 +663,7 @@
       // --- 4. Compute Dynamic KPI Metrics based on Active Filters ---
       const activeNonKpiFilters = (
         this.filters.project !== 'all' ||
+        this.filters.releaseStatus !== 'all' ||
         this.filters.fixVersion !== 'all' ||
         this.filters.type !== 'all' ||
         this.filters.assignee !== 'all' ||
@@ -674,6 +679,15 @@
           const pIssue = (i.project || i.projectKey || '').toLowerCase();
           const pFilter = this.filters.project.toLowerCase();
           if (pIssue !== pFilter && !pIssue.includes(pFilter)) return false;
+        }
+        if (this.filters.releaseStatus !== 'all') {
+          const isRel = i.isReleased === true || (i.releaseStatus || '').toLowerCase() === 'released';
+          const isUnversioned = !i.fixVersion || i.fixVersion === 'Unversioned';
+          if (this.filters.releaseStatus === 'released') {
+            if (!isRel || isUnversioned) return false;
+          } else if (this.filters.releaseStatus === 'unreleased') {
+            if (isRel || isUnversioned) return false;
+          }
         }
         if (this.filters.fixVersion !== 'all') {
           const vIssue = (i.fixVersion || 'Unversioned').toLowerCase();
@@ -747,6 +761,15 @@
           const pIssue = (i.project || i.projectKey || '').toLowerCase();
           const pFilter = this.filters.project.toLowerCase();
           if (pIssue !== pFilter && !pIssue.includes(pFilter)) return false;
+        }
+        if (this.filters.releaseStatus !== 'all') {
+          const isRel = i.isReleased === true || (i.releaseStatus || '').toLowerCase() === 'released';
+          const isUnversioned = !i.fixVersion || i.fixVersion === 'Unversioned';
+          if (this.filters.releaseStatus === 'released') {
+            if (!isRel || isUnversioned) return false;
+          } else if (this.filters.releaseStatus === 'unreleased') {
+            if (isRel || isUnversioned) return false;
+          }
         }
         if (this.filters.fixVersion !== 'all') {
           const vIssue = (i.fixVersion || 'Unversioned').toLowerCase();
