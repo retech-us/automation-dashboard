@@ -64,7 +64,6 @@
         project: 'all',
         releaseStatus: 'unreleased', // default to Unreleased versions
         fixVersion: 'all',
-        versionSearch: '',
         type: 'all',
         assignee: 'all',
         tester: 'all',
@@ -267,13 +266,6 @@
           if (vIssue !== vFilter && !vIssue.includes(vFilter)) return false;
         }
 
-        // Fix Version Search
-        if (this.filters.versionSearch && this.filters.versionSearch.trim()) {
-          const vs = this.filters.versionSearch.toLowerCase().trim();
-          const vIssue = (issue.fixVersion || '').toLowerCase();
-          if (!vIssue.includes(vs)) return false;
-        }
-
         // Ticket Type Filter (Strict matching)
         if (!this.matchesTicketType(issue, this.filters.type)) {
           return false;
@@ -388,7 +380,6 @@
       if (this.filters.project !== 'all') count++;
       if (this.filters.releaseStatus !== 'unreleased') count++;
       if (this.filters.fixVersion !== 'all') count++;
-      if (this.filters.versionSearch && this.filters.versionSearch.trim()) count++;
       if (this.filters.type !== 'all') count++;
       if (this.filters.assignee !== 'all') count++;
       if (this.filters.tester !== 'all') count++;
@@ -405,7 +396,6 @@
         project: 'all',
         releaseStatus: 'unreleased',
         fixVersion: 'all',
-        versionSearch: '',
         type: 'all',
         assignee: 'all',
         tester: 'all',
@@ -588,8 +578,8 @@
         }
       });
 
-      // Filter fixVersions based on releaseStatus and versionSearch
-      let displayFixVersions = rawFixVersions.filter(v => {
+      // Filter fixVersions based on releaseStatus
+      const displayFixVersions = rawFixVersions.filter(v => {
         if (this.filters.releaseStatus === 'released') {
           return versionStatusMap[v] === 'Released';
         }
@@ -598,11 +588,6 @@
         }
         return true;
       });
-
-      if (this.filters.versionSearch && this.filters.versionSearch.trim()) {
-        const vs = this.filters.versionSearch.toLowerCase().trim();
-        displayFixVersions = displayFixVersions.filter(v => v.toLowerCase().includes(vs));
-      }
       
       const standardTypes = ['Epic', 'Story', 'Bug', 'Task', 'Sub-task'];
       const types = Array.from(new Set(['Epic'].concat(filterOptions.types || []).concat(issues.map(i => i.type)).concat(standardTypes).filter(Boolean)));
@@ -919,22 +904,6 @@
                   return `<option value="${this.escapeHtml(v)}" ${(this.filters.fixVersion || '').toLowerCase() === v.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(v)}${tag}</option>`;
                 }).join('')}
               </select>
-            </div>
-
-            <!-- Fix Version Quick Search -->
-            <div class="jira-filter-field">
-              <label>🔍 Version Search</label>
-              <div style="position:relative;display:flex;align-items:center;">
-                <input 
-                  type="text" 
-                  id="filter-version-search" 
-                  class="jira-input" 
-                  placeholder="Search version (e.g. 2.4)..." 
-                  value="${this.escapeHtml(this.filters.versionSearch || '')}"
-                  style="width:100%;padding-right:24px;height:38px;"
-                />
-                ${this.filters.versionSearch ? `<button type="button" id="clear-version-search" style="position:absolute;right:8px;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:12px;" title="Clear version search">✕</button>` : ''}
-              </div>
             </div>
 
             <!-- Assignee (Dev) Filter with explicit Unassigned -->
@@ -1368,30 +1337,6 @@
       bindSelect('filter-assignee', 'assignee');
       bindSelect('filter-tester', 'tester');
       bindSelect('filter-priority', 'priority');
-
-      // Version Search Input
-      const versionSearchInput = document.getElementById('filter-version-search');
-      if (versionSearchInput) {
-        versionSearchInput.addEventListener('input', (e) => {
-          this.filters.versionSearch = e.target.value;
-          this.pagination.page = 1;
-          this.render();
-          const newVEl = document.getElementById('filter-version-search');
-          if (newVEl) {
-            newVEl.focus();
-            newVEl.setSelectionRange(newVEl.value.length, newVEl.value.length);
-          }
-        });
-      }
-
-      const clearVersionSearch = document.getElementById('clear-version-search');
-      if (clearVersionSearch) {
-        clearVersionSearch.addEventListener('click', () => {
-          this.filters.versionSearch = '';
-          this.pagination.page = 1;
-          this.render();
-        });
-      }
 
       // Sort Select Dropdown
       const sortSelect = document.getElementById('jira-sort-select');
