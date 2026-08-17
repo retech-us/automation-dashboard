@@ -247,6 +247,42 @@ def fetch_jira_live():
         assignee_avatar = assignee_obj.get("avatarUrls", {}).get("48x48") if assignee_obj else None
         assignees_set.add(assignee_name)
 
+        # Epic / Parent
+        parent_obj = fields.get("parent") or {}
+        epic_name = ""
+        if issue_type.lower() == "epic":
+            epic_name = summary
+        elif parent_obj:
+            p_key = parent_obj.get("key", "")
+            p_sum = parent_obj.get("fields", {}).get("summary", "")
+            epic_name = f"{p_key} - {p_sum}" if p_sum else p_key
+        else:
+            # Check custom fields for epic link / epic name
+            for k, v in fields.items():
+                if ("epic" in k.lower() or k in ["customfield_10014", "customfield_10008"]) and v:
+                    if isinstance(v, str):
+                        epic_name = v
+                    elif isinstance(v, dict) and "name" in v:
+                        epic_name = v["name"]
+
+        # Date calculations
+        created_str = fields.get("created", "")
+        updated_str = fields.get("updated", "")
+        age_days = 0
+        stale_days = 0
+        if created_str:
+            try:
+                c_dt = datetime.datetime.fromisoformat(created_str.replace("Z", "+00:00"))
+                age_days = max(0, (now - c_dt).days)
+            except Exception:
+                pass
+        if updated_str:
+            try:
+                u_dt = datetime.datetime.fromisoformat(updated_str.replace("Z", "+00:00"))
+                stale_days = max(0, (now - u_dt).days)
+            except Exception:
+                pass
+
         # Tester / Reporter
         reporter_obj = fields.get("reporter")
         tester_name = reporter_obj.get("displayName", "Unknown") if reporter_obj else "Unknown"
@@ -263,6 +299,7 @@ def fetch_jira_live():
             "projectKey": proj_key,
             "fixVersion": fix_ver_name,
             "type": issue_type,
+            "epic": epic_name or "None",
             "status": status_name,
             "statusCategory": status_category,
             "priority": priority_name,
@@ -271,8 +308,10 @@ def fetch_jira_live():
             "assigneeAvatar": assignee_avatar,
             "tester": tester_name,
             "reporter": reporter_obj.get("displayName", "Unknown") if reporter_obj else "Unknown",
-            "created": fields.get("created", ""),
-            "updated": fields.get("updated", ""),
+            "created": created_str,
+            "updated": updated_str,
+            "ageDays": age_days,
+            "staleDays": stale_days,
             "labels": fields.get("labels", []),
             "url": f"{JIRA_BASE_URL}/browse/{key}"
         })
