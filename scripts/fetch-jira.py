@@ -99,7 +99,9 @@ def fetch_jira_live():
     fields_list = [
         "summary", "status", "priority", "components", "assignee",
         "reporter", "created", "updated", "labels", "issuetype",
-        "project", "fixVersions", "description"
+        "project", "fixVersions", "description", "parent", "epic",
+        "customfield_10014", "customfield_10008", "customfield_10011",
+        "customfield_10018", "customfield_10004", "subtasks", "issuelinks"
     ]
 
     # 4. Construct candidate bounded JQL queries
