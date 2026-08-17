@@ -268,9 +268,10 @@
         return;
       }
 
-      const { summary = {}, issues = [], jiraUrl, projectKey, status, lastUpdated, filterOptions = {} } = this.data;
+      const { summary = {}, issues = [], jiraUrl, projectKey, status, lastUpdated, filterOptions = {}, lastError } = this.data;
       const filtered = this.filterAndSortIssues(issues);
       const isLive = status === 'live';
+      const isError = status === 'error';
       const activeFilterCount = this.countActiveFilters();
 
       // Extract unique lists dynamically if not in filterOptions
@@ -283,10 +284,14 @@
 
       // Update status pill
       if (statusPill) {
-        statusPill.innerHTML = isLive
-          ? `<span style="color:#10b981;">●</span> Live Jira Sync`
-          : `<span>ℹ️</span> Sample Dataset`;
-        statusPill.title = `Last synchronized: ${lastUpdated ? new Date(lastUpdated).toLocaleString() : 'N/A'}`;
+        if (isLive) {
+          statusPill.innerHTML = `<span style="color:#10b981;">●</span> Live Jira (${this.escapeHtml(projectKey || 'Connected')})`;
+        } else if (isError) {
+          statusPill.innerHTML = `<span style="color:#f59e0b;">⏳</span> Pending CI Jira Sync`;
+        } else {
+          statusPill.innerHTML = `<span>ℹ️</span> Sample Dataset`;
+        }
+        statusPill.title = isError && lastError ? `Sync info: ${lastError}` : `Last synchronized: ${lastUpdated ? new Date(lastUpdated).toLocaleString() : 'N/A'}`;
       }
 
       // Update header action button
@@ -426,8 +431,16 @@
         <div class="jira-table-container">
           ${filtered.length === 0 ? `
             <div class="jira-empty-state" style="padding:48px 20px;">
-              <p style="font-size:16px;color:var(--muted);margin-bottom:12px;">No Jira tickets match the selected filters or search criteria.</p>
-              <button type="button" class="btn btn--ghost" id="jira-empty-reset">Reset All Filters</button>
+              <div class="jira-empty-icon">${issues.length === 0 ? (isError ? '⚙️' : '📁') : '🔍'}</div>
+              <h3 style="margin-bottom:8px;">${issues.length === 0 ? (isError ? 'Jira Project Sync' : 'No Jira Tickets Found') : 'No Matching Tickets'}</h3>
+              <p style="font-size:14px;color:var(--muted);max-width:540px;margin:0 auto 16px;">
+                ${issues.length === 0 
+                  ? (isError 
+                      ? 'Live tickets from your Jira Project will appear here once the GitHub Actions workflow runs with your configured secrets.' 
+                      : `No active tickets returned for Jira Project <strong>${this.escapeHtml(projectKey || '')}</strong>.`)
+                  : 'No Jira tickets match the selected filters or search criteria.'}
+              </p>
+              ${activeFilterCount > 0 ? `<button type="button" class="btn btn--ghost" id="jira-empty-reset">Reset All Filters</button>` : ''}
             </div>
           ` : `
             <table class="jira-table">

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Fetch live Jira defects and quality metrics for the Store Intell QA Automation Dashboard.
-Runs via GitHub Actions on scheduled cron or manual workflow dispatch.
+Queries real Jira projects via Atlassian REST API (v3 / v2) with fallback error diagnostics.
 """
 
 import os
@@ -13,209 +13,50 @@ import urllib.request
 import urllib.parse
 import urllib.error
 
-JIRA_BASE_URL = os.environ.get("JIRA_BASE_URL", "").rstrip("/")
-JIRA_USER_EMAIL = os.environ.get("JIRA_USER_EMAIL", "")
-JIRA_API_TOKEN = os.environ.get("JIRA_API_TOKEN", "")
-JIRA_PROJECT_KEY = os.environ.get("JIRA_PROJECT_KEY", "")
-JIRA_CUSTOM_JQL = os.environ.get("JIRA_JQL", "")
+raw_base_url = os.environ.get("JIRA_BASE_URL", "").strip().rstrip("/")
+if raw_base_url and not raw_base_url.startswith("http://") and not raw_base_url.startswith("https://"):
+    raw_base_url = f"https://{raw_base_url}"
+
+JIRA_BASE_URL = raw_base_url
+JIRA_USER_EMAIL = os.environ.get("JIRA_USER_EMAIL", "").strip()
+JIRA_API_TOKEN = os.environ.get("JIRA_API_TOKEN", "").strip()
+JIRA_PROJECT_KEY = os.environ.get("JIRA_PROJECT_KEY", "").strip()
+JIRA_CUSTOM_JQL = os.environ.get("JIRA_JQL", "").strip()
 
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "jira.json")
 
 
-def get_mock_data():
-    """Fallback sample data when live Jira credentials are not present."""
-    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    project_key = JIRA_PROJECT_KEY or "STORE"
-    
-    issues = [
-        {
-            "key": f"{project_key}-1042",
-            "summary": "Realogram shelf scanner crash on iOS 18 beta during wide-angle capture",
-            "project": "Store Intelligence Mobile",
-            "projectKey": project_key,
-            "fixVersion": "v16.3.0",
-            "type": "Bug",
-            "status": "In Progress",
-            "statusCategory": "indeterminate",
-            "priority": "Highest",
-            "component": "Mobile iOS",
-            "assignee": "Alex Rivera",
-            "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-            "tester": "Elena Rostova",
-            "reporter": "Automation Bot",
-            "created": "2026-08-16T09:14:00.000Z",
-            "updated": "2026-08-17T06:30:00.000Z",
-            "labels": ["automation-failure", "flaky-triage", "p0-blocker"],
-            "url": f"{JIRA_BASE_URL or 'https://your-domain.atlassian.net'}/browse/{project_key}-1042"
-        },
-        {
-            "key": f"{project_key}-1039",
-            "summary": "Price tag OCR validation endpoint returns HTTP 504 gateway timeout under load",
-            "project": "Store Intelligence Backend",
-            "projectKey": project_key,
-            "fixVersion": "v16.2.1",
-            "type": "Defect",
-            "status": "Open",
-            "statusCategory": "new",
-            "priority": "Highest",
-            "component": "API Backend",
-            "assignee": "Devin Kumar",
-            "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-            "tester": "Vipin Nair",
-            "reporter": "API Regression Suite",
-            "created": "2026-08-15T14:22:00.000Z",
-            "updated": "2026-08-16T11:15:00.000Z",
-            "labels": ["perf-regression", "p0-blocker"],
-            "url": f"{JIRA_BASE_URL or 'https://your-domain.atlassian.net'}/browse/{project_key}-1039"
-        },
-        {
-            "key": f"{project_key}-1035",
-            "summary": "Product approval review modal layout overflows on resolution 1366x768",
-            "project": "Store Intelligence Web",
-            "projectKey": project_key,
-            "fixVersion": "v16.2.0",
-            "type": "Bug",
-            "status": "In QA / Review",
-            "statusCategory": "indeterminate",
-            "priority": "High",
-            "component": "Web Portal",
-            "assignee": "Sarah Chen",
-            "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-            "tester": "Vipin Nair",
-            "reporter": "Visual SmartUI",
-            "created": "2026-08-14T16:05:00.000Z",
-            "updated": "2026-08-17T04:20:00.000Z",
-            "labels": ["smartui-diff", "frontend"],
-            "url": f"{JIRA_BASE_URL or 'https://your-domain.atlassian.net'}/browse/{project_key}-1035"
-        },
-        {
-            "key": f"{project_key}-1028",
-            "summary": "Store associate barcode scanning fails to register consecutive rapid scans",
-            "project": "Store Intelligence Mobile",
-            "projectKey": project_key,
-            "fixVersion": "v16.3.0",
-            "type": "Bug",
-            "status": "In Progress",
-            "statusCategory": "indeterminate",
-            "priority": "High",
-            "component": "Mobile Android",
-            "assignee": "Marcus Vance",
-            "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-            "tester": "Marcus Vance",
-            "reporter": "Marcus Vance",
-            "created": "2026-08-13T11:40:00.000Z",
-            "updated": "2026-08-16T15:10:00.000Z",
-            "labels": ["android-appium"],
-            "url": f"{JIRA_BASE_URL or 'https://your-domain.atlassian.net'}/browse/{project_key}-1028"
-        },
-        {
-            "key": f"{project_key}-1022",
-            "summary": "Bulk CSV import silently ignores rows with special UTF-8 characters",
-            "project": "Store Intelligence Web",
-            "projectKey": project_key,
-            "fixVersion": "v16.2.0",
-            "type": "Defect",
-            "status": "Open",
-            "statusCategory": "new",
-            "priority": "Medium",
-            "component": "Web Portal",
-            "assignee": "Unassigned",
-            "assigneeAvatar": None,
-            "tester": "Elena Rostova",
-            "reporter": "Elena Rostova",
-            "created": "2026-08-12T10:18:00.000Z",
-            "updated": "2026-08-15T08:45:00.000Z",
-            "labels": ["data-pipeline"],
-            "url": f"{JIRA_BASE_URL or 'https://your-domain.atlassian.net'}/browse/{project_key}-1022"
-        },
-        {
-            "key": f"{project_key}-1018",
-            "summary": "Session timeout redirect loses user's draft task state",
-            "project": "Store Intelligence Web",
-            "projectKey": project_key,
-            "fixVersion": "v16.1.0",
-            "type": "Bug",
-            "status": "Done / Closed",
-            "statusCategory": "done",
-            "priority": "Medium",
-            "component": "Web Portal",
-            "assignee": "Sarah Chen",
-            "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/default-avatar.png",
-            "tester": "Devin Kumar",
-            "reporter": "Devin Kumar",
-            "created": "2026-08-10T08:00:00.000Z",
-            "updated": "2026-08-16T18:00:00.000Z",
-            "labels": ["auth-ux"],
-            "url": f"{JIRA_BASE_URL or 'https://your-domain.atlassian.net'}/browse/{project_key}-1018"
-        }
-    ]
-
-    return {
-        "status": "sample",
-        "lastUpdated": now,
-        "jiraUrl": JIRA_BASE_URL or "https://your-domain.atlassian.net",
-        "projectKey": project_key,
-        "summary": {
-            "totalDefects": len(issues),
-            "openDefects": sum(1 for i in issues if i["statusCategory"] == "new"),
-            "blockers": sum(1 for i in issues if i["priority"] in ["Highest", "Blocker", "P0"]),
-            "inProgress": sum(1 for i in issues if i["statusCategory"] == "indeterminate" and "qa" not in i["status"].lower()),
-            "inQa": sum(1 for i in issues if "qa" in i["status"].lower() or "review" in i["status"].lower()),
-            "resolvedThisWeek": sum(1 for i in issues if i["statusCategory"] == "done"),
-            "defectDensity": "0.14 defect/test"
-        },
-        "byPriority": {
-            "Highest": 2,
-            "High": 2,
-            "Medium": 2,
-            "Low": 0
-        },
-        "byComponent": {
-            "Web Portal": 3,
-            "Mobile iOS": 1,
-            "Mobile Android": 1,
-            "API Backend": 1
-        },
-        "byStatus": {
-            "Open": 2,
-            "In Progress": 2,
-            "In QA / Review": 1,
-            "Done / Closed": 1
-        },
-        "filterOptions": {
-            "projects": sorted(list(set(i["project"] for i in issues))),
-            "fixVersions": sorted(list(set(i["fixVersion"] for i in issues))),
-            "types": sorted(list(set(i["type"] for i in issues))),
-            "assignees": sorted(list(set(i["assignee"] for i in issues))),
-            "testers": sorted(list(set(i["tester"] for i in issues)))
-        },
-        "issues": issues
-    }
-
-
 def fetch_jira_live():
-    if not (JIRA_BASE_URL and JIRA_USER_EMAIL and JIRA_API_TOKEN):
-        print("[Jira Fetcher] Missing Jira credentials. Using fallback sample dataset.")
-        return get_mock_data()
+    print(f"[Jira Fetcher] Config Check:")
+    print(f"  - Base URL: {JIRA_BASE_URL or '(Not set)'}")
+    print(f"  - User Email: {JIRA_USER_EMAIL or '(Not set)'}")
+    print(f"  - API Token: {'(Set - ' + str(len(JIRA_API_TOKEN)) + ' chars)' if JIRA_API_TOKEN else '(Not set)'}")
+    print(f"  - Project Key: {JIRA_PROJECT_KEY or '(Not set)'}")
+    print(f"  - Custom JQL: {JIRA_CUSTOM_JQL or '(None)'}")
 
-    # Build JQL query
+    if not (JIRA_BASE_URL and JIRA_USER_EMAIL and JIRA_API_TOKEN):
+        raise ValueError("Missing required Jira environment secrets (JIRA_BASE_URL, JIRA_USER_EMAIL, JIRA_API_TOKEN)")
+
+    # Build JQL query directly targeting the Jira project
     if JIRA_CUSTOM_JQL:
         jql = JIRA_CUSTOM_JQL
     elif JIRA_PROJECT_KEY:
-        jql = f'project = "{JIRA_PROJECT_KEY}" AND (issuetype in (Bug, Defect, Incident) OR type in (Bug, Defect)) ORDER BY priority DESC, created DESC'
+        # Query all issues in the project sorted by newest first
+        jql = f'project = "{JIRA_PROJECT_KEY}" ORDER BY created DESC'
     else:
-        jql = 'issuetype in (Bug, Defect) ORDER BY priority DESC, created DESC'
+        jql = 'ORDER BY created DESC'
 
-    print(f"[Jira Fetcher] Querying Jira: {JIRA_BASE_URL} with JQL: {jql}")
+    print(f"[Jira Fetcher] Executing JQL: {jql}")
 
-    # Build search URL with all relevant fields
+    # Build search URL with maximum fields
     params = {
         "jql": jql,
         "maxResults": 100,
-        "fields": "summary,status,priority,components,assignee,reporter,created,updated,labels,issuetype,project,fixVersions"
+        "fields": "summary,status,priority,components,assignee,reporter,created,updated,labels,issuetype,project,fixVersions,description"
     }
     query_string = urllib.parse.urlencode(params)
-    api_url = f"{JIRA_BASE_URL}/rest/api/3/search?{query_string}"
+    api_url_v3 = f"{JIRA_BASE_URL}/rest/api/3/search?{query_string}"
+    api_url_v2 = f"{JIRA_BASE_URL}/rest/api/2/search?{query_string}"
 
     auth_str = f"{JIRA_USER_EMAIL}:{JIRA_API_TOKEN}"
     b64_auth = base64.b64encode(auth_str.encode("utf-8")).decode("utf-8")
@@ -227,24 +68,37 @@ def fetch_jira_live():
         "User-Agent": "StoreIntell-QADashboard/1.0"
     }
 
+    data = None
     try:
-        req = urllib.request.Request(api_url, headers=headers)
+        print(f"[Jira Fetcher] Requesting Jira API v3: {api_url_v3}")
+        req = urllib.request.Request(api_url_v3, headers=headers)
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        # Fallback to API v2 if v3 is not supported
-        if e.code in (400, 404):
-            print(f"[Jira Fetcher] API v3 failed ({e.code}), falling back to API v2...")
-            api_url_v2 = f"{JIRA_BASE_URL}/rest/api/2/search?{query_string}"
+        error_body = ""
+        try:
+            error_body = e.read().decode("utf-8")
+        except Exception:
+            pass
+        print(f"[Jira Fetcher] API v3 returned HTTP {e.code}: {error_body}")
+        
+        # Fallback to API v2
+        print(f"[Jira Fetcher] Retrying with API v2: {api_url_v2}")
+        try:
             req_v2 = urllib.request.Request(api_url_v2, headers=headers)
             with urllib.request.urlopen(req_v2, timeout=30) as resp_v2:
                 data = json.loads(resp_v2.read().decode("utf-8"))
-        else:
-            print(f"[Jira Fetcher] HTTP Error {e.code}: {e.read().decode('utf-8')}")
-            raise
+        except urllib.error.HTTPError as e2:
+            error_body_v2 = ""
+            try:
+                error_body_v2 = e2.read().decode("utf-8")
+            except Exception:
+                pass
+            print(f"[Jira Fetcher] API v2 returned HTTP {e2.code}: {error_body_v2}")
+            raise RuntimeError(f"Jira API request failed (HTTP {e2.code}): {error_body_v2 or str(e2)}")
 
     raw_issues = data.get("issues", [])
-    print(f"[Jira Fetcher] Retrieved {len(raw_issues)} issues from Jira.")
+    print(f"[Jira Fetcher] Successfully retrieved {len(raw_issues)} real issues from Jira Project '{JIRA_PROJECT_KEY}'.")
 
     issues = []
     by_priority = {"Highest": 0, "High": 0, "Medium": 0, "Low": 0, "Lowest": 0}
@@ -281,7 +135,7 @@ def fetch_jira_live():
 
         # Project
         proj_obj = fields.get("project") or {}
-        project_name = proj_obj.get("name") or proj_obj.get("key") or JIRA_PROJECT_KEY or "Main Project"
+        project_name = proj_obj.get("name") or proj_obj.get("key") or JIRA_PROJECT_KEY or "Project"
         proj_key = proj_obj.get("key") or JIRA_PROJECT_KEY or "PROJ"
         projects_set.add(project_name)
 
@@ -295,7 +149,7 @@ def fetch_jira_live():
         issue_type = issue_type_obj.get("name", "Bug")
         types_set.add(issue_type)
 
-        # Normalize priority
+        # Priority Counts
         if priority_name in by_priority:
             by_priority[priority_name] += 1
         else:
@@ -311,7 +165,7 @@ def fetch_jira_live():
 
         # Status counts
         by_status[status_name] = by_status.get(status_name, 0) + 1
-        if status_category == "done":
+        if status_category == "done" or status_name.lower() in ["closed", "done", "resolved"]:
             done_count += 1
             updated_str = fields.get("updated", "")
             if updated_str:
@@ -321,9 +175,9 @@ def fetch_jira_live():
                         resolved_this_week += 1
                 except Exception:
                     pass
-        elif "qa" in status_name.lower() or "review" in status_name.lower() or "testing" in status_name.lower():
+        elif any(k in status_name.lower() for k in ["qa", "review", "testing", "verified"]):
             in_qa_count += 1
-        elif status_category == "indeterminate" or "progress" in status_name.lower() or "dev" in status_name.lower():
+        elif status_category == "indeterminate" or any(k in status_name.lower() for k in ["progress", "dev"]):
             in_prog_count += 1
         else:
             open_count += 1
@@ -335,10 +189,10 @@ def fetch_jira_live():
         assignees_set.add(assignee_name)
 
         # Tester / Reporter
-        # Check if custom tester field or reporter exists
         reporter_obj = fields.get("reporter")
         tester_name = reporter_obj.get("displayName", "Unknown") if reporter_obj else "Unknown"
-        # Check customfield for tester/QA if available
+        
+        # Check customfields for QA/Tester if available
         for k, v in fields.items():
             if k.startswith("customfield_") and isinstance(v, dict) and "displayName" in v:
                 if any(term in k.lower() for term in ["tester", "qa", "verified"]):
@@ -398,15 +252,40 @@ def main():
     try:
         data = fetch_jira_live()
     except Exception as err:
-        print(f"[Jira Fetcher] Error fetching Jira data ({err}). Generating fallback mock dataset.")
-        data = get_mock_data()
-        data["lastError"] = str(err)
+        print(f"[Jira Fetcher] Live fetch failed: {err}")
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        data = {
+            "status": "error",
+            "lastUpdated": now,
+            "lastError": str(err),
+            "jiraUrl": JIRA_BASE_URL or "https://your-domain.atlassian.net",
+            "projectKey": JIRA_PROJECT_KEY or "STORE",
+            "summary": {
+                "totalDefects": 0,
+                "openDefects": 0,
+                "blockers": 0,
+                "inProgress": 0,
+                "inQa": 0,
+                "resolvedThisWeek": 0
+            },
+            "byPriority": {},
+            "byComponent": {},
+            "byStatus": {},
+            "filterOptions": {
+                "projects": [],
+                "fixVersions": [],
+                "types": [],
+                "assignees": [],
+                "testers": []
+            },
+            "issues": []
+        }
 
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-    print(f"[Jira Fetcher] Successfully written Jira data to {OUTPUT_FILE}")
+    print(f"[Jira Fetcher] Written output to {OUTPUT_FILE} (status: {data.get('status')})")
 
 
 if __name__ == "__main__":
