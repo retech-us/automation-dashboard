@@ -1,31 +1,31 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-17T09:43:05.841292+00:00",
+  "lastUpdated": "2026-08-17T09:50:10.472038+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 228,
-    "blockers": 141,
-    "inProgress": 349,
-    "inQa": 87,
+    "openDefects": 229,
+    "blockers": 142,
+    "inProgress": 352,
+    "inQa": 84,
     "resolvedThisWeek": 21,
-    "resolvedTotal": 336
+    "resolvedTotal": 335
   },
   "byPriority": {
-    "Highest": 141,
+    "Highest": 142,
     "High": 268,
-    "Medium": 532,
+    "Medium": 531,
     "Low": 57,
     "Lowest": 2
   },
   "byComponent": {
-    "BE REBM": 184,
     "IOS": 215,
+    "General": 194,
+    "BE REBM": 184,
     "BE ADMIN": 2,
-    "General": 193,
-    "ANDR": 223,
+    "ANDR": 222,
     "PARENT-WORK-ITEM": 22,
     "CVAT": 5,
     "BE CORE": 26,
@@ -40,12 +40,12 @@
     "Customer": 1
   },
   "byStatus": {
+    "QA": 84,
+    "UAT": 207,
+    "To  Do": 167,
     "Dev Complete": 19,
-    "To  Do": 166,
-    "Done": 264,
-    "QA": 87,
+    "Done": 263,
     "In Progress": 47,
-    "UAT": 204,
     "Invalid": 72,
     "Code Review": 35,
     "Waiting for clarification": 62,
@@ -235,6 +235,173 @@
   },
   "issues": [
     {
+      "key": "REB3-20087",
+      "summary": "[iOS] Add current manual retry logic to Image Log tab",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.13 PRGM BETA",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Brijesh Bhatt",
+      "reporter": "Brijesh Bhatt",
+      "created": "2026-07-20T06:40:33.021-0700",
+      "updated": "2026-08-17T02:49:29.973-0700",
+      "ageDays": 27,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20087"
+    },
+    {
+      "key": "REB3-20391",
+      "summary": "[iOS] Retry button is not displayed after TIMER_BASED_RETRY_TIMEOUT when upload remains stuck",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.13 PRGM BETA",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-08-13T23:47:17.231-0700",
+      "updated": "2026-08-17T02:49:29.919-0700",
+      "ageDays": 3,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20391"
+    },
+    {
+      "key": "REB3-20408",
+      "summary": "[iOS] \"Retry All\" button remains fixed at the top and is not visible after scrolling in Image Log",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.13 PRGM BETA",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-08-17T02:36:40.685-0700",
+      "updated": "2026-08-17T02:49:29.660-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20408"
+    },
+    {
+      "key": "REB3-20409",
+      "summary": "Android: Fixture Validation Popup UI Does Not Match Figma Design",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Highest",
+      "component": "General",
+      "assignee": "Hemant Singh",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-08-17T02:47:44.532-0700",
+      "updated": "2026-08-17T02:48:14.183-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20409"
+    },
+    {
+      "key": "REB3-20345",
+      "summary": "[iOS] Image upload repeatedly fails despite stable network connectivity on Image Log",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.13 PRGM BETA",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-08-11T05:09:44.047-0700",
+      "updated": "2026-08-17T02:44:23.932-0700",
+      "ageDays": 5,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20345"
+    },
+    {
+      "key": "REB3-20344",
+      "summary": "[iOS] \u201cRetry All\u201d button is not displayed on Image Log page when multiple images have retry option",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.13 PRGM BETA",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-08-11T04:54:34.672-0700",
+      "updated": "2026-08-17T02:44:17.034-0700",
+      "ageDays": 5,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20344"
+    },
+    {
       "key": "REB3-20397",
       "summary": "[ANDR] Day code Badge Should be moved below TrackingID",
       "project": "Rebotics 3",
@@ -258,34 +425,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20397"
-    },
-    {
-      "key": "REB3-20408",
-      "summary": "[iOS] \"Retry All\" button remains fixed at the top and is not visible after scrolling in Image Log",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.13 PRGM BETA",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-08-17T02:36:40.685-0700",
-      "updated": "2026-08-17T02:38:29.250-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "IOS",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20408"
     },
     {
       "key": "REB3-20366",
@@ -314,34 +453,6 @@
         "Customer"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20366"
-    },
-    {
-      "key": "REB3-20344",
-      "summary": "[iOS] \u201cRetry All\u201d button is not displayed on Image Log page when multiple images have retry option",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.13 PRGM BETA",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-08-11T04:54:34.672-0700",
-      "updated": "2026-08-17T02:36:42.179-0700",
-      "ageDays": 5,
-      "staleDays": 0,
-      "labels": [
-        "IOS",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20344"
     },
     {
       "key": "REB3-20393",
@@ -2074,62 +2185,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20396"
     },
     {
-      "key": "REB3-20391",
-      "summary": "[iOS] Retry button is not displayed after TIMER_BASED_RETRY_TIMEOUT when upload remains stuck",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.13 PRGM BETA",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-08-13T23:47:17.231-0700",
-      "updated": "2026-08-14T06:48:14.685-0700",
-      "ageDays": 3,
-      "staleDays": 2,
-      "labels": [
-        "IOS",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20391"
-    },
-    {
-      "key": "REB3-20345",
-      "summary": "[iOS] Image upload repeatedly fails despite stable network connectivity on Image Log",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.13 PRGM BETA",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-08-11T05:09:44.047-0700",
-      "updated": "2026-08-14T06:48:05.858-0700",
-      "ageDays": 5,
-      "staleDays": 2,
-      "labels": [
-        "IOS",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20345"
-    },
-    {
       "key": "REB3-20014",
       "summary": "[VAPT][BE] JWT access token validity too long (24h)",
       "project": "Rebotics 3",
@@ -2291,34 +2346,6 @@
         "PRGM"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-19841"
-    },
-    {
-      "key": "REB3-20087",
-      "summary": "[iOS] Add current manual retry logic to Image Log tab",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.13 PRGM BETA",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Brijesh Bhatt",
-      "reporter": "Brijesh Bhatt",
-      "created": "2026-07-20T06:40:33.021-0700",
-      "updated": "2026-08-14T06:05:29.820-0700",
-      "ageDays": 27,
-      "staleDays": 2,
-      "labels": [
-        "IOS",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20087"
     },
     {
       "key": "REB3-20279",
@@ -4612,7 +4639,7 @@
       "reporter": "Irbaz Khan",
       "created": "2026-07-31T02:44:41.244-0700",
       "updated": "2026-08-12T05:28:52.931-0700",
-      "ageDays": 16,
+      "ageDays": 17,
       "staleDays": 4,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20207"
@@ -6040,7 +6067,7 @@
       "reporter": "vikas yadav",
       "created": "2026-07-01T02:46:27.537-0700",
       "updated": "2026-08-11T01:15:11.019-0700",
-      "ageDays": 46,
+      "ageDays": 47,
       "staleDays": 6,
       "labels": [
         "SHIELD",
@@ -6533,7 +6560,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-04T02:49:16.413-0700",
       "updated": "2026-08-10T04:37:17.365-0700",
-      "ageDays": 12,
+      "ageDays": 13,
       "staleDays": 6,
       "labels": [
         "android16",
@@ -7116,7 +7143,7 @@
       "reporter": "Bekzat",
       "created": "2025-09-17T02:50:04.012-0700",
       "updated": "2026-08-10T00:44:11.237-0700",
-      "ageDays": 333,
+      "ageDays": 334,
       "staleDays": 7,
       "labels": [
         "Backend",
@@ -8582,7 +8609,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-06T02:45:59.670-0700",
       "updated": "2026-08-07T00:10:51.599-0700",
-      "ageDays": 10,
+      "ageDays": 11,
       "staleDays": 10,
       "labels": [
         "Android",
@@ -12732,7 +12759,7 @@
       "reporter": "Jesper Qi",
       "created": "2026-07-28T02:45:47.413-0700",
       "updated": "2026-07-30T00:14:47.270-0700",
-      "ageDays": 19,
+      "ageDays": 20,
       "staleDays": 18,
       "labels": [
         "AD-HOC",
@@ -16194,7 +16221,7 @@
       "reporter": "Ashok Pilli",
       "created": "2026-07-14T02:45:20.616-0700",
       "updated": "2026-07-24T02:15:47.587-0700",
-      "ageDays": 33,
+      "ageDays": 34,
       "staleDays": 24,
       "labels": [
         "PILOT",
@@ -16383,7 +16410,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-07-23T02:44:00.021-0700",
       "updated": "2026-07-23T04:17:59.718-0700",
-      "ageDays": 24,
+      "ageDays": 25,
       "staleDays": 24,
       "labels": [
         "Backend",
@@ -18283,7 +18310,7 @@
       "created": "2026-07-01T14:58:22.525-0700",
       "updated": "2026-07-22T02:47:15.255-0700",
       "ageDays": 46,
-      "staleDays": 25,
+      "staleDays": 26,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -20264,7 +20291,7 @@
       "created": "2026-02-12T03:29:29.746-0800",
       "updated": "2026-07-15T02:47:24.926-0700",
       "ageDays": 185,
-      "staleDays": 32,
+      "staleDays": 33,
       "labels": [
         "SHIELD"
       ],
@@ -20291,7 +20318,7 @@
       "created": "2025-07-22T23:18:44.586-0700",
       "updated": "2026-07-15T02:44:18.906-0700",
       "ageDays": 390,
-      "staleDays": 32,
+      "staleDays": 33,
       "labels": [
         "Spillover",
         "Unplanned"
@@ -20873,7 +20900,7 @@
       "created": "2026-07-07T05:14:17.965-0700",
       "updated": "2026-07-14T02:45:52.278-0700",
       "ageDays": 40,
-      "staleDays": 33,
+      "staleDays": 34,
       "labels": [
         "Customer",
         "QKTP"
@@ -20900,7 +20927,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-05-18T02:48:17.568-0700",
       "updated": "2026-07-14T01:46:50.649-0700",
-      "ageDays": 90,
+      "ageDays": 91,
       "staleDays": 34,
       "labels": [
         "Android",
@@ -21011,8 +21038,8 @@
       "reporter": "Brianne Tanke",
       "created": "2026-07-13T02:47:08.064-0700",
       "updated": "2026-07-13T02:47:09.776-0700",
-      "ageDays": 34,
-      "staleDays": 34,
+      "ageDays": 35,
+      "staleDays": 35,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20022"
     },
@@ -23631,7 +23658,7 @@
       "created": "2026-03-10T03:34:51.122-0700",
       "updated": "2026-06-30T02:45:29.435-0700",
       "ageDays": 159,
-      "staleDays": 47,
+      "staleDays": 48,
       "labels": [
         "REGRESSION"
       ],
@@ -24740,7 +24767,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-06-05T02:45:01.487-0700",
       "updated": "2026-06-29T01:17:55.681-0700",
-      "ageDays": 72,
+      "ageDays": 73,
       "staleDays": 49,
       "labels": [
         "Customer"
@@ -27542,33 +27569,6 @@
       "staleDays": 55,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19658"
-    },
-    {
-      "key": "REB3-19622",
-      "summary": "Current and expected POG compliance percentage not showing in low compliance dialog",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03",
-      "isReleased": true,
-      "releaseStatus": "Released",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Done",
-      "statusCategory": "done",
-      "priority": "Medium",
-      "component": "ANDR",
-      "assignee": "Gaurav Tripathi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
-      "tester": "Gaurav Tripathi",
-      "reporter": "Gaurav Tripathi",
-      "created": "2026-05-13T02:18:02.634-0700",
-      "updated": "2026-06-22T05:02:26.810-0700",
-      "ageDays": 96,
-      "staleDays": 55,
-      "labels": [
-        "Android"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19622"
     }
   ]
 }
