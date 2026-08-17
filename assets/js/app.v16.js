@@ -2734,6 +2734,10 @@ function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
   if (tab === 'jira' && window.JiraTracker) {
     window.JiraTracker.init();
   }
+  if (tab === 'live' && window.LiveTracker) {
+    window.LiveTracker.renderLiveBanner();
+    window.LiveTracker.checkAll();
+  }
 
   if (persist) {
     try { localStorage.setItem('dashboard.activeTab', tab); } catch { /* ignore */ }
