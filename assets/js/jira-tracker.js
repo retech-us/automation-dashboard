@@ -62,7 +62,9 @@
       this.filters = {
         kpi: 'all',          // 'all', 'blockers', 'progress', 'qa', 'resolved'
         project: 'all',
+        releaseStatus: 'all', // 'all', 'unreleased', 'released'
         fixVersion: 'all',
+        versionSearch: '',
         type: 'all',
         assignee: 'all',
         tester: 'all',
@@ -251,11 +253,25 @@
           if (pIssue !== pFilter && !pIssue.includes(pFilter)) return false;
         }
 
+        // Release Status Filter (Released vs Unreleased)
+        if (this.filters.releaseStatus !== 'all') {
+          const isRel = issue.isReleased === true || (issue.releaseStatus || '').toLowerCase() === 'released';
+          if (this.filters.releaseStatus === 'released' && !isRel) return false;
+          if (this.filters.releaseStatus === 'unreleased' && isRel) return false;
+        }
+
         // Fix Version Filter
         if (this.filters.fixVersion !== 'all') {
           const vIssue = (issue.fixVersion || 'Unversioned').toLowerCase();
           const vFilter = this.filters.fixVersion.toLowerCase();
           if (vIssue !== vFilter && !vIssue.includes(vFilter)) return false;
+        }
+
+        // Fix Version Search
+        if (this.filters.versionSearch && this.filters.versionSearch.trim()) {
+          const vs = this.filters.versionSearch.toLowerCase().trim();
+          const vIssue = (issue.fixVersion || '').toLowerCase();
+          if (!vIssue.includes(vs)) return false;
         }
 
         // Ticket Type Filter (Strict matching)
@@ -370,7 +386,9 @@
       let count = 0;
       if (this.filters.kpi !== 'all') count++;
       if (this.filters.project !== 'all') count++;
+      if (this.filters.releaseStatus !== 'all') count++;
       if (this.filters.fixVersion !== 'all') count++;
+      if (this.filters.versionSearch && this.filters.versionSearch.trim()) count++;
       if (this.filters.type !== 'all') count++;
       if (this.filters.assignee !== 'all') count++;
       if (this.filters.tester !== 'all') count++;
@@ -385,7 +403,9 @@
       this.filters = {
         kpi: 'all',
         project: 'all',
+        releaseStatus: 'all',
         fixVersion: 'all',
+        versionSearch: '',
         type: 'all',
         assignee: 'all',
         tester: 'all',
@@ -547,7 +567,42 @@
 
       // Extract unique lists dynamically across both filterOptions and actual issue records
       const projects = Array.from(new Set([].concat(filterOptions.projects || []).concat(issues.map(i => i.project || i.projectKey)).filter(Boolean))).sort();
-      const fixVersions = Array.from(new Set([].concat(filterOptions.fixVersions || []).concat(issues.map(i => i.fixVersion)).filter(Boolean))).sort();
+      const rawFixVersions = Array.from(new Set([].concat(filterOptions.fixVersions || []).concat(issues.map(i => i.fixVersion)).filter(Boolean))).sort();
+      
+      const versionStatusMap = {};
+      issues.forEach(i => {
+        const v = i.fixVersion;
+        if (v && v !== 'Unversioned') {
+          const isRel = i.isReleased === true || (i.releaseStatus || '').toLowerCase() === 'released';
+          versionStatusMap[v] = isRel ? 'Released' : 'Unreleased';
+        }
+      });
+      (filterOptions.fixVersions || []).forEach(v => {
+        if (!versionStatusMap[v]) {
+          const vLower = v.toLowerCase();
+          if (vLower.includes('released') && !vLower.includes('unreleased')) {
+            versionStatusMap[v] = 'Released';
+          } else {
+            versionStatusMap[v] = 'Unreleased';
+          }
+        }
+      });
+
+      // Filter fixVersions based on releaseStatus and versionSearch
+      let displayFixVersions = rawFixVersions.filter(v => {
+        if (this.filters.releaseStatus === 'released') {
+          return versionStatusMap[v] === 'Released';
+        }
+        if (this.filters.releaseStatus === 'unreleased') {
+          return versionStatusMap[v] === 'Unreleased';
+        }
+        return true;
+      });
+
+      if (this.filters.versionSearch && this.filters.versionSearch.trim()) {
+        const vs = this.filters.versionSearch.toLowerCase().trim();
+        displayFixVersions = displayFixVersions.filter(v => v.toLowerCase().includes(vs));
+      }
       
       const standardTypes = ['Epic', 'Story', 'Bug', 'Task', 'Sub-task'];
       const types = Array.from(new Set(['Epic'].concat(filterOptions.types || []).concat(issues.map(i => i.type)).concat(standardTypes).filter(Boolean)));
@@ -844,13 +899,42 @@
               </select>
             </div>
 
+            <!-- Release State Filter (Released / Unreleased) -->
+            <div class="jira-filter-field">
+              <label>🚀 Release State</label>
+              <select class="jira-select" id="filter-release-status">
+                <option value="all" ${this.filters.releaseStatus === 'all' ? 'selected' : ''}>All Releases</option>
+                <option value="unreleased" ${this.filters.releaseStatus === 'unreleased' ? 'selected' : ''}>⏳ Unreleased Only</option>
+                <option value="released" ${this.filters.releaseStatus === 'released' ? 'selected' : ''}>🚀 Released Only</option>
+              </select>
+            </div>
+
             <!-- Fix Version Filter -->
             <div class="jira-filter-field">
               <label>🎯 Fix Version</label>
               <select class="jira-select" id="filter-fix-version">
-                <option value="all">All Fix Versions</option>
-                ${fixVersions.map(v => `<option value="${this.escapeHtml(v)}" ${(this.filters.fixVersion || '').toLowerCase() === v.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(v)}</option>`).join('')}
+                <option value="all">All Fix Versions ${this.filters.releaseStatus !== 'all' ? `(${this.filters.releaseStatus === 'unreleased' ? 'Unreleased' : 'Released'})` : ''}</option>
+                ${displayFixVersions.map(v => {
+                  const tag = versionStatusMap[v] ? ` [${versionStatusMap[v]}]` : '';
+                  return `<option value="${this.escapeHtml(v)}" ${(this.filters.fixVersion || '').toLowerCase() === v.toLowerCase() ? 'selected' : ''}>${this.escapeHtml(v)}${tag}</option>`;
+                }).join('')}
               </select>
+            </div>
+
+            <!-- Fix Version Quick Search -->
+            <div class="jira-filter-field">
+              <label>🔍 Version Search</label>
+              <div style="position:relative;display:flex;align-items:center;">
+                <input 
+                  type="text" 
+                  id="filter-version-search" 
+                  class="jira-input" 
+                  placeholder="Search version (e.g. 2.4)..." 
+                  value="${this.escapeHtml(this.filters.versionSearch || '')}"
+                  style="width:100%;padding-right:24px;height:38px;"
+                />
+                ${this.filters.versionSearch ? `<button type="button" id="clear-version-search" style="position:absolute;right:8px;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:12px;" title="Clear version search">✕</button>` : ''}
+              </div>
             </div>
 
             <!-- Assignee (Dev) Filter with explicit Unassigned -->
@@ -1265,6 +1349,18 @@
         }
       };
 
+      // Release Status Filter
+      const releaseStatusSelect = document.getElementById('filter-release-status');
+      if (releaseStatusSelect) {
+        releaseStatusSelect.addEventListener('change', (e) => {
+          this.filters.releaseStatus = e.target.value;
+          this.filters.fixVersion = 'all';
+          this.filters.kpi = 'all';
+          this.pagination.page = 1;
+          this.render();
+        });
+      }
+
       bindSelect('filter-project', 'project');
       bindSelect('filter-status', 'status');
       bindSelect('filter-fix-version', 'fixVersion');
@@ -1272,6 +1368,30 @@
       bindSelect('filter-assignee', 'assignee');
       bindSelect('filter-tester', 'tester');
       bindSelect('filter-priority', 'priority');
+
+      // Version Search Input
+      const versionSearchInput = document.getElementById('filter-version-search');
+      if (versionSearchInput) {
+        versionSearchInput.addEventListener('input', (e) => {
+          this.filters.versionSearch = e.target.value;
+          this.pagination.page = 1;
+          this.render();
+          const newVEl = document.getElementById('filter-version-search');
+          if (newVEl) {
+            newVEl.focus();
+            newVEl.setSelectionRange(newVEl.value.length, newVEl.value.length);
+          }
+        });
+      }
+
+      const clearVersionSearch = document.getElementById('clear-version-search');
+      if (clearVersionSearch) {
+        clearVersionSearch.addEventListener('click', () => {
+          this.filters.versionSearch = '';
+          this.pagination.page = 1;
+          this.render();
+        });
+      }
 
       // Sort Select Dropdown
       const sortSelect = document.getElementById('jira-sort-select');
