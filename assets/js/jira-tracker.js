@@ -28,8 +28,12 @@
     'in progress': '#fbbf24',
     'in dev': '#fbbf24',
     'development': '#fbbf24',
+    'code review': '#fbbf24',
+    'in review': '#fbbf24',
+    'review': '#fbbf24',
     'in qa': '#a855f7',
-    'in review': '#a855f7',
+    'ready for qa': '#a855f7',
+    'qa': '#a855f7',
     'testing': '#a855f7',
     'verified': '#a855f7',
     'blocked': '#f43f5e',
@@ -142,12 +146,27 @@
       return 'jira-priority--lowest';
     }
 
+    isQaStatus(statusName) {
+      const s = (statusName || '').toLowerCase().trim();
+      const isCodeReview = s.includes('code review') || s.includes('pr review') || s.includes('peer review') || s === 'in review' || s === 'review';
+      if (isCodeReview) return false;
+      return s.includes('qa') || s.includes('testing') || s.includes('verified');
+    }
+
+    isDevStatus(statusName, statusCategory) {
+      const s = (statusName || '').toLowerCase().trim();
+      const cat = (statusCategory || '').toLowerCase();
+      if (this.isQaStatus(statusName)) return false;
+      if (cat === 'done' || ['closed', 'done', 'resolved'].includes(s)) return false;
+      return cat === 'indeterminate' || s.includes('progress') || s.includes('dev') || s.includes('review') || s.includes('draft') || s.includes('working');
+    }
+
     getStatusBadgeClass(statusCategory, statusName) {
       const cat = (statusCategory || '').toLowerCase();
       const name = (statusName || '').toLowerCase();
       if (cat === 'done' || name.includes('closed') || name.includes('resolved')) return 'jira-status--done';
-      if (name.includes('qa') || name.includes('testing') || name.includes('review')) return 'jira-status--qa';
-      if (cat === 'indeterminate' || name.includes('progress') || name.includes('dev')) return 'jira-status--prog';
+      if (this.isQaStatus(statusName)) return 'jira-status--qa';
+      if (this.isDevStatus(statusName, statusCategory)) return 'jira-status--prog';
       return 'jira-status--open';
     }
 
@@ -158,10 +177,10 @@
 
     getStatusColor(statusName) {
       const s = (statusName || '').toLowerCase().trim();
-      for (const [k, color] of Object.entries(STATUS_COLORS)) {
-        if (s.includes(k)) return color;
-      }
-      return '#64748b';
+      if (this.isQaStatus(statusName)) return '#a855f7';
+      if (this.isDevStatus(statusName, 'indeterminate')) return '#fbbf24';
+      if (['done', 'closed', 'resolved'].includes(s)) return '#10b981';
+      return '#38bdf8';
     }
 
     getPriorityColor(priorityName) {
@@ -178,20 +197,16 @@
       const tFilter = filterType.toLowerCase().trim();
 
       if (tFilter === 'epic') {
-        const isDirectEpic = tIssue.includes('epic');
-        const hasEpicTag = Boolean(issue.epic && issue.epic !== 'None' && !issue.epic.toLowerCase().includes('undefined') && !issue.epic.toLowerCase().includes('null'));
-        const isLabeledEpic = Boolean(issue.labels && issue.labels.some(l => l.toLowerCase().includes('epic')));
-        const summaryHasEpic = Boolean((issue.summary || '').toLowerCase().includes('epic'));
-        return isDirectEpic || hasEpicTag || isLabeledEpic || summaryHasEpic;
+        return tIssue === 'epic' || tIssue.includes('epic');
       }
       if (tFilter === 'bug' || tFilter === 'defect') {
-        return tIssue.includes('bug') || tIssue.includes('defect') || tIssue.includes('incident');
+        return tIssue === 'bug' || tIssue.includes('bug') || tIssue.includes('defect') || tIssue.includes('incident');
       }
       if (tFilter === 'story' || tFilter === 'feature') {
-        return tIssue.includes('story') || tIssue.includes('feature');
+        return tIssue === 'story' || tIssue.includes('story') || tIssue.includes('feature');
       }
       if (tFilter === 'task') {
-        return tIssue.includes('task') && !tIssue.includes('sub');
+        return (tIssue === 'task' || tIssue.includes('task')) && !tIssue.includes('sub');
       }
       if (tFilter.includes('sub')) {
         return tIssue.includes('sub');
@@ -205,13 +220,11 @@
         // KPI Card Quick Filters
         if (this.filters.kpi === 'blockers') {
           const p = (issue.priority || '').toLowerCase();
-          if (!p.includes('highest') && !p.includes('blocker') && !p.includes('p0')) return false;
+          if (!p.includes('highest') && !p.includes('blocker') && !p.includes('p0') && !p.includes('p1')) return false;
         } else if (this.filters.kpi === 'progress') {
-          const s = (issue.status || '').toLowerCase();
-          if (!s.includes('progress') && !s.includes('dev')) return false;
+          if (!this.isDevStatus(issue.status, issue.statusCategory)) return false;
         } else if (this.filters.kpi === 'qa') {
-          const s = (issue.status || '').toLowerCase();
-          if (!s.includes('qa') && !s.includes('review') && !s.includes('testing') && !s.includes('verified')) return false;
+          if (!this.isQaStatus(issue.status)) return false;
         } else if (this.filters.kpi === 'resolved') {
           const s = (issue.statusCategory || '').toLowerCase();
           const sn = (issue.status || '').toLowerCase();
@@ -232,7 +245,7 @@
           if (vIssue !== vFilter && !vIssue.includes(vFilter)) return false;
         }
 
-        // Ticket Type Filter (Smart matching for Epic, Story, Bug, Task, Sub-task)
+        // Ticket Type Filter (Strict matching)
         if (!this.matchesTicketType(issue, this.filters.type)) {
           return false;
         }
@@ -495,19 +508,26 @@
       const priorities = ['Highest', 'High', 'Medium', 'Low', 'Lowest'];
 
       // --- 1. Compute Dynamic Status Distribution for Filtered Tickets ---
+      const STATUS_PALETTE = ['#38bdf8', '#fbbf24', '#a855f7', '#06b6d4', '#10b981', '#ec4899', '#f97316', '#6366f1'];
       const statusCounts = {};
       filtered.forEach((i) => {
         const s = i.status || 'Unknown';
         statusCounts[s] = (statusCounts[s] || 0) + 1;
       });
-      const statusSlices = Object.entries(statusCounts).map(([label, count]) => ({
-        label,
-        count,
-        color: this.getStatusColor(label)
-      })).sort((a, b) => b.count - a.count);
-
-      // Pending tickets count
-      const pendingCount = filtered.filter(i => (i.statusCategory || '').toLowerCase() !== 'done' && !['closed', 'done', 'resolved'].includes((i.status || '').toLowerCase())).length;
+      const statusSlices = Object.entries(statusCounts).map(([label, count], idx) => {
+        let col = this.getStatusColor(label);
+        const lLow = label.toLowerCase();
+        if (lLow === 'uat') col = '#06b6d4';
+        else if (lLow.includes('dev complete')) col = '#6366f1';
+        else if (col === '#38bdf8' && lLow !== 'to do' && lLow !== 'open' && lLow !== 'new') {
+          col = STATUS_PALETTE[idx % STATUS_PALETTE.length];
+        }
+        return {
+          label,
+          count,
+          color: col
+        };
+      }).sort((a, b) => b.count - a.count);
 
       // --- 2. Compute Dynamic Priority Distribution ---
       const priorityCounts = {};
@@ -525,7 +545,7 @@
       const typeCounts = {};
       filtered.forEach((i) => {
         let t = i.type || 'Story';
-        if (i.epic && i.epic !== 'None' && (i.type || '').toLowerCase() === 'epic') t = 'Epic';
+        if ((i.type || '').toLowerCase() === 'epic') t = 'Epic';
         typeCounts[t] = (typeCounts[t] || 0) + 1;
       });
       const typeSlices = Object.entries(typeCounts).map(([label, count], idx) => ({
@@ -585,49 +605,50 @@
       const dynamicKpiTotal = baseForKpi.length;
       const dynamicKpiBlockers = baseForKpi.filter(i => {
         const p = (i.priority || '').toLowerCase();
-        return p.includes('highest') || p.includes('blocker') || p.includes('p0');
+        return p.includes('highest') || p.includes('blocker') || p.includes('p0') || p.includes('p1');
       }).length;
-      const dynamicKpiInProgress = baseForKpi.filter(i => {
-        const s = (i.status || '').toLowerCase();
-        const cat = (i.statusCategory || '').toLowerCase();
-        return (cat === 'indeterminate' || s.includes('progress') || s.includes('dev')) && !s.includes('qa') && !s.includes('testing') && !s.includes('review');
-      }).length;
-      const dynamicKpiInQa = baseForKpi.filter(i => {
-        const s = (i.status || '').toLowerCase();
-        return s.includes('qa') || s.includes('testing') || s.includes('review') || s.includes('verified');
-      }).length;
+      const dynamicKpiInProgress = baseForKpi.filter(i => this.isDevStatus(i.status, i.statusCategory)).length;
+      const dynamicKpiInQa = baseForKpi.filter(i => this.isQaStatus(i.status)).length;
       const dynamicKpiResolved = baseForKpi.filter(i => {
         const s = (i.status || '').toLowerCase();
         const cat = (i.statusCategory || '').toLowerCase();
         return cat === 'done' || ['closed', 'done', 'resolved'].includes(s);
       }).length;
 
-      // --- 5. Compute Sprint & Milestone Delivery Progress ---
-      const doneCount = filtered.filter(i => (i.statusCategory || '').toLowerCase() === 'done' || ['closed', 'done', 'resolved'].includes((i.status || '').toLowerCase())).length;
-      const inQaCount = filtered.filter(i => {
-        const s = (i.status || '').toLowerCase();
-        return s.includes('qa') || s.includes('testing') || s.includes('review') || s.includes('verified');
-      }).length;
-      const inDevCount = filtered.filter(i => {
-        const s = (i.status || '').toLowerCase();
-        const cat = (i.statusCategory || '').toLowerCase();
-        return (cat === 'indeterminate' || s.includes('progress') || s.includes('dev')) && !s.includes('qa') && !s.includes('testing') && !s.includes('review');
-      }).length;
-      const todoCount = Math.max(0, filtered.length - doneCount - inQaCount - inDevCount);
+      // --- 5. Compute Sprint & Milestone Delivery Progress (Scoped to Sprint / Version / Project) ---
+      const milestoneIssues = issues.filter(i => {
+        if (this.filters.project !== 'all') {
+          const pIssue = (i.project || i.projectKey || '').toLowerCase();
+          const pFilter = this.filters.project.toLowerCase();
+          if (pIssue !== pFilter && !pIssue.includes(pFilter)) return false;
+        }
+        if (this.filters.fixVersion !== 'all') {
+          const vIssue = (i.fixVersion || 'Unversioned').toLowerCase();
+          const vFilter = this.filters.fixVersion.toLowerCase();
+          if (vIssue !== vFilter && !vIssue.includes(vFilter)) return false;
+        }
+        return true;
+      });
 
-      const donePct = filtered.length ? Math.round((doneCount / filtered.length) * 100) : 0;
-      const qaPct = filtered.length ? Math.round((inQaCount / filtered.length) * 100) : 0;
-      const devPct = filtered.length ? Math.round((inDevCount / filtered.length) * 100) : 0;
-      const todoPct = filtered.length ? Math.max(0, 100 - donePct - qaPct - devPct) : 0;
+      const milestoneTotal = milestoneIssues.length || issues.length;
+      const doneCount = milestoneIssues.filter(i => (i.statusCategory || '').toLowerCase() === 'done' || ['closed', 'done', 'resolved'].includes((i.status || '').toLowerCase())).length;
+      const inQaCount = milestoneIssues.filter(i => this.isQaStatus(i.status)).length;
+      const inDevCount = milestoneIssues.filter(i => this.isDevStatus(i.status, i.statusCategory)).length;
+      const todoCount = Math.max(0, milestoneTotal - doneCount - inQaCount - inDevCount);
+
+      const donePct = milestoneTotal ? Math.round((doneCount / milestoneTotal) * 100) : 0;
+      const qaPct = milestoneTotal ? Math.round((inQaCount / milestoneTotal) * 100) : 0;
+      const devPct = milestoneTotal ? Math.round((inDevCount / milestoneTotal) * 100) : 0;
+      const todoPct = milestoneTotal ? Math.max(0, 100 - donePct - qaPct - devPct) : 0;
 
       // --- 6. Compute Defect vs Story Ratio (Quality Index) ---
-      const bugCount = filtered.filter(i => {
+      const bugCount = milestoneIssues.filter(i => {
         const t = (i.type || '').toLowerCase();
         return t.includes('bug') || t.includes('defect') || t.includes('incident');
       }).length;
-      const storyCount = Math.max(0, filtered.length - bugCount);
-      const defectRatio = filtered.length ? Math.round((bugCount / filtered.length) * 100) : 0;
-      const qualityScore = filtered.length ? Math.max(0, 100 - defectRatio) : 100;
+      const storyCount = Math.max(0, milestoneTotal - bugCount);
+      const defectRatio = milestoneTotal ? Math.round((bugCount / milestoneTotal) * 100) : 0;
+      const qualityScore = milestoneTotal ? Math.max(0, 100 - defectRatio) : 100;
 
       let qualityBadge = { label: '🟢 Healthy Sprint (<15% defects)', bg: 'rgba(16,185,129,0.15)', color: '#10b981' };
       if (defectRatio > 30) {
@@ -779,15 +800,15 @@
           </div>
 
           <div class="jira-kpi-card ${this.filters.kpi === 'progress' ? 'jira-kpi-card--active' : ''}" data-kpi="progress">
-            <div class="jira-kpi-label">⚡ In Progress</div>
+            <div class="jira-kpi-label">⚡ In Progress &amp; Review</div>
             <div class="jira-kpi-val" style="color:var(--warn);">${dynamicKpiInProgress}</div>
-            <div class="jira-kpi-sub">Active developer fixes</div>
+            <div class="jira-kpi-sub">Active fixes &amp; code reviews</div>
           </div>
 
           <div class="jira-kpi-card ${this.filters.kpi === 'qa' ? 'jira-kpi-card--active' : ''}" data-kpi="qa">
-            <div class="jira-kpi-label">🔍 Ready for QA</div>
+            <div class="jira-kpi-label">🔍 In QA &amp; Testing</div>
             <div class="jira-kpi-val" style="color:#38bdf8;">${dynamicKpiInQa}</div>
-            <div class="jira-kpi-sub">Ready for test verification</div>
+            <div class="jira-kpi-sub">QA verification &amp; testing</div>
           </div>
 
           <div class="jira-kpi-card ${this.filters.kpi === 'resolved' ? 'jira-kpi-card--active' : ''}" data-kpi="resolved">
@@ -870,17 +891,17 @@
 
         <!-- Interactive Visual Analytics Pie / Donut Charts Row -->
         <div class="jira-charts-grid">
-          <!-- Chart 1: Status & Pending Distribution -->
+          <!-- Chart 1: Status Distribution -->
           <div class="jira-chart-card">
             <div class="jira-chart-card__header">
               <div>
                 <h4>🎯 Status Distribution</h4>
-                <p>Breakdown of active vs pending work</p>
+                <p>Workflow progression breakdown</p>
               </div>
-              <span class="jira-chart-tag">${pendingCount} Pending</span>
+              <span class="jira-chart-tag">${statusSlices.length} Statuses</span>
             </div>
             <div class="jira-chart-body">
-              ${this.generateSvgDonut(statusSlices, filtered.length, pendingCount, 'Pending', 'status')}
+              ${this.generateSvgDonut(statusSlices, filtered.length, filtered.length, 'Tickets', 'status')}
               <div class="jira-chart-legend">
                 ${statusSlices.map(s => {
                   const pct = filtered.length ? Math.round((s.count / filtered.length) * 100) : 0;
