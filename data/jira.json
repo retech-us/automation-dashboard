@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-18T17:39:42.791340+00:00",
+  "lastUpdated": "2026-08-18T17:53:41.424795+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -8,8 +8,8 @@
     "totalDefects": 1000,
     "openDefects": 219,
     "blockers": 142,
-    "inProgress": 372,
-    "inQa": 83,
+    "inProgress": 371,
+    "inQa": 84,
     "resolvedThisWeek": 21,
     "resolvedTotal": 326
   },
@@ -21,8 +21,8 @@
     "Lowest": 2
   },
   "byComponent": {
-    "BE REBM": 184,
     "ANDR": 218,
+    "BE REBM": 184,
     "IOS": 216,
     "PARENT-WORK-ITEM": 22,
     "General": 198,
@@ -40,10 +40,10 @@
     "Customer": 1
   },
   "byStatus": {
-    "QA": 83,
-    "In Progress": 41,
+    "QA": 84,
     "UAT": 225,
     "Staging": 18,
+    "In Progress": 40,
     "Dev Complete": 23,
     "To  Do": 156,
     "Code Review": 38,
@@ -236,6 +236,37 @@
   },
   "issues": [
     {
+      "key": "REB3-20423",
+      "summary": "[ANDR] In case of NONE_VALIDATION in codeValidator we check for min length",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.18 Mobile HF",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "ANDR",
+      "assignee": "Hemant Singh",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
+      "tester": "Hemant Singh",
+      "reporter": "Hemant Singh",
+      "created": "2026-08-18T10:07:59.763-0700",
+      "updated": "2026-08-18T10:53:04.850-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "ANDR",
+        "Customer",
+        "MJHD",
+        "SPAR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20423"
+    },
+    {
       "key": "REB3-20193",
       "summary": "[RSMN] Add visibility setting for suppressed invader, wandering, and extra facing tasks on shelf edge",
       "project": "Rebotics 3",
@@ -263,37 +294,6 @@
         "RSMN"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20193"
-    },
-    {
-      "key": "REB3-20423",
-      "summary": "[ANDR] In case of NONE_VALIDATION in codeValidator we check for min length",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.18 Mobile HF",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "ANDR",
-      "assignee": "Hemant Singh",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
-      "tester": "Hemant Singh",
-      "reporter": "Hemant Singh",
-      "created": "2026-08-18T10:07:59.763-0700",
-      "updated": "2026-08-18T10:14:24.709-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "AD-HOC",
-        "ANDR",
-        "Customer",
-        "MJHD",
-        "SPAR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20423"
     },
     {
       "key": "REB3-19965",
@@ -10394,7 +10394,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-06-18T10:40:58.960-0700",
       "updated": "2026-08-05T05:40:49.949-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 13,
       "labels": [
         "ALBT",
@@ -10423,7 +10423,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-06-18T10:45:44.164-0700",
       "updated": "2026-08-05T05:40:49.357-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 13,
       "labels": [
         "ALBT",
@@ -10452,7 +10452,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-06-18T10:46:43.830-0700",
       "updated": "2026-08-05T05:40:48.825-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 13,
       "labels": [
         "ALBT",
@@ -10481,7 +10481,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-06-18T10:52:30.864-0700",
       "updated": "2026-08-05T05:40:48.251-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 13,
       "labels": [
         "ALBT",
@@ -15356,7 +15356,7 @@
       "created": "2026-06-25T09:15:56.580-0700",
       "updated": "2026-07-27T10:44:31.156-0700",
       "ageDays": 54,
-      "staleDays": 21,
+      "staleDays": 22,
       "labels": [
         "Customer"
       ],
@@ -15383,7 +15383,7 @@
       "created": "2025-10-07T06:49:27.464-0700",
       "updated": "2026-07-27T10:43:57.410-0700",
       "ageDays": 315,
-      "staleDays": 21,
+      "staleDays": 22,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -15412,7 +15412,7 @@
       "created": "2025-10-07T06:53:33.181-0700",
       "updated": "2026-07-27T10:43:57.137-0700",
       "ageDays": 315,
-      "staleDays": 21,
+      "staleDays": 22,
       "labels": [
         "AD-HOC",
         "PILOT"
@@ -16891,7 +16891,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-07-13T10:46:55.837-0700",
       "updated": "2026-07-23T06:10:33.419-0700",
-      "ageDays": 35,
+      "ageDays": 36,
       "staleDays": 26,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20028"
@@ -20118,7 +20118,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-07-16T10:52:57.602-0700",
       "updated": "2026-07-16T11:26:09.030-0700",
-      "ageDays": 32,
+      "ageDays": 33,
       "staleDays": 32,
       "labels": [
         "SHIELD"
@@ -23652,7 +23652,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-06-17T10:51:50.328-0700",
       "updated": "2026-07-02T07:27:27.572-0700",
-      "ageDays": 61,
+      "ageDays": 62,
       "staleDays": 47,
       "labels": [
         "ALBT",
@@ -23680,7 +23680,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-06-17T10:44:17.326-0700",
       "updated": "2026-07-02T07:27:26.839-0700",
-      "ageDays": 61,
+      "ageDays": 62,
       "staleDays": 47,
       "labels": [
         "ALBT",
