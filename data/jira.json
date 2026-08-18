@@ -1,17 +1,17 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-18T03:05:06.421011+00:00",
+  "lastUpdated": "2026-08-18T03:29:11.926156+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 229,
+    "openDefects": 228,
     "blockers": 142,
     "inProgress": 349,
     "inQa": 93,
-    "resolvedThisWeek": 19,
-    "resolvedTotal": 329
+    "resolvedThisWeek": 20,
+    "resolvedTotal": 330
   },
   "byPriority": {
     "Highest": 142,
@@ -21,6 +21,7 @@
     "Lowest": 2
   },
   "byComponent": {
+    "DE": 67,
     "General": 197,
     "BE REBM": 185,
     "FE REBM": 16,
@@ -31,7 +32,6 @@
     "BE CORE": 26,
     "BE ADMIN": 2,
     "CVAT": 5,
-    "DE": 67,
     "FE Hawkeye": 17,
     "BE SDK": 2,
     "MOBILE": 4,
@@ -40,8 +40,9 @@
     "Customer": 1
   },
   "byStatus": {
+    "Invalid": 73,
     "Code Review": 35,
-    "To  Do": 167,
+    "To  Do": 166,
     "In Progress": 44,
     "QA": 93,
     "Staging": 18,
@@ -49,7 +50,6 @@
     "Dev Complete": 12,
     "PRODUCTION READY": 27,
     "Done": 257,
-    "Invalid": 72,
     "Waiting for clarification": 62
   },
   "filterOptions": {
@@ -235,6 +235,33 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-17038",
+      "summary": "[REB3] Optimize Sale Data Existence Check to Avoid N+1 Query Problem",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "REB3: DE backlog",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Improvement",
+      "epic": "None",
+      "status": "Invalid",
+      "statusCategory": "done",
+      "priority": "Medium",
+      "component": "DE",
+      "assignee": "Sriyuth Sagi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/55bf75d962493c6c2cc3a6d4583be454?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-1.png",
+      "tester": "Sriyuth Sagi",
+      "reporter": "Sriyuth Sagi",
+      "created": "2025-05-21T11:12:41.815-0700",
+      "updated": "2026-08-17T20:23:17.117-0700",
+      "ageDays": 453,
+      "staleDays": 0,
+      "labels": [
+        "ALBT"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-17038"
+    },
     {
       "key": "REB3-20212",
       "summary": "[BE ADMIN] Add recently added model types to protect from deletion signal",
@@ -26133,7 +26160,7 @@
       "created": "2025-08-21T12:58:30.774-0700",
       "updated": "2026-06-23T20:19:28.109-0700",
       "ageDays": 361,
-      "staleDays": 54,
+      "staleDays": 55,
       "labels": [
         "AHLD"
       ],
@@ -26160,7 +26187,7 @@
       "created": "2025-08-12T23:23:46.911-0700",
       "updated": "2026-06-23T20:18:20.056-0700",
       "ageDays": 369,
-      "staleDays": 54,
+      "staleDays": 55,
       "labels": [
         "ALBT",
         "SRAI"
@@ -26188,7 +26215,7 @@
       "created": "2025-09-30T12:27:31.059-0700",
       "updated": "2026-06-23T20:18:13.835-0700",
       "ageDays": 321,
-      "staleDays": 54,
+      "staleDays": 55,
       "labels": [
         "ALBT",
         "Customer"
@@ -26305,33 +26332,6 @@
         "ALL"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-17938"
-    },
-    {
-      "key": "REB3-17038",
-      "summary": "[REB3] Optimize Sale Data Existence Check to Avoid N+1 Query Problem",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "REB3: DE backlog",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Improvement",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "DE",
-      "assignee": "Sriyuth Sagi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/55bf75d962493c6c2cc3a6d4583be454?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-1.png",
-      "tester": "Sriyuth Sagi",
-      "reporter": "Sriyuth Sagi",
-      "created": "2025-05-21T11:12:41.815-0700",
-      "updated": "2026-06-23T19:42:20.882-0700",
-      "ageDays": 453,
-      "staleDays": 55,
-      "labels": [
-        "ALBT"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-17038"
     },
     {
       "key": "REB3-15249",
