@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-19T03:51:09.409362+00:00",
+  "lastUpdated": "2026-08-19T04:13:16.157066+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -8,8 +8,8 @@
     "totalDefects": 1000,
     "openDefects": 220,
     "blockers": 142,
-    "inProgress": 371,
-    "inQa": 84,
+    "inProgress": 372,
+    "inQa": 83,
     "resolvedThisWeek": 21,
     "resolvedTotal": 325
   },
@@ -40,10 +40,10 @@
     "Customer": 1
   },
   "byStatus": {
-    "QA": 84,
+    "UAT": 226,
+    "QA": 83,
     "To  Do": 157,
     "Code Review": 38,
-    "UAT": 225,
     "Staging": 18,
     "In Progress": 40,
     "Dev Complete": 23,
@@ -236,6 +236,35 @@
   },
   "issues": [
     {
+      "key": "REB3-20193",
+      "summary": "[RSMN] Add visibility setting for suppressed invader, wandering, and extra facing tasks on shelf edge",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "BE REBM",
+      "assignee": "Sourabh Yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/1992b54c65168d62b06676d8fba9defa?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSY-1.png",
+      "tester": "Jesper Qi",
+      "reporter": "Jesper Qi",
+      "created": "2026-07-30T04:56:14.596-0700",
+      "updated": "2026-08-18T21:06:13.932-0700",
+      "ageDays": 19,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PILOT",
+        "RSMN"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20193"
+    },
+    {
       "key": "REB3-19978",
       "summary": "WSTM - line model server result is correct, Line Post-Processing Causes Incorrect Shelf Line Output",
       "project": "Rebotics 3",
@@ -381,35 +410,6 @@
         "SPAR"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20423"
-    },
-    {
-      "key": "REB3-20193",
-      "summary": "[RSMN] Add visibility setting for suppressed invader, wandering, and extra facing tasks on shelf edge",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "BE REBM",
-      "assignee": "Sourabh Yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/1992b54c65168d62b06676d8fba9defa?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSY-1.png",
-      "tester": "Jesper Qi",
-      "reporter": "Jesper Qi",
-      "created": "2026-07-30T04:56:14.596-0700",
-      "updated": "2026-08-18T10:25:18.078-0700",
-      "ageDays": 19,
-      "staleDays": 0,
-      "labels": [
-        "AD-HOC",
-        "PILOT",
-        "RSMN"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20193"
     },
     {
       "key": "REB3-19965",
@@ -1871,7 +1871,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-08-13T21:10:07.551-0700",
       "updated": "2026-08-18T03:06:33.740-0700",
-      "ageDays": 4,
+      "ageDays": 5,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20390"
@@ -3091,7 +3091,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-08-13T21:08:06.545-0700",
       "updated": "2026-08-17T04:44:04.739-0700",
-      "ageDays": 4,
+      "ageDays": 5,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20389"
@@ -18454,7 +18454,7 @@
       "reporter": "Akanksha Jangir",
       "created": "2023-01-11T20:02:44.920-0800",
       "updated": "2026-07-22T17:11:00.070-0700",
-      "ageDays": 1314,
+      "ageDays": 1315,
       "staleDays": 27,
       "labels": [
         "DE"
@@ -21037,7 +21037,7 @@
       "reporter": "Zhuogang Peng",
       "created": "2026-06-23T21:08:47.635-0700",
       "updated": "2026-07-14T19:07:08.584-0700",
-      "ageDays": 55,
+      "ageDays": 56,
       "staleDays": 35,
       "labels": [
         "AD-HOC",
@@ -21647,7 +21647,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-05-13T21:10:15.196-0700",
       "updated": "2026-07-13T01:18:21.919-0700",
-      "ageDays": 96,
+      "ageDays": 97,
       "staleDays": 36,
       "labels": [
         "Backend",
@@ -22634,7 +22634,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-03-17T20:56:09.075-0700",
       "updated": "2026-07-08T02:52:59.640-0700",
-      "ageDays": 153,
+      "ageDays": 154,
       "staleDays": 41,
       "labels": [
         "Backend",
@@ -23001,7 +23001,7 @@
       "reporter": "Akanksha Jangir",
       "created": "2026-01-27T19:58:08.067-0800",
       "updated": "2026-07-08T02:52:50.344-0700",
-      "ageDays": 202,
+      "ageDays": 203,
       "staleDays": 41,
       "labels": [
         "ALBT",
@@ -24130,7 +24130,7 @@
       "reporter": "Mark Bieler",
       "created": "2026-03-05T19:56:18.932-0800",
       "updated": "2026-06-30T06:29:30.413-0700",
-      "ageDays": 165,
+      "ageDays": 166,
       "staleDays": 49,
       "labels": [
         "AD-HOC",
@@ -26012,7 +26012,7 @@
       "created": "2024-07-23T10:30:37.826-0700",
       "updated": "2026-06-28T20:58:39.579-0700",
       "ageDays": 756,
-      "staleDays": 50,
+      "staleDays": 51,
       "labels": [
         "ANDR",
         "IOS",
@@ -26474,7 +26474,7 @@
       "created": "2025-05-05T03:02:22.594-0700",
       "updated": "2026-06-23T21:04:02.970-0700",
       "ageDays": 470,
-      "staleDays": 55,
+      "staleDays": 56,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-16939"
     },
