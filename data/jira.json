@@ -1,33 +1,32 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-19T08:24:57.839608+00:00",
+  "lastUpdated": "2026-08-19T08:44:20.972236+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 221,
+    "openDefects": 222,
     "blockers": 142,
     "inProgress": 368,
     "inQa": 90,
     "resolvedThisWeek": 38,
-    "resolvedTotal": 321
+    "resolvedTotal": 320
   },
   "byPriority": {
     "Highest": 142,
-    "High": 266,
-    "Medium": 531,
+    "High": 267,
+    "Medium": 530,
     "Low": 59,
     "Lowest": 2
   },
   "byComponent": {
-    "IOS": 216,
+    "ANDR": 224,
+    "IOS": 217,
     "PARENT-WORK-ITEM": 23,
     "General": 189,
-    "ANDR": 224,
     "BE REBM": 185,
     "QA": 4,
-    "MOBILE": 5,
     "HAWKEYE": 19,
     "DE": 66,
     "FE Hawkeye": 16,
@@ -36,15 +35,16 @@
     "BE ADMIN": 2,
     "CVAT": 5,
     "BE SDK": 2,
+    "MOBILE": 4,
     "AI CORE": 1,
     "Customer": 1
   },
   "byStatus": {
-    "UAT": 230,
     "QA": 90,
+    "To  Do": 158,
     "In Progress": 41,
-    "To  Do": 157,
-    "Done": 245,
+    "UAT": 230,
+    "Done": 244,
     "Invalid": 76,
     "Waiting for clarification": 64,
     "Code Review": 37,
@@ -235,6 +235,92 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-20271",
+      "summary": "[ANDR] Implement missing translations for English",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.18 Mobile HF",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "ANDR",
+      "assignee": "Brijesh Bhatt",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/454849e7691ac8d49ea041e672536507?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBB-4.png",
+      "tester": "Brijesh Bhatt",
+      "reporter": "Brijesh Bhatt",
+      "created": "2026-08-06T02:16:59.683-0700",
+      "updated": "2026-08-19T01:36:14.689-0700",
+      "ageDays": 12,
+      "staleDays": 0,
+      "labels": [
+        "ANDR",
+        "RSMN"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20271"
+    },
+    {
+      "key": "REB3-20429",
+      "summary": "[WSTM][iOS] Survey skip logic is not working for multiple choice question type",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "High",
+      "component": "IOS",
+      "assignee": "Vishal Kohli",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/9a9700fc7ae838f189eadfa192f2a8cb?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVK-6.png",
+      "tester": "Vishal Kohli",
+      "reporter": "Vishal Kohli",
+      "created": "2026-08-19T01:34:17.854-0700",
+      "updated": "2026-08-19T01:34:51.752-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PILOT",
+        "WSTM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20429"
+    },
+    {
+      "key": "REB3-20426",
+      "summary": "[WSTM][ANDR] Survey skip logic is not working for multiple choice question type",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "In Progress",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "ANDR",
+      "assignee": "Gaurav Tripathi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
+      "tester": "Vishal Kohli",
+      "reporter": "Vishal Kohli",
+      "created": "2026-08-18T21:33:59.566-0700",
+      "updated": "2026-08-19T01:34:19.405-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PILOT",
+        "WSTM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20426"
+    },
     {
       "key": "REB3-20418",
       "summary": "[iOS] Complete button is not enabled after adding Post Photo when reopening a task from Preview",
@@ -1151,35 +1237,6 @@
         "ANDR"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20234"
-    },
-    {
-      "key": "REB3-20426",
-      "summary": "[WSTM] Survey skip logic is not working for multiple choice question type",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "MOBILE",
-      "assignee": "Gaurav Tripathi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
-      "tester": "Vishal Kohli",
-      "reporter": "Vishal Kohli",
-      "created": "2026-08-18T21:33:59.566-0700",
-      "updated": "2026-08-18T23:30:32.471-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "AD-HOC",
-        "PILOT",
-        "WSTM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20426"
     },
     {
       "key": "REB3-19830",
@@ -3125,7 +3182,7 @@
       "created": "2026-08-10T00:27:30.999-0700",
       "updated": "2026-08-18T01:36:30.072-0700",
       "ageDays": 9,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "Android",
         "PRGM"
@@ -3751,34 +3808,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20385"
     },
     {
-      "key": "REB3-20271",
-      "summary": "[ANDR] Implement missing translations for English",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.18 Mobile HF",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "ANDR",
-      "assignee": "Brijesh Bhatt",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/454849e7691ac8d49ea041e672536507?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBB-4.png",
-      "tester": "Brijesh Bhatt",
-      "reporter": "Brijesh Bhatt",
-      "created": "2026-08-06T02:16:59.683-0700",
-      "updated": "2026-08-17T05:31:34.673-0700",
-      "ageDays": 12,
-      "staleDays": 1,
-      "labels": [
-        "ANDR",
-        "RSMN"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20271"
-    },
-    {
       "key": "REB3-19957",
       "summary": "[Enhancement] [Mobile] Align iOS and Android sorting implementations across Capture, Pre-Photo, Camera, and Planogram views",
       "project": "Rebotics 3",
@@ -4212,7 +4241,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-08-06T01:43:31.262-0700",
       "updated": "2026-08-17T02:09:20.422-0700",
-      "ageDays": 12,
+      "ageDays": 13,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20268"
@@ -5032,7 +5061,7 @@
       "reporter": "Brianne Tanke",
       "created": "2026-03-15T01:30:09.520-0700",
       "updated": "2026-08-14T06:14:25.973-0700",
-      "ageDays": 156,
+      "ageDays": 157,
       "staleDays": 4,
       "labels": [
         "Customer",
@@ -5465,7 +5494,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-07T01:37:36.457-0700",
       "updated": "2026-08-13T05:52:17.591-0700",
-      "ageDays": 11,
+      "ageDays": 12,
       "staleDays": 5,
       "labels": [
         "Android",
@@ -5744,7 +5773,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-06-24T01:36:58.767-0700",
       "updated": "2026-08-13T03:39:57.454-0700",
-      "ageDays": 55,
+      "ageDays": 56,
       "staleDays": 5,
       "labels": [
         "IOS"
@@ -5852,7 +5881,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-06-24T01:39:38.205-0700",
       "updated": "2026-08-13T02:16:25.673-0700",
-      "ageDays": 55,
+      "ageDays": 56,
       "staleDays": 5,
       "labels": [
         "IOS"
@@ -6131,7 +6160,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-10T01:26:44.118-0700",
       "updated": "2026-08-12T23:41:56.412-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 6,
       "labels": [
         "IOS",
@@ -7157,7 +7186,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-05T01:35:29.766-0700",
       "updated": "2026-08-11T23:32:46.751-0700",
-      "ageDays": 13,
+      "ageDays": 14,
       "staleDays": 7,
       "labels": [
         "Android",
@@ -7730,7 +7759,7 @@
       "created": "2026-08-10T01:16:57.940-0700",
       "updated": "2026-08-11T01:39:57.863-0700",
       "ageDays": 9,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [
         "IOS",
         "PRGM"
@@ -8640,7 +8669,7 @@
       "created": "2026-07-24T03:40:29.969-0700",
       "updated": "2026-08-10T01:27:13.930-0700",
       "ageDays": 25,
-      "staleDays": 8,
+      "staleDays": 9,
       "labels": [
         "Backend",
         "REBM"
@@ -8774,7 +8803,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-07-29T01:30:18.179-0700",
       "updated": "2026-08-09T23:36:15.008-0700",
-      "ageDays": 20,
+      "ageDays": 21,
       "staleDays": 9,
       "labels": [
         "Backend",
@@ -9277,7 +9306,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-07-31T01:35:29.978-0700",
       "updated": "2026-08-07T05:40:34.587-0700",
-      "ageDays": 18,
+      "ageDays": 19,
       "staleDays": 11,
       "labels": [
         "Android",
@@ -9333,7 +9362,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-07-30T01:40:02.865-0700",
       "updated": "2026-08-07T05:40:33.704-0700",
-      "ageDays": 19,
+      "ageDays": 20,
       "staleDays": 11,
       "labels": [
         "Android",
@@ -9584,7 +9613,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-04T01:26:42.753-0700",
       "updated": "2026-08-07T04:56:31.882-0700",
-      "ageDays": 14,
+      "ageDays": 15,
       "staleDays": 11,
       "labels": [
         "Android",
@@ -10083,7 +10112,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-07-31T01:39:51.295-0700",
       "updated": "2026-08-07T00:08:06.285-0700",
-      "ageDays": 18,
+      "ageDays": 19,
       "staleDays": 12,
       "labels": [
         "Android",
@@ -11149,7 +11178,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-06-19T01:32:50.179-0700",
       "updated": "2026-08-05T05:40:47.716-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 13,
       "labels": [
         "ALBT",
@@ -11178,7 +11207,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-06-19T01:34:22.936-0700",
       "updated": "2026-08-05T05:40:47.228-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 13,
       "labels": [
         "ALBT",
@@ -11207,7 +11236,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-06-19T01:35:51.800-0700",
       "updated": "2026-08-05T05:40:46.765-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 13,
       "labels": [
         "ALBT",
@@ -11236,7 +11265,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-06-19T01:36:42.338-0700",
       "updated": "2026-08-05T05:40:46.229-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 13,
       "labels": [
         "ALBT",
@@ -12131,7 +12160,7 @@
       "created": "2026-07-10T01:16:12.395-0700",
       "updated": "2026-08-05T01:27:56.163-0700",
       "ageDays": 40,
-      "staleDays": 13,
+      "staleDays": 14,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -12159,7 +12188,7 @@
       "created": "2026-07-10T01:11:32.186-0700",
       "updated": "2026-08-05T01:27:32.245-0700",
       "ageDays": 40,
-      "staleDays": 13,
+      "staleDays": 14,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -12187,7 +12216,7 @@
       "created": "2026-07-07T05:37:29.839-0700",
       "updated": "2026-08-05T01:27:03.649-0700",
       "ageDays": 42,
-      "staleDays": 13,
+      "staleDays": 14,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -12214,8 +12243,8 @@
       "reporter": "Sourabh Yadav",
       "created": "2026-07-02T01:29:50.202-0700",
       "updated": "2026-08-05T01:26:16.381-0700",
-      "ageDays": 47,
-      "staleDays": 13,
+      "ageDays": 48,
+      "staleDays": 14,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -12244,7 +12273,7 @@
       "created": "2026-06-10T00:56:40.496-0700",
       "updated": "2026-08-05T01:25:32.478-0700",
       "ageDays": 70,
-      "staleDays": 13,
+      "staleDays": 14,
       "labels": [
         "Customer",
         "MJHD",
@@ -12274,7 +12303,7 @@
       "created": "2026-05-22T05:53:49.874-0700",
       "updated": "2026-08-05T01:25:11.029-0700",
       "ageDays": 88,
-      "staleDays": 13,
+      "staleDays": 14,
       "labels": [
         "AD-HOC",
         "BE",
@@ -12521,7 +12550,7 @@
       "reporter": "Jesper Qi",
       "created": "2026-07-10T01:35:34.660-0700",
       "updated": "2026-08-04T06:26:33.213-0700",
-      "ageDays": 39,
+      "ageDays": 40,
       "staleDays": 14,
       "labels": [
         "AD-HOC",
@@ -13297,7 +13326,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-07-06T01:37:16.003-0700",
       "updated": "2026-07-30T23:07:53.068-0700",
-      "ageDays": 43,
+      "ageDays": 44,
       "staleDays": 19,
       "labels": [
         "AD-HOC",
@@ -13439,7 +13468,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-06-15T01:36:42.042-0700",
       "updated": "2026-07-30T23:06:51.911-0700",
-      "ageDays": 64,
+      "ageDays": 65,
       "staleDays": 19,
       "labels": [
         "PILOT",
@@ -13467,7 +13496,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2025-07-30T01:41:44.159-0700",
       "updated": "2026-07-30T22:58:27.484-0700",
-      "ageDays": 384,
+      "ageDays": 385,
       "staleDays": 19,
       "labels": [
         "Android"
@@ -13494,7 +13523,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-06-18T01:41:20.716-0700",
       "updated": "2026-07-30T04:51:41.335-0700",
-      "ageDays": 61,
+      "ageDays": 62,
       "staleDays": 19,
       "labels": [
         "PILOT",
@@ -13909,7 +13938,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-07-24T01:41:24.367-0700",
       "updated": "2026-07-29T04:38:59.239-0700",
-      "ageDays": 25,
+      "ageDays": 26,
       "staleDays": 20,
       "labels": [
         "ANDR",
@@ -14081,7 +14110,7 @@
       "created": "2026-07-24T02:58:43.458-0700",
       "updated": "2026-07-29T01:25:54.819-0700",
       "ageDays": 25,
-      "staleDays": 20,
+      "staleDays": 21,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -14209,7 +14238,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-15T01:29:35.577-0700",
       "updated": "2026-07-29T00:09:11.808-0700",
-      "ageDays": 64,
+      "ageDays": 65,
       "staleDays": 21,
       "labels": [
         "HAWKEYE",
@@ -14237,7 +14266,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-15T01:28:40.762-0700",
       "updated": "2026-07-29T00:09:04.160-0700",
-      "ageDays": 64,
+      "ageDays": 65,
       "staleDays": 21,
       "labels": [
         "HAWKEYE",
@@ -14265,7 +14294,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-15T01:27:34.291-0700",
       "updated": "2026-07-29T00:08:39.354-0700",
-      "ageDays": 64,
+      "ageDays": 65,
       "staleDays": 21,
       "labels": [
         "REBM",
@@ -14923,7 +14952,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-15T01:35:49.971-0700",
       "updated": "2026-07-28T09:40:58.199-0700",
-      "ageDays": 64,
+      "ageDays": 65,
       "staleDays": 21,
       "labels": [
         "SHIELD"
@@ -15193,7 +15222,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-07-21T01:39:25.091-0700",
       "updated": "2026-07-28T05:27:38.473-0700",
-      "ageDays": 28,
+      "ageDays": 29,
       "staleDays": 21,
       "labels": [
         "be",
@@ -15360,7 +15389,7 @@
       "reporter": "Zhuogang Peng",
       "created": "2026-07-08T01:34:37.680-0700",
       "updated": "2026-07-27T22:47:29.677-0700",
-      "ageDays": 41,
+      "ageDays": 42,
       "staleDays": 22,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20083"
@@ -17276,7 +17305,7 @@
       "created": "2025-07-11T14:59:32.355-0700",
       "updated": "2026-07-23T01:43:30.062-0700",
       "ageDays": 403,
-      "staleDays": 26,
+      "staleDays": 27,
       "labels": [
         "ALBT",
         "Customer"
@@ -20753,7 +20782,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-06-29T01:43:40.511-0700",
       "updated": "2026-07-15T10:04:26.295-0700",
-      "ageDays": 50,
+      "ageDays": 51,
       "staleDays": 34,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19936"
@@ -21628,7 +21657,7 @@
       "created": "2026-04-21T04:23:34.040-0700",
       "updated": "2026-07-14T01:43:39.591-0700",
       "ageDays": 119,
-      "staleDays": 35,
+      "staleDays": 36,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -21763,7 +21792,7 @@
       "created": "2026-03-10T06:01:52.105-0700",
       "updated": "2026-07-13T01:36:17.661-0700",
       "ageDays": 161,
-      "staleDays": 36,
+      "staleDays": 37,
       "labels": [
         "REGRESSION"
       ],
@@ -23012,7 +23041,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-03-13T01:26:35.571-0700",
       "updated": "2026-07-08T02:52:53.983-0700",
-      "ageDays": 158,
+      "ageDays": 159,
       "staleDays": 41,
       "labels": [
         "IOS"
@@ -23663,7 +23692,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2025-02-27T00:33:34.119-0800",
       "updated": "2026-07-06T05:49:57.740-0700",
-      "ageDays": 537,
+      "ageDays": 538,
       "staleDays": 43,
       "labels": [
         "Customer",
@@ -26478,7 +26507,7 @@
       "created": "2026-02-04T22:20:29.412-0800",
       "updated": "2026-06-24T01:39:54.212-0700",
       "ageDays": 195,
-      "staleDays": 55,
+      "staleDays": 56,
       "labels": [
         "AD-HOC",
         "Android",
@@ -26507,7 +26536,7 @@
       "created": "2026-03-18T21:51:38.512-0700",
       "updated": "2026-06-24T01:39:39.700-0700",
       "ageDays": 153,
-      "staleDays": 55,
+      "staleDays": 56,
       "labels": [
         "Android"
       ],
@@ -26534,7 +26563,7 @@
       "created": "2026-02-19T23:58:03.616-0800",
       "updated": "2026-06-24T01:37:00.636-0700",
       "ageDays": 180,
-      "staleDays": 55,
+      "staleDays": 56,
       "labels": [
         "Android"
       ],
@@ -27437,7 +27466,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-04-16T01:30:01.538-0700",
       "updated": "2026-06-22T05:11:36.487-0700",
-      "ageDays": 124,
+      "ageDays": 125,
       "staleDays": 57,
       "labels": [
         "AD-HOC",
@@ -27465,7 +27494,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-04-16T01:26:31.950-0700",
       "updated": "2026-06-22T05:11:35.822-0700",
-      "ageDays": 124,
+      "ageDays": 125,
       "staleDays": 57,
       "labels": [
         "ALBT"
@@ -27576,33 +27605,6 @@
         "IOS"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-19365"
-    },
-    {
-      "key": "REB3-19364",
-      "summary": "[ANDR] Add Barcode Recognition Support for CANPAR",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03",
-      "isReleased": true,
-      "releaseStatus": "Released",
-      "type": "Task",
-      "epic": "REB3-19239 - [Pilot] Add Barcode Recognition Support for CANPAR Shipping and Return Labels (SPAR)",
-      "status": "Done",
-      "statusCategory": "done",
-      "priority": "Medium",
-      "component": "ANDR",
-      "assignee": "Alexander Ryabchikov",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
-      "tester": "Alexander Ryabchikov",
-      "reporter": "Alexander Ryabchikov",
-      "created": "2026-03-31T23:15:01.669-0700",
-      "updated": "2026-06-22T05:11:32.269-0700",
-      "ageDays": 140,
-      "staleDays": 57,
-      "labels": [
-        "Android"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19364"
     }
   ]
 }
