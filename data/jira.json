@@ -1,32 +1,32 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-21T11:09:24.043340+00:00",
+  "lastUpdated": "2026-08-21T11:23:03.153047+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
     "openDefects": 222,
-    "blockers": 143,
+    "blockers": 144,
     "inProgress": 385,
     "inQa": 86,
-    "resolvedThisWeek": 53,
+    "resolvedThisWeek": 55,
     "resolvedTotal": 307
   },
   "byPriority": {
-    "Highest": 143,
+    "Highest": 144,
     "High": 264,
-    "Medium": 531,
+    "Medium": 530,
     "Low": 60,
     "Lowest": 2
   },
   "byComponent": {
-    "IOS": 212,
-    "ANDR": 225,
-    "BE REBM": 187,
-    "General": 188,
-    "DE": 66,
     "PARENT-WORK-ITEM": 27,
+    "DE": 67,
+    "General": 189,
+    "IOS": 212,
+    "ANDR": 224,
+    "BE REBM": 186,
     "HAWKEYE": 19,
     "QA": 4,
     "BE CORE": 26,
@@ -40,16 +40,16 @@
     "Customer": 1
   },
   "byStatus": {
-    "UAT": 238,
     "QA": 86,
+    "Done": 227,
+    "UAT": 238,
+    "To  Do": 158,
     "In Progress": 38,
     "Dev Complete": 21,
-    "To  Do": 158,
-    "Done": 226,
     "PRODUCTION READY": 30,
     "Code Review": 35,
     "Waiting for clarification": 64,
-    "Invalid": 81,
+    "Invalid": 80,
     "Staging": 23
   },
   "filterOptions": {
@@ -75,6 +75,7 @@
       "SI 2025.10.1 HF",
       "SI 2026.02",
       "SI 2026.02.2 HF - ANDR",
+      "SI 2026.02.8 HF for QKTP",
       "SI 2026.03",
       "SI 2026.03.1",
       "SI 2026.03.10 HF for RSMN",
@@ -241,6 +242,138 @@
   },
   "issues": [
     {
+      "key": "REB3-20324",
+      "summary": "Shipping Info \u2013 FedEx Tracking UI and Date Format Issues",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.18 Mobile HF",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Improvement",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "PARENT-WORK-ITEM",
+      "assignee": "Vishal Kohli",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/9a9700fc7ae838f189eadfa192f2a8cb?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVK-6.png",
+      "tester": "Aakash Oswal",
+      "reporter": "Aakash Oswal",
+      "created": "2026-08-10T23:27:29.116-0700",
+      "updated": "2026-08-21T04:22:28.814-0700",
+      "ageDays": 10,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20324"
+    },
+    {
+      "key": "REB3-19416",
+      "summary": "[DE][QKTP] Move QKTP Store Planogram date-adjustment logic from integration to mgmt import",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.02.8 HF for QKTP",
+      "isReleased": true,
+      "releaseStatus": "Released",
+      "type": "Task",
+      "epic": "None",
+      "status": "Done",
+      "statusCategory": "done",
+      "priority": "Highest",
+      "component": "DE",
+      "assignee": "Sriyuth Sagi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/55bf75d962493c6c2cc3a6d4583be454?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-1.png",
+      "tester": "Akanksha Jangir",
+      "reporter": "Akanksha Jangir",
+      "created": "2026-04-08T09:11:48.049-0700",
+      "updated": "2026-08-21T04:22:07.855-0700",
+      "ageDays": 134,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-19416"
+    },
+    {
+      "key": "REB3-19466",
+      "summary": "[BE REBM] [Django] ('',) appearing as default value instead of 'None' for DATA_IMPORT_PLANOGRAM_DATE_MODIFIERS setting.",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-bug",
+      "epic": "REB3-19416 - [DE][QKTP] Move QKTP Store Planogram date-adjustment logic from integration to mgmt import",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "DE",
+      "assignee": "Sriyuth Sagi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/55bf75d962493c6c2cc3a6d4583be454?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-1.png",
+      "tester": "Dheeraj Suyal",
+      "reporter": "Dheeraj Suyal",
+      "created": "2026-04-15T03:54:20.284-0700",
+      "updated": "2026-08-21T04:21:47.730-0700",
+      "ageDays": 128,
+      "staleDays": 0,
+      "labels": [
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-19466"
+    },
+    {
+      "key": "REB3-18149",
+      "summary": "[HAWKEYE][FE REBM] - Exporting more than 100 records using the store filter.",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "Hawkeye MVP",
+      "isReleased": true,
+      "releaseStatus": "Released",
+      "type": "Task",
+      "epic": "None",
+      "status": "Done",
+      "statusCategory": "done",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Anil Melinmani",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/4ab641520a75f9d3f1c973b4addb43c5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAM-6.png",
+      "tester": "Anil Melinmani",
+      "reporter": "Anil Melinmani",
+      "created": "2025-10-15T04:24:03.711-0700",
+      "updated": "2026-08-21T04:21:22.218-0700",
+      "ageDays": 309,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-18149"
+    },
+    {
+      "key": "REB3-20443",
+      "summary": "Core&mgmt sprint Q3",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.6 HF for RSMN",
+      "isReleased": true,
+      "releaseStatus": "Released",
+      "type": "Story",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Unassigned",
+      "assigneeAvatar": null,
+      "tester": "Bekzat",
+      "reporter": "Bekzat",
+      "created": "2026-08-21T04:12:50.242-0700",
+      "updated": "2026-08-21T04:12:50.348-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "PILOT"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20443"
+    },
+    {
       "key": "REB3-20085",
       "summary": "[IOS] Add Network Gate before Photo Upload in Survey Task",
       "project": "Rebotics 3",
@@ -289,7 +422,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-07-14T04:12:41.395-0700",
       "updated": "2026-08-21T04:07:16.842-0700",
-      "ageDays": 37,
+      "ageDays": 38,
       "staleDays": 0,
       "labels": [
         "Android",
@@ -1090,7 +1223,7 @@
       "reporter": "Vipin Nair",
       "created": "2026-06-19T04:19:02.004-0700",
       "updated": "2026-08-20T06:39:28.704-0700",
-      "ageDays": 62,
+      "ageDays": 63,
       "staleDays": 0,
       "labels": [
         "SHIELD"
@@ -1253,7 +1386,7 @@
       "created": "2026-08-19T01:34:17.854-0700",
       "updated": "2026-08-20T04:19:00.673-0700",
       "ageDays": 2,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -1282,7 +1415,7 @@
       "created": "2026-08-19T08:02:02.817-0700",
       "updated": "2026-08-20T04:14:37.657-0700",
       "ageDays": 1,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "IOS",
         "PRGM",
@@ -1311,7 +1444,7 @@
       "created": "2026-08-19T23:28:18.508-0700",
       "updated": "2026-08-20T04:14:35.776-0700",
       "ageDays": 1,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "IOS",
         "PRGM"
@@ -2052,7 +2185,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-06T04:13:24.168-0700",
       "updated": "2026-08-20T02:01:52.669-0700",
-      "ageDays": 14,
+      "ageDays": 15,
       "staleDays": 1,
       "labels": [
         "AD-HOC",
@@ -2759,34 +2892,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20264"
     },
     {
-      "key": "REB3-20324",
-      "summary": "Shipping Info \u2013 FedEx Tracking UI and Date Format Issues",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.18 Mobile HF",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Improvement",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "PARENT-WORK-ITEM",
-      "assignee": "Vishal Kohli",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/9a9700fc7ae838f189eadfa192f2a8cb?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVK-6.png",
-      "tester": "Aakash Oswal",
-      "reporter": "Aakash Oswal",
-      "created": "2026-08-10T23:27:29.116-0700",
-      "updated": "2026-08-20T01:50:04.303-0700",
-      "ageDays": 10,
-      "staleDays": 1,
-      "labels": [
-        "AD-HOC",
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20324"
-    },
-    {
       "key": "REB3-20397",
       "summary": "[ANDR] Day code Badge Should be moved below TrackingID",
       "project": "Rebotics 3",
@@ -3028,7 +3133,7 @@
       "reporter": "Anton Tyuvaev",
       "created": "2021-07-08T04:20:15.987-0700",
       "updated": "2026-08-19T23:52:04.122-0700",
-      "ageDays": 1869,
+      "ageDays": 1870,
       "staleDays": 1,
       "labels": [
         "Android",
@@ -3057,7 +3162,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-17T04:18:05.134-0700",
       "updated": "2026-08-19T23:28:19.743-0700",
-      "ageDays": 3,
+      "ageDays": 4,
       "staleDays": 1,
       "labels": [
         "IOS",
@@ -4299,7 +4404,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-08-13T04:18:51.710-0700",
       "updated": "2026-08-19T00:58:28.028-0700",
-      "ageDays": 7,
+      "ageDays": 8,
       "staleDays": 2,
       "labels": [
         "ANDR",
@@ -4705,7 +4810,7 @@
       "reporter": "vikas yadav",
       "created": "2026-06-22T04:19:23.080-0700",
       "updated": "2026-08-19T00:40:39.477-0700",
-      "ageDays": 59,
+      "ageDays": 60,
       "staleDays": 2,
       "labels": [
         "ALBT",
@@ -5124,7 +5229,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-08-10T04:11:09.461-0700",
       "updated": "2026-08-18T05:45:30.707-0700",
-      "ageDays": 10,
+      "ageDays": 11,
       "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20300"
@@ -5286,7 +5391,7 @@
       "created": "2026-07-22T00:23:25.361-0700",
       "updated": "2026-08-18T04:22:47.061-0700",
       "ageDays": 30,
-      "staleDays": 2,
+      "staleDays": 3,
       "labels": [
         "SHIELD",
         "iOS"
@@ -5314,7 +5419,7 @@
       "created": "2026-07-22T00:14:40.934-0700",
       "updated": "2026-08-18T04:22:44.421-0700",
       "ageDays": 30,
-      "staleDays": 2,
+      "staleDays": 3,
       "labels": [
         "SHIELD",
         "iOS"
@@ -7535,7 +7640,7 @@
       "created": "2024-08-28T02:40:52.206-0700",
       "updated": "2026-08-13T04:22:01.514-0700",
       "ageDays": 723,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [
         "Android"
       ],
@@ -7562,7 +7667,7 @@
       "created": "2026-06-29T03:58:45.662-0700",
       "updated": "2026-08-13T04:18:51.923-0700",
       "ageDays": 53,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [
         "ANDR",
         "Customer",
@@ -7591,7 +7696,7 @@
       "created": "2025-08-07T02:22:43.017-0700",
       "updated": "2026-08-13T04:11:55.700-0700",
       "ageDays": 379,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [
         "ROADMAP_2026_04"
       ],
@@ -8116,7 +8221,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-12T04:14:16.643-0700",
       "updated": "2026-08-12T23:40:41.120-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 8,
       "labels": [
         "IOS",
@@ -8506,7 +8611,7 @@
       "created": "2026-07-13T00:15:34.141-0700",
       "updated": "2026-08-12T04:14:55.768-0700",
       "ageDays": 39,
-      "staleDays": 8,
+      "staleDays": 9,
       "labels": [
         "SHIELD"
       ],
@@ -8533,7 +8638,7 @@
       "created": "2026-07-13T00:17:51.846-0700",
       "updated": "2026-08-12T04:14:51.973-0700",
       "ageDays": 39,
-      "staleDays": 8,
+      "staleDays": 9,
       "labels": [
         "SHIELD"
       ],
@@ -9173,7 +9278,7 @@
       "created": "2026-08-10T23:53:49.525-0700",
       "updated": "2026-08-11T04:15:24.452-0700",
       "ageDays": 10,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "IOS",
         "PRGM"
@@ -9201,7 +9306,7 @@
       "created": "2026-08-11T00:11:15.219-0700",
       "updated": "2026-08-11T04:15:23.552-0700",
       "ageDays": 10,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "IOS",
         "PRGM"
@@ -9229,7 +9334,7 @@
       "created": "2026-08-10T00:50:28.841-0700",
       "updated": "2026-08-11T04:12:02.320-0700",
       "ageDays": 11,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20293"
     },
@@ -9777,7 +9882,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-06T04:12:10.881-0700",
       "updated": "2026-08-10T03:35:18.034-0700",
-      "ageDays": 14,
+      "ageDays": 15,
       "staleDays": 11,
       "labels": [
         "AD-HOC",
@@ -11041,7 +11146,7 @@
       "created": "2026-06-02T18:34:18.622-0700",
       "updated": "2026-08-07T04:19:55.940-0700",
       "ageDays": 79,
-      "staleDays": 13,
+      "staleDays": 14,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19764"
     },
@@ -11730,7 +11835,7 @@
       "reporter": "Vipin Nair",
       "created": "2026-06-22T04:21:48.328-0700",
       "updated": "2026-08-05T06:06:30.873-0700",
-      "ageDays": 59,
+      "ageDays": 60,
       "staleDays": 15,
       "labels": [
         "ALBT",
@@ -15139,7 +15244,7 @@
       "created": "2026-07-13T04:05:03.386-0700",
       "updated": "2026-07-29T04:18:34.435-0700",
       "ageDays": 39,
-      "staleDays": 22,
+      "staleDays": 23,
       "labels": [
         "Customer",
         "QKTP"
@@ -16797,7 +16902,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-06-09T04:10:38.234-0700",
       "updated": "2026-07-27T05:58:35.091-0700",
-      "ageDays": 72,
+      "ageDays": 73,
       "staleDays": 24,
       "labels": [
         "AD-HOC",
@@ -17953,7 +18058,7 @@
       "created": "2026-07-23T02:44:00.021-0700",
       "updated": "2026-07-23T04:17:59.718-0700",
       "ageDays": 29,
-      "staleDays": 28,
+      "staleDays": 29,
       "labels": [
         "Backend",
         "REBM"
@@ -17981,7 +18086,7 @@
       "created": "2026-07-15T00:34:28.116-0700",
       "updated": "2026-07-23T04:09:32.214-0700",
       "ageDays": 37,
-      "staleDays": 28,
+      "staleDays": 29,
       "labels": [
         "ALBT",
         "Customer"
@@ -20294,7 +20399,7 @@
       "created": "2025-12-18T06:05:55.762-0800",
       "updated": "2026-07-20T04:18:32.970-0700",
       "ageDays": 245,
-      "staleDays": 31,
+      "staleDays": 32,
       "labels": [
         "Customer"
       ],
@@ -20683,7 +20788,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-07-16T04:11:06.973-0700",
       "updated": "2026-07-20T03:01:38.930-0700",
-      "ageDays": 35,
+      "ageDays": 36,
       "staleDays": 32,
       "labels": [
         "ANDR",
@@ -21229,7 +21334,7 @@
       "created": "2026-06-03T09:33:29.250-0700",
       "updated": "2026-07-16T04:12:39.540-0700",
       "ageDays": 78,
-      "staleDays": 35,
+      "staleDays": 36,
       "labels": [
         "ALBT",
         "Customer"
@@ -22130,7 +22235,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-05-15T04:21:11.227-0700",
       "updated": "2026-07-14T07:48:15.563-0700",
-      "ageDays": 97,
+      "ageDays": 98,
       "staleDays": 37,
       "labels": [
         "Customer"
@@ -22632,7 +22737,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-07-01T04:10:40.999-0700",
       "updated": "2026-07-12T23:54:35.019-0700",
-      "ageDays": 50,
+      "ageDays": 51,
       "staleDays": 39,
       "labels": [
         "Customer"
@@ -24183,31 +24288,6 @@
         "SHIELD"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-18899"
-    },
-    {
-      "key": "REB3-18149",
-      "summary": "[HAWKEYE][FE REBM] - Exporting more than 100 records using the store filter.",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "Hawkeye MVP",
-      "isReleased": true,
-      "releaseStatus": "Released",
-      "type": "Task",
-      "epic": "None",
-      "status": "Done",
-      "statusCategory": "done",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Anil Melinmani",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/4ab641520a75f9d3f1c973b4addb43c5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAM-6.png",
-      "tester": "Anil Melinmani",
-      "reporter": "Anil Melinmani",
-      "created": "2025-10-15T04:24:03.711-0700",
-      "updated": "2026-07-07T05:19:21.534-0700",
-      "ageDays": 309,
-      "staleDays": 44,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-18149"
     },
     {
       "key": "REB3-18436",
@@ -25786,33 +25866,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-19243"
     },
     {
-      "key": "REB3-19466",
-      "summary": "[BE REBM] [Django] ('',) appearing as default value instead of 'None' for DATA_IMPORT_PLANOGRAM_DATE_MODIFIERS setting.",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-bug",
-      "epic": "REB3-19416 - [DE][QKTP] Move QKTP Store Planogram date-adjustment logic from integration to mgmt import",
-      "status": "UAT",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "DE",
-      "assignee": "Sriyuth Sagi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/55bf75d962493c6c2cc3a6d4583be454?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-1.png",
-      "tester": "Dheeraj Suyal",
-      "reporter": "Dheeraj Suyal",
-      "created": "2026-04-15T03:54:20.284-0700",
-      "updated": "2026-06-29T01:18:03.466-0700",
-      "ageDays": 128,
-      "staleDays": 53,
-      "labels": [
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19466"
-    },
-    {
       "key": "REB3-19472",
       "summary": "[MOBILE] Dovid items not visible for task after applied Advance product filter",
       "project": "Rebotics 3",
@@ -26251,7 +26304,7 @@
       "reporter": "Vishal Kohli",
       "created": "2025-08-19T04:18:22.853-0700",
       "updated": "2026-06-29T01:15:15.092-0700",
-      "ageDays": 366,
+      "ageDays": 367,
       "staleDays": 53,
       "labels": [
         "Customer"
@@ -26359,7 +26412,7 @@
       "reporter": "Vishal Kohli",
       "created": "2025-10-06T04:19:10.206-0700",
       "updated": "2026-06-29T01:15:09.697-0700",
-      "ageDays": 318,
+      "ageDays": 319,
       "staleDays": 53,
       "labels": [
         "Customer"
@@ -27452,7 +27505,7 @@
       "reporter": "Prakash",
       "created": "2024-07-23T04:20:52.337-0700",
       "updated": "2026-06-23T17:57:04.089-0700",
-      "ageDays": 758,
+      "ageDays": 759,
       "staleDays": 58,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-15249"
@@ -27477,7 +27530,7 @@
       "reporter": "Former user",
       "created": "2023-12-25T03:14:21.660-0800",
       "updated": "2026-06-23T17:54:47.537-0700",
-      "ageDays": 969,
+      "ageDays": 970,
       "staleDays": 58,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-13571"
@@ -27589,63 +27642,6 @@
       "staleDays": 59,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18729"
-    },
-    {
-      "key": "REB3-16641",
-      "summary": "Failed : [Mobile ANDR Regression] identify badge count not showing for supplier ",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "REB3: Mobile backlog",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "ANDR",
-      "assignee": "Unassigned",
-      "assigneeAvatar": null,
-      "tester": "Dev Singh Rathore",
-      "reporter": "Dev Singh Rathore",
-      "created": "2025-02-27T04:25:13.550-0800",
-      "updated": "2026-06-22T23:50:07.350-0700",
-      "ageDays": 539,
-      "staleDays": 59,
-      "labels": [
-        "ANDR",
-        "Android"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-16641"
-    },
-    {
-      "key": "REB3-19698",
-      "summary": "[SONA] Action report of fresh fullness pictures cannot be visited",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Invalid",
-      "statusCategory": "done",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Vishal Kohli",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/9a9700fc7ae838f189eadfa192f2a8cb?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVK-6.png",
-      "tester": "Jesper Qi",
-      "reporter": "Jesper Qi",
-      "created": "2026-05-27T09:04:39.094-0700",
-      "updated": "2026-06-22T23:26:43.282-0700",
-      "ageDays": 85,
-      "staleDays": 59,
-      "labels": [
-        "AD-HOC",
-        "PILOT",
-        "SONA"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19698"
     }
   ]
 }
