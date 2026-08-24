@@ -1,15 +1,15 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-24T12:07:30.946988+00:00",
+  "lastUpdated": "2026-08-24T12:25:07.532079+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 219,
+    "openDefects": 218,
     "blockers": 147,
     "inProgress": 345,
-    "inQa": 107,
+    "inQa": 108,
     "resolvedThisWeek": 102,
     "resolvedTotal": 329
   },
@@ -21,10 +21,10 @@
     "Lowest": 2
   },
   "byComponent": {
-    "General": 184,
-    "PARENT-WORK-ITEM": 29,
     "BE REBM": 187,
-    "IOS": 226,
+    "PARENT-WORK-ITEM": 29,
+    "IOS": 227,
+    "General": 183,
     "ANDR": 215,
     "BE CORE": 28,
     "DE": 62,
@@ -40,11 +40,11 @@
     "AI CORE": 1
   },
   "byStatus": {
-    "To  Do": 156,
+    "QA": 108,
     "Code Review": 32,
-    "UAT": 219,
     "In Progress": 36,
-    "QA": 107,
+    "UAT": 219,
+    "To  Do": 155,
     "Done": 253,
     "Waiting for clarification": 63,
     "Invalid": 76,
@@ -240,31 +240,33 @@
   },
   "issues": [
     {
-      "key": "REB3-20449",
-      "summary": "[IOS] Set Aside Actions Should Appear Before Move From Bay Actions in Set Aside Group",
+      "key": "REB3-20395",
+      "summary": "[BE REBM] [SONA] Big arrow : different Big arrow Price tag assigned to same BBox",
       "project": "Rebotics 3",
       "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "fixVersion": "SI 2026.4",
       "isReleased": false,
       "releaseStatus": "Unreleased",
       "type": "Bug",
       "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "vikas yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-08-24T05:04:45.691-0700",
-      "updated": "2026-08-24T05:06:49.825-0700",
-      "ageDays": 0,
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "BE REBM",
+      "assignee": "Sourabh Yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/1992b54c65168d62b06676d8fba9defa?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSY-1.png",
+      "tester": "Gautam Chakraborty",
+      "reporter": "Gautam Chakraborty",
+      "created": "2026-08-14T03:30:56.559-0700",
+      "updated": "2026-08-24T05:16:46.174-0700",
+      "ageDays": 10,
       "staleDays": 0,
       "labels": [
-        "IOS"
+        "AD-HOC",
+        "PILOT",
+        "SONA"
       ],
-      "url": "https://retech.atlassian.net/browse/REB3-20449"
+      "url": "https://retech.atlassian.net/browse/REB3-20395"
     },
     {
       "key": "REB3-20441",
@@ -285,14 +287,40 @@
       "tester": "vikas yadav",
       "reporter": "vikas yadav",
       "created": "2026-08-21T01:49:15.119-0700",
-      "updated": "2026-08-24T05:01:44.160-0700",
+      "updated": "2026-08-24T05:12:26.935-0700",
       "ageDays": 3,
       "staleDays": 0,
       "labels": [
-        "AD-HOC",
-        "Customer"
+        "iOS"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20441"
+    },
+    {
+      "key": "REB3-20449",
+      "summary": "[IOS] Set Aside Actions Should Appear Before Move From Bay Actions in Set Aside Group",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "In Progress",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "vikas yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-08-24T05:04:45.691-0700",
+      "updated": "2026-08-24T05:12:19.910-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "iOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20449"
     },
     {
       "key": "REB3-20380",
@@ -371,35 +399,6 @@
         "REBM"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20448"
-    },
-    {
-      "key": "REB3-20395",
-      "summary": "[BE REBM] [SONA] Big arrow : different Big arrow Price tag assigned to same BBox",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "BE REBM",
-      "assignee": "Sourabh Yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/1992b54c65168d62b06676d8fba9defa?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSY-1.png",
-      "tester": "Gautam Chakraborty",
-      "reporter": "Gautam Chakraborty",
-      "created": "2026-08-14T03:30:56.559-0700",
-      "updated": "2026-08-24T04:41:24.989-0700",
-      "ageDays": 10,
-      "staleDays": 0,
-      "labels": [
-        "AD-HOC",
-        "PILOT",
-        "SONA"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20395"
     },
     {
       "key": "REB3-20447",
@@ -737,7 +736,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-18T05:11:18.347-0700",
       "updated": "2026-08-24T04:03:05.221-0700",
-      "ageDays": 5,
+      "ageDays": 6,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20420"
@@ -818,7 +817,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-08-21T05:18:20.009-0700",
       "updated": "2026-08-24T03:44:48.737-0700",
-      "ageDays": 2,
+      "ageDays": 3,
       "staleDays": 0,
       "labels": [
         "AD-HOC",
@@ -2858,7 +2857,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-21T05:08:47.069-0700",
       "updated": "2026-08-24T00:51:06.823-0700",
-      "ageDays": 2,
+      "ageDays": 3,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20444"
@@ -3271,7 +3270,7 @@
       "reporter": "Farid Khalikov",
       "created": "2026-07-31T05:13:03.583-0700",
       "updated": "2026-08-23T18:49:36.584-0700",
-      "ageDays": 23,
+      "ageDays": 24,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20212"
@@ -3484,7 +3483,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-10T05:17:20.295-0700",
       "updated": "2026-08-21T04:42:29.025-0700",
-      "ageDays": 13,
+      "ageDays": 14,
       "staleDays": 3,
       "labels": [
         "Android",
@@ -3623,7 +3622,7 @@
       "reporter": "vikas yadav",
       "created": "2026-08-10T05:10:18.978-0700",
       "updated": "2026-08-21T04:42:28.474-0700",
-      "ageDays": 13,
+      "ageDays": 14,
       "staleDays": 3,
       "labels": [
         "SHIELD",
@@ -3766,7 +3765,7 @@
       "reporter": "vikas yadav",
       "created": "2026-08-10T05:09:01.614-0700",
       "updated": "2026-08-21T04:42:27.892-0700",
-      "ageDays": 13,
+      "ageDays": 14,
       "staleDays": 3,
       "labels": [
         "SHIELD",
@@ -4630,7 +4629,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-11T05:09:44.047-0700",
       "updated": "2026-08-21T04:42:22.138-0700",
-      "ageDays": 12,
+      "ageDays": 13,
       "staleDays": 3,
       "labels": [
         "IOS",
@@ -5733,7 +5732,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-05T05:18:31.120-0700",
       "updated": "2026-08-21T04:42:15.833-0700",
-      "ageDays": 18,
+      "ageDays": 19,
       "staleDays": 3,
       "labels": [
         "ALBT",
@@ -7653,7 +7652,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-06-16T05:17:59.220-0700",
       "updated": "2026-08-21T04:42:05.889-0700",
-      "ageDays": 68,
+      "ageDays": 69,
       "staleDays": 3,
       "labels": [
         "IOS",
@@ -7959,7 +7958,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-05-18T05:22:54.526-0700",
       "updated": "2026-08-21T04:42:05.055-0700",
-      "ageDays": 97,
+      "ageDays": 98,
       "staleDays": 3,
       "labels": [
         "SHIELD",
@@ -9196,7 +9195,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-06T05:15:25.800-0700",
       "updated": "2026-08-21T04:29:18.257-0700",
-      "ageDays": 17,
+      "ageDays": 18,
       "staleDays": 3,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20280"
@@ -9221,7 +9220,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-13T05:20:35.331-0700",
       "updated": "2026-08-21T04:29:18.205-0700",
-      "ageDays": 10,
+      "ageDays": 11,
       "staleDays": 3,
       "labels": [
         "ANDR"
@@ -9416,7 +9415,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-08-06T05:11:11.339-0700",
       "updated": "2026-08-21T04:29:17.397-0700",
-      "ageDays": 17,
+      "ageDays": 18,
       "staleDays": 3,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20279"
@@ -11463,7 +11462,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-16T05:18:01.221-0700",
       "updated": "2026-08-21T04:29:02.306-0700",
-      "ageDays": 68,
+      "ageDays": 69,
       "staleDays": 3,
       "labels": [
         "HAWKEYE",
@@ -12986,7 +12985,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-12T05:08:47.539-0700",
       "updated": "2026-08-21T04:28:49.157-0700",
-      "ageDays": 72,
+      "ageDays": 73,
       "staleDays": 3,
       "labels": [
         "AD-HOC",
@@ -15751,7 +15750,7 @@
       "created": "2026-01-14T07:47:14.564-0800",
       "updated": "2026-08-18T05:17:59.497-0700",
       "ageDays": 221,
-      "staleDays": 5,
+      "staleDays": 6,
       "labels": [
         "AD-HOC",
         "ASDA",
@@ -17122,7 +17121,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-03T05:24:49.529-0700",
       "updated": "2026-08-11T23:34:32.276-0700",
-      "ageDays": 20,
+      "ageDays": 21,
       "staleDays": 12,
       "labels": [
         "IOS",
@@ -17903,7 +17902,7 @@
       "reporter": "Farid Khalikov",
       "created": "2025-12-17T04:12:50.046-0800",
       "updated": "2026-08-07T03:23:36.843-0700",
-      "ageDays": 249,
+      "ageDays": 250,
       "staleDays": 17,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18632"
@@ -19687,7 +19686,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-08-01T05:15:57.885-0700",
       "updated": "2026-08-05T05:40:18.786-0700",
-      "ageDays": 22,
+      "ageDays": 23,
       "staleDays": 18,
       "labels": [
         "Customer"
@@ -20172,7 +20171,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-07-07T05:22:30.589-0700",
       "updated": "2026-07-31T02:05:09.899-0700",
-      "ageDays": 47,
+      "ageDays": 48,
       "staleDays": 24,
       "labels": [
         "AD-HOC",
@@ -23850,7 +23849,7 @@
       "reporter": "Prakash",
       "created": "2023-09-07T05:12:55.406-0700",
       "updated": "2026-07-22T17:11:33.295-0700",
-      "ageDays": 1081,
+      "ageDays": 1082,
       "staleDays": 32,
       "labels": [
         "ALL",
@@ -25484,7 +25483,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-07-13T05:07:46.219-0700",
       "updated": "2026-07-15T01:17:59.842-0700",
-      "ageDays": 41,
+      "ageDays": 42,
       "staleDays": 40,
       "labels": [
         "AD-HOC",
@@ -25731,7 +25730,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-07-07T05:14:17.965-0700",
       "updated": "2026-07-14T02:45:52.278-0700",
-      "ageDays": 47,
+      "ageDays": 48,
       "staleDays": 41,
       "labels": [
         "Customer",
@@ -25787,7 +25786,7 @@
       "created": "2026-03-02T00:04:41.797-0800",
       "updated": "2026-07-13T05:07:48.024-0700",
       "ageDays": 175,
-      "staleDays": 41,
+      "staleDays": 42,
       "labels": [
         "AD-HOC"
       ],
@@ -26008,7 +26007,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-06-22T05:11:51.879-0700",
       "updated": "2026-07-12T23:53:40.739-0700",
-      "ageDays": 62,
+      "ageDays": 63,
       "staleDays": 42,
       "labels": [
         "ALBT",
@@ -26947,7 +26946,7 @@
       "reporter": "Anastasia Sokolova",
       "created": "2026-01-13T04:22:54.453-0800",
       "updated": "2026-07-08T02:52:51.927-0700",
-      "ageDays": 222,
+      "ageDays": 223,
       "staleDays": 47,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18728"
@@ -26972,7 +26971,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-04-07T05:16:00.848-0700",
       "updated": "2026-07-08T02:52:51.081-0700",
-      "ageDays": 138,
+      "ageDays": 139,
       "staleDays": 47,
       "labels": [
         "ALBT"
@@ -27371,7 +27370,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-06-22T05:12:58.773-0700",
       "updated": "2026-07-02T07:27:37.660-0700",
-      "ageDays": 62,
+      "ageDays": 63,
       "staleDays": 52,
       "labels": [
         "ALBT",
