@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-25T10:13:09.738619+00:00",
+  "lastUpdated": "2026-08-25T10:27:49.340072+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -8,8 +8,8 @@
     "totalDefects": 1000,
     "openDefects": 214,
     "blockers": 145,
-    "inProgress": 353,
-    "inQa": 111,
+    "inProgress": 348,
+    "inQa": 116,
     "resolvedThisWeek": 95,
     "resolvedTotal": 322
   },
@@ -22,9 +22,9 @@
   },
   "byComponent": {
     "IOS": 225,
+    "ANDR": 215,
     "General": 188,
     "BE CORE": 30,
-    "ANDR": 215,
     "BE REBM": 183,
     "PARENT-WORK-ITEM": 28,
     "DE": 62,
@@ -40,17 +40,17 @@
     "AI CORE": 1
   },
   "byStatus": {
+    "UAT": 223,
+    "QA": 116,
     "Code Review": 31,
-    "In Progress": 39,
-    "UAT": 222,
-    "Dev Complete": 7,
+    "In Progress": 38,
     "Staging": 14,
     "To  Do": 153,
-    "QA": 111,
     "Waiting for clarification": 61,
     "Done": 249,
     "Invalid": 73,
-    "PRODUCTION READY": 40
+    "PRODUCTION READY": 40,
+    "Dev Complete": 2
   },
   "filterOptions": {
     "projects": [
@@ -237,6 +237,195 @@
   },
   "issues": [
     {
+      "key": "REB3-20429",
+      "summary": "[WSTM][iOS] Survey skip logic is not working for multiple choice question type",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.24 release for WSTM",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Vishal Kohli",
+      "reporter": "Vishal Kohli",
+      "created": "2026-08-19T01:34:17.854-0700",
+      "updated": "2026-08-25T03:22:15.549-0700",
+      "ageDays": 6,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PILOT",
+        "WSTM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20429"
+    },
+    {
+      "key": "REB3-20437",
+      "summary": "[ANDR] IR \u2013 Performed but Unsaved Actions Revert to Undone State After Tablet Sleep/Wake",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Story",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "ANDR",
+      "assignee": "Alexander Ryabchikov",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
+      "tester": "Gaurav Tripathi",
+      "reporter": "Gaurav Tripathi",
+      "created": "2026-08-20T04:32:20.324-0700",
+      "updated": "2026-08-25T03:15:25.005-0700",
+      "ageDays": 4,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20437"
+    },
+    {
+      "key": "REB3-20410",
+      "summary": "Android: Set Bay Screen UI/Behavior Differs from iOS Implementation",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "General",
+      "assignee": "Alexander Ryabchikov",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-08-17T02:55:25.831-0700",
+      "updated": "2026-08-25T03:15:24.412-0700",
+      "ageDays": 8,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20410"
+    },
+    {
+      "key": "REB3-20409",
+      "summary": "Android: Fixture Validation Popup UI Does Not Match Figma Design",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "General",
+      "assignee": "Alexander Ryabchikov",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-08-17T02:47:44.532-0700",
+      "updated": "2026-08-25T03:15:23.844-0700",
+      "ageDays": 8,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20409"
+    },
+    {
+      "key": "REB3-20404",
+      "summary": "Android: Low Compliance Modal UI Does Not Match Figma Design",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "General",
+      "assignee": "Hemant Singh",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-08-16T22:55:41.419-0700",
+      "updated": "2026-08-25T03:15:23.360-0700",
+      "ageDays": 8,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20404"
+    },
+    {
+      "key": "REB3-20402",
+      "summary": "[ANDR]Pre-Photo Step: Incomplete Button UI Does Not Match Figma Design",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Hemant Singh",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-08-16T22:18:46.509-0700",
+      "updated": "2026-08-25T03:15:22.576-0700",
+      "ageDays": 8,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20402"
+    },
+    {
+      "key": "REB3-20456",
+      "summary": "[BE CORE] The obstacle mask model is not identifying the head of a human",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "BE CORE",
+      "assignee": "Ashok Pilli",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
+      "tester": "Gautam Chakraborty",
+      "reporter": "Gautam Chakraborty",
+      "created": "2026-08-25T00:48:19.545-0700",
+      "updated": "2026-08-25T03:13:54.601-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20456"
+    },
+    {
       "key": "REB3-20341",
       "summary": "[iOS]Product Search: Product location is not highlighted in Planogram after selecting location",
       "project": "Rebotics 3",
@@ -256,7 +445,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-11T03:23:49.885-0700",
       "updated": "2026-08-25T03:10:40.289-0700",
-      "ageDays": 13,
+      "ageDays": 14,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20341"
@@ -285,31 +474,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20458"
-    },
-    {
-      "key": "REB3-20456",
-      "summary": "[BE CORE] The obstacle mask model is not identifying the head of a human",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "BE CORE",
-      "assignee": "Ashok Pilli",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
-      "tester": "Gautam Chakraborty",
-      "reporter": "Gautam Chakraborty",
-      "created": "2026-08-25T00:48:19.545-0700",
-      "updated": "2026-08-25T02:38:26.182-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20456"
     },
     {
       "key": "REB3-20426",
@@ -364,33 +528,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20452"
-    },
-    {
-      "key": "REB3-20437",
-      "summary": "[ANDR] IR \u2013 Performed but Unsaved Actions Revert to Undone State After Tablet Sleep/Wake",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Story",
-      "epic": "None",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "ANDR",
-      "assignee": "Alexander Ryabchikov",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
-      "tester": "Gaurav Tripathi",
-      "reporter": "Gaurav Tripathi",
-      "created": "2026-08-20T04:32:20.324-0700",
-      "updated": "2026-08-25T01:33:47.113-0700",
-      "ageDays": 4,
-      "staleDays": 0,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20437"
     },
     {
       "key": "REB3-20442",
@@ -491,7 +628,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-11T03:22:53.507-0700",
       "updated": "2026-08-25T00:55:34.732-0700",
-      "ageDays": 13,
+      "ageDays": 14,
       "staleDays": 0,
       "labels": [
         "AD-HOC",
@@ -636,7 +773,7 @@
       "reporter": "Artem Kanarev",
       "created": "2026-08-19T03:17:46.909-0700",
       "updated": "2026-08-25T00:10:26.948-0700",
-      "ageDays": 5,
+      "ageDays": 6,
       "staleDays": 0,
       "labels": [
         "AD-HOC",
@@ -841,35 +978,6 @@
         "WSTM"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20435"
-    },
-    {
-      "key": "REB3-20429",
-      "summary": "[WSTM][iOS] Survey skip logic is not working for multiple choice question type",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.24 release for WSTM",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Vishal Kohli",
-      "reporter": "Vishal Kohli",
-      "created": "2026-08-19T01:34:17.854-0700",
-      "updated": "2026-08-24T23:04:59.335-0700",
-      "ageDays": 6,
-      "staleDays": 0,
-      "labels": [
-        "AD-HOC",
-        "PILOT",
-        "WSTM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20429"
     },
     {
       "key": "REB3-20445",
@@ -1170,33 +1278,6 @@
         "PRGM"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20447"
-    },
-    {
-      "key": "REB3-20410",
-      "summary": "Android: Set Bay Screen UI/Behavior Differs from iOS Implementation",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "General",
-      "assignee": "Alexander Ryabchikov",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-08-17T02:55:25.831-0700",
-      "updated": "2026-08-24T05:59:02.135-0700",
-      "ageDays": 8,
-      "staleDays": 0,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20410"
     },
     {
       "key": "REB3-20395",
@@ -1722,7 +1803,7 @@
       "created": "2026-05-07T05:53:33.068-0700",
       "updated": "2026-08-24T03:23:56.443-0700",
       "ageDays": 109,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "AD-HOC",
         "PRGM"
@@ -1750,7 +1831,7 @@
       "created": "2026-02-12T09:22:48.548-0800",
       "updated": "2026-08-24T03:16:19.771-0700",
       "ageDays": 193,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "Customer",
         "MJHD",
@@ -1781,7 +1862,7 @@
       "created": "2026-07-07T05:37:59.694-0700",
       "updated": "2026-08-24T03:15:22.115-0700",
       "ageDays": 48,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -1809,7 +1890,7 @@
       "created": "2026-07-07T05:37:45.581-0700",
       "updated": "2026-08-24T03:14:41.001-0700",
       "ageDays": 48,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -1837,7 +1918,7 @@
       "created": "2026-07-07T03:49:47.927-0700",
       "updated": "2026-08-24T03:13:54.864-0700",
       "ageDays": 48,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -1865,7 +1946,7 @@
       "created": "2026-07-14T01:00:22.188-0700",
       "updated": "2026-08-24T03:13:18.367-0700",
       "ageDays": 42,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "Customer",
         "iOS"
@@ -4033,33 +4114,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20367"
     },
     {
-      "key": "REB3-20409",
-      "summary": "Android: Fixture Validation Popup UI Does Not Match Figma Design",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "General",
-      "assignee": "Alexander Ryabchikov",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-08-17T02:47:44.532-0700",
-      "updated": "2026-08-21T04:42:28.543-0700",
-      "ageDays": 8,
-      "staleDays": 3,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20409"
-    },
-    {
       "key": "REB3-20377",
       "summary": "[VAPT][ANDR]Implement Root Detection for Android Application",
       "project": "Rebotics 3",
@@ -4249,7 +4303,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-11T03:14:14.923-0700",
       "updated": "2026-08-21T04:42:26.682-0700",
-      "ageDays": 13,
+      "ageDays": 14,
       "staleDays": 3,
       "labels": [
         "IOS",
@@ -5447,7 +5501,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-10T03:17:43.236-0700",
       "updated": "2026-08-21T04:42:17.752-0700",
-      "ageDays": 14,
+      "ageDays": 15,
       "staleDays": 3,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20298"
@@ -6361,7 +6415,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-07-22T03:19:38.435-0700",
       "updated": "2026-08-21T04:42:15.041-0700",
-      "ageDays": 33,
+      "ageDays": 34,
       "staleDays": 3,
       "labels": [
         "IOS",
@@ -6807,7 +6861,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-07-31T03:16:20.481-0700",
       "updated": "2026-08-21T04:42:12.898-0700",
-      "ageDays": 24,
+      "ageDays": 25,
       "staleDays": 3,
       "labels": [
         "IOS",
@@ -9573,33 +9627,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20128"
     },
     {
-      "key": "REB3-20404",
-      "summary": "Android: Low Compliance Modal UI Does Not Match Figma Design",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "General",
-      "assignee": "Hemant Singh",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-08-16T22:55:41.419-0700",
-      "updated": "2026-08-21T04:29:17.883-0700",
-      "ageDays": 8,
-      "staleDays": 3,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20404"
-    },
-    {
       "key": "REB3-19957",
       "summary": "[Enhancement] [Mobile] Align iOS and Android sorting implementations across Capture, Pre-Photo, Camera, and Planogram views",
       "project": "Rebotics 3",
@@ -9767,33 +9794,6 @@
         "REBM"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20039"
-    },
-    {
-      "key": "REB3-20402",
-      "summary": "[ANDR]Pre-Photo Step: Incomplete Button UI Does Not Match Figma Design",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Hemant Singh",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-08-16T22:18:46.509-0700",
-      "updated": "2026-08-21T04:29:17.059-0700",
-      "ageDays": 8,
-      "staleDays": 3,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20402"
     },
     {
       "key": "REB3-20124",
@@ -10034,7 +10034,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-07-22T03:24:17.656-0700",
       "updated": "2026-08-21T04:29:16.175-0700",
-      "ageDays": 33,
+      "ageDays": 34,
       "staleDays": 3,
       "labels": [
         "AD-HOC",
@@ -10751,7 +10751,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-07-21T03:17:18.340-0700",
       "updated": "2026-08-21T04:29:13.556-0700",
-      "ageDays": 34,
+      "ageDays": 35,
       "staleDays": 3,
       "labels": [
         "Customer"
@@ -14448,7 +14448,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-06-12T03:23:54.012-0700",
       "updated": "2026-08-21T04:23:34.334-0700",
-      "ageDays": 73,
+      "ageDays": 74,
       "staleDays": 3,
       "labels": [
         "ALBT",
@@ -16728,7 +16728,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-11T03:27:14.795-0700",
       "updated": "2026-08-13T08:09:07.488-0700",
-      "ageDays": 13,
+      "ageDays": 14,
       "staleDays": 11,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20342"
@@ -17822,7 +17822,7 @@
       "created": "2026-07-13T00:19:51.847-0700",
       "updated": "2026-08-10T03:21:19.407-0700",
       "ageDays": 43,
-      "staleDays": 14,
+      "staleDays": 15,
       "labels": [
         "SHIELD"
       ],
@@ -18116,7 +18116,7 @@
       "created": "2026-01-26T05:12:48.336-0800",
       "updated": "2026-08-07T03:25:43.081-0700",
       "ageDays": 210,
-      "staleDays": 17,
+      "staleDays": 18,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18810"
     },
@@ -18141,7 +18141,7 @@
       "created": "2025-07-01T11:20:42.329-0700",
       "updated": "2026-08-07T03:25:00.631-0700",
       "ageDays": 419,
-      "staleDays": 17,
+      "staleDays": 18,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-17349"
     },
@@ -18166,7 +18166,7 @@
       "created": "2025-12-17T04:12:50.046-0800",
       "updated": "2026-08-07T03:23:36.843-0700",
       "ageDays": 250,
-      "staleDays": 17,
+      "staleDays": 18,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18632"
     },
@@ -20770,7 +20770,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-07-17T03:27:17.985-0700",
       "updated": "2026-07-29T05:58:17.971-0700",
-      "ageDays": 38,
+      "ageDays": 39,
       "staleDays": 26,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20075"
@@ -21089,7 +21089,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-08T03:26:16.925-0700",
       "updated": "2026-07-29T00:02:25.686-0700",
-      "ageDays": 77,
+      "ageDays": 78,
       "staleDays": 27,
       "labels": [
         "SHIELD"
@@ -22062,7 +22062,7 @@
       "reporter": "Anil Melinmani",
       "created": "2026-07-17T03:15:32.475-0700",
       "updated": "2026-07-27T05:46:03.973-0700",
-      "ageDays": 38,
+      "ageDays": 39,
       "staleDays": 28,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20074"
@@ -22087,7 +22087,7 @@
       "reporter": "Anil Melinmani",
       "created": "2026-07-17T03:13:25.508-0700",
       "updated": "2026-07-27T05:45:55.452-0700",
-      "ageDays": 38,
+      "ageDays": 39,
       "staleDays": 28,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20073"
@@ -22169,7 +22169,7 @@
       "created": "2025-11-13T07:41:13.101-0800",
       "updated": "2026-07-27T03:25:24.622-0700",
       "ageDays": 284,
-      "staleDays": 28,
+      "staleDays": 29,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18374"
     },
@@ -22849,7 +22849,7 @@
       "created": "2026-07-20T22:11:15.647-0700",
       "updated": "2026-07-23T03:15:02.115-0700",
       "ageDays": 35,
-      "staleDays": 32,
+      "staleDays": 33,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20089"
     },
@@ -24361,7 +24361,7 @@
       "created": "2025-07-30T08:54:45.176-0700",
       "updated": "2026-07-22T03:24:44.606-0700",
       "ageDays": 390,
-      "staleDays": 33,
+      "staleDays": 34,
       "labels": [
         "Spillover",
         "Unplanned"
@@ -24389,7 +24389,7 @@
       "created": "2026-06-01T07:51:13.514-0700",
       "updated": "2026-07-22T03:16:42.951-0700",
       "ageDays": 84,
-      "staleDays": 33,
+      "staleDays": 34,
       "labels": [
         "ANDR",
         "Customer"
@@ -24604,7 +24604,7 @@
       "created": "2026-06-01T07:49:48.696-0700",
       "updated": "2026-07-21T03:18:51.244-0700",
       "ageDays": 84,
-      "staleDays": 34,
+      "staleDays": 35,
       "labels": [
         "Customer"
       ],
@@ -25366,7 +25366,7 @@
       "created": "2025-07-22T23:20:15.823-0700",
       "updated": "2026-07-16T03:17:41.049-0700",
       "ageDays": 398,
-      "staleDays": 39,
+      "staleDays": 40,
       "labels": [
         "Unplanned"
       ],
@@ -25393,7 +25393,7 @@
       "created": "2025-07-22T23:20:00.967-0700",
       "updated": "2026-07-16T03:17:36.605-0700",
       "ageDays": 398,
-      "staleDays": 39,
+      "staleDays": 40,
       "labels": [
         "Unplanned"
       ],
@@ -27157,7 +27157,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-03-11T03:21:08.534-0700",
       "updated": "2026-07-08T02:52:53.283-0700",
-      "ageDays": 166,
+      "ageDays": 167,
       "staleDays": 48,
       "labels": [
         "REGRESSION"
