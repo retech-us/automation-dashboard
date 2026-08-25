@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-25T14:15:28.786694+00:00",
+  "lastUpdated": "2026-08-25T14:32:31.501086+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -8,8 +8,8 @@
     "totalDefects": 1000,
     "openDefects": 220,
     "blockers": 143,
-    "inProgress": 346,
-    "inQa": 119,
+    "inProgress": 347,
+    "inQa": 118,
     "resolvedThisWeek": 95,
     "resolvedTotal": 315
   },
@@ -21,12 +21,12 @@
     "Lowest": 2
   },
   "byComponent": {
+    "BE CORE": 28,
+    "ANDR": 214,
+    "IOS": 225,
     "General": 194,
     "PARENT-WORK-ITEM": 29,
-    "BE CORE": 28,
-    "IOS": 225,
     "BE REBM": 179,
-    "ANDR": 214,
     "DE": 62,
     "MOBILE": 4,
     "FE Hawkeye": 17,
@@ -40,11 +40,11 @@
     "AI CORE": 1
   },
   "byStatus": {
+    "UAT": 222,
     "To  Do": 160,
     "In Progress": 37,
-    "UAT": 221,
-    "QA": 119,
     "Done": 245,
+    "QA": 118,
     "Staging": 16,
     "Code Review": 30,
     "Waiting for clarification": 60,
@@ -236,6 +236,89 @@
   },
   "issues": [
     {
+      "key": "REB3-20457",
+      "summary": "[BE CORE] Line Detection model is creating multiple edge lines when pillar is showing as obstruction",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "BE CORE",
+      "assignee": "Ashok Pilli",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
+      "tester": "Gautam Chakraborty",
+      "reporter": "Gautam Chakraborty",
+      "created": "2026-08-25T00:55:31.166-0700",
+      "updated": "2026-08-25T07:29:53.221-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20457"
+    },
+    {
+      "key": "REB3-20426",
+      "summary": "[WSTM][ANDR] Survey skip logic is not working for multiple choice question type",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.24 release for WSTM",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "ANDR",
+      "assignee": "Gaurav Tripathi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
+      "tester": "Vishal Kohli",
+      "reporter": "Vishal Kohli",
+      "created": "2026-08-18T21:33:59.566-0700",
+      "updated": "2026-08-25T07:20:26.329-0700",
+      "ageDays": 6,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PILOT",
+        "WSTM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20426"
+    },
+    {
+      "key": "REB3-20429",
+      "summary": "[WSTM][iOS] Survey skip logic is not working for multiple choice question type",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.24 release for WSTM",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Vishal Kohli",
+      "reporter": "Vishal Kohli",
+      "created": "2026-08-19T01:34:17.854-0700",
+      "updated": "2026-08-25T07:19:54.472-0700",
+      "ageDays": 6,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PILOT",
+        "WSTM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20429"
+    },
+    {
       "key": "REB3-20160",
       "summary": "[MJHD] \u201cTime in Store\u201d Data Missing in Store Visit Summary Grafana Report",
       "project": "Rebotics 3",
@@ -312,31 +395,6 @@
         "Customer"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20445"
-    },
-    {
-      "key": "REB3-20457",
-      "summary": "[BE CORE] Line Detection model is creating multiple edge lines when pillar is showing as obstruction",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "BE CORE",
-      "assignee": "Ashok Pilli",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
-      "tester": "Gautam Chakraborty",
-      "reporter": "Gautam Chakraborty",
-      "created": "2026-08-25T00:55:31.166-0700",
-      "updated": "2026-08-25T06:07:09.357-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20457"
     },
     {
       "key": "REB3-20468",
@@ -1016,35 +1074,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20455"
     },
     {
-      "key": "REB3-20429",
-      "summary": "[WSTM][iOS] Survey skip logic is not working for multiple choice question type",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.24 release for WSTM",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "UAT",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Vishal Kohli",
-      "reporter": "Vishal Kohli",
-      "created": "2026-08-19T01:34:17.854-0700",
-      "updated": "2026-08-25T03:22:15.549-0700",
-      "ageDays": 6,
-      "staleDays": 0,
-      "labels": [
-        "AD-HOC",
-        "PILOT",
-        "WSTM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20429"
-    },
-    {
       "key": "REB3-20437",
       "summary": "[ANDR] IR \u2013 Performed but Unsaved Actions Revert to Undone State After Tablet Sleep/Wake",
       "project": "Rebotics 3",
@@ -1228,35 +1257,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20341"
-    },
-    {
-      "key": "REB3-20426",
-      "summary": "[WSTM][ANDR] Survey skip logic is not working for multiple choice question type",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.24 release for WSTM",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "UAT",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "ANDR",
-      "assignee": "Gaurav Tripathi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
-      "tester": "Vishal Kohli",
-      "reporter": "Vishal Kohli",
-      "created": "2026-08-18T21:33:59.566-0700",
-      "updated": "2026-08-25T01:56:16.594-0700",
-      "ageDays": 6,
-      "staleDays": 0,
-      "labels": [
-        "AD-HOC",
-        "PILOT",
-        "WSTM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20426"
     },
     {
       "key": "REB3-20442",
@@ -1555,7 +1555,7 @@
       "created": "2026-08-21T01:12:04.611-0700",
       "updated": "2026-08-24T07:15:47.819-0700",
       "ageDays": 4,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -7917,7 +7917,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-07-01T07:19:56.030-0700",
       "updated": "2026-08-21T04:42:07.628-0700",
-      "ageDays": 54,
+      "ageDays": 55,
       "staleDays": 4,
       "labels": [
         "IOS"
@@ -11281,7 +11281,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-08-10T07:16:00.596-0700",
       "updated": "2026-08-21T04:29:12.803-0700",
-      "ageDays": 14,
+      "ageDays": 15,
       "staleDays": 4,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20318"
@@ -15930,7 +15930,7 @@
       "reporter": "vikas yadav",
       "created": "2026-08-01T07:25:23.404-0700",
       "updated": "2026-08-19T00:41:23.268-0700",
-      "ageDays": 23,
+      "ageDays": 24,
       "staleDays": 6,
       "labels": [
         "iOS"
@@ -16180,7 +16180,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-06-12T07:18:09.763-0700",
       "updated": "2026-08-18T23:14:28.489-0700",
-      "ageDays": 73,
+      "ageDays": 74,
       "staleDays": 6,
       "labels": [
         "AD-HOC",
@@ -16266,7 +16266,7 @@
       "created": "2026-06-16T02:39:25.075-0700",
       "updated": "2026-08-18T07:23:39.264-0700",
       "ageDays": 70,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [
         "Customer",
         "PRGM"
@@ -16294,7 +16294,7 @@
       "created": "2026-07-14T02:11:43.702-0700",
       "updated": "2026-08-18T07:23:19.374-0700",
       "ageDays": 42,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [
         "Customer",
         "PRGM"
@@ -18741,7 +18741,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:22:48.720-0700",
       "updated": "2026-08-05T05:40:59.047-0700",
-      "ageDays": 74,
+      "ageDays": 75,
       "staleDays": 20,
       "labels": [
         "ALBT",
@@ -18769,7 +18769,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:28.389-0700",
       "updated": "2026-08-05T05:40:58.563-0700",
-      "ageDays": 74,
+      "ageDays": 75,
       "staleDays": 20,
       "labels": [
         "ALBT",
@@ -18797,7 +18797,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:29.562-0700",
       "updated": "2026-08-05T05:40:57.975-0700",
-      "ageDays": 74,
+      "ageDays": 75,
       "staleDays": 20,
       "labels": [
         "ALBT",
@@ -18825,7 +18825,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:30.413-0700",
       "updated": "2026-08-05T05:40:57.393-0700",
-      "ageDays": 74,
+      "ageDays": 75,
       "staleDays": 20,
       "labels": [
         "ALBT",
@@ -18853,7 +18853,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:31.401-0700",
       "updated": "2026-08-05T05:40:56.916-0700",
-      "ageDays": 74,
+      "ageDays": 75,
       "staleDays": 20,
       "labels": [
         "ALBT",
@@ -18881,7 +18881,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:32.260-0700",
       "updated": "2026-08-05T05:40:56.363-0700",
-      "ageDays": 74,
+      "ageDays": 75,
       "staleDays": 20,
       "labels": [
         "ALBT",
@@ -18909,7 +18909,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:33.098-0700",
       "updated": "2026-08-05T05:40:55.886-0700",
-      "ageDays": 74,
+      "ageDays": 75,
       "staleDays": 20,
       "labels": [
         "ALBT",
@@ -22190,7 +22190,7 @@
       "created": "2026-04-13T19:41:02.269-0700",
       "updated": "2026-07-27T07:19:19.131-0700",
       "ageDays": 133,
-      "staleDays": 28,
+      "staleDays": 29,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19446"
     },
@@ -22215,7 +22215,7 @@
       "created": "2026-05-19T20:31:53.231-0700",
       "updated": "2026-07-27T07:18:52.551-0700",
       "ageDays": 97,
-      "staleDays": 28,
+      "staleDays": 29,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19669"
     },
@@ -22240,7 +22240,7 @@
       "created": "2026-05-04T22:02:23.887-0700",
       "updated": "2026-07-27T07:18:15.415-0700",
       "ageDays": 112,
-      "staleDays": 28,
+      "staleDays": 29,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19554"
     },
@@ -22657,7 +22657,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-07-01T07:30:34.532-0700",
       "updated": "2026-07-25T09:14:02.439-0700",
-      "ageDays": 54,
+      "ageDays": 55,
       "staleDays": 30,
       "labels": [
         "ANDR",
@@ -25130,7 +25130,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:21:39.731-0700",
       "updated": "2026-07-20T03:01:39.883-0700",
-      "ageDays": 84,
+      "ageDays": 85,
       "staleDays": 36,
       "labels": [
         "Customer"
@@ -25157,7 +25157,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:20:08.689-0700",
       "updated": "2026-07-20T03:01:39.740-0700",
-      "ageDays": 84,
+      "ageDays": 85,
       "staleDays": 36,
       "labels": [
         "ANDR",
@@ -25186,7 +25186,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:18:09.242-0700",
       "updated": "2026-07-20T03:01:39.624-0700",
-      "ageDays": 84,
+      "ageDays": 85,
       "staleDays": 36,
       "labels": [
         "Customer"
@@ -25213,7 +25213,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:16:35.790-0700",
       "updated": "2026-07-20T03:01:39.471-0700",
-      "ageDays": 84,
+      "ageDays": 85,
       "staleDays": 36,
       "labels": [
         "Customer"
