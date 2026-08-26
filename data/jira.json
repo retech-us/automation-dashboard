@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-26T14:14:53.992130+00:00",
+  "lastUpdated": "2026-08-26T14:32:21.378450+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -8,8 +8,8 @@
     "totalDefects": 1000,
     "openDefects": 224,
     "blockers": 141,
-    "inProgress": 351,
-    "inQa": 121,
+    "inProgress": 350,
+    "inQa": 122,
     "resolvedThisWeek": 80,
     "resolvedTotal": 304
   },
@@ -21,8 +21,8 @@
     "Lowest": 2
   },
   "byComponent": {
-    "IOS": 222,
     "ANDR": 215,
+    "IOS": 222,
     "General": 199,
     "FE Hawkeye": 18,
     "BE REBM": 177,
@@ -40,8 +40,7 @@
     "AI CORE": 1
   },
   "byStatus": {
-    "QA": 121,
-    "Dev Complete": 4,
+    "QA": 122,
     "In Progress": 37,
     "Code Review": 29,
     "UAT": 226,
@@ -49,6 +48,7 @@
     "Done": 236,
     "Waiting for clarification": 60,
     "PRODUCTION READY": 42,
+    "Dev Complete": 3,
     "Invalid": 68,
     "Staging": 13
   },
@@ -236,6 +236,36 @@
   },
   "issues": [
     {
+      "key": "REB3-20455",
+      "summary": "[ANDR] Improvement in Sentry to control session recording.",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.24 release for WSTM_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Improvement",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "ANDR",
+      "assignee": "Brijesh Bhatt",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/454849e7691ac8d49ea041e672536507?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBB-4.png",
+      "tester": "Brijesh Bhatt",
+      "reporter": "Brijesh Bhatt",
+      "created": "2026-08-25T00:16:34.280-0700",
+      "updated": "2026-08-26T07:19:03.734-0700",
+      "ageDays": 1,
+      "staleDays": 0,
+      "labels": [
+        "ANDR",
+        "sentry",
+        "session-recording",
+        "shield"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20455"
+    },
+    {
       "key": "REB3-20438",
       "summary": "[IOS] Add Retry Recovery for Capture Uploads Stuck in Queued/Uploading State",
       "project": "Rebotics 3",
@@ -292,36 +322,6 @@
         "upload"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20126"
-    },
-    {
-      "key": "REB3-20455",
-      "summary": "[ANDR] Improvement in Sentry to control session recording.",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.24 release for WSTM_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Improvement",
-      "epic": "None",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "ANDR",
-      "assignee": "Brijesh Bhatt",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/454849e7691ac8d49ea041e672536507?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBB-4.png",
-      "tester": "Brijesh Bhatt",
-      "reporter": "Brijesh Bhatt",
-      "created": "2026-08-25T00:16:34.280-0700",
-      "updated": "2026-08-26T06:53:49.603-0700",
-      "ageDays": 1,
-      "staleDays": 0,
-      "labels": [
-        "ANDR",
-        "sentry",
-        "session-recording",
-        "shield"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20455"
     },
     {
       "key": "REB3-20453",
@@ -1877,7 +1877,7 @@
       "created": "2026-08-18T21:33:59.566-0700",
       "updated": "2026-08-25T07:20:26.329-0700",
       "ageDays": 7,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -8370,7 +8370,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-07-01T07:19:56.030-0700",
       "updated": "2026-08-21T04:42:07.628-0700",
-      "ageDays": 55,
+      "ageDays": 56,
       "staleDays": 5,
       "labels": [
         "IOS"
@@ -11625,7 +11625,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-08-10T07:16:00.596-0700",
       "updated": "2026-08-21T04:29:12.803-0700",
-      "ageDays": 15,
+      "ageDays": 16,
       "staleDays": 5,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20318"
@@ -16274,7 +16274,7 @@
       "reporter": "vikas yadav",
       "created": "2026-08-01T07:25:23.404-0700",
       "updated": "2026-08-19T00:41:23.268-0700",
-      "ageDays": 24,
+      "ageDays": 25,
       "staleDays": 7,
       "labels": [
         "iOS"
@@ -16524,7 +16524,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-06-12T07:18:09.763-0700",
       "updated": "2026-08-18T23:14:28.489-0700",
-      "ageDays": 74,
+      "ageDays": 75,
       "staleDays": 7,
       "labels": [
         "AD-HOC",
@@ -16610,7 +16610,7 @@
       "created": "2026-06-16T02:39:25.075-0700",
       "updated": "2026-08-18T07:23:39.264-0700",
       "ageDays": 71,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [
         "Customer",
         "PRGM"
@@ -16638,7 +16638,7 @@
       "created": "2026-07-14T02:11:43.702-0700",
       "updated": "2026-08-18T07:23:19.374-0700",
       "ageDays": 43,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [
         "Customer",
         "PRGM"
@@ -19085,7 +19085,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:22:48.720-0700",
       "updated": "2026-08-05T05:40:59.047-0700",
-      "ageDays": 75,
+      "ageDays": 76,
       "staleDays": 21,
       "labels": [
         "ALBT",
@@ -19113,7 +19113,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:28.389-0700",
       "updated": "2026-08-05T05:40:58.563-0700",
-      "ageDays": 75,
+      "ageDays": 76,
       "staleDays": 21,
       "labels": [
         "ALBT",
@@ -19141,7 +19141,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:29.562-0700",
       "updated": "2026-08-05T05:40:57.975-0700",
-      "ageDays": 75,
+      "ageDays": 76,
       "staleDays": 21,
       "labels": [
         "ALBT",
@@ -19169,7 +19169,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:30.413-0700",
       "updated": "2026-08-05T05:40:57.393-0700",
-      "ageDays": 75,
+      "ageDays": 76,
       "staleDays": 21,
       "labels": [
         "ALBT",
@@ -19197,7 +19197,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:31.401-0700",
       "updated": "2026-08-05T05:40:56.916-0700",
-      "ageDays": 75,
+      "ageDays": 76,
       "staleDays": 21,
       "labels": [
         "ALBT",
@@ -19225,7 +19225,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:32.260-0700",
       "updated": "2026-08-05T05:40:56.363-0700",
-      "ageDays": 75,
+      "ageDays": 76,
       "staleDays": 21,
       "labels": [
         "ALBT",
@@ -19253,7 +19253,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:33.098-0700",
       "updated": "2026-08-05T05:40:55.886-0700",
-      "ageDays": 75,
+      "ageDays": 76,
       "staleDays": 21,
       "labels": [
         "ALBT",
@@ -22534,7 +22534,7 @@
       "created": "2026-04-13T19:41:02.269-0700",
       "updated": "2026-07-27T07:19:19.131-0700",
       "ageDays": 134,
-      "staleDays": 29,
+      "staleDays": 30,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19446"
     },
@@ -22559,7 +22559,7 @@
       "created": "2026-05-19T20:31:53.231-0700",
       "updated": "2026-07-27T07:18:52.551-0700",
       "ageDays": 98,
-      "staleDays": 29,
+      "staleDays": 30,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19669"
     },
@@ -22584,7 +22584,7 @@
       "created": "2026-05-04T22:02:23.887-0700",
       "updated": "2026-07-27T07:18:15.415-0700",
       "ageDays": 113,
-      "staleDays": 29,
+      "staleDays": 30,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19554"
     },
@@ -23001,7 +23001,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-07-01T07:30:34.532-0700",
       "updated": "2026-07-25T09:14:02.439-0700",
-      "ageDays": 55,
+      "ageDays": 56,
       "staleDays": 31,
       "labels": [
         "ANDR",
@@ -25474,7 +25474,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:21:39.731-0700",
       "updated": "2026-07-20T03:01:39.883-0700",
-      "ageDays": 85,
+      "ageDays": 86,
       "staleDays": 37,
       "labels": [
         "Customer"
@@ -25501,7 +25501,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:20:08.689-0700",
       "updated": "2026-07-20T03:01:39.740-0700",
-      "ageDays": 85,
+      "ageDays": 86,
       "staleDays": 37,
       "labels": [
         "ANDR",
@@ -25530,7 +25530,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:18:09.242-0700",
       "updated": "2026-07-20T03:01:39.624-0700",
-      "ageDays": 85,
+      "ageDays": 86,
       "staleDays": 37,
       "labels": [
         "Customer"
@@ -25557,7 +25557,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:16:35.790-0700",
       "updated": "2026-07-20T03:01:39.471-0700",
-      "ageDays": 85,
+      "ageDays": 86,
       "staleDays": 37,
       "labels": [
         "Customer"
