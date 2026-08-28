@@ -1,14 +1,14 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-28T20:13:20.650519+00:00",
+  "lastUpdated": "2026-08-28T22:00:37.919186+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 227,
+    "openDefects": 226,
     "blockers": 143,
-    "inProgress": 369,
+    "inProgress": 370,
     "inQa": 116,
     "resolvedThisWeek": 58,
     "resolvedTotal": 288
@@ -21,9 +21,9 @@
     "Lowest": 2
   },
   "byComponent": {
+    "DE": 59,
     "General": 195,
     "QA": 5,
-    "DE": 59,
     "IOS": 221,
     "ANDR": 233,
     "BE REBM": 169,
@@ -40,16 +40,16 @@
     "AI CORE": 1
   },
   "byStatus": {
-    "To  Do": 167,
+    "Waiting for clarification": 60,
     "QA": 116,
+    "In Progress": 36,
+    "To  Do": 166,
     "UAT": 237,
     "PRODUCTION READY": 44,
     "Code Review": 28,
     "Staging": 14,
     "Done": 227,
     "Dev Complete": 11,
-    "In Progress": 35,
-    "Waiting for clarification": 60,
     "Invalid": 61
   },
   "filterOptions": {
@@ -234,6 +234,86 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-19418",
+      "summary": "[DE][MJHD] Update Box Tracking Reporting Logic to Support FedEx Labels",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "REB3: DE backlog",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "Waiting for clarification",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "DE",
+      "assignee": "Sriyuth Sagi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/55bf75d962493c6c2cc3a6d4583be454?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-1.png",
+      "tester": "Aakash Oswal",
+      "reporter": "Aakash Oswal",
+      "created": "2026-04-08T17:53:22.792-0700",
+      "updated": "2026-08-28T13:21:19.132-0700",
+      "ageDays": 141,
+      "staleDays": 0,
+      "labels": [
+        "DE"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-19418"
+    },
+    {
+      "key": "REB3-20103",
+      "summary": "[DE][SPAR/MJHD] Remove 1Z from UPS Barcode Report",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "DE",
+      "assignee": "Sriyuth Sagi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/55bf75d962493c6c2cc3a6d4583be454?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-1.png",
+      "tester": "Akanksha Jangir",
+      "reporter": "Akanksha Jangir",
+      "created": "2026-07-21T20:48:41.734-0700",
+      "updated": "2026-08-28T13:21:19.021-0700",
+      "ageDays": 37,
+      "staleDays": 0,
+      "labels": [
+        "Customer",
+        "PILOT"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20103"
+    },
+    {
+      "key": "REB3-20501",
+      "summary": "[BE] Implement session-correlated API logging for CloudWatch",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "Unversioned",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "In Progress",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Arihant Srivastava",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AS-3.png",
+      "tester": "Raghav Galhotra",
+      "reporter": "Raghav Galhotra",
+      "created": "2026-08-27T21:13:43.225-0700",
+      "updated": "2026-08-28T13:20:12.885-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20501"
+    },
     {
       "key": "REB3-20504",
       "summary": "  YOLOv11 passes xyxy boxes to OpenCV NMS instead of [x, y, width, height]",
@@ -927,31 +1007,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20502"
     },
     {
-      "key": "REB3-20501",
-      "summary": "[BE] Implement session-correlated API logging for CloudWatch",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "Unversioned",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Arihant Srivastava",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AS-3.png",
-      "tester": "Raghav Galhotra",
-      "reporter": "Raghav Galhotra",
-      "created": "2026-08-27T21:13:43.225-0700",
-      "updated": "2026-08-27T21:14:52.447-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20501"
-    },
-    {
       "key": "REB3-20500",
       "summary": "SPAR-MJ Holding OOS reporting via SFTP",
       "project": "Rebotics 3",
@@ -997,7 +1052,7 @@
       "created": "2026-08-12T10:02:11.062-0700",
       "updated": "2026-08-27T14:23:17.120-0700",
       "ageDays": 16,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20365"
     },
@@ -1235,7 +1290,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-08-24T14:12:12.653-0700",
       "updated": "2026-08-27T07:50:05.791-0700",
-      "ageDays": 3,
+      "ageDays": 4,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20451"
@@ -1341,7 +1396,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-06-15T13:26:47.641-0700",
       "updated": "2026-08-27T07:20:32.946-0700",
-      "ageDays": 73,
+      "ageDays": 74,
       "staleDays": 1,
       "labels": [
         "Customer",
@@ -1830,7 +1885,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-08-24T14:05:19.895-0700",
       "updated": "2026-08-27T04:17:22.602-0700",
-      "ageDays": 3,
+      "ageDays": 4,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20450"
@@ -2334,7 +2389,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-08-26T14:29:45.130-0700",
       "updated": "2026-08-27T01:41:48.365-0700",
-      "ageDays": 1,
+      "ageDays": 2,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20484"
@@ -2359,7 +2414,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-08-26T14:24:24.400-0700",
       "updated": "2026-08-27T01:41:46.120-0700",
-      "ageDays": 1,
+      "ageDays": 2,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20483"
@@ -2384,7 +2439,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-08-26T14:21:40.988-0700",
       "updated": "2026-08-27T01:41:42.427-0700",
-      "ageDays": 1,
+      "ageDays": 2,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20482"
@@ -2620,8 +2675,8 @@
       "reporter": "Gaurav Jain",
       "created": "2026-08-26T14:42:56.789-0700",
       "updated": "2026-08-26T14:42:56.905-0700",
-      "ageDays": 1,
-      "staleDays": 1,
+      "ageDays": 2,
+      "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20485"
     },
@@ -5141,7 +5196,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-07-01T14:26:55.327-0700",
       "updated": "2026-08-24T03:02:10.351-0700",
-      "ageDays": 57,
+      "ageDays": 58,
       "staleDays": 4,
       "labels": [
         "AD-HOC",
@@ -5593,7 +5648,7 @@
       "reporter": "Aakash Oswal",
       "created": "2026-06-10T14:10:01.288-0700",
       "updated": "2026-08-24T02:44:37.345-0700",
-      "ageDays": 78,
+      "ageDays": 79,
       "staleDays": 4,
       "labels": [
         "Customer",
@@ -9177,7 +9232,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-05-04T14:13:10.616-0700",
       "updated": "2026-08-21T04:42:08.816-0700",
-      "ageDays": 115,
+      "ageDays": 116,
       "staleDays": 7,
       "labels": [
         "AD-HOC",
@@ -11230,7 +11285,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-08-17T14:09:41.123-0700",
       "updated": "2026-08-21T04:29:20.174-0700",
-      "ageDays": 10,
+      "ageDays": 11,
       "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20412"
@@ -12028,34 +12083,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20034"
     },
     {
-      "key": "REB3-20103",
-      "summary": "[DE][SPAR/MJHD] Remove 1Z from UPS Barcode Report",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "DE",
-      "assignee": "Sriyuth Sagi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/55bf75d962493c6c2cc3a6d4583be454?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-1.png",
-      "tester": "Akanksha Jangir",
-      "reporter": "Akanksha Jangir",
-      "created": "2026-07-21T20:48:41.734-0700",
-      "updated": "2026-08-21T04:29:15.191-0700",
-      "ageDays": 37,
-      "staleDays": 7,
-      "labels": [
-        "Customer",
-        "PILOT"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20103"
-    },
-    {
       "key": "REB3-19953",
       "summary": "GitHub Workflow is failing with warnings to write cache",
       "project": "Rebotics 3",
@@ -12377,7 +12404,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-08-11T14:33:42.341-0700",
       "updated": "2026-08-21T04:29:13.731-0700",
-      "ageDays": 16,
+      "ageDays": 17,
       "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20349"
@@ -13034,7 +13061,7 @@
       "reporter": "Stefano Merli",
       "created": "2026-07-01T14:58:22.525-0700",
       "updated": "2026-08-21T04:29:09.143-0700",
-      "ageDays": 57,
+      "ageDays": 58,
       "staleDays": 7,
       "labels": [
         "AD-HOC",
@@ -13447,7 +13474,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-05-04T14:02:00.572-0700",
       "updated": "2026-08-21T04:28:59.112-0700",
-      "ageDays": 115,
+      "ageDays": 116,
       "staleDays": 7,
       "labels": [
         "AD-HOC",
@@ -13727,7 +13754,7 @@
       "reporter": "Sourabh Yadav",
       "created": "2026-05-12T14:24:21.680-0700",
       "updated": "2026-08-21T04:28:57.238-0700",
-      "ageDays": 107,
+      "ageDays": 108,
       "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19616"
@@ -15399,7 +15426,7 @@
       "reporter": "Vignesh Sankaranarayanan",
       "created": "2025-07-11T14:59:32.355-0700",
       "updated": "2026-08-21T04:28:41.661-0700",
-      "ageDays": 412,
+      "ageDays": 413,
       "staleDays": 7,
       "labels": [
         "ALBT",
@@ -15427,7 +15454,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-04-16T14:29:50.032-0700",
       "updated": "2026-08-21T04:28:41.632-0700",
-      "ageDays": 133,
+      "ageDays": 134,
       "staleDays": 7,
       "labels": [
         "Customer"
@@ -16138,7 +16165,7 @@
       "created": "2026-05-14T04:03:27.777-0700",
       "updated": "2026-08-20T13:23:40.462-0700",
       "ageDays": 106,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19636"
     },
@@ -16163,7 +16190,7 @@
       "created": "2026-05-14T04:04:31.568-0700",
       "updated": "2026-08-20T13:17:58.966-0700",
       "ageDays": 106,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19637"
     },
@@ -17358,7 +17385,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-08-17T14:26:41.431-0700",
       "updated": "2026-08-18T22:13:16.661-0700",
-      "ageDays": 10,
+      "ageDays": 11,
       "staleDays": 9,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20413"
@@ -20822,7 +20849,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-07-11T13:42:30.216-0700",
       "updated": "2026-08-05T05:40:33.969-0700",
-      "ageDays": 47,
+      "ageDays": 48,
       "staleDays": 23,
       "labels": [
         "Customer",
@@ -21652,33 +21679,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20224"
     },
     {
-      "key": "REB3-19418",
-      "summary": "[DE][MJHD] Update Box Tracking Reporting Logic to Support FedEx Labels",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "REB3: DE backlog",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "Waiting for clarification",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "DE",
-      "assignee": "Sriyuth Sagi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/55bf75d962493c6c2cc3a6d4583be454?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-1.png",
-      "tester": "Aakash Oswal",
-      "reporter": "Aakash Oswal",
-      "created": "2026-04-08T17:53:22.792-0700",
-      "updated": "2026-08-03T22:07:04.671-0700",
-      "ageDays": 141,
-      "staleDays": 24,
-      "labels": [
-        "DE"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19418"
-    },
-    {
       "key": "REB3-18932",
       "summary": "[iOS] Implement offline-compatible task discovery from task list API",
       "project": "Rebotics 3",
@@ -21953,7 +21953,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-06-18T14:38:46.498-0700",
       "updated": "2026-07-30T23:07:00.823-0700",
-      "ageDays": 70,
+      "ageDays": 71,
       "staleDays": 28,
       "labels": [
         "PILOT"
@@ -22821,7 +22821,7 @@
       "created": "2025-01-10T08:35:46.742-0800",
       "updated": "2026-07-28T14:42:45.878-0700",
       "ageDays": 595,
-      "staleDays": 30,
+      "staleDays": 31,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-16340"
     },
@@ -22846,7 +22846,7 @@
       "created": "2026-06-29T21:43:18.081-0700",
       "updated": "2026-07-28T14:41:08.272-0700",
       "ageDays": 59,
-      "staleDays": 30,
+      "staleDays": 31,
       "labels": [
         "Customer",
         "KRCS"
@@ -24090,7 +24090,7 @@
       "reporter": "Gaurav Jain",
       "created": "2025-12-07T13:46:05.018-0800",
       "updated": "2026-07-23T04:50:21.042-0700",
-      "ageDays": 263,
+      "ageDays": 264,
       "staleDays": 36,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18566"
@@ -24896,7 +24896,7 @@
       "reporter": "Prakash",
       "created": "2024-11-26T12:51:27.756-0800",
       "updated": "2026-07-22T18:32:25.086-0700",
-      "ageDays": 639,
+      "ageDays": 640,
       "staleDays": 36,
       "labels": [
         "MJHD"
@@ -25079,7 +25079,7 @@
       "reporter": "Prakash",
       "created": "2024-11-26T12:46:28.536-0800",
       "updated": "2026-07-22T18:29:05.491-0700",
-      "ageDays": 639,
+      "ageDays": 640,
       "staleDays": 36,
       "labels": [
         "ALL",
@@ -25242,7 +25242,7 @@
       "reporter": "Vignesh Sankaranarayanan",
       "created": "2025-10-24T14:14:41.537-0700",
       "updated": "2026-07-22T17:35:13.447-0700",
-      "ageDays": 307,
+      "ageDays": 308,
       "staleDays": 36,
       "labels": [
         "AD-HOC"
@@ -26853,7 +26853,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-03-18T14:00:04.150-0700",
       "updated": "2026-07-15T09:51:56.520-0700",
-      "ageDays": 162,
+      "ageDays": 163,
       "staleDays": 44,
       "labels": [
         "ALBT"
