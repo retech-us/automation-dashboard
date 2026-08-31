@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-31T17:04:17.624875+00:00",
+  "lastUpdated": "2026-08-31T17:21:36.979936+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -21,14 +21,14 @@
     "Lowest": 2
   },
   "byComponent": {
-    "BE CORE": 27,
+    "ANDR": 234,
     "General": 196,
+    "BE CORE": 27,
     "DE": 59,
     "FE Hawkeye": 19,
     "BE REBM": 167,
     "QA": 6,
     "MOBILE": 4,
-    "ANDR": 234,
     "IOS": 220,
     "PARENT-WORK-ITEM": 27,
     "CVAT": 5,
@@ -41,9 +41,9 @@
   },
   "byStatus": {
     "QA": 131,
+    "To  Do": 163,
     "Code Review": 29,
     "Staging": 16,
-    "To  Do": 163,
     "PRODUCTION READY": 42,
     "In Progress": 33,
     "Done": 244,
@@ -234,6 +234,59 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-20508",
+      "summary": "[Andr]Offline survey sync stuck in a retry loop \u2014 \"complete survey\" API is never called after \"start survey\" returns HTTP 405 \"Survey Response is already started\"",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.13 PRGM HF",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "ANDR",
+      "assignee": "Gaurav Tripathi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
+      "tester": "Gaurav Tripathi",
+      "reporter": "Gaurav Tripathi",
+      "created": "2026-08-31T03:07:17.239-0700",
+      "updated": "2026-08-31T10:13:39.530-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "Android",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20508"
+    },
+    {
+      "key": "REB3-20511",
+      "summary": "[IR]  Display \u201cNew\u201d Badge for New Items in Backroom Popup",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Story",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Unassigned",
+      "assigneeAvatar": null,
+      "tester": "Gaurav Jain",
+      "reporter": "Gaurav Jain",
+      "created": "2026-08-31T04:59:26.795-0700",
+      "updated": "2026-08-31T10:07:46.075-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20511"
+    },
     {
       "key": "REB3-19304",
       "summary": "  Add YOLOv11 Support to Production Inference Service While Preserving YOLOv5 Compatibility",
@@ -675,34 +728,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20451"
     },
     {
-      "key": "REB3-20508",
-      "summary": "[Andr]Offline survey sync stuck in a retry loop \u2014 \"complete survey\" API is never called after \"start survey\" returns HTTP 405 \"Survey Response is already started\"",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.13 PRGM HF",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "ANDR",
-      "assignee": "Gaurav Tripathi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
-      "tester": "Gaurav Tripathi",
-      "reporter": "Gaurav Tripathi",
-      "created": "2026-08-31T03:07:17.239-0700",
-      "updated": "2026-08-31T06:01:26.205-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "Android",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20508"
-    },
-    {
       "key": "REB3-20463",
       "summary": "[iOS] IR Scanner \u2014 Find Product Location in Planogram",
       "project": "Rebotics 3",
@@ -932,31 +957,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20464"
-    },
-    {
-      "key": "REB3-20511",
-      "summary": "[IR]  Display \u201cNew\u201d Badge for New Items in Backroom Popup",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "Unversioned",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Story",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Unassigned",
-      "assigneeAvatar": null,
-      "tester": "Gaurav Jain",
-      "reporter": "Gaurav Jain",
-      "created": "2026-08-31T04:59:26.795-0700",
-      "updated": "2026-08-31T04:59:27.330-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20511"
     },
     {
       "key": "REB3-20505",
@@ -5872,7 +5872,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-18T10:07:59.763-0700",
       "updated": "2026-08-24T03:03:15.395-0700",
-      "ageDays": 12,
+      "ageDays": 13,
       "staleDays": 7,
       "labels": [
         "AD-HOC",
@@ -6885,7 +6885,7 @@
       "reporter": "Farid Khalikov",
       "created": "2026-05-18T10:19:43.709-0700",
       "updated": "2026-08-21T06:19:57.933-0700",
-      "ageDays": 104,
+      "ageDays": 105,
       "staleDays": 10,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19659"
@@ -11496,7 +11496,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-07-02T10:15:51.099-0700",
       "updated": "2026-08-21T04:42:02.957-0700",
-      "ageDays": 59,
+      "ageDays": 60,
       "staleDays": 10,
       "labels": [
         "AD-HOC",
@@ -12696,7 +12696,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-22T10:11:59.874-0700",
       "updated": "2026-08-21T04:29:14.504-0700",
-      "ageDays": 69,
+      "ageDays": 70,
       "staleDays": 10,
       "labels": [
         "BE",
@@ -14266,7 +14266,7 @@
       "reporter": "Vishal Kohli",
       "created": "2025-08-19T10:12:24.345-0700",
       "updated": "2026-08-21T04:28:56.480-0700",
-      "ageDays": 376,
+      "ageDays": 377,
       "staleDays": 10,
       "labels": [
         "Customer"
@@ -14405,7 +14405,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-05-12T10:15:33.971-0700",
       "updated": "2026-08-21T04:28:54.333-0700",
-      "ageDays": 110,
+      "ageDays": 111,
       "staleDays": 10,
       "labels": [
         "ALBT",
@@ -16619,7 +16619,7 @@
       "created": "2024-09-06T17:36:34.665-0700",
       "updated": "2026-08-20T10:20:28.932-0700",
       "ageDays": 723,
-      "staleDays": 10,
+      "staleDays": 11,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-15739"
     },
@@ -21010,7 +21010,7 @@
       "reporter": "vikas yadav",
       "created": "2026-07-10T10:11:06.877-0700",
       "updated": "2026-08-05T05:40:35.288-0700",
-      "ageDays": 51,
+      "ageDays": 52,
       "staleDays": 26,
       "labels": [
         "Customer",
@@ -21038,7 +21038,7 @@
       "reporter": "vikas yadav",
       "created": "2026-07-10T10:14:10.946-0700",
       "updated": "2026-08-05T05:40:34.567-0700",
-      "ageDays": 51,
+      "ageDays": 52,
       "staleDays": 26,
       "labels": [
         "Customer",
@@ -21619,7 +21619,7 @@
       "created": "2025-03-21T04:58:54.152-0700",
       "updated": "2026-08-04T10:11:13.958-0700",
       "ageDays": 528,
-      "staleDays": 26,
+      "staleDays": 27,
       "labels": [
         "BE"
       ],
@@ -26992,7 +26992,7 @@
       "created": "2026-06-29T01:43:40.511-0700",
       "updated": "2026-07-15T10:04:26.295-0700",
       "ageDays": 63,
-      "staleDays": 46,
+      "staleDays": 47,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19936"
     },
