@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-08-31T14:47:06.423423+00:00",
+  "lastUpdated": "2026-08-31T15:05:12.003427+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -21,6 +21,8 @@
     "Lowest": 2
   },
   "byComponent": {
+    "BE REBM": 167,
+    "BE CORE": 27,
     "DE": 59,
     "QA": 6,
     "MOBILE": 4,
@@ -28,11 +30,9 @@
     "General": 196,
     "IOS": 220,
     "FE Hawkeye": 19,
-    "BE REBM": 167,
     "PARENT-WORK-ITEM": 27,
     "CVAT": 5,
     "BE SDK": 2,
-    "BE CORE": 27,
     "HAWKEYE": 18,
     "BE ADMIN": 2,
     "FE REBM": 12,
@@ -40,14 +40,14 @@
     "AI CORE": 1
   },
   "byStatus": {
+    "Staging": 16,
     "In Progress": 35,
     "To  Do": 163,
     "PRODUCTION READY": 42,
     "QA": 131,
     "Code Review": 27,
-    "Staging": 15,
     "Done": 244,
-    "UAT": 219,
+    "UAT": 218,
     "Dev Complete": 4,
     "Waiting for clarification": 60,
     "Invalid": 60
@@ -234,6 +234,203 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-20128",
+      "summary": "[BE] Task Detail API returns survey_response for existing offline tasks when ENABLE_TRUE_OFFLINE_SURVEY_START is disabled, and Survey created when ENABLE_TRUE_OFFLINE_SURVEY_START was True",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Staging",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Naveen Satyarthi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-07-23T03:03:14.918-0700",
+      "updated": "2026-08-31T07:52:05.391-0700",
+      "ageDays": 39,
+      "staleDays": 0,
+      "labels": [
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20128"
+    },
+    {
+      "key": "REB3-20094",
+      "summary": "[BE] Make Network Gate behind flag is_network_gate_enabled",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.13 PRGM HF",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "REB3-18944 - Store Intelligence - Maintenance & Optimization",
+      "status": "Staging",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "BE CORE",
+      "assignee": "Arihant Srivastava",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AS-3.png",
+      "tester": "Brijesh Bhatt",
+      "reporter": "Brijesh Bhatt",
+      "created": "2026-07-21T01:39:25.091-0700",
+      "updated": "2026-08-31T07:51:49.680-0700",
+      "ageDays": 41,
+      "staleDays": 0,
+      "labels": [
+        "be",
+        "prgm",
+        "shield"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20094"
+    },
+    {
+      "key": "REB3-20080",
+      "summary": "[BE]Offline Tasks: Existing Tasks Do Not Return survey_response.id After Enabling ENABLE_TRUE_OFFLINE_SURVEY_START",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Staging",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Naveen Satyarthi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
+      "tester": "Gaurav Tripathi",
+      "reporter": "Gaurav Tripathi",
+      "created": "2026-07-17T05:59:27.272-0700",
+      "updated": "2026-08-31T07:51:34.762-0700",
+      "ageDays": 45,
+      "staleDays": 0,
+      "labels": [
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20080"
+    },
+    {
+      "key": "REB3-20079",
+      "summary": "[BE] Rename enable_offline_completion_v2 to ENABLE_TRUE_OFFLINE_SURVEY_START in Settings API",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "Staging",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Naveen Satyarthi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
+      "tester": "Gaurav Tripathi",
+      "reporter": "Gaurav Tripathi",
+      "created": "2026-07-17T05:42:43.361-0700",
+      "updated": "2026-08-31T07:51:22.343-0700",
+      "ageDays": 45,
+      "staleDays": 0,
+      "labels": [
+        "BE",
+        "Customer",
+        "PRGM",
+        "REBM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20079"
+    },
+    {
+      "key": "REB3-19986",
+      "summary": "[BE] offline survey tasks in created state and unassigned until first upload(offline completion)",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "Staging",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Naveen Satyarthi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
+      "tester": "Raghav Galhotra",
+      "reporter": "Raghav Galhotra",
+      "created": "2026-07-07T00:36:48.444-0700",
+      "updated": "2026-08-31T07:50:09.584-0700",
+      "ageDays": 55,
+      "staleDays": 0,
+      "labels": [
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-19986"
+    },
+    {
+      "key": "REB3-19246",
+      "summary": "[BE] Prepare surveys for offline work",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "Staging",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "BE REBM",
+      "assignee": "Naveen Satyarthi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
+      "tester": "Dmitrii Azarenko",
+      "reporter": "Dmitrii Azarenko",
+      "created": "2026-03-16T05:42:50.146-0700",
+      "updated": "2026-08-31T07:49:42.438-0700",
+      "ageDays": 168,
+      "staleDays": 0,
+      "labels": [
+        "BE",
+        "Customer",
+        "PRGM",
+        "REBM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-19246"
+    },
+    {
+      "key": "REB3-20078",
+      "summary": "[BE REBM] Allow iOS platform to perform multiple tasks at the same time",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.13 PRGM HF",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "Staging",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Naveen Satyarthi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
+      "tester": "anton.mitrofanov",
+      "reporter": "anton.mitrofanov",
+      "created": "2026-07-17T05:25:46.708-0700",
+      "updated": "2026-08-31T07:48:02.497-0700",
+      "ageDays": 45,
+      "staleDays": 0,
+      "labels": [
+        "BE"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20078"
+    },
     {
       "key": "REB3-20033",
       "summary": "[DE] [PRGM] Add Survey number to survey API",
@@ -972,7 +1169,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-19T08:02:02.817-0700",
       "updated": "2026-08-31T02:43:23.622-0700",
-      "ageDays": 11,
+      "ageDays": 12,
       "staleDays": 0,
       "labels": [
         "IOS",
@@ -2672,7 +2869,7 @@
       "created": "2026-08-25T00:55:31.166-0700",
       "updated": "2026-08-27T08:00:51.753-0700",
       "ageDays": 6,
-      "staleDays": 3,
+      "staleDays": 4,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20457"
     },
@@ -2697,7 +2894,7 @@
       "created": "2026-05-28T15:28:42.018-0700",
       "updated": "2026-08-27T07:59:29.408-0700",
       "ageDays": 94,
-      "staleDays": 3,
+      "staleDays": 4,
       "labels": [
         "Customer",
         "ai",
@@ -3107,7 +3304,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-05-08T07:53:46.872-0700",
       "updated": "2026-08-27T03:27:01.296-0700",
-      "ageDays": 114,
+      "ageDays": 115,
       "staleDays": 4,
       "labels": [
         "ANDR"
@@ -4157,7 +4354,7 @@
       "created": "2026-08-25T04:13:24.365-0700",
       "updated": "2026-08-25T07:56:49.853-0700",
       "ageDays": 6,
-      "staleDays": 5,
+      "staleDays": 6,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20461"
     },
@@ -4182,7 +4379,7 @@
       "created": "2026-08-12T13:10:50.389-0700",
       "updated": "2026-08-25T07:52:44.376-0700",
       "ageDays": 18,
-      "staleDays": 5,
+      "staleDays": 6,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -9803,7 +10000,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-05-13T07:55:56.501-0700",
       "updated": "2026-08-21T04:42:08.734-0700",
-      "ageDays": 109,
+      "ageDays": 110,
       "staleDays": 10,
       "labels": [
         "ios"
@@ -11930,33 +12127,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20280"
     },
     {
-      "key": "REB3-20080",
-      "summary": "[BE]Offline Tasks: Existing Tasks Do Not Return survey_response.id After Enabling ENABLE_TRUE_OFFLINE_SURVEY_START",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Staging",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Naveen Satyarthi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
-      "tester": "Gaurav Tripathi",
-      "reporter": "Gaurav Tripathi",
-      "created": "2026-07-17T05:59:27.272-0700",
-      "updated": "2026-08-21T04:29:18.205-0700",
-      "ageDays": 45,
-      "staleDays": 10,
-      "labels": [
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20080"
-    },
-    {
       "key": "REB3-20041",
       "summary": "[BE] Actions Reduce Facing and Increase Facing mapping to existing actions (extra facings and low stock actions to be excluded))",
       "project": "Rebotics 3",
@@ -11983,33 +12153,6 @@
         "Customer"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20041"
-    },
-    {
-      "key": "REB3-20128",
-      "summary": "[BE] Task Detail API returns survey_response for existing offline tasks when ENABLE_TRUE_OFFLINE_SURVEY_START is disabled, and Survey created when ENABLE_TRUE_OFFLINE_SURVEY_START was True",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Staging",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Naveen Satyarthi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-07-23T03:03:14.918-0700",
-      "updated": "2026-08-21T04:29:18.057-0700",
-      "ageDays": 39,
-      "staleDays": 10,
-      "labels": [
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20128"
     },
     {
       "key": "REB3-19957",
@@ -12069,36 +12212,6 @@
         "RSMN"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20193"
-    },
-    {
-      "key": "REB3-20079",
-      "summary": "[BE] Rename enable_offline_completion_v2 to ENABLE_TRUE_OFFLINE_SURVEY_START in Settings API",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "Staging",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Naveen Satyarthi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
-      "tester": "Gaurav Tripathi",
-      "reporter": "Gaurav Tripathi",
-      "created": "2026-07-17T05:42:43.361-0700",
-      "updated": "2026-08-21T04:29:17.385-0700",
-      "ageDays": 45,
-      "staleDays": 10,
-      "labels": [
-        "BE",
-        "Customer",
-        "PRGM",
-        "REBM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20079"
     },
     {
       "key": "REB3-20124",
@@ -12207,33 +12320,6 @@
       "staleDays": 10,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20270"
-    },
-    {
-      "key": "REB3-20078",
-      "summary": "[BE REBM] Allow iOS platform to perform multiple tasks at the same time",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.13 PRGM HF",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "UAT",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Naveen Satyarthi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
-      "tester": "anton.mitrofanov",
-      "reporter": "anton.mitrofanov",
-      "created": "2026-07-17T05:25:46.708-0700",
-      "updated": "2026-08-21T04:29:16.434-0700",
-      "ageDays": 45,
-      "staleDays": 10,
-      "labels": [
-        "BE"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20078"
     },
     {
       "key": "REB3-19906",
@@ -12456,33 +12542,6 @@
         "SHIELD"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20062"
-    },
-    {
-      "key": "REB3-19986",
-      "summary": "[BE] offline survey tasks in created state and unassigned until first upload(offline completion)",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "Staging",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Naveen Satyarthi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
-      "tester": "Raghav Galhotra",
-      "reporter": "Raghav Galhotra",
-      "created": "2026-07-07T00:36:48.444-0700",
-      "updated": "2026-08-21T04:29:15.247-0700",
-      "ageDays": 55,
-      "staleDays": 10,
-      "labels": [
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19986"
     },
     {
       "key": "REB3-20034",
@@ -13413,35 +13472,6 @@
         "Customer"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-19916"
-    },
-    {
-      "key": "REB3-20094",
-      "summary": "[BE] Make Network Gate behind flag is_network_gate_enabled",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.13 PRGM HF",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "REB3-18944 - Store Intelligence - Maintenance & Optimization",
-      "status": "Staging",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "BE CORE",
-      "assignee": "Arihant Srivastava",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AS-3.png",
-      "tester": "Brijesh Bhatt",
-      "reporter": "Brijesh Bhatt",
-      "created": "2026-07-21T01:39:25.091-0700",
-      "updated": "2026-08-21T04:29:09.415-0700",
-      "ageDays": 41,
-      "staleDays": 10,
-      "labels": [
-        "be",
-        "prgm",
-        "shield"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20094"
     },
     {
       "key": "REB3-20048",
@@ -15123,7 +15153,7 @@
       "reporter": "Vipin Nair",
       "created": "2026-03-26T07:58:00.931-0700",
       "updated": "2026-08-21T04:28:49.245-0700",
-      "ageDays": 157,
+      "ageDays": 158,
       "staleDays": 10,
       "labels": [
         "AD-HOC",
@@ -15641,36 +15671,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-18989"
     },
     {
-      "key": "REB3-19246",
-      "summary": "[BE] Prepare surveys for offline work",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "Staging",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "BE REBM",
-      "assignee": "Naveen Satyarthi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/69db3c1a96c77121c120be6b598ab9d5?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNS-0.png",
-      "tester": "Dmitrii Azarenko",
-      "reporter": "Dmitrii Azarenko",
-      "created": "2026-03-16T05:42:50.146-0700",
-      "updated": "2026-08-21T04:28:43.233-0700",
-      "ageDays": 168,
-      "staleDays": 10,
-      "labels": [
-        "BE",
-        "Customer",
-        "PRGM",
-        "REBM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19246"
-    },
-    {
       "key": "REB3-19757",
       "summary": "Weekly SPAR task - FV images transfer from MJHD to SPAR.",
       "project": "Rebotics 3",
@@ -16136,7 +16136,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-06-08T07:47:29.467-0700",
       "updated": "2026-08-21T04:28:38.471-0700",
-      "ageDays": 83,
+      "ageDays": 84,
       "staleDays": 10,
       "labels": [
         "Customer"
@@ -16835,7 +16835,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-03-19T07:53:23.792-0700",
       "updated": "2026-08-20T02:05:37.165-0700",
-      "ageDays": 164,
+      "ageDays": 165,
       "staleDays": 11,
       "labels": [
         "ANDR"
@@ -20025,7 +20025,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-06-10T07:47:26.520-0700",
       "updated": "2026-08-05T05:40:59.649-0700",
-      "ageDays": 81,
+      "ageDays": 82,
       "staleDays": 26,
       "labels": [
         "ALBT",
@@ -22388,7 +22388,7 @@
       "reporter": "Aiganysh Orozbakova",
       "created": "2021-05-29T07:56:39.414-0700",
       "updated": "2026-07-29T05:45:22.996-0700",
-      "ageDays": 1919,
+      "ageDays": 1920,
       "staleDays": 33,
       "labels": [
         "REBM"
@@ -25511,7 +25511,7 @@
       "reporter": "Vignesh Sankaranarayanan",
       "created": "2025-07-09T08:03:53.123-0700",
       "updated": "2026-07-22T17:21:37.484-0700",
-      "ageDays": 417,
+      "ageDays": 418,
       "staleDays": 39,
       "labels": [
         "ALBT",
@@ -25900,7 +25900,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:51:13.514-0700",
       "updated": "2026-07-22T03:16:42.951-0700",
-      "ageDays": 90,
+      "ageDays": 91,
       "staleDays": 40,
       "labels": [
         "ANDR",
@@ -26115,7 +26115,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:49:48.696-0700",
       "updated": "2026-07-21T03:18:51.244-0700",
-      "ageDays": 90,
+      "ageDays": 91,
       "staleDays": 41,
       "labels": [
         "Customer"
@@ -26249,7 +26249,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:48:02.838-0700",
       "updated": "2026-07-20T03:35:46.895-0700",
-      "ageDays": 90,
+      "ageDays": 91,
       "staleDays": 42,
       "labels": [
         "ANDR",
@@ -27045,7 +27045,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-03-18T08:03:00.459-0700",
       "updated": "2026-07-15T09:52:20.926-0700",
-      "ageDays": 165,
+      "ageDays": 166,
       "staleDays": 46,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19266"
@@ -27368,7 +27368,7 @@
       "created": "2025-07-15T12:03:49.945-0700",
       "updated": "2026-07-14T08:00:32.415-0700",
       "ageDays": 411,
-      "staleDays": 47,
+      "staleDays": 48,
       "labels": [
         "Customer",
         "ROADMAP_2026_04"
@@ -27396,7 +27396,7 @@
       "created": "2026-03-27T07:12:24.231-0700",
       "updated": "2026-07-14T07:55:24.701-0700",
       "ageDays": 157,
-      "staleDays": 47,
+      "staleDays": 48,
       "labels": [
         "Customer"
       ],
@@ -27423,7 +27423,7 @@
       "created": "2026-04-13T02:18:01.080-0700",
       "updated": "2026-07-14T07:50:30.765-0700",
       "ageDays": 140,
-      "staleDays": 47,
+      "staleDays": 48,
       "labels": [
         "Customer"
       ],
@@ -27450,7 +27450,7 @@
       "created": "2026-05-15T04:21:11.227-0700",
       "updated": "2026-07-14T07:48:15.563-0700",
       "ageDays": 108,
-      "staleDays": 47,
+      "staleDays": 48,
       "labels": [
         "Customer"
       ],
