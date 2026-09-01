@@ -1,0 +1,30 @@
+id: "fetch_planogram_categories"
+name: "Fetch Store Planogram Categories"
+description: "Verifies mobile production parsing of planogram departments and category list"
+platforms:
+  - "android"
+  - "ios"
+
+setup:
+  account: "standard_user"
+
+steps:
+  - id: "step_auth"
+    action: "login"
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+      actions:
+        - "AUTH_INITIATED"
+        - "AUTH_SUCCESS"
+
+  - id: "step_fetch_categories"
+    action: "fetch_planogram_categories"
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+        has_categories: true
+      actions:
+        - "CATEGORIES_LOADED"

@@ -31,7 +31,7 @@
   }
 
   function isE2EReport(title) {
-    return /Action Count|Resumption Audit/i.test(title);
+    return /Action Count|Resumption Audit|E2E Audit|Bi-Directional Trace/i.test(title);
   }
 
   function exportReportToExcel() {
@@ -111,7 +111,11 @@
       'font-family:inherit',
     ].join(';');
 
-    const target = document.querySelector('.header-badges') || document.querySelector('.header-meta');
+    const target =
+      document.querySelector('.header-badges') ||
+      document.querySelector('.header-meta') ||
+      document.querySelector('.header-card') ||
+      document.querySelector('.header-banner');
     if (target) {
       target.insertBefore(btn, target.firstChild);
     }

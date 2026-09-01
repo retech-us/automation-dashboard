@@ -1,0 +1,23 @@
+name: "Task Details and Actions Count Fetch"
+id: "get_task_details"
+description: "Verify mobile production code fetches task details and processes action count metrics"
+platforms:
+  - "android"
+  - "ios"
+
+steps:
+  - name: "Fetch Task By ID"
+    endpoint: "api/v4/tasks/41743485/"
+    method: "GET"
+    response:
+      statusCode: 200
+      fixture: "tasks/task_details_success.json"
+    expected:
+      actions:
+        - "TASK_LOADED"
+      state:
+        taskId: 41743485
+        taskStatus: "IN_PROGRESS"
+        totalActions: 12
+        pendingActions: 4
+        completedActions: 8

@@ -1,0 +1,72 @@
+{
+  "gateways": {
+    "production": {
+      "name": "Production / Beta Discovery Gateway",
+      "url": "https://r3us-admin.rebotics.net"
+    },
+    "alpha": {
+      "name": "Alpha Discovery Gateway",
+      "url": "https://r3dev-admin.rebotics.net"
+    }
+  },
+  "knownInstances": {
+    "epsilon": {
+      "company": "epsilon",
+      "resolvedHost": "https://epsilon.rebotics.net"
+    },
+    "delta": {
+      "company": "delta",
+      "resolvedHost": "https://delta.rebotics.net"
+    },
+    "gamma": {
+      "company": "gamma",
+      "resolvedHost": "https://gamma.rebotics.net"
+    }
+  },
+  "mobileBuildVariants": {
+    "alpha": {
+      "android": {
+        "flavor": "alpha",
+        "appId": "com.retechlabs.rebotics.alpha",
+        "gateway": "https://r3dev-admin.rebotics.net",
+        "userAgent": "Store Intelligence Alpha Android/4.x (Headless; JVM)"
+      },
+      "ios": {
+        "configuration": "Alpha",
+        "appId": "com.retechlabs.rebotics-ios-a",
+        "gateway": "https://r3dev-admin.rebotics.net",
+        "userAgent": "Store Intelligence Alpha iOS/4.x (Headless; Swift/Moya)"
+      }
+    },
+    "beta": {
+      "android": {
+        "flavor": "staging",
+        "appId": "com.retechlabs.rebotics.dev",
+        "gateway": "https://r3us-admin.rebotics.net",
+        "userAgent": "Store Intelligence Beta Android/4.x (Headless; JVM)"
+      },
+      "ios": {
+        "configuration": "Beta",
+        "appId": "com.retechlabs.rebotics-ios-b",
+        "gateway": "https://r3us-admin.rebotics.net",
+        "userAgent": "Store Intelligence Beta iOS/4.x (Headless; Swift/Moya)"
+      }
+    },
+    "production": {
+      "android": {
+        "flavor": "production",
+        "appId": "com.retechlabs.rebotics",
+        "gateway": "https://r3us-admin.rebotics.net",
+        "userAgent": "Store Intelligence Production Android/4.x (Headless; JVM)"
+      },
+      "ios": {
+        "configuration": "Release",
+        "appId": "com.retechlabs.rebotics",
+        "gateway": "https://r3us-admin.rebotics.net",
+        "userAgent": "Store Intelligence Production iOS/4.x (Headless; Swift/Moya)"
+      }
+    }
+  },
+  "defaultInstance": "epsilon",
+  "defaultBuildVariant": "production"
+}
