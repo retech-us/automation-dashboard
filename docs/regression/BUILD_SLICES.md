@@ -141,4 +141,4 @@ See [GATES.md](./GATES.md).
 |------|--------|
 | A (PR bot) | ✅ |
 | B (live nightly) | ✅ `gate-b run` + `.github/workflows/regression-gate-b.yml` |
-| C (release) | Pending |
+| C (release) | ✅ `gate-c run` + `.github/workflows/regression-gate-c.yml` |

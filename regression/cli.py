@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression platform CLI — Slices 1–7 + Gate B live smoke."""
+"""Regression platform CLI — Slices 1–7 + Gates B/C."""
 
 from __future__ import annotations
 
@@ -23,6 +23,12 @@ from regression.auth import (
 from regression.domain_parity import DomainParityError, run_domain_parity
 from regression.env import EnvironmentResolutionError, resolve_base_url
 from regression.gate_b import GateBError, run_gate_b
+from regression.gate_c import (
+    GateCError,
+    render_gate_c_markdown,
+    run_gate_c,
+    to_run_summary,
+)
 from regression.image_catalog import ImageCatalog, ImageCatalogError
 from regression.impact import ImpactError
 from regression.pr_bot import (
@@ -331,10 +337,47 @@ def cmd_gate_b_run(args: argparse.Namespace) -> int:
     return int(report.exit_code)
 
 
+def cmd_gate_c_run(args: argparse.Namespace) -> int:
+    try:
+        report = run_gate_c(
+            env=args.env,
+            require_live=bool(args.require_live),
+            task_id=args.task_id,
+            api_ir_cmd=args.api_ir_cmd,
+            appium_cmd=args.appium_cmd,
+        )
+    except GateCError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return int(exc.exit_code)
+
+    summary = to_run_summary(
+        report,
+        report_url=args.report_url or "file://regression-gate-c.json",
+    )
+    md = render_gate_c_markdown(report)
+
+    if args.json_out:
+        Path(args.json_out).write_text(
+            json.dumps(report.as_dict(), indent=2) + "\n", encoding="utf-8"
+        )
+    if args.summary_out:
+        Path(args.summary_out).write_text(
+            json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+        )
+    if args.markdown_out:
+        Path(args.markdown_out).write_text(md, encoding="utf-8")
+
+    out = report.as_dict()
+    out["run_summary"] = summary
+    out["markdown"] = md
+    print(json.dumps(out, indent=2))
+    return int(report.exit_code)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="regression",
-        description="Regression platform CLI (Slices 1–7 + Gate B)",
+        description="Regression platform CLI (Slices 1–7 + Gates B/C)",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -544,6 +587,43 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_gbrun.add_argument("--json-out", default=None)
     p_gbrun.set_defaults(func=cmd_gate_b_run)
+
+    p_gc = sub.add_parser(
+        "gate-c",
+        help="Gate C release pack + dashboard run-summary artifact",
+    )
+    gc_sub = p_gc.add_subparsers(dest="gate_c_command", required=True)
+    p_gcrun = gc_sub.add_parser("run", help="Run Gate C release pack")
+    p_gcrun.add_argument("--env", default="epsilon")
+    p_gcrun.add_argument("--task-id", type=int, default=None)
+    p_gcrun.add_argument(
+        "--require-live",
+        action="store_true",
+        help="Fail if Gate B live cannot run (default: skip live when no creds)",
+    )
+    p_gcrun.add_argument(
+        "--api-ir-cmd",
+        default=None,
+        help="Shell command for API IR subset (or REGRESSION_API_IR_CMD)",
+    )
+    p_gcrun.add_argument(
+        "--appium-cmd",
+        default=None,
+        help="Shell command for thin Appium IR (or REGRESSION_APPIUM_CMD)",
+    )
+    p_gcrun.add_argument("--json-out", default=None, help="Full Gate C report JSON")
+    p_gcrun.add_argument(
+        "--summary-out",
+        default=None,
+        help="Dashboard run-summary JSON (schemaVersion 1.0 + regression_platform)",
+    )
+    p_gcrun.add_argument("--markdown-out", default=None)
+    p_gcrun.add_argument(
+        "--report-url",
+        default=None,
+        help="reportUrl field for run-summary (default file://regression-gate-c.json)",
+    )
+    p_gcrun.set_defaults(func=cmd_gate_c_run)
 
     return parser
 

@@ -6,7 +6,7 @@ There are **3 gates**. Gate A is the PR bot. Gate B is live nightly/manual. Gate
 |------|------|---------|--------|
 | **A** | Every PR | Fast offline judgement + PR comment | ✅ Live on PR bot workflow |
 | **B** | Nightly / `workflow_dispatch` | Live auth + IR action-list + domain + provision dry-run | ✅ Implemented |
-| **C** | Release | Full IR + API + thin Appium + dashboard artifact | Pending |
+| **C** | Release / `workflow_dispatch` | Full release pack + dashboard `run-summary` artifact | ✅ Implemented |
 
 ---
 
@@ -56,6 +56,36 @@ UI: **Actions → Regression Gate B (live) → Run workflow**
 
 ---
 
-## Gate C — Release (not started)
+## Gate C — Release
 
-Full IR suite + API IR subset + thin Appium + unified dashboard PASS/FAIL artifact.
+Composes release layers and emits a dashboard-oriented artifact:
+
+```bash
+python3 regression/cli.py gate-c run --env=epsilon \
+  --json-out=/tmp/gate-c.json \
+  --summary-out=/tmp/regression-release-summary.json \
+  --markdown-out=/tmp/gate-c.md
+```
+
+### Layers
+| Layer | Required? | Notes |
+|-------|-----------|--------|
+| `gate_a_pr_bot_smoke` | Yes | Offline Gate A pack |
+| `domain_parity_cat1` | Yes | Android CAT1 count lock |
+| `gate_b_live` | If creds / `--require-live` | Skipped (not failed) when no creds |
+| `api_ir_subset` | Optional | Enable via `REGRESSION_API_IR_CMD` |
+| `appium_ir_thin` | Optional | Enable via `REGRESSION_APPIUM_CMD` |
+
+Skipped optional layers do **not** fail the release pack. Failed required layers do.
+
+### Artifacts
+- `regression-gate-c.json` — full Gate C report  
+- `regression-release-summary.json` — `schemaVersion: 1.0` run-summary with `repo: regression` + `regression_platform` block  
+- `regression-gate-c.md` — human summary  
+
+### CI secrets (optional extras)
+- `REGRESSION_API_IR_CMD` — shell command for API IR Maven/subset  
+- `REGRESSION_APPIUM_CMD` — shell command for thin Appium IR  
+
+Workflow: `.github/workflows/regression-gate-c.yml`  
+UI: **Actions → Regression Gate C (release) → Run workflow**

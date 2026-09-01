@@ -1,0 +1,75 @@
+name: Regression Gate C (release)
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Target env slug
+        required: false
+        default: epsilon
+      require_live:
+        description: Fail if live Gate B cannot run
+        type: boolean
+        required: false
+        default: false
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regression-gate-c
+  cancel-in-progress: false
+
+jobs:
+  gate-c:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: pip install --quiet pyyaml
+
+      - name: Unit tests (Gate C + prior)
+        run: |
+          python3 -m unittest \
+            regression.tests.test_gate_c_release \
+            regression.tests.test_gate_b_live \
+            regression.tests.test_slice7_pr_bot -v
+
+      - name: Run Gate C release pack
+        env:
+          REGRESSION_USERNAME: ${{ secrets.REGRESSION_USERNAME }}
+          REGRESSION_PASSWORD: ${{ secrets.REGRESSION_PASSWORD }}
+          REGRESSION_TASK_ID: ${{ secrets.REGRESSION_TASK_ID }}
+          REGRESSION_API_IR_CMD: ${{ secrets.REGRESSION_API_IR_CMD }}
+          REGRESSION_APPIUM_CMD: ${{ secrets.REGRESSION_APPIUM_CMD }}
+        run: |
+          ENV="${{ github.event.inputs.env || 'epsilon' }}"
+          EXTRA=(--env="$ENV")
+          if [ "${{ github.event.inputs.require_live }}" = "true" ]; then
+            EXTRA+=(--require-live)
+          fi
+          python3 regression/cli.py gate-c run \
+            "${EXTRA[@]}" \
+            --json-out=regression-gate-c.json \
+            --summary-out=regression-release-summary.json \
+            --markdown-out=regression-gate-c.md \
+            --report-url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Upload release artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-gate-c
+          path: |
+            regression-gate-c.json
+            regression-release-summary.json
+            regression-gate-c.md
+          if-no-files-found: ignore
