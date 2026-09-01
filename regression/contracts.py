@@ -129,6 +129,17 @@ def assert_action_list_contract(
                     )
                 )
 
+        for field in list(cfg.get("preferred_fields") or []):
+            if field not in item or item.get(field) in (None, ""):
+                warnings.append(
+                    ContractViolation(
+                        path=f"{base}.{field}",
+                        rule="preferred",
+                        message=f"Preferred field {field!r} missing or empty",
+                        severity="warning",
+                    )
+                )
+
         for field, allowed in field_types.items():
             if field not in item:
                 continue

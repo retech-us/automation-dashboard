@@ -18,7 +18,8 @@
 | [10-regression-orchestrator-design.md](./10-regression-orchestrator-design.md) | Orchestrator |
 | [11-failure-classification.md](./11-failure-classification.md) | Failure taxonomy |
 | [12-ai-analysis-design.md](./12-ai-analysis-design.md) | AI (non-authoritative) |
-| [13-ci-cd-integration.md](./13-ci-cd-integration.md) | CI gates |
+| [13-ci-cd-integration.md](./13-ci-cd-integration.md) | CI gates sketch |
+| [GATES.md](./GATES.md) | Gate A/B/C how-to + status |
 | [14-implementation-roadmap.md](./14-implementation-roadmap.md) | Phases 0–10 |
 | [15-product-decisions.md](./15-product-decisions.md) | Locked product decisions |
 | [16-genai-and-full-roadmap.md](./16-genai-and-full-roadmap.md) | GenAI as assistant + cover/not-cover |

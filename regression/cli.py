@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression platform CLI — Slices 1–7 (tools + CI PR bot)."""
+"""Regression platform CLI — Slices 1–7 + Gate B live smoke."""
 
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ from regression.auth import (
 )
 from regression.domain_parity import DomainParityError, run_domain_parity
 from regression.env import EnvironmentResolutionError, resolve_base_url
+from regression.gate_b import GateBError, run_gate_b
 from regression.image_catalog import ImageCatalog, ImageCatalogError
 from regression.impact import ImpactError
 from regression.pr_bot import (
@@ -302,10 +303,38 @@ def cmd_pr_bot_run(args: argparse.Namespace) -> int:
     return int(report.exit_code)
 
 
+def cmd_gate_b_run(args: argparse.Namespace) -> int:
+    try:
+        report = run_gate_b(
+            env=args.env,
+            base_url_override=args.base_url,
+            task_id=args.task_id,
+            execute_provision=bool(args.execute),
+            category=args.category,
+            bays=[int(x) for x in args.bays.split(",") if x.strip()],
+            store_id=args.store_id,
+            pog_id=args.pog_id,
+            category_id=args.category_id,
+        )
+    except GateBError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return int(exc.exit_code)
+    except AuthCredentialsMissing as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+
+    if args.json_out:
+        Path(args.json_out).write_text(
+            json.dumps(report.as_dict(), indent=2) + "\n", encoding="utf-8"
+        )
+    print(json.dumps(report.as_dict(), indent=2))
+    return int(report.exit_code)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="regression",
-        description="Regression platform CLI (Slices 1–7)",
+        description="Regression platform CLI (Slices 1–7 + Gate B)",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -488,6 +517,33 @@ def build_parser() -> argparse.ArgumentParser:
         help="Post comment via gh (requires --pr and gh auth)",
     )
     p_run.set_defaults(func=cmd_pr_bot_run)
+
+    p_gb = sub.add_parser(
+        "gate-b",
+        help="Gate B live smoke (auth + IR action-list + domain + provision dry-run)",
+    )
+    gb_sub = p_gb.add_subparsers(dest="gate_b_command", required=True)
+    p_gbrun = gb_sub.add_parser("run", help="Run Gate B against --env")
+    p_gbrun.add_argument("--env", default="epsilon")
+    p_gbrun.add_argument("--base-url", default=None)
+    p_gbrun.add_argument(
+        "--task-id",
+        type=int,
+        default=None,
+        help="IR task id (else REGRESSION_TASK_ID or auto-discover)",
+    )
+    p_gbrun.add_argument("--category", default="pasta")
+    p_gbrun.add_argument("--bays", default="1")
+    p_gbrun.add_argument("--store-id", type=int, default=None)
+    p_gbrun.add_argument("--pog-id", type=int, default=None)
+    p_gbrun.add_argument("--category-id", type=int, default=None)
+    p_gbrun.add_argument(
+        "--execute",
+        action="store_true",
+        help="Also mutate: upload catalog scans to task (needs store/pog ids)",
+    )
+    p_gbrun.add_argument("--json-out", default=None)
+    p_gbrun.set_defaults(func=cmd_gate_b_run)
 
     return parser
 

@@ -130,3 +130,15 @@ python3 regression/cli.py pr-bot run --env=epsilon --mode=smoke \
   --json-out=/tmp/reg-pr.json --comment-out=/tmp/reg-pr.md
 # Verdict PASS from tools; narrative source=template
 ```
+
+---
+
+## After slices — CI Gates
+
+See [GATES.md](./GATES.md).
+
+| Gate | Status |
+|------|--------|
+| A (PR bot) | ✅ |
+| B (live nightly) | ✅ `gate-b run` + `.github/workflows/regression-gate-b.yml` |
+| C (release) | Pending |

@@ -1,0 +1,76 @@
+name: Regression Gate B (live)
+
+on:
+  schedule:
+    # Nightly 02:30 UTC
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Target env slug
+        required: false
+        default: epsilon
+      task_id:
+        description: Optional IR task id (else auto-discover / secret)
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regression-gate-b
+  cancel-in-progress: false
+
+jobs:
+  gate-b:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: pip install --quiet pyyaml
+
+      - name: Gate A unit smoke (fast)
+        run: |
+          python3 -m unittest \
+            regression.tests.test_slice7_pr_bot \
+            regression.tests.test_gate_b_live -v
+
+      - name: Run Gate B live
+        env:
+          REGRESSION_USERNAME: ${{ secrets.REGRESSION_USERNAME }}
+          REGRESSION_PASSWORD: ${{ secrets.REGRESSION_PASSWORD }}
+          REGRESSION_TASK_ID: ${{ secrets.REGRESSION_TASK_ID }}
+          REGRESSION_STORE_ID: ${{ secrets.REGRESSION_STORE_ID }}
+          REGRESSION_POG_ID: ${{ secrets.REGRESSION_POG_ID }}
+        run: |
+          ENV="${{ github.event.inputs.env || 'epsilon' }}"
+          TASK_INPUT="${{ github.event.inputs.task_id }}"
+          EXTRA=()
+          if [ -n "$TASK_INPUT" ]; then
+            EXTRA+=(--task-id="$TASK_INPUT")
+          fi
+          # Skip live if secrets missing (exit 2 → mark skipped via continue)
+          if [ -z "$REGRESSION_USERNAME" ] || [ -z "$REGRESSION_PASSWORD" ]; then
+            echo "Missing REGRESSION_USERNAME/PASSWORD secrets — Gate B live cannot run."
+            echo "Add repository secrets, then re-run workflow_dispatch."
+            exit 2
+          fi
+          python3 regression/cli.py gate-b run \
+            --env="$ENV" \
+            --json-out=regression-gate-b.json \
+            "${EXTRA[@]}"
+
+      - name: Upload Gate B report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-gate-b
+          path: regression-gate-b.json
+          if-no-files-found: ignore

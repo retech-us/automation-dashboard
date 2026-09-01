@@ -8,13 +8,13 @@ envelope: results_or_list  # {results:[...]} or bare [...]
 item_required_fields:
   - id
   - action
-  - product_title
   - store_planogram_id
+  # product_title is preferred but live IR payloads may send null for unidentified facings
 
 item_field_types:
   id: [int]
   action: [str]
-  product_title: [str]
+  product_title: [str, "null"]
   store_planogram_id: [int]
   displayed_upc: [str, "null"]
   upc: [str, "null"]
@@ -24,6 +24,10 @@ item_field_types:
   action_resolved: [bool, "null"]
   current_position: [dict, "null"]
   expected_position: [dict, "null"]
+
+# Soft preference: warn when product_title missing/empty (not hard fail)
+preferred_fields:
+  - product_title
 
 # At least one UPC-like field must be present and non-empty when item has product_id
 upc_fields: [displayed_upc, upc]

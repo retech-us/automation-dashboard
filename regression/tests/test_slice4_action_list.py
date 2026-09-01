@@ -68,11 +68,23 @@ class ContractAssertTests(unittest.TestCase):
         self.assertEqual(report.item_count, 0)
 
     def test_missing_required_fails(self):
-        bad = [{"id": 1, "action": "ACTION_MOVE"}]  # missing title + store_planogram_id
+        bad = [{"id": 1, "action": "ACTION_MOVE"}]  # missing store_planogram_id
         report = assert_action_list_contract(bad)
         self.assertFalse(report.ok)
         rules = {e.rule for e in report.errors}
         self.assertIn("required", rules)
+
+    def test_missing_title_is_warning_not_error(self):
+        item = {
+            "id": 1,
+            "action": "ACTION_MOVE",
+            "product_title": None,
+            "store_planogram_id": 9,
+            "displayed_upc": "123",
+        }
+        report = assert_action_list_contract([item])
+        self.assertTrue(report.ok, report.as_dict())
+        self.assertTrue(any(w.rule == "preferred" for w in report.warnings))
 
     def test_product_id_without_upc_fails(self):
         item = {
