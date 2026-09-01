@@ -24,16 +24,7 @@ from core.action_list_ui_mapper import ActionListItemUiModel, BayUiSummary
 from core.invariants_validator import CrossBayPairingRecord, InvariantCheckResult
 from core.current_mobile_code_evaluator import audit_current_mobile_code_regressions
 from core.test_directory_registry import get_all_master_test_records
-
-
-def _ir_export_script_href(output_path: Path) -> str:
-    root = Path(__file__).resolve().parents[2]
-    try:
-        rel = output_path.resolve().relative_to(root)
-    except ValueError:
-        return "assets/js/ir-report-export.js"
-    depth = len(rel.parts) - 1
-    return ("../" * depth) + "assets/js/ir-report-export.js"
+from core.ir_export_script import ensure_ir_export_inline
 
 
 def generate_html_validation_report(
@@ -1807,8 +1798,7 @@ def generate_html_validation_report(
 </body>
 </html>
 """
-    href = _ir_export_script_href(output_path)
-    html_content = html_content.replace("</body>", f'<script src="{href}"></script>\n</body>')
+    html_content = ensure_ir_export_inline(html_content)
     output_path.write_text(html_content, encoding="utf-8")
     return str(output_path)
 

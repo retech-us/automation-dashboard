@@ -1,0 +1,84 @@
+id: "image_upload_and_ai_compliance"
+name: "Store Planogram Image Upload and AI Compliance Processing"
+description: "Execute end-to-end flow: Authenticate -> Select Store/POG -> Request Upload -> Transfer Image -> Trigger AI Recognition -> Execute Mobile Compliance Logic"
+platforms:
+  - "android"
+  - "ios"
+
+setup:
+  account: "standard_user"
+
+steps:
+  - id: "step_1_auth"
+    name: "Authenticate User"
+    action: "login"
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+      actions:
+        - "AUTH_INITIATED"
+        - "AUTH_SUCCESS"
+
+  - id: "step_2_planogram"
+    name: "Fetch Active Store Planogram"
+    action: "fetch_planogram_details"
+    params:
+      pog_id: 5001
+    assertions:
+      state:
+        pog_id: 5001
+        has_error: false
+      actions:
+        - "PLANOGRAM_LOADED"
+
+  - id: "step_3_upload_request"
+    name: "Request Upload Pre-Signed URL"
+    action: "request_upload"
+    params:
+      store_id: 1088
+      filename: "shelf_scan_01.jpg"
+    assertions:
+      state:
+        upload_id: 88201
+        has_error: false
+      actions:
+        - "UPLOAD_REQUESTED"
+
+  - id: "step_4_upload_image"
+    name: "Transfer Binary Image File"
+    action: "upload_image"
+    assertions:
+      state:
+        has_error: false
+      actions:
+        - "IMAGE_UPLOADED"
+
+  - id: "step_5_finish_upload"
+    name: "Finish Upload and Trigger AI Processing"
+    action: "finish_upload"
+    params:
+      upload_id: 88201
+    assertions:
+      state:
+        processing_id: 99341
+        processing_status: "processing"
+        has_error: false
+      actions:
+        - "UPLOAD_FINISHED"
+
+  - id: "step_6_compliance_logic"
+    name: "Receive AI Detections and Execute Mobile Compliance Logic"
+    action: "fetch_compliance_result"
+    params:
+      processing_id: 99341
+    assertions:
+      state:
+        processing_status: "completed"
+        compliance_score: 88.5
+        detected_facings: 32
+        missing_facings: 4
+        oos_items_count: 2
+        has_error: false
+      actions:
+        - "COMPLIANCE_CALCULATED"

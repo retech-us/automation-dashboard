@@ -1,0 +1,30 @@
+id: "shift_lifecycle"
+name: "Store Shift Status Lifecycle"
+description: "Verifies shift active status and task counters for store associate"
+platforms:
+  - "android"
+  - "ios"
+
+setup:
+  account: "standard_user"
+
+steps:
+  - id: "step_auth"
+    action: "login"
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+      actions:
+        - "AUTH_INITIATED"
+        - "AUTH_SUCCESS"
+
+  - id: "step_shift_status"
+    action: "fetch_shift_status"
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+        shift_is_active: true
+      actions:
+        - "SHIFT_STATUS_LOADED"

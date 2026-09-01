@@ -1,0 +1,29 @@
+id: "auth_login_success"
+name: "2FA Authentication and Profile Fetch Success"
+description: "Verify mobile production code authenticates via 2FA verify endpoint and fetches user profile"
+platforms:
+  - "android"
+  - "ios"
+
+setup:
+  account: "standard_user"
+
+steps:
+  - id: "step_auth"
+    action: "login"
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+      actions:
+        - "AUTH_INITIATED"
+        - "AUTH_SUCCESS"
+
+  - id: "step_profile"
+    action: "fetch_user_profile"
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+      actions:
+        - "USER_PROFILE_FETCHED"

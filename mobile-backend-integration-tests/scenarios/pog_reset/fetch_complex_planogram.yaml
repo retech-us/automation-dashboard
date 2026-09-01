@@ -1,0 +1,32 @@
+id: "fetch_complex_planogram"
+name: "Fetch Multi-Shelf Planogram Details"
+description: "Verifies parsing of detailed planogram layout with shelves, UPCs, and out-of-stock items"
+platforms:
+  - "android"
+  - "ios"
+
+setup:
+  account: "standard_user"
+
+steps:
+  - id: "step_auth"
+    action: "login"
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+      actions:
+        - "AUTH_INITIATED"
+        - "AUTH_SUCCESS"
+
+  - id: "step_fetch_pog"
+    action: "fetch_planogram_details"
+    params:
+      pog_id: 5001
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+        pog_id: 5001
+      actions:
+        - "PLANOGRAM_LOADED"

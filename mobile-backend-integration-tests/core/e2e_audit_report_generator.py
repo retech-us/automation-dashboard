@@ -14,16 +14,7 @@ import html
 from pathlib import Path
 from typing import Dict, Any, Optional
 from core.e2e_audit_engine import TaskAuditSummary, StepTelemetryRecord
-
-
-def _ir_export_script_href(output_path: Path) -> str:
-    root = Path(__file__).resolve().parents[2]
-    try:
-        rel = output_path.resolve().relative_to(root)
-    except ValueError:
-        return "assets/js/ir-report-export.js"
-    depth = len(rel.parts) - 1
-    return ("../" * depth) + "assets/js/ir-report-export.js"
+from core.ir_export_script import ensure_ir_export_inline
 
 
 def generate_e2e_audit_html_report(
@@ -1183,8 +1174,7 @@ def generate_e2e_audit_html_report(
 </body>
 </html>
 """
-    href = _ir_export_script_href(output_path)
-    html_content = html_content.replace("</body>", f'<script src="{href}"></script>\n</body>')
+    html_content = ensure_ir_export_inline(html_content)
     output_path.write_text(html_content, encoding="utf-8")
     print(f"📄 [E2E Audit Report Generated]: {output_path.name}")
     return output_path
