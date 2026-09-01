@@ -16,6 +16,16 @@ from typing import Dict, Any, Optional
 from core.e2e_audit_engine import TaskAuditSummary, StepTelemetryRecord
 
 
+def _ir_export_script_href(output_path: Path) -> str:
+    root = Path(__file__).resolve().parents[2]
+    try:
+        rel = output_path.resolve().relative_to(root)
+    except ValueError:
+        return "assets/js/ir-report-export.js"
+    depth = len(rel.parts) - 1
+    return ("../" * depth) + "assets/js/ir-report-export.js"
+
+
 def generate_e2e_audit_html_report(
     audit: TaskAuditSummary,
     output_path: Path
@@ -633,7 +643,7 @@ def generate_e2e_audit_html_report(
             <p>Task #{audit.task_id} &bull; Store #{audit.store_id} &bull; POG #{audit.pog_id} ({audit.pog_name})</p>
         </div>
         <div class="header-badges">
-            <button type="button" class="btn-export" onclick="exportReportToExcel()" title="Export all report tables to Excel (CSV)">
+            <button type="button" id="ir-export-excel-btn" class="btn-export" onclick="exportReportToExcel()" title="Export all report tables to Excel (CSV)">
                 📊 Export to Excel
             </button>
             <span class="tenant-pill">🏬 {audit.instance_slug.upper()}</span>
@@ -1173,6 +1183,8 @@ def generate_e2e_audit_html_report(
 </body>
 </html>
 """
+    href = _ir_export_script_href(output_path)
+    html_content = html_content.replace("</body>", f'<script src="{href}"></script>\n</body>')
     output_path.write_text(html_content, encoding="utf-8")
     print(f"📄 [E2E Audit Report Generated]: {output_path.name}")
     return output_path

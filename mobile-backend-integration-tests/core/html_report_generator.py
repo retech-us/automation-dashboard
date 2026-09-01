@@ -26,6 +26,16 @@ from core.current_mobile_code_evaluator import audit_current_mobile_code_regress
 from core.test_directory_registry import get_all_master_test_records
 
 
+def _ir_export_script_href(output_path: Path) -> str:
+    root = Path(__file__).resolve().parents[2]
+    try:
+        rel = output_path.resolve().relative_to(root)
+    except ValueError:
+        return "assets/js/ir-report-export.js"
+    depth = len(rel.parts) - 1
+    return ("../" * depth) + "assets/js/ir-report-export.js"
+
+
 def generate_html_validation_report(
     task_id: int,
     task_title: str,
@@ -786,7 +796,7 @@ def generate_html_validation_report(
             <p>Task #{task_id} &bull; Store #{store_id} &bull; Planogram #{pog_id} ({pog_name})</p>
         </div>
         <div class="header-meta">
-            <button type="button" class="btn btn-primary" style="font-size: 11.5px; padding: 7px 14px; background: #107C41; border-color: #107C41; color: #FFFFFF; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 8px;" onclick="exportFullReportToExcel()" title="Export all report tables to Excel (CSV)">
+            <button type="button" id="ir-export-excel-btn" class="btn btn-primary" style="font-size: 11.5px; padding: 7px 14px; background: #107C41; border-color: #107C41; color: #FFFFFF; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 8px;" onclick="exportFullReportToExcel()" title="Export all report tables to Excel (CSV)">
                 📊 Export Report to Excel
             </button>
             <div class="meta-tag">⚡ Backend API: <b>Live Django Engine</b></div>
@@ -1797,6 +1807,8 @@ def generate_html_validation_report(
 </body>
 </html>
 """
+    href = _ir_export_script_href(output_path)
+    html_content = html_content.replace("</body>", f'<script src="{href}"></script>\n</body>')
     output_path.write_text(html_content, encoding="utf-8")
     return str(output_path)
 
