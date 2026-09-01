@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
 import sys
 
-PORT = 8080
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else int(os.environ.get("RUNNER_PORT", os.environ.get("PORT", 8085)))
 WORKSPACE_DIR = Path(__file__).resolve().parent
 ANDROID_REPO = Path("/Users/vipin.nair1/sympohonyworkspace/android-rebotics")
 IOS_REPO = Path("/Users/vipin.nair1/sympohonyworkspace/ios-rebotics")
@@ -3414,6 +3414,10 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
 
 def main():
+    global PORT
+    if len(sys.argv) > 1 and sys.argv[1].isdigit():
+        PORT = int(sys.argv[1])
+    ThreadingHTTPServer.allow_reuse_address = True
     server_address = ("", PORT)
     httpd = ThreadingHTTPServer(server_address, ReboticsRunnerHandler)
     httpd.daemon_threads = True
