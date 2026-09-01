@@ -122,9 +122,11 @@ def generate_html_validation_report(
             badge_class = f"badge-{item.banner_color_theme}"
             thumb_html = f'<img src="{item.thumbnail_url}" alt="thumb" class="prod-thumb" onerror="this.src=\'data:image/svg+xml;utf8,<svg xmlns=\\\'http://www.w3.org/2000/svg\\\' width=\\\'36\\\' height=\\\'36\\\'><rect width=\\\'36\\\' height=\\\'36\\\' fill=\\\'%23D9E1F2\\\'/><text x=\\\'18\\\' y=\\\'22\\\' font-size=\\\'10\\\' text-anchor=\\\'middle\\\' fill=\\\'%231F4E79\\\'>POG</text></svg>\'"/>' if item.thumbnail_url else '<div class="prod-thumb-placeholder">POG</div>'
             reason_badge = f'<div style="margin-top: 3px;"><span class="badge badge-red" style="font-size: 10px; padding: 2px 6px;">⚠️ {item.reason}</span></div>' if item.reason else ""
+            escaped_meaning = item.user_action_meaning.replace("'", "\\'")
+            escaped_title = item.product_title.replace("'", "\\'")
 
             rows_html += f"""
-            <tr onclick="selectActionItem({item.step_index}, '{item.banner_text}', '{item.banner_color_theme}', '{item.movement_line}', '{item.user_action_meaning.replace("'", "\\'")}', '{item.product_title.replace("'", "\\'")}', '{item.displayed_upc}', '{item.screen_bay}', {item.shelf}, {item.position})">
+            <tr onclick="selectActionItem({item.step_index}, '{item.banner_text}', '{item.banner_color_theme}', '{item.movement_line}', '{escaped_meaning}', '{escaped_title}', '{item.displayed_upc}', '{item.screen_bay}', {item.shelf}, {item.position})">
                 <td class="text-center font-bold">#{item.step_index}</td>
                 <td>
                     <div class="prod-cell">

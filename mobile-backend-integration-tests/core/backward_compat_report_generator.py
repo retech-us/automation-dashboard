@@ -232,6 +232,9 @@ def generate_backward_compatibility_html_report(
         </tr>
         """
 
+    upgraded_escaped = upgraded_rows_html.replace('`', '\\`')
+    legacy_escaped = legacy_rows_html.replace('`', '\\`')
+
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -786,8 +789,8 @@ def generate_backward_compatibility_html_report(
     </div>
 
     <script>
-        const upgradedHtml = `{upgraded_rows_html.replace('`', '\\`')}`;
-        const legacyHtml = `{legacy_rows_html.replace('`', '\\`')}`;
+        const upgradedHtml = `{upgraded_escaped}`;
+        const legacyHtml = `{legacy_escaped}`;
 
         function switchTab(tabId, btn) {{
             document.getElementById('gapsTab').style.display = (tabId === 'gapsTab') ? 'block' : 'none';
