@@ -1,0 +1,551 @@
+# Feature Inventory — Machine-Readable Seed
+
+# Schema version: 1.0
+# Status: discovery seed — expand before claiming full coverage
+# Location convention: FEATURE-NNN
+
+meta:
+  generated: 2026-09-01
+  owner: qa-platform
+  primary_focus: Intelligent_Reset_and_release_critical_paths
+  expansion_rule: >
+    Every mobile screen/module must eventually receive a FEATURE-ID.
+    This seed prioritizes IR, auth, tasks, capture, shifts, and contract-critical APIs.
+  sources:
+    - android-rebotics/features/rebotics_pog_reset
+    - ios-rebotics/Screens/Modules/Tasks
+    - rebotics-management-django/apps/tasks
+    - automation-dashboard/mobile-backend-integration-tests
+    - retech-api-automation IntelligenceResetApiTest
+    - retech-mobile-automation featureFiles
+
+features:
+
+  - id: FEATURE-001
+    name: Mobile Authentication (Password + 2FA)
+    module: Auth
+    mobile_entry_point:
+      android: AuthorizationActivity / AuthorizationConfirmationActivity
+      ios: AuthFlow/Auth + TwoFactorAuth
+    user_intent: Obtain session token for Store Intelligence APIs
+    backend_apis:
+      - POST /api/v1/2fa/status/
+      - POST /api/v1/2fa/obtain/
+      - POST /api/v1/2fa/verify/
+      - POST /api/v1/token/
+      - POST /api/v1/refresh/
+      - POST /api/v4/token-auth/  # legacy
+      - GET /api/v4/me/
+    http_methods: [POST, GET]
+    request_schema: username, password, device_id, token_type
+    response_schema: token | access+refresh JWT
+    database_tables: [auth_user, authtoken_token, JWT blacklist]
+    business_rules:
+      - 2FA may be required when Constance ENABLE_TWO_FACTOR_AUTH
+      - Mobile UA Store Intelligence / Rebotics
+    mobile_processing: Store token + host in Preferences/Keychain; inject Authorization header
+    state_changes: [UNAUTHENTICATED → AUTHENTICATED]
+    navigation: Splash/Auth → Main/Tasks
+    dependencies: [FEATURE-002]
+    feature_flags: [ENABLE_TWO_FACTOR_AUTH]
+    authentication_requirements: none (bootstrap)
+    permissions: network
+    success_conditions: [HTTP 200, non-empty token, /me returns user]
+    failure_conditions: [401 invalid credentials, 429 throttle, 2FA failure]
+    edge_cases: [SSO path, expired refresh, wrong host/instance]
+    existing_tests:
+      - MBIT scenarios/auth/*
+      - retech-mobile-automation Login feature
+      - Django master_data auth tests
+    test_coverage: medium
+    risk_level: high
+    release_criticality: critical
+    automation_status: partial_real_api
+    headless_without_ui: yes
+    dependency_class: REAL
+
+  - id: FEATURE-002
+    name: Instance / Host Resolution
+    module: Auth
+    mobile_entry_point:
+      android: AuthorizationInstanceActivity
+      ios: company → AuthenticationService.getHost
+    user_intent: Resolve retailer Management base URL
+    backend_apis: [company/host lookup endpoints used by mobile]
+    http_methods: [GET, POST]
+    request_schema: company/instance identifier
+    response_schema: host URL
+    database_tables: []
+    business_rules: [Wrong host breaks all subsequent calls]
+    mobile_processing: Persist host in settings
+    state_changes: [HOST_UNSET → HOST_SET]
+    navigation: Instance → Login
+    dependencies: []
+    feature_flags: []
+    authentication_requirements: none
+    permissions: network
+    success_conditions: [Valid https host stored]
+    failure_conditions: [Unknown company, DNS failure]
+    edge_cases: [alpha vs r3us vs r3dev]
+    existing_tests: [sparse]
+    test_coverage: low
+    risk_level: high
+    release_criticality: critical
+    automation_status: weak
+    headless_without_ui: yes
+    dependency_class: REAL
+
+  - id: FEATURE-010
+    name: Task List & Detail
+    module: Tasks
+    mobile_entry_point:
+      android: TaskDetailActivity / task fragments
+      ios: Tasks/TasksList
+    user_intent: View assigned store tasks
+    backend_apis:
+      - GET /api/v1/tasks/
+      - GET /api/v1/tasks/{id}/
+      - GET /api/v4/tasks/
+      - GET /api/v4/tasks/{id}/
+      - GET /api/v1/tasks/defs/
+    http_methods: [GET]
+    request_schema: store, task_def filters
+    response_schema: Task serializer fields including pog_reset_task_step_enabled
+    database_tables: [tasks_task, tasks_taskdef, tasks_taskdeftype]
+    business_rules: [IR gated by pog_reset_task_step_enabled]
+    mobile_processing: Cache tasks (Room/Realm); gate IR entry
+    state_changes: [TASKS_LOADING → TASKS_LOADED]
+    navigation: Tasks → Task Detail → Capture/IR
+    dependencies: [FEATURE-001]
+    feature_flags: [pog_reset_task_step_enabled]
+    authentication_requirements: authenticated
+    permissions: []
+    success_conditions: [Task payload includes def flags]
+    failure_conditions: [403, empty list for wrong store]
+    edge_cases: [multi-store associate, expired shift]
+    existing_tests:
+      - MBIT scenarios/tasks/*
+      - API task CRUD tests
+      - Appium Tasks features
+    test_coverage: medium
+    risk_level: medium
+    release_criticality: high
+    automation_status: partial
+    headless_without_ui: yes
+    dependency_class: REAL
+
+  - id: FEATURE-020
+    name: Intelligent Reset — Action List Fetch
+    module: IntelligentReset
+    mobile_entry_point:
+      android: PogResetActivity → ActionListPresenter + PogResetApi.getActionList
+      ios: TaskActionList VIPER + ActionListRetailerTarget
+    user_intent: Load retailer action list for POG reset task
+    backend_apis:
+      - GET /api/v1/tasks/{id}/action-list/retailer/?limit=1000
+    http_methods: [GET]
+    request_schema: task id, pagination
+    response_schema: action items with UPC, bay/shelf/pos, action type, images
+    database_tables: [tasks_task, planograms_compliance_*, planogram comparison structures]
+    business_rules:
+      - IR exclusions via Constance pog_reset_excluded_checks
+      - Actions derived from compliance/comparison pipeline
+    mobile_processing: Map JSON → domain models → UI cards; sort/group by bay
+    state_changes: [NO_ACTIONS → ACTIONS_LOADED]
+    navigation: Task Detail → Action List
+    dependencies: [FEATURE-010, FEATURE-030]
+    feature_flags: [pog_reset_task_step_enabled]
+    authentication_requirements: authenticated
+    permissions: []
+    success_conditions: [HTTP 200, schema valid, mappable items]
+    failure_conditions: [404 task, empty when scans incomplete, 500]
+    edge_cases: [duplicate UPC multi-location, multibay set-aside pairs]
+    existing_tests:
+      - MBIT domain mapper + e2e audit
+      - Android ActionListDomainMapperTest / WorkflowTest
+      - API IntelligenceResetApiTest (partial)
+    test_coverage: medium_lab
+    risk_level: critical
+    release_criticality: critical
+    automation_status: simulated_mobile_plus_real_api
+    headless_without_ui: partial  # API yes; Presenter sequencing no
+    dependency_class: REAL_api_SIMULATED_mobile_map
+
+  - id: FEATURE-021
+    name: Intelligent Reset — Action Domain Mapping & Ordering
+    module: IntelligentReset
+    mobile_entry_point:
+      android: data/response/actionlist/mapper + ActionListPresenter
+      ios: TaskActionListInteractor parsers
+    user_intent: Transform backend actions into executable mobile workflow cards
+    backend_apis: [consumes FEATURE-020 response]
+    http_methods: []
+    request_schema: action-list payload
+    response_schema: N/A (local)
+    database_tables: []
+    business_rules:
+      - Identify / Remove / SetBay (SetAside/Add) / End sequencing
+      - Cross-bay set-aside pairing
+      - No silent drop of actions on refresh (conservation)
+    mobile_processing: Domain map → UI map → presenter state
+    state_changes: [DOMAIN_BUILT, UI_CARDS_BUILT]
+    navigation: stays on action list
+    dependencies: [FEATURE-020]
+    feature_flags: []
+    authentication_requirements: authenticated
+    permissions: []
+    success_conditions: [Card count equals expected domain count; order stable]
+    failure_conditions: [Dropped cards, wrong type, wrong bay]
+    edge_cases: [mid-task refresh, logout/relogin, kill/relaunch]
+    existing_tests:
+      - MBIT invariants_validator (8 invariants)
+      - MBIT e2e_audit_engine
+      - Android mapper unit tests
+    test_coverage: high_in_lab
+    risk_level: critical
+    release_criticality: critical
+    automation_status: simulated_with_android_parity_tests
+    headless_without_ui: partial
+    dependency_class: SIMULATED
+
+  - id: FEATURE-022
+    name: Intelligent Reset — Action Progress Update
+    module: IntelligentReset
+    mobile_entry_point:
+      android: PogResetApi PATCH scan-report-actions
+      ios: ScanReportActionsService
+    user_intent: Persist completed/skipped action progress to backend
+    backend_apis:
+      - PATCH /api/v1/mobile/scan-report-actions/
+      - related v4 processing action updates
+    http_methods: [PATCH, POST]
+    request_schema: action completion payload
+    response_schema: updated action status
+    database_tables: [planograms_compliance actions, processing actions]
+    business_rules: [Idempotent updates; stage constraints]
+    mobile_processing: Optimistic UI then confirm
+    state_changes: [ACTION_PENDING → ACTION_DONE]
+    navigation: next card / bay
+    dependencies: [FEATURE-021]
+    feature_flags: []
+    authentication_requirements: authenticated
+    permissions: []
+    success_conditions: [Backend reflects completion]
+    failure_conditions: [409 conflict, network loss]
+    edge_cases: [duplicate PATCH, offline queue]
+    existing_tests: [API partial; Appium IR dormant]
+    test_coverage: low
+    risk_level: high
+    release_criticality: critical
+    automation_status: weak
+    headless_without_ui: yes_for_api
+    dependency_class: REAL
+
+  - id: FEATURE-023
+    name: Intelligent Reset — Multi-Bay Set-Aside Pairing
+    module: IntelligentReset
+    mobile_entry_point:
+      android: ActionListPresenter + domain models
+      ios: TaskActionsListBays
+    user_intent: Correctly pair remove/set-aside with add across bays
+    backend_apis: [FEATURE-020]
+    http_methods: []
+    request_schema: action-list
+    response_schema: N/A
+    database_tables: []
+    business_rules: [1-to-1 cross-bay pairing matrix]
+    mobile_processing: Pairing validation in domain/UI layer
+    state_changes: [PAIRINGS_COMPUTED]
+    navigation: bay tabs
+    dependencies: [FEATURE-021]
+    feature_flags: []
+    authentication_requirements: authenticated
+    permissions: []
+    success_conditions: [MBIT CrossBayPairingRecord complete]
+    failure_conditions: [Orphan set-aside, orphan add]
+    edge_cases: [3+ bay, same UPC]
+    existing_tests: [MBIT invariants + HTML multi-bay report]
+    test_coverage: medium_lab
+    risk_level: critical
+    release_criticality: critical
+    automation_status: lab_only
+    headless_without_ui: yes_via_simulation
+    dependency_class: SIMULATED
+
+  - id: FEATURE-024
+    name: Intelligent Reset — Mid-Task Resilience (Refresh/Kill)
+    module: IntelligentReset
+    mobile_entry_point:
+      android: ActionListPresenter reload paths
+      ios: TaskActionList reload
+    user_intent: Zero dropped actions after interrupt
+    backend_apis: [re-fetch action-list]
+    http_methods: [GET]
+    request_schema: task id
+    response_schema: action-list
+    database_tables: []
+    business_rules: [Conservation invariant — pending set stable]
+    mobile_processing: Merge/reload without dropping pending
+    state_changes: [RELOADED]
+    navigation: same screen
+    dependencies: [FEATURE-021]
+    feature_flags: []
+    authentication_requirements: authenticated
+    permissions: []
+    success_conditions: [e2e_audit zero-drop]
+    failure_conditions: [Missing pending cards]
+    edge_cases: [logout, screen switch, process death]
+    existing_tests: [MBIT e2e_audit_engine, current_mobile_code_evaluator]
+    test_coverage: medium_lab
+    risk_level: critical
+    release_criticality: critical
+    automation_status: lab_only
+    headless_without_ui: yes_via_simulation
+    dependency_class: SIMULATED
+
+  - id: FEATURE-030
+    name: Bay Scan Upload & Processing
+    module: Capture
+    mobile_entry_point:
+      android: capture activities + Upload workers
+      ios: Capture modules + upload session
+    user_intent: Upload shelf images for compliance/action generation
+    backend_apis:
+      - POST /api/v4/processing/upload/request/
+      - POST /api/v4/processing/upload/request/{id}/finish/
+      - GET /api/v4/processing/{id}/
+      - POST /api/v4/processing/actions/
+      - POST /api/v1/mobile/scanfile/presigned-upload/
+    http_methods: [POST, GET]
+    request_schema: multipart/image + metadata
+    response_schema: processing action status
+    database_tables: [realograms_implementation_scan*, ProcessingAction]
+    business_rules: [Async Core/Dramatiq; poll until ready]
+    mobile_processing: WorkManager/URLSession upload; retry
+    state_changes: [UPLOADING → PROCESSING → READY]
+    navigation: Capture → wait → Task/IR
+    dependencies: [FEATURE-010]
+    feature_flags: []
+    authentication_requirements: authenticated
+    permissions: [camera, storage]
+    success_conditions: [Processing complete; actions appear]
+    failure_conditions: [Upload fail, Core timeout]
+    edge_cases: [dummy image rejected; retry; offline]
+    existing_tests:
+      - runner_server pipeline
+      - API upload tests
+      - Web scan-upload CI job
+      - Appium Capture (image injection)
+    test_coverage: medium
+    risk_level: high
+    release_criticality: critical
+    automation_status: real_api_good
+    headless_without_ui: yes_with_fixture_images
+    dependency_class: REAL
+
+  - id: FEATURE-031
+    name: Pre/Post Photo IR Stages
+    module: IntelligentReset
+    mobile_entry_point:
+      android: PogResetEntryPoint PRE_PHOTO / POST_PHOTO
+      ios: pogResetTaskStepEnabled flows
+    user_intent: Complete photo stages before/after reset actions
+    backend_apis: [FEATURE-030 + task stage fields]
+    http_methods: [POST, GET, PATCH]
+    request_schema: stage-specific scans
+    response_schema: compliance/OSA scores
+    database_tables: [tasks_tasktoscan, tasks_tasktopostscan, compliance reports]
+    business_rules: [Stage gating before action list completeness]
+    mobile_processing: Stage machine in PogReset shared presenters
+    state_changes: [PRE_PHOTO → ACTIONS → POST_PHOTO → DONE]
+    navigation: stage wizard
+    dependencies: [FEATURE-030, FEATURE-020]
+    feature_flags: [pog_reset_task_step_enabled]
+    authentication_requirements: authenticated
+    permissions: [camera]
+    success_conditions: [Both stages accepted]
+    failure_conditions: [Low compliance dialog, rejected bay]
+    edge_cases: [reject bay, incomplete reasons]
+    existing_tests: [partial API; Appium IR off]
+    test_coverage: low
+    risk_level: high
+    release_criticality: critical
+    automation_status: weak
+    headless_without_ui: partial  # upload yes; camera UI no
+    dependency_class: REAL_plus_UI
+
+  - id: FEATURE-040
+    name: Shift Start / End
+    module: Shifts
+    mobile_entry_point:
+      android: shift-related activities
+      ios: EndShift module
+    user_intent: Bound work session
+    backend_apis: [GET|POST /api/v1/shifts/]
+    http_methods: [GET, POST, PATCH]
+    request_schema: store, reasons
+    response_schema: Shift serializer
+    database_tables: [shifts_shift]
+    business_rules: [Tasks may require open shift]
+    mobile_processing: Persist shift status
+    state_changes: [SHIFT_CLOSED ↔ SHIFT_OPEN]
+    navigation: Store → Shift → Tasks
+    dependencies: [FEATURE-001]
+    feature_flags: []
+    authentication_requirements: authenticated
+    permissions: []
+    success_conditions: [Shift record active]
+    failure_conditions: [Already open, missing reason]
+    edge_cases: [force end]
+    existing_tests: [MBIT scenarios/shifts; Django shifts tests]
+    test_coverage: medium
+    risk_level: medium
+    release_criticality: high
+    automation_status: partial
+    headless_without_ui: yes
+    dependency_class: REAL
+
+  - id: FEATURE-050
+    name: Planogram Fetch
+    module: Planograms
+    mobile_entry_point:
+      android: planogram activities + PogReset planogram presenters
+      ios: Planogram VIPER + PlanogramView
+    user_intent: Load POG structure for store aisle/section
+    backend_apis:
+      - GET /api/v4/planograms/{id}/
+      - GET /api/v4/planograms/categories/
+      - GET /api/v1/planograms/
+    http_methods: [GET]
+    request_schema: pog id
+    response_schema: sections, products, positions
+    database_tables: [planograms_implementation_*]
+    business_rules: [Store assignment via StorePlanogram*]
+    mobile_processing: Render PlanogramView / Compose
+    state_changes: [POG_LOADED]
+    navigation: Task → Planogram
+    dependencies: [FEATURE-010]
+    feature_flags: []
+    authentication_requirements: authenticated
+    permissions: []
+    success_conditions: [Structure parseable]
+    failure_conditions: [404, empty sections]
+    edge_cases: [complex pegboard]
+    existing_tests: [API; MBIT planogram calls in adapters]
+    test_coverage: medium
+    risk_level: medium
+    release_criticality: high
+    automation_status: partial
+    headless_without_ui: yes_for_api_no_for_PlanogramView
+    dependency_class: REAL
+
+  - id: FEATURE-060
+    name: Remote Config / Retailer Settings Bootstrap
+    module: Config
+    mobile_entry_point:
+      android: rebotics_remote_config
+      ios: SettingsManager / RetailerFeatures
+    user_intent: Load feature toggles and screen settings
+    backend_apis:
+      - GET /api/v4/settings/
+      - GET /api/v4/version/
+      - GET /api/v1/rebotics/config/
+    http_methods: [GET]
+    request_schema: none
+    response_schema: large settings graph
+    database_tables: [constance]
+    business_rules: [Tenant-specific Constance]
+    mobile_processing: Cache settings; gate features
+    state_changes: [CONFIG_LOADED]
+    navigation: post-auth bootstrap
+    dependencies: [FEATURE-001]
+    feature_flags: [many]
+    authentication_requirements: authenticated
+    permissions: []
+    success_conditions: [Required keys present]
+    failure_conditions: [Missing keys → default unsafe]
+    edge_cases: [schema additive changes]
+    existing_tests: [sparse contract]
+    test_coverage: low
+    risk_level: high
+    release_criticality: critical
+    automation_status: weak
+    headless_without_ui: yes
+    dependency_class: REAL
+
+  - id: FEATURE-070
+    name: OOS Reporting
+    module: OOS
+    mobile_entry_point:
+      android: features/rebotics_oos
+      ios: OOSItemDetails modules
+    user_intent: Report out-of-stock items
+    backend_apis: [/api/v1/mobile/oos-report/retailer/]
+    http_methods: [GET, POST]
+    request_schema: OOS payload
+    response_schema: report status
+    database_tables: [compliance / OOS related]
+    business_rules: [OOS modifiers on backend]
+    mobile_processing: Orbit MVI stores (Android)
+    state_changes: [OOS_SUBMITTED]
+    navigation: Task → OOS
+    dependencies: [FEATURE-010]
+    feature_flags: []
+    authentication_requirements: authenticated
+    permissions: []
+    success_conditions: [Report persisted]
+    failure_conditions: [Validation errors]
+    edge_cases: [phantom OOS]
+    existing_tests: [Appium OOS; API partial]
+    test_coverage: medium_ui
+    risk_level: medium
+    release_criticality: high
+    automation_status: ui_primary
+    headless_without_ui: partial
+    dependency_class: REAL
+
+  - id: FEATURE-080
+    name: Product Search
+    module: ProductSearch
+    mobile_entry_point:
+      android: rebotics_product_search
+      ios: ProductSearch*
+    user_intent: Find product by UPC/name
+    backend_apis: [/api/v4/products/search/]
+    http_methods: [GET]
+    request_schema: query
+    response_schema: product hits
+    database_tables: [master_data products]
+    business_rules: []
+    mobile_processing: Search UI + API
+    state_changes: [RESULTS]
+    navigation: modal search
+    dependencies: [FEATURE-001]
+    feature_flags: []
+    authentication_requirements: authenticated
+    permissions: [camera for barcode]
+    success_conditions: [Relevant hits]
+    failure_conditions: [Empty, timeout]
+    edge_cases: [leading zeros UPC]
+    existing_tests: [partial]
+    test_coverage: low
+    risk_level: low
+    release_criticality: medium
+    automation_status: weak
+    headless_without_ui: yes_for_api
+    dependency_class: REAL
+
+# Expansion backlog (IDs reserved — details TBD)
+backlog_feature_ids:
+  - FEATURE-090  # Price correction
+  - FEATURE-100  # Section report
+  - FEATURE-110  # Action report
+  - FEATURE-120  # Push notifications
+  - FEATURE-130  # Deep links open-store
+  - FEATURE-140  # Media gallery
+  - FEATURE-150  # Surveys
+  - FEATURE-160  # ESL
+  - FEATURE-170  # On-shelf
+  - FEATURE-180  # Scanner/barcode
+  - FEATURE-190  # Upload sync queue
+  - FEATURE-200  # SSO auth

@@ -1,0 +1,172 @@
+# Test Coverage Matrix (seed)
+
+meta:
+  generated: 2026-09-01
+  honesty_note: >
+    Scores are qualitative from discovery audit, not measured line coverage.
+    Regenerate after Phase 1 instrumentation.
+
+layers: [unit_mobile, unit_backend, api, mbit_domain, appium, web, contract, state]
+
+features:
+
+  - feature_id: FEATURE-001
+    name: Auth 2FA
+    unit_mobile: low
+    unit_backend: high
+    api: medium
+    mbit_domain: medium
+    appium: high
+    web: n/a
+    contract: low
+    state: low
+    overall: medium
+    gap: contract_baseline_for_token_shapes
+
+  - feature_id: FEATURE-010
+    name: Tasks
+    unit_mobile: low
+    unit_backend: high
+    api: high
+    mbit_domain: medium
+    appium: high
+    web: medium
+    contract: medium
+    state: low
+    overall: medium_high
+    gap: cross_layer_state_asserts
+
+  - feature_id: FEATURE-020
+    name: IR Action List Fetch
+    unit_mobile: medium  # Android mappers
+    unit_backend: medium
+    api: medium
+    mbit_domain: high
+    appium: none  # IR feature commented out
+    web: low
+    contract: medium_weak_baseline
+    state: medium
+    overall: medium_lab
+    gap: CI gate + contract drift
+
+  - feature_id: FEATURE-021
+    name: IR Domain Mapping
+    unit_mobile: medium_android_only
+    unit_backend: n/a
+    api: n/a
+    mbit_domain: high
+    appium: none
+    web: n/a
+    contract: n/a
+    state: high_lab
+    overall: lab_strong_prod_weak
+    gap: iOS parity tests; Presenter extraction
+
+  - feature_id: FEATURE-022
+    name: IR Progress PATCH
+    unit_mobile: low
+    unit_backend: medium
+    api: low_medium
+    mbit_domain: low
+    appium: none
+    web: n/a
+    contract: low
+    state: low
+    overall: weak
+    gap: dedicated API + headless scenarios
+
+  - feature_id: FEATURE-023
+    name: Multi-Bay Pairing
+    unit_mobile: low
+    unit_backend: low
+    api: none
+    mbit_domain: high
+    appium: none
+    web: n/a
+    contract: n/a
+    state: high_lab
+    overall: lab_only
+    gap: promote to CI
+
+  - feature_id: FEATURE-024
+    name: Mid-Task Resilience
+    unit_mobile: low
+    unit_backend: n/a
+    api: low
+    mbit_domain: high
+    appium: none
+    web: n/a
+    contract: n/a
+    state: high_lab
+    overall: lab_only
+    gap: native reload tests
+
+  - feature_id: FEATURE-030
+    name: Scan Upload
+    unit_mobile: low
+    unit_backend: high
+    api: high
+    mbit_domain: medium
+    appium: high  # injection
+    web: high  # scan-upload job
+    contract: medium
+    state: medium
+    overall: strong
+    gap: flake control on async poll
+
+  - feature_id: FEATURE-031
+    name: Pre/Post Photo Stages
+    unit_mobile: low
+    unit_backend: medium
+    api: medium
+    mbit_domain: low
+    appium: none_active
+    web: low
+    contract: low
+    state: low
+    overall: weak
+    gap: stage state machine scenarios
+
+  - feature_id: FEATURE-040
+    name: Shifts
+    unit_mobile: low
+    unit_backend: medium
+    api: medium
+    mbit_domain: medium
+    appium: medium
+    web: low
+    contract: low
+    state: low
+    overall: medium
+    gap: negative cases
+
+  - feature_id: FEATURE-060
+    name: Settings Bootstrap
+    unit_mobile: low
+    unit_backend: medium
+    api: low
+    mbit_domain: none
+    appium: low
+    web: n/a
+    contract: weak
+    state: none
+    overall: weak
+    gap: required-key contract tests
+
+metrics_targets:
+  feature_coverage_critical: 0.9
+  scenario_coverage_per_critical_feature: 5
+  api_contract_baseline_coverage: 1.0_for_IR_auth_upload
+  business_rule_coverage_ir_invariants: 1.0
+  mobile_domain_coverage: parity_android_ios
+  negative_case_ratio: 0.3
+  release_change_impact_selection: enabled
+
+zero_or_weak_coverage:
+  - FEATURE-022
+  - FEATURE-031
+  - FEATURE-060
+  - FEATURE-080
+  - Appium IR (09_IntelligenceReset commented out)
+  - iOS dedicated IR unit tests (none found)
+  - OpenAPI baseline drift gate

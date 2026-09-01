@@ -1,0 +1,255 @@
+# API Inventory (seed)
+
+meta:
+  generated: 2026-09-01
+  sources:
+    - rebotics-management-django/config/urls/api/v1.py
+    - rebotics-management-django deprecated v4 routes
+    - docs/swagger/main.yaml
+    - MBIT adapters android_adapter.py / ios_adapter.py
+    - retech-api-automation clients
+  note: >
+    Dual API generations (v1 + v4). Mobile still depends on v4 processing spine.
+    Expand by downloading OpenAPI auto-docs into versioned baselines.
+
+apis:
+
+  - id: API-AUTH-001
+    method: POST
+    path: /api/v1/2fa/verify/
+    auth: none
+    producer: master_data TwoFactorAuthView
+    mobile_consumers: [Android AuthRepository, iOS AuthenticationService, MBIT adapters]
+    request_fields: [username, password, device_id, token_type]
+    response_fields: [token | access, refresh]
+    error_codes: [400, 401, 429]
+    versioning: v1
+    risk: critical
+    features: [FEATURE-001]
+
+  - id: API-AUTH-002
+    method: POST
+    path: /api/v1/token/
+    auth: none
+    producer: CustomTokenObtainPairView
+    mobile_consumers: [JWT login paths]
+    request_fields: [username, password]
+    response_fields: [access, refresh]
+    error_codes: [401]
+    versioning: v1
+    risk: high
+    features: [FEATURE-001]
+
+  - id: API-AUTH-003
+    method: POST
+    path: /api/v4/token-auth/
+    auth: none
+    producer: deprecated_api ObtainAuthTokenViewSet
+    mobile_consumers: [legacy Token header clients]
+    request_fields: [username, password]
+    response_fields: [token]
+    error_codes: [400, 401]
+    versioning: v4_legacy
+    risk: medium
+    features: [FEATURE-001]
+    notes: Deprecated toward JWT/2FA
+
+  - id: API-AUTH-004
+    method: GET
+    path: /api/v4/me/
+    auth: Token or JWT
+    producer: deprecated_api me
+    mobile_consumers: [both apps, MBIT]
+    request_fields: []
+    response_fields: [user profile]
+    error_codes: [401]
+    versioning: v4
+    risk: medium
+    features: [FEATURE-001]
+
+  - id: API-CFG-001
+    method: GET
+    path: /api/v4/settings/
+    auth: required
+    producer: rebotics/settings
+    mobile_consumers: [bootstrap]
+    request_fields: []
+    response_fields: [retailer settings graph]
+    error_codes: [401]
+    versioning: v4
+    risk: high
+    features: [FEATURE-060]
+
+  - id: API-CFG-002
+    method: GET
+    path: /api/v1/rebotics/config/
+    auth: required
+    producer: apps/rebotics
+    mobile_consumers: [config]
+    request_fields: []
+    response_fields: [config]
+    error_codes: [401]
+    versioning: v1
+    risk: medium
+    features: [FEATURE-060]
+
+  - id: API-TASK-001
+    method: GET
+    path: /api/v1/tasks/
+    auth: required
+    producer: tasks TaskViewSet
+    mobile_consumers: [task list]
+    request_fields: [store, task_def, query params]
+    response_fields: [task list]
+    error_codes: [401, 403]
+    versioning: v1
+    risk: high
+    features: [FEATURE-010]
+
+  - id: API-TASK-002
+    method: GET
+    path: /api/v1/tasks/{id}/
+    auth: required
+    producer: tasks TaskViewSet
+    mobile_consumers: [task detail]
+    request_fields: [id]
+    response_fields: [task detail, flags]
+    error_codes: [404]
+    versioning: v1
+    risk: high
+    features: [FEATURE-010]
+
+  - id: API-TASK-003
+    method: GET
+    path: /api/v1/tasks/defs/
+    auth: required
+    producer: tasks defs
+    mobile_consumers: [provisioning, MBIT, API IR tests]
+    request_fields: []
+    response_fields: [task definitions including pog_reset_task_step_enabled]
+    error_codes: [401]
+    versioning: v1
+    risk: critical
+    features: [FEATURE-010, FEATURE-020]
+
+  - id: API-IR-001
+    method: GET
+    path: /api/v1/tasks/{id}/action-list/retailer/
+    auth: required
+    producer: TaskActionListViewSet
+    mobile_consumers: [PogResetApi, ActionListRetailerTarget, MBIT]
+    request_fields: [limit, pagination]
+    response_fields: [actions[], upc, positions, types, images]
+    error_codes: [404, 500]
+    versioning: v1
+    risk: critical
+    features: [FEATURE-020, FEATURE-021, FEATURE-023, FEATURE-024]
+    contract_watch:
+      - field renames
+      - type changes (string vs number positions)
+      - nullability of optional image URLs
+      - enum action type changes
+
+  - id: API-IR-002
+    method: PATCH
+    path: /api/v1/mobile/scan-report-actions/
+    auth: required
+    producer: mobile_api / related
+    mobile_consumers: [Android PogResetApi, iOS ScanReportActionsService]
+    request_fields: [action progress payload]
+    response_fields: [updated status]
+    error_codes: [400, 409]
+    versioning: v1
+    risk: critical
+    features: [FEATURE-022]
+
+  - id: API-CAP-001
+    method: POST
+    path: /api/v4/processing/upload/request/
+    auth: required
+    producer: deprecated_api processing
+    mobile_consumers: [upload pipelines, MBIT, runner_server]
+    request_fields: [metadata]
+    response_fields: [upload id, urls]
+    error_codes: [400]
+    versioning: v4
+    risk: critical
+    features: [FEATURE-030]
+
+  - id: API-CAP-002
+    method: POST
+    path: /api/v4/processing/upload/request/{id}/finish/
+    auth: required
+    producer: deprecated_api processing
+    mobile_consumers: [upload finish]
+    request_fields: [id]
+    response_fields: [processing refs]
+    error_codes: [400, 404]
+    versioning: v4
+    risk: critical
+    features: [FEATURE-030]
+
+  - id: API-CAP-003
+    method: GET
+    path: /api/v4/processing/{id}/
+    auth: required
+    producer: deprecated_api processing
+    mobile_consumers: [poll status]
+    request_fields: [id]
+    response_fields: [status, results]
+    error_codes: [404]
+    versioning: v4
+    risk: high
+    features: [FEATURE-030]
+    notes: Must poll — Dramatiq/Core async
+
+  - id: API-CAP-004
+    method: POST
+    path: /api/v4/processing/actions/
+    auth: required
+    producer: deprecated_api
+    mobile_consumers: [create processing action]
+    request_fields: [task/scan linkage]
+    response_fields: [action id]
+    error_codes: [400]
+    versioning: v4
+    risk: high
+    features: [FEATURE-030]
+
+  - id: API-POG-001
+    method: GET
+    path: /api/v4/planograms/{id}/
+    auth: required
+    producer: deprecated_api planograms
+    mobile_consumers: [planogram viewers, adapters]
+    request_fields: [id]
+    response_fields: [sections, products]
+    error_codes: [404]
+    versioning: v4
+    risk: medium
+    features: [FEATURE-050]
+
+  - id: API-SHIFT-001
+    method: GET
+    path: /api/v1/shifts/
+    auth: required
+    producer: shifts
+    mobile_consumers: [shift flows, MBIT]
+    request_fields: [filters]
+    response_fields: [shifts]
+    error_codes: [401]
+    versioning: v1
+    risk: medium
+    features: [FEATURE-040]
+
+contract_validation_rules:
+  - Detect missing required fields
+  - Detect type/nullability/enum changes vs baseline
+  - Detect HTTP status class changes on success paths
+  - Detect unexpected breaking renames
+  - Report MOBILE/BACKEND CONTRACT BREAK with expected vs actual
+
+baseline_strategy:
+  store_under: docs/regression/baselines/openapi/
+  update_policy: explicit PR with contract review
+  gate: fail CI on breaking changes unless waiver label

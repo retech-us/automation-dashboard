@@ -1,0 +1,42 @@
+# Path glob → feature IDs for PR bot impacted mode (Slice 7)
+version: 1
+default_pack: smoke
+packs:
+  smoke:
+    description: Offline Gate A — judgement tools without live mutate
+    tools:
+      - name: health
+        args: {}
+      - name: resolve_env
+        args: { env: epsilon }
+      - name: resolve_images
+        args: { category: pasta, bays: [1, 2], allow_missing_files: true }
+      - name: provision
+        args: { env: epsilon, category: pasta, bays: [1, 2] }
+      - name: action_list
+        args:
+          env: epsilon
+          task_id: 999
+          fixture: regression/tests/fixtures/action_list_retailer_sample.json
+      - name: domain_parity
+        args: { env: epsilon, case: cat1_t5_mixed }
+
+  auth_optional:
+    description: Auth smoke when credentials exist (skip otherwise)
+    tools:
+      - name: auth_smoke
+        args: { env: epsilon, skip_if_no_creds: true }
+
+rules:
+  - globs: ["regression/**", "docs/regression/**"]
+    features: [FEATURE-PLATFORM]
+    packs: [smoke]
+  - globs: ["mobile-backend-integration-tests/core/action_list_domain_mapper.py"]
+    features: [FEATURE-021]
+    packs: [smoke]
+  - globs: ["**/action*list*", "**/ActionList*"]
+    features: [FEATURE-020, FEATURE-021]
+    packs: [smoke]
+  - globs: [".github/workflows/**"]
+    features: [FEATURE-PLATFORM]
+    packs: [smoke]

@@ -1,0 +1,121 @@
+[
+  {
+    "id": 10,
+    "upc": "U10",
+    "displayed_upc": "U10",
+    "product_title": "Remove",
+    "product_id": 1,
+    "source_id": 10,
+    "store_planogram_id": 555,
+    "action": "remove",
+    "state": "STATE_IDLE",
+    "action_resolved": false,
+    "current_position": {
+      "action": "remove",
+      "shelf": 1,
+      "position": "1",
+      "section_info": { "id": 1, "name": "1", "original_name": "Bay 1" }
+    },
+    "expected_position": null
+  },
+  {
+    "id": 11,
+    "upc": "U11",
+    "displayed_upc": "U11",
+    "product_title": "FixInBay",
+    "product_id": 2,
+    "source_id": 11,
+    "store_planogram_id": 555,
+    "action": "fix_position_fix_in_bay",
+    "state": "STATE_IDLE",
+    "action_resolved": false,
+    "current_position": {
+      "action": "fix_position_fix_in_bay",
+      "shelf": 1,
+      "position": "1",
+      "section_info": { "id": 1, "name": "1", "original_name": "Bay 1" }
+    },
+    "expected_position": {
+      "action": "fix_position_fix_in_bay",
+      "shelf": 2,
+      "position": "3",
+      "section_info": { "id": 1, "name": "1", "original_name": "Bay 1" },
+      "store_planogram_id": 555
+    }
+  },
+  {
+    "id": 12,
+    "upc": "U12",
+    "displayed_upc": "U12",
+    "product_title": "Move",
+    "product_id": 3,
+    "source_id": 12,
+    "store_planogram_id": 555,
+    "action": "fix_position_move_to_bay",
+    "state": "STATE_IDLE",
+    "action_resolved": false,
+    "current_position": {
+      "action": "fix_position_move_to_bay",
+      "shelf": 1,
+      "position": "1",
+      "section_info": { "id": 1, "name": "1", "original_name": "Bay 1" }
+    },
+    "expected_position": {
+      "action": "fix_position_move_to_bay",
+      "shelf": 2,
+      "position": "3",
+      "section_info": { "id": 1, "name": "1", "original_name": "Bay 1" },
+      "store_planogram_id": 555
+    }
+  },
+  {
+    "id": 13,
+    "upc": "U13",
+    "displayed_upc": "U13",
+    "product_title": "AddToBay",
+    "product_id": 4,
+    "source_id": 13,
+    "store_planogram_id": 555,
+    "action": "set_aside",
+    "state": "STATE_IDLE",
+    "action_resolved": false,
+    "current_position": {
+      "action": "set_aside",
+      "shelf": 1,
+      "position": "1",
+      "section_info": { "id": 1, "name": "1", "original_name": "Bay 1" }
+    },
+    "expected_position": {
+      "action": "place_on_shelf_add_to_bay",
+      "shelf": 2,
+      "position": "3",
+      "section_info": { "id": 2, "name": "2", "original_name": "Bay 2" },
+      "store_planogram_id": 555
+    }
+  },
+  {
+    "id": 14,
+    "upc": "U14",
+    "displayed_upc": "U14",
+    "product_title": "Restock",
+    "product_id": 5,
+    "source_id": 14,
+    "store_planogram_id": 555,
+    "action": "place_on_shelf_restock",
+    "state": "STATE_IDLE",
+    "action_resolved": false,
+    "current_position": {
+      "action": "place_on_shelf_restock",
+      "shelf": 1,
+      "position": "1",
+      "section_info": { "id": 1, "name": "1", "original_name": "Bay 1" }
+    },
+    "expected_position": {
+      "action": "place_on_shelf_restock",
+      "shelf": 2,
+      "position": "3",
+      "section_info": { "id": 1, "name": "1", "original_name": "Bay 1" },
+      "store_planogram_id": 555
+    }
+  }
+]

@@ -1,0 +1,24 @@
+# Domain count parity baseline — locked to Android ActionListDomainMapperTest CAT1-T5
+# Source: android-rebotics/.../ActionListDomainMapperTest.kt
+#   `CAT1-T5 mixed all action types in single response produce correct domain item counts`
+#
+# Restock is counted as AddItems to match Android ActionType.SetBay.AddItems.
+
+version: 1
+source: android.ActionListDomainMapperTest.CAT1-T5
+mapper: interim_python_mbit  # shrink toward native JVM/Swift later
+android_normalize:
+  Restock: AddItems
+
+cases:
+  cat1_t5_mixed:
+    fixture: regression/tests/fixtures/domain_cat1_t5_mixed.json
+    expected_domain_total: 6
+    expected_by_type:
+      Remove: 1
+      FixInBay: 1
+      SetAside: 2
+      AddItems: 2
+    notes: |
+      remove(1) + fixInBay(1) + moveToBay(1 SetAside) +
+      addToBay(2: SetAside+AddItems) + restock(1 AddItems) = 6

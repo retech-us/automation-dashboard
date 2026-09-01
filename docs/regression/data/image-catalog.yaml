@@ -1,0 +1,42 @@
+# Planogram / category-aware scan image catalog
+# Selection key: category + bay + stage
+# Rule: never silently fall back to an unrelated image
+
+version: 1
+images:
+  - id: pasta_bay1_pre
+    file: mobile-backend-integration-tests/test-data/images/Pasta_Bay1.jpg
+    categories: [pasta, dry_grocery]
+    bay: 1
+    stage: pre_photo
+
+  - id: pasta_bay2_pre
+    file: mobile-backend-integration-tests/test-data/images/Pasta_bay2.jpg
+    categories: [pasta, dry_grocery]
+    bay: 2
+    stage: pre_photo
+
+  # Generic bay scans — only for categories explicitly listed (not a global default)
+  - id: deli_bay1_pre
+    file: mobile-backend-integration-tests/test-data/images/bay_1_scan.jpg
+    categories: [deli, deli_meat]
+    bay: 1
+    stage: pre_photo
+
+  - id: deli_bay2_pre
+    file: mobile-backend-integration-tests/test-data/images/bay_2_scan.jpg
+    categories: [deli, deli_meat]
+    bay: 2
+    stage: pre_photo
+
+  - id: deli_bay3_pre
+    file: mobile-backend-integration-tests/test-data/images/bay_3_scan.jpg
+    categories: [deli, deli_meat]
+    bay: 3
+    stage: pre_photo
+
+  - id: deli_bay4_pre
+    file: mobile-backend-integration-tests/test-data/images/bay_4_scan.jpg
+    categories: [deli, deli_meat]
+    bay: 4
+    stage: pre_photo

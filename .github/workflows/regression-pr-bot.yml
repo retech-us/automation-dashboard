@@ -1,0 +1,96 @@
+name: Regression PR Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Pack mode (smoke | impacted | full)
+        required: false
+        default: smoke
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: regression-pr-bot-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: pip install --quiet pyyaml
+
+      - name: Unit tests (slices 1–7)
+        run: |
+          python3 -m unittest \
+            regression.tests.test_slice1_env_and_images \
+            regression.tests.test_slice2_auth_smoke \
+            regression.tests.test_slice3_provisioner \
+            regression.tests.test_slice4_action_list \
+            regression.tests.test_slice5_domain_parity \
+            regression.tests.test_slice6_tools_api \
+            regression.tests.test_slice7_pr_bot -v
+
+      - name: Run PR bot (Gate A offline pack)
+        id: bot
+        env:
+          REGRESSION_NARRATIVE_MODE: template
+        run: |
+          MODE="${{ github.event.inputs.mode || 'smoke' }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            PR_NUM="${{ github.event.pull_request.number }}"
+            EXTRA=(--mode="$MODE" --git-base="$BASE_SHA" --sha="$HEAD_SHA" --pr="$PR_NUM")
+            if [ "$MODE" = "impacted" ]; then
+              EXTRA=(--mode=impacted --git-base="$BASE_SHA" --sha="$HEAD_SHA" --pr="$PR_NUM")
+            fi
+          else
+            EXTRA=(--mode="$MODE")
+          fi
+          set +e
+          python3 regression/cli.py pr-bot run \
+            --env=epsilon \
+            --json-out=regression-pr-bot.json \
+            --comment-out=regression-pr-bot.md \
+            "${EXTRA[@]}"
+          CODE=$?
+          set -e
+          echo "exit_code=$CODE" >> "$GITHUB_OUTPUT"
+          exit $CODE
+
+      - name: Upload bot artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-pr-bot
+          path: |
+            regression-pr-bot.json
+            regression-pr-bot.md
+          if-no-files-found: ignore
+
+      - name: Comment on PR
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f regression-pr-bot.md ]; then
+            gh pr comment "${{ github.event.pull_request.number }}" \
+              --body-file regression-pr-bot.md
+          else
+            echo "No comment file; skipping"
+          fi

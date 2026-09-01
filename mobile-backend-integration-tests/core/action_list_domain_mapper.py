@@ -314,41 +314,66 @@ def transform_action_list_to_domain(raw_results: List[Dict[str, Any]], include_c
     for item in domain_models:
         curr_b = item.current_position.section_info.name if item.current_position and item.current_position.section_info else None
         exp_b = item.expected_position.section_info.name if item.expected_position and item.expected_position.section_info else None
-        curr_sh = item.current_position.shelf if item.current_position else None
-        exp_sh = item.expected_position.shelf if item.expected_position else None
         curr_act = (item.current_position.action or "").lower() if item.current_position else ""
         exp_act = (item.expected_position.action or "").lower() if item.expected_position else ""
 
-        # 1. 2-Phase Move: Pick from source (SetAside) ➔ Place into target (AddItems)
-        # Occurs when:
-        # - Cross-Bay move (Source bay != Target bay)
-        # - Current position action is explicitly 'set_aside' or root action is SetAside
-        is_cross_bay = (curr_b is not None and exp_b is not None and str(curr_b) != str(exp_b))
+        # 1. 2-Phase Move: Pick (SetAside) ➔ Place (AddItems)
+        # Parity-locked to Android ActionListDomainMapper / CAT1 tests:
+        # - place_on_shelf_add_to_bay (or set_aside → add_to_bay) → 2 cards
+        # - fix_position_move_to_bay alone → 1 SetAside (NO paired AddItems)
+        # - place_on_shelf_restock → 1 Restock/AddItems (NOT FixInBay)
         is_explicit_set_aside = (
             curr_act == "set_aside"
-            or item.action_type == "SetAside"
             or item.action_type_enum == ActionTypeByName.SET_ASIDE.value
         )
+        is_add_to_bay = exp_act == ActionTypeByName.PLACE_ON_SHELF_ADD_TO_BAY.value or (
+            item.action_type_enum == ActionTypeByName.PLACE_ON_SHELF_ADD_TO_BAY.value
+        )
         is_two_phase_move = (
-            (item.current_position is not None and item.expected_position is not None) and (
-                is_cross_bay
-                or is_explicit_set_aside
-                or item.action_type_enum in (ActionTypeByName.PLACE_ON_SHELF_ADD_TO_BAY.value, ActionTypeByName.FIX_POSITION_MOVE_TO_BAY.value)
-            )
+            item.current_position is not None
+            and item.expected_position is not None
+            and is_add_to_bay
         )
 
-        # 2. Intra-Bay Alignment (FixInBay)
-        # Occurs when move is within the same bay and backend action is fix_position_fix_in_bay
+        # 2. Intra-Bay Alignment (FixInBay) — only true horizontal shifts
+        is_restock = (
+            exp_act == ActionTypeByName.PLACE_ON_SHELF_RESTOCK.value
+            or item.action_type == "Restock"
+            or item.action_type_enum == ActionTypeByName.PLACE_ON_SHELF_RESTOCK.value
+        )
+        is_move_to_bay = (
+            exp_act == ActionTypeByName.FIX_POSITION_MOVE_TO_BAY.value
+            or curr_act == ActionTypeByName.FIX_POSITION_MOVE_TO_BAY.value
+            or item.action_type_enum == ActionTypeByName.FIX_POSITION_MOVE_TO_BAY.value
+        )
         is_intra_bay_shift = (
-            (not is_cross_bay and not is_explicit_set_aside) and (
+            (not is_two_phase_move)
+            and (not is_explicit_set_aside)
+            and (not is_restock)
+            and (not is_move_to_bay)
+            and item.action_type not in ("Remove", "Identify", "Exception", "Restock", "AddItems")
+            and (
                 exp_act == "fix_position_fix_in_bay"
                 or item.action_type == "FixInBay"
                 or item.action_type_enum == ActionTypeByName.FIX_POSITION_IN_BAY.value
                 or (
-                    item.current_position is not None and item.expected_position is not None
-                    and curr_b is not None and exp_b is not None and str(curr_b) == str(exp_b)
-                    and curr_act not in ("set_aside", "remove")
-                    and exp_act not in ("place_on_shelf_add_to_bay", "add_from_cart_to_bay", "add")
+                    item.current_position is not None
+                    and item.expected_position is not None
+                    and curr_b is not None
+                    and exp_b is not None
+                    and str(curr_b) == str(exp_b)
+                    and curr_act not in ("set_aside", "remove", "place_on_shelf_restock")
+                    and exp_act
+                    not in (
+                        "place_on_shelf_add_to_bay",
+                        "place_on_shelf_restock",
+                        "add_from_cart_to_bay",
+                        "add",
+                        "remove",
+                        "identify",
+                        "exception",
+                        "fix_position_move_to_bay",
+                    )
                 )
             )
         )
