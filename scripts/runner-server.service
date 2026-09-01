@@ -1,0 +1,16 @@
+[Unit]
+Description=Intelligent Reset Runner Backend Server
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/var/www/automation-dashboard
+ExecStart=/usr/bin/python3 /var/www/automation-dashboard/runner_server.py 8085
+Restart=always
+RestartSec=5
+StandardOutput=append:/tmp/runner_server.log
+StandardError=append:/tmp/runner_server.log
+
+[Install]
+WantedBy=multi-user.target
