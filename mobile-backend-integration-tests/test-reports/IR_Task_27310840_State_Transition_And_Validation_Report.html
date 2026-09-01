@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IR Task #27310840 State Transition & Validation Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy-primary: #1F4E79;
+            --navy-dark: #143552;
+            --navy-light: #2A68A0;
+            --sub-gray: #D9E1F2;
+            --soft-green: #E2EFDA;
+            --green-text: #375623;
+            --green-border: #A9D08E;
+            --warm-orange: #FCE4D6;
+            --orange-text: #C65911;
+            --orange-border: #F4B084;
+            --soft-red: #F8CBAD;
+            --red-text: #C00000;
+            --red-border: #F1948A;
+            --bg-canvas: #F4F6F9;
+            --card-bg: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-gray: #64748B;
+            --border-light: #E2E8F0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-canvas); color: var(--text-dark); padding: 24px; }
+
+        .container { max-width: 1540px; margin: 0 auto; }
+
+        /* Top Header Banner */
+        .header-banner {
+            background: linear-gradient(135deg, var(--navy-primary) 0%, var(--navy-dark) 100%);
+            border-radius: 16px;
+            padding: 28px 36px;
+            color: #FFFFFF;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px -5px rgba(31, 78, 121, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .header-title h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+        .header-title p { color: #CBD5E1; font-size: 14px; margin-top: 4px; }
+        .header-meta { display: flex; gap: 14px; flex-wrap: wrap; }
+        .meta-tag { background: rgba(255,255,255,0.12); padding: 8px 16px; border-radius: 10px; font-size: 13px; backdrop-filter: blur(8px); }
+
+        /* Navigation Tabs */
+        .tabs-nav {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-light);
+        }
+        .tab-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-gray);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { background: #F8FAFC; color: var(--navy-primary); border-color: var(--navy-primary); }
+        .tab-btn.active {
+            background: var(--navy-primary);
+            color: #FFFFFF;
+            border-color: var(--navy-primary);
+            box-shadow: 0 4px 12px rgba(31, 78, 121, 0.25);
+        }
+        .tab-badge {
+            background: rgba(0,0,0,0.08);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+        .tab-btn.active .tab-badge { background: rgba(255,255,255,0.25); color: #FFFFFF; }
+
+        /* Main Workspace Layout */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 1200px) { .workspace-grid { grid-template-columns: 1fr; } }
+
+        /* Cards & Containers */
+        .section-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border-light);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.25s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Metrics Row */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .metric-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+        .metric-card:hover { transform: translateY(-2px); }
+        .metric-card .title { font-size: 12px; font-weight: 700; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.5px; }
+        .metric-card .val { font-size: 26px; font-weight: 800; color: var(--navy-primary); margin: 6px 0 2px; }
+        .metric-card .sub { font-size: 12px; color: var(--green-text); font-weight: 600; }
+
+        /* Tables */
+        .table-responsive { overflow-x: auto; }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .report-table th {
+            background: var(--navy-primary);
+            color: #FFFFFF;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 12px 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-top: 1px solid var(--navy-dark);
+            border-bottom: 1px solid var(--navy-dark);
+        }
+        .report-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 13px;
+            vertical-align: middle;
+        }
+        .report-table tr:hover { background-color: #F8FAFC; cursor: pointer; }
+
+        /* Product Cell */
+        .prod-cell { display: flex; align-items: center; gap: 12px; }
+        .prod-thumb { width: 38px; height: 38px; border-radius: 6px; object-fit: contain; border: 1px solid var(--border-light); background: #FFF; }
+        .prod-thumb-placeholder { width: 38px; height: 38px; border-radius: 6px; background: var(--sub-gray); color: var(--navy-primary); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .prod-title { font-weight: 600; color: var(--text-dark); line-height: 1.3; font-size: 13px; }
+        .upc-pill { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: #F1F5F9; color: #475569; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 2px; }
+
+        /* Badges & Color Themes */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .badge-orange { background-color: var(--warm-orange); color: var(--orange-text); border: 1px solid var(--orange-border); }
+        .badge-green { background-color: var(--soft-green); color: var(--green-text); border: 1px solid var(--green-border); }
+        .badge-red { background-color: var(--soft-red); color: var(--red-text); border: 1px solid var(--red-border); }
+        .badge-neutral { background-color: #E2E8F0; color: #334155; padding: 4px 8px; border-radius: 6px; }
+
+        .color-pill { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; }
+        .pill-orange { background: #FFE8D6; color: #C65911; }
+        .pill-green { background: #DFF0D8; color: #3C763D; }
+        .pill-red { background: #F2DEDE; color: #A94442; }
+
+        .bg-orange-light { background-color: #FFF9F5; }
+        .bg-green-light { background-color: #F6FFF3; }
+
+        /* Invariant Row */
+        .invariant-row {
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+        }
+
+        /* Mobile Simulation Live Phone Frame */
+        .mobile-simulator {
+            position: sticky;
+            top: 24px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .phone-header {
+            background: #0F172A;
+            color: #FFFFFF;
+            padding: 14px 18px;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .phone-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: #1E293B;
+            padding: 4px;
+        }
+        .phone-tab-btn {
+            background: transparent;
+            border: none;
+            color: #94A3B8;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .phone-tab-btn.active {
+            background: #334155;
+            color: #FFFFFF;
+        }
+        .phone-screen {
+            padding: 16px;
+            background: #F8FAFC;
+            min-height: 480px;
+        }
+        .phone-card {
+            background: #FFFFFF;
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-light);
+        }
+        .phone-banner {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .phone-movement {
+            background: #F1F5F9;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Utilities */
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .text-navy { color: var(--navy-primary); }
+        .text-gray { color: var(--text-gray); }
+        .text-sm { font-size: 13px; }
+        .text-xs { font-size: 11px; }
+        .text-center { text-align: center; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .stats-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+        .pill-stat { background: #F1F5F9; padding: 4px 10px; border-radius: 20px; font-size: 12px; color: #334155; }
+        .stat-orange { background: var(--warm-orange); color: var(--orange-text); }
+        .stat-green { background: var(--soft-green); color: var(--green-text); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Header Banner -->
+    <div class="header-banner">
+        <div class="header-title">
+            <h1>🏬 Intelligent Reset State Transition & Validation Dashboard</h1>
+            <p>Task #27310840 &bull; Store #30248 &bull; Planogram #4139874 (16FT CAN CAT (PET CAT CAN))</p>
+        </div>
+        <div class="header-meta">
+            <div class="meta-tag">⚡ Live Backend: <b>Epsilon QA</b></div>
+            <div class="meta-tag">📱 Target: <b>Android & iOS</b></div>
+            <div class="meta-tag" style="background: rgba(169, 208, 142, 0.3);">✅ Status: <b>100% VERIFIED</b></div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="openTab(event, 'tab_overview')">
+            📊 Executive Overview
+        </button>
+        
+        <button class="tab-btn" onclick="openTab(event, 'bay_1')">
+            🏷️ Bay 1 Actions <span class="tab-badge">33</span>
+        </button>
+        
+        <button class="tab-btn" onclick="openTab(event, 'bay_2')">
+            🏷️ Bay 2 Actions <span class="tab-badge">0</span>
+        </button>
+        
+        <button class="tab-btn" onclick="openTab(event, 'bay_3')">
+            🏷️ Bay 3 Actions <span class="tab-badge">1</span>
+        </button>
+        
+        <button class="tab-btn" onclick="openTab(event, 'bay_4')">
+            🏷️ Bay 4 Actions <span class="tab-badge">19</span>
+        </button>
+        
+        <button class="tab-btn" onclick="openTab(event, 'tab_pairing')">
+            🔗 Set Aside 1-to-1 Validation <span class="tab-badge">20</span>
+        </button>
+        <button class="tab-btn" onclick="openTab(event, 'tab_master')">
+            📋 All Products Master Grid <span class="tab-badge">53</span>
+        </button>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="workspace-grid">
+        
+        <!-- Left Tab Content Area -->
+        <div class="main-content">
+            
+            <!-- Tab 1: Executive Overview -->
+            <div id="tab_overview" class="tab-content active">
+                
+                <!-- KPI Metrics -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="title">Raw Backend Records</div>
+                        <div class="val">65</div>
+                        <div class="sub">API /action-list/retailer</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="title">Mobile UI Action Steps</div>
+                        <div class="val">53</div>
+                        <div class="sub">1-to-2 Steps Duplicated</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="title">Total Active Bays</div>
+                        <div class="val">4 Bays</div>
+                        <div class="sub">Sections 1, 2, 3, 4</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="title">Invariants Passed</div>
+                        <div class="val">5/5</div>
+                        <div class="sub">100% Compliance ✅</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="title">Unit Test Suite</div>
+                        <div class="val">17/17</div>
+                        <div class="sub">All Passed ✅</div>
+                    </div>
+                </div>
+
+                <!-- Executive Summary Table -->
+                <div class="section-card">
+                    <h2 class="text-xl font-bold text-navy mb-4">Executive Summary Matrix</h2>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Metric / Scope</th>
+                                <th style="width: 140px;">Count</th>
+                                <th style="width: 220px;">Status / Verification</th>
+                                <th>Operational Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-semibold">Total Raw Backend Action Records</td>
+                                <td class="font-bold font-mono">65</td>
+                                <td><span class="badge badge-green">VERIFIED ✅</span></td>
+                                <td class="text-sm text-gray">Raw API payload fetched from live Epsilon task #27310840</td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold">Total Mobile Action Steps (Rendered on App)</td>
+                                <td class="font-bold font-mono">53</td>
+                                <td><span class="badge badge-green">VERIFIED ✅</span></td>
+                                <td class="text-sm text-gray">Includes Set Aside cart picks generated for cross-bay items</td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold">Cross-Bay Set Aside-to-Add 1-to-1 Pairing</td>
+                                <td class="font-bold font-mono">20 / 20</td>
+                                <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+                                <td class="text-sm text-gray">Every staged cart item has an exact corresponding target home</td>
+                            </tr>
+                            <tr>
+                                <td class="font-semibold">Mobile Logic Unit Test Suite</td>
+                                <td class="font-bold font-mono">17 / 17</td>
+                                <td><span class="badge badge-green">ALL PASSED ✅</span></td>
+                                <td class="text-sm text-gray">DomainMapper, UiMapper, and Invariants validated headlessly</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 5 Invariants Section -->
+                <div class="section-card">
+                    <h2 class="text-xl font-bold text-navy mb-4">🛡️ 5 Core Physical Invariants Verification</h2>
+                    
+        <div class="invariant-row">
+            <div class="flex-between">
+                <span class="font-bold text-navy">1. Zero-Collision Shelf Clearance</span>
+                <span class="badge badge-green">PASSED ✅</span>
+            </div>
+            <p class="text-sm text-gray mt-1">All foreign removals and cart picks precede shelf additions</p>
+        </div>
+        
+        <div class="invariant-row">
+            <div class="flex-between">
+                <span class="font-bold text-navy">2. 100% Cross-Bay Pairing</span>
+                <span class="badge badge-green">PASSED ✅</span>
+            </div>
+            <p class="text-sm text-gray mt-1">Exact pairing: 20 SetAside picks == 20 AddItems placements</p>
+        </div>
+        
+        <div class="invariant-row">
+            <div class="flex-between">
+                <span class="font-bold text-navy">3. Fix in Bay Direct Slides</span>
+                <span class="badge badge-green">PASSED ✅</span>
+            </div>
+            <p class="text-sm text-gray mt-1">All 0 intra-bay items are direct horizontal slides with 0 cart steps</p>
+        </div>
+        
+        <div class="invariant-row">
+            <div class="flex-between">
+                <span class="font-bold text-navy">4. Restock Difference</span>
+                <span class="badge badge-green">PASSED ✅</span>
+            </div>
+            <p class="text-sm text-gray mt-1">Total Add Placements (20) - Set Aside Picks (20) == Restock (0)</p>
+        </div>
+        
+        <div class="invariant-row">
+            <div class="flex-between">
+                <span class="font-bold text-navy">5. Final Cart Balance</span>
+                <span class="badge badge-green">PASSED ✅</span>
+            </div>
+            <p class="text-sm text-gray mt-1">Cart balance verified: 0 foreign items staged for backroom return, 0 orphaned items</p>
+        </div>
+        
+                </div>
+
+            </div>
+
+            <!-- Dynamic Bay Tabs (Bay 1, Bay 2, Bay 3, Bay 4, ...) -->
+            
+        <div id="bay_1" class="tab-content">
+            <div class="section-card">
+                <div class="flex-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-navy">Bay 1 Physical Action Sequence</h2>
+                        <p class="text-sm text-gray">Sorted priority: Set Aside (Picks) ➔ Fix in Bay (Shifts) ➔ Add to Shelf (Placements) ➔ Restock</p>
+                    </div>
+                    <div class="stats-pills">
+                        <span class="pill-stat">Total: <b>33</b></span>
+                        <span class="pill-stat stat-orange">Picks: <b>20</b></span>
+                        <span class="pill-stat stat-orange">Shifts: <b>0</b></span>
+                        <span class="pill-stat stat-green">Adds: <b>0</b></span>
+                        <span class="pill-stat stat-green">Restock: <b>0</b></span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th style="width: 280px;">Product</th>
+                                <th style="width: 220px;">Mobile Screen Banner</th>
+                                <th style="width: 90px;">Theme</th>
+                                <th style="width: 260px;">Movement Line on Mobile</th>
+                                <th>Associate Action Meaning</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+            <tr onclick="selectActionItem(1, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 9, Pos 1 ➔ Bay 4, Sh 9, Pos 15', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FD SALMON GRILLED', '05000050389', '1', 9, 1)">
+                <td class="text-center font-bold">#1</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/0192ddf6-9e51-8582-0f98-afd98143f43d.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=rp0x8wi8qopohSJqx2n7CMDnIDs%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD SALMON GRILLED</div>
+                            <span class="upc-pill">UPC: 05000050389</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 1 ➔ Bay 4, Sh 9, Pos 15</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(2, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 9, Pos 2 ➔ Bay 4, Sh 8, Pos 16', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FD BEEF/LIVER', '05000042914', '1', 9, 2)">
+                <td class="text-center font-bold">#2</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20251010/0199cefd-5f74-f833-6514-da398a17fbb2.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=98wjdfT7qua9Bu8MhEIu0GMcWL8%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD BEEF/LIVER</div>
+                            <span class="upc-pill">UPC: 05000042914</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 2 ➔ Bay 4, Sh 8, Pos 16</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(3, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 9, Pos 4 ➔ Bay 4, Sh 8, Pos 19', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FD CHUNKY CHCKN', '05000042694', '1', 9, 4)">
+                <td class="text-center font-bold">#3</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20251016/0199ee22-354e-efc7-ffa0-03f6352a5ae8.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=uj8RM9h4ENC2cG1vNKE10QlUGYs%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD CHUNKY CHCKN</div>
+                            <span class="upc-pill">UPC: 05000042694</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 4 ➔ Bay 4, Sh 8, Pos 19</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(4, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 9, Pos 8 ➔ Bay 4, Sh 9, Pos 7', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FD GRILLED CHICKEN', '05000004080', '1', 9, 8)">
+                <td class="text-center font-bold">#4</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20251010/0199cdab-d298-834c-b487-10dd4c110b7e.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=LjRF35N6BhazI4QqT7Nyngvmls0%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD GRILLED CHICKEN</div>
+                            <span class="upc-pill">UPC: 05000004080</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 8 ➔ Bay 4, Sh 9, Pos 7</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(5, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 9, Pos 11 ➔ Bay 4, Sh 9, Pos 11', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FOOD GRLD WHTFISH & TUNA', '05000010084', '1', 9, 11)">
+                <td class="text-center font-bold">#5</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FOOD GRLD WHTFISH & TUNA</div>
+                            <span class="upc-pill">UPC: 05000010084</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 11 ➔ Bay 4, Sh 9, Pos 11</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(6, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 9, Pos 14 ➔ Bay 4, Sh 9, Pos 13', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP', '05000010206', '1', 9, 14)">
+                <td class="text-center font-bold">#6</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20250404/0195ff41-3ec8-80ef-f13c-7bbf13337d2d.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=tVC8PwUdzcAhXQJxc6EryFxJcg0%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP</div>
+                            <span class="upc-pill">UPC: 05000010206</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 14 ➔ Bay 4, Sh 9, Pos 13</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(7, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 8, Pos 6 ➔ Bay 4, Sh 9, Pos 13', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP', '05000010206', '1', 8, 6)">
+                <td class="text-center font-bold">#7</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20250404/0195ff41-3ec8-80ef-f13c-7bbf13337d2d.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=tVC8PwUdzcAhXQJxc6EryFxJcg0%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP</div>
+                            <span class="upc-pill">UPC: 05000010206</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 6 ➔ Bay 4, Sh 9, Pos 13</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(8, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 8, Pos 1 ➔ Bay 4, Sh 8, Pos 5', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FOOD CHPD GRILL', '05000042924', '1', 8, 1)">
+                <td class="text-center font-bold">#8</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20260112/019bb0b7-1431-70a2-5606-67562ab9a9f2.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=JHO7LthnIKFcH1VH3J9S4Zvp2pk%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FOOD CHPD GRILL</div>
+                            <span class="upc-pill">UPC: 05000042924</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 1 ➔ Bay 4, Sh 8, Pos 5</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(9, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 8, Pos 4 ➔ Bay 4, Sh 8, Pos 7', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FD GRMET CHICKEN', '05000042994', '1', 8, 4)">
+                <td class="text-center font-bold">#9</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/01915a12-bef6-e15c-804e-2ec940f304f6.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=ua2P8R14fYf6AoHlJxcUPoqXcTY%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD GRMET CHICKEN</div>
+                            <span class="upc-pill">UPC: 05000042994</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 4 ➔ Bay 4, Sh 8, Pos 7</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(10, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 8, Pos 7 ➔ Bay 4, Sh 8, Pos 10', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FD TENDER BEEF', '05000042954', '1', 8, 7)">
+                <td class="text-center font-bold">#10</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/57f42c7a-c5e4-455b-b8b2-30daa8b912bc?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=1MliFQoRLs4fqTwq0r6SnT195K8%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD TENDER BEEF</div>
+                            <span class="upc-pill">UPC: 05000042954</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 7 ➔ Bay 4, Sh 8, Pos 10</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(11, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 8, Pos 13 ➔ Bay 4, Sh 9, Pos 17', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FD GRLD SFD FEAST/GRAY', '05000057216', '1', 8, 13)">
+                <td class="text-center font-bold">#11</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD GRLD SFD FEAST/GRAY</div>
+                            <span class="upc-pill">UPC: 05000057216</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 13 ➔ Bay 4, Sh 9, Pos 17</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(12, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 8, Pos 17 ➔ Bay 4, Sh 8, Pos 13', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'FANCY FEAST CAT FOOD BEEF & CHICKEN', '05000042974', '1', 8, 17)">
+                <td class="text-center font-bold">#12</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/50abdf7a-438f-46ea-b460-b301012129a6?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=7wWrsLCxnNnMeBQiJYM7Tj0ESec%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FOOD BEEF & CHICKEN</div>
+                            <span class="upc-pill">UPC: 05000042974</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 17 ➔ Bay 4, Sh 8, Pos 13</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(13, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 7, Pos 4 ➔ Bay 4, Sh 4, Pos 12', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'XOXOS SALMON & TUNA PATE', '81833601358', '1', 7, 4)">
+                <td class="text-center font-bold">#13</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/5c6515f0-eef1-4049-a64f-fc9325cc8834?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=v8QUFDjZaPGJph95s9cY2mKfO1Q%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">XOXOS SALMON & TUNA PATE</div>
+                            <span class="upc-pill">UPC: 81833601358</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 4 ➔ Bay 4, Sh 4, Pos 12</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(14, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 7, Pos 6 ➔ Bay 4, Sh 4, Pos 9', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'XOXOS WHITEFISH & TUNA PATE', '81833601357', '1', 7, 6)">
+                <td class="text-center font-bold">#14</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/945eaac5-0e8f-4c34-8332-fc441593e671?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=vkc1n1C4NUGN6rmWHV53qqimahc%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">XOXOS WHITEFISH & TUNA PATE</div>
+                            <span class="upc-pill">UPC: 81833601357</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 6 ➔ Bay 4, Sh 4, Pos 9</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(15, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 7, Pos 7 ➔ Bay 4, Sh 4, Pos 15', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'XOXOS CHICKEN & TUNA PATE', '81833601359', '1', 7, 7)">
+                <td class="text-center font-bold">#15</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">XOXOS CHICKEN & TUNA PATE</div>
+                            <span class="upc-pill">UPC: 81833601359</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 7 ➔ Bay 4, Sh 4, Pos 15</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(16, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 7, Pos 11 ➔ Bay 4, Sh 7, Pos 5', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'BLUE BUFFALO TASTEFULS TUNA ENTREE', '84024314071', '1', 7, 11)">
+                <td class="text-center font-bold">#16</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">BLUE BUFFALO TASTEFULS TUNA ENTREE</div>
+                            <span class="upc-pill">UPC: 84024314071</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 11 ➔ Bay 4, Sh 7, Pos 5</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(17, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 7, Pos 13 ➔ Bay 4, Sh 7, Pos 7', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'BLUE BUFFALO TASTEFULS TRKY & CHKN PATE', '84024314055', '1', 7, 13)">
+                <td class="text-center font-bold">#17</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/99c939fa-72d1-4285-a2a0-62cc78339f4d?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=1CuDhspkeDOI0ltZwE4WWDNVl4Y%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">BLUE BUFFALO TASTEFULS TRKY & CHKN PATE</div>
+                            <span class="upc-pill">UPC: 84024314055</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 13 ➔ Bay 4, Sh 7, Pos 7</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(18, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 7, Pos 16 ➔ Bay 4, Sh 7, Pos 10', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'BLUE BUFFALO TASTEFULS CHICKEN ENTREE', '84024314069', '1', 7, 16)">
+                <td class="text-center font-bold">#18</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/d3f14283-f03d-4f5b-b058-edbac6fa009a?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=6U7jP7OujhmqkhcfyuEpXO4xvtk%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">BLUE BUFFALO TASTEFULS CHICKEN ENTREE</div>
+                            <span class="upc-pill">UPC: 84024314069</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 16 ➔ Bay 4, Sh 7, Pos 10</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(19, 'SET ASIDE FOR BAY 4', 'orange', 'Bay 1, Sh 7, Pos 17 ➔ Bay 4, Sh 7, Pos 11', 'Pick from Bay 1 shelf and stage on cart for Bay 4', 'BLUE WILDERNESS KITTEN CHKN WET CAT', '85961000620', '1', 7, 17)">
+                <td class="text-center font-bold">#19</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20250626/0197aabc-2629-65c3-afc3-128facd01fdc.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=2Az7QnSh%2BYBPjMYVXLCM7wlrlyI%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">BLUE WILDERNESS KITTEN CHKN WET CAT</div>
+                            <span class="upc-pill">UPC: 85961000620</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 17 ➔ Bay 4, Sh 7, Pos 11</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 4</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(20, 'SET ASIDE FOR BAY 3', 'orange', 'Bay 1, Sh 6, Pos 1 ➔ Bay 3, Sh 6, Pos 11', 'Pick from Bay 1 shelf and stage on cart for Bay 3', 'BLUE BUFFALO TASTEFULS CHICKEN IN GRAVY', '84024314070', '1', 6, 1)">
+                <td class="text-center font-bold">#20</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">BLUE BUFFALO TASTEFULS CHICKEN IN GRAVY</div>
+                            <span class="upc-pill">UPC: 84024314070</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">SET ASIDE FOR BAY 3</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 6, Pos 1 ➔ Bay 3, Sh 6, Pos 11</td>
+                <td class="text-sm text-gray">Pick from Bay 1 shelf and stage on cart for Bay 3</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(21, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 7, Pos 2 ➔ Backroom Cart', 'Scan barcode on Shelf 7, Pos 2 to identify unknown item', 'Unnamed Product', '', '1', 7, 2)">
+                <td class="text-center font-bold">#21</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 2 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 7, Pos 2 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(22, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 7, Pos 3 ➔ Backroom Cart', 'Scan barcode on Shelf 7, Pos 3 to identify unknown item', 'Unnamed Product', '', '1', 7, 3)">
+                <td class="text-center font-bold">#22</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 3 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 7, Pos 3 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(23, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 5, Pos 1 ➔ Backroom Cart', 'Scan barcode on Shelf 5, Pos 1 to identify unknown item', 'Unnamed Product', '', '1', 5, 1)">
+                <td class="text-center font-bold">#23</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 5, Pos 1 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 5, Pos 1 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(24, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 5, Pos 1 ➔ Backroom Cart', 'Scan barcode on Shelf 5, Pos 1 to identify unknown item', 'Unnamed Product', '', '1', 5, 1)">
+                <td class="text-center font-bold">#24</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 5, Pos 1 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 5, Pos 1 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(25, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 5, Pos 2 ➔ Backroom Cart', 'Scan barcode on Shelf 5, Pos 2 to identify unknown item', 'Unnamed Product', '', '1', 5, 2)">
+                <td class="text-center font-bold">#25</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 5, Pos 2 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 5, Pos 2 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(26, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 5, Pos 2 ➔ Backroom Cart', 'Scan barcode on Shelf 5, Pos 2 to identify unknown item', 'Unnamed Product', '', '1', 5, 2)">
+                <td class="text-center font-bold">#26</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 5, Pos 2 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 5, Pos 2 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(27, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 5, Pos 3 ➔ Backroom Cart', 'Scan barcode on Shelf 5, Pos 3 to identify unknown item', 'Unnamed Product', '', '1', 5, 3)">
+                <td class="text-center font-bold">#27</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 5, Pos 3 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 5, Pos 3 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(28, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 5, Pos 3 ➔ Backroom Cart', 'Scan barcode on Shelf 5, Pos 3 to identify unknown item', 'Unnamed Product', '', '1', 5, 3)">
+                <td class="text-center font-bold">#28</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 5, Pos 3 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 5, Pos 3 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(29, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 4, Pos 12 ➔ Backroom Cart', 'Scan barcode on Shelf 4, Pos 12 to identify unknown item', 'Unnamed Product', '', '1', 4, 12)">
+                <td class="text-center font-bold">#29</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 4, Pos 12 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 4, Pos 12 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(30, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 4, Pos 12 ➔ Backroom Cart', 'Scan barcode on Shelf 4, Pos 12 to identify unknown item', 'Unnamed Product', '', '1', 4, 12)">
+                <td class="text-center font-bold">#30</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 4, Pos 12 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 4, Pos 12 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(31, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 4, Pos 13 ➔ Backroom Cart', 'Scan barcode on Shelf 4, Pos 13 to identify unknown item', 'Unnamed Product', '', '1', 4, 13)">
+                <td class="text-center font-bold">#31</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 4, Pos 13 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 4, Pos 13 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(32, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 3, Pos 7 ➔ Backroom Cart', 'Scan barcode on Shelf 3, Pos 7 to identify unknown item', 'Unnamed Product', '', '1', 3, 7)">
+                <td class="text-center font-bold">#32</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 3, Pos 7 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 3, Pos 7 to identify unknown item</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(33, 'IDENTIFY PRODUCT IN BAY 1', 'orange', 'Bay 1, Sh 3, Pos 7 ➔ Backroom Cart', 'Scan barcode on Shelf 3, Pos 7 to identify unknown item', 'Unnamed Product', '', '1', 3, 7)">
+                <td class="text-center font-bold">#33</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">Unnamed Product</div>
+                            <span class="upc-pill">UPC: </span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+                <td><span class="color-pill pill-orange">ORANGE</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 3, Pos 7 ➔ Backroom Cart</td>
+                <td class="text-sm text-gray">Scan barcode on Shelf 3, Pos 7 to identify unknown item</td>
+            </tr>
+            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="bay_2" class="tab-content">
+            <div class="section-card">
+                <div class="flex-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-navy">Bay 2 Physical Action Sequence</h2>
+                        <p class="text-sm text-gray">Sorted priority: Set Aside (Picks) ➔ Fix in Bay (Shifts) ➔ Add to Shelf (Placements) ➔ Restock</p>
+                    </div>
+                    <div class="stats-pills">
+                        <span class="pill-stat">Total: <b>0</b></span>
+                        <span class="pill-stat stat-orange">Picks: <b>0</b></span>
+                        <span class="pill-stat stat-orange">Shifts: <b>0</b></span>
+                        <span class="pill-stat stat-green">Adds: <b>0</b></span>
+                        <span class="pill-stat stat-green">Restock: <b>0</b></span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th style="width: 280px;">Product</th>
+                                <th style="width: 220px;">Mobile Screen Banner</th>
+                                <th style="width: 90px;">Theme</th>
+                                <th style="width: 260px;">Movement Line on Mobile</th>
+                                <th>Associate Action Meaning</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="bay_3" class="tab-content">
+            <div class="section-card">
+                <div class="flex-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-navy">Bay 3 Physical Action Sequence</h2>
+                        <p class="text-sm text-gray">Sorted priority: Set Aside (Picks) ➔ Fix in Bay (Shifts) ➔ Add to Shelf (Placements) ➔ Restock</p>
+                    </div>
+                    <div class="stats-pills">
+                        <span class="pill-stat">Total: <b>1</b></span>
+                        <span class="pill-stat stat-orange">Picks: <b>0</b></span>
+                        <span class="pill-stat stat-orange">Shifts: <b>0</b></span>
+                        <span class="pill-stat stat-green">Adds: <b>1</b></span>
+                        <span class="pill-stat stat-green">Restock: <b>0</b></span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th style="width: 280px;">Product</th>
+                                <th style="width: 220px;">Mobile Screen Banner</th>
+                                <th style="width: 90px;">Theme</th>
+                                <th style="width: 260px;">Movement Line on Mobile</th>
+                                <th>Associate Action Meaning</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+            <tr onclick="selectActionItem(1, 'ADD TO SHELF BAY 3', 'green', 'Bay 1, Sh 6, Pos 1 ➔ Bay 3, Sh 6, Pos 11', 'Take staged item from cart and place on Bay 3, Shelf 6, Pos 11', 'BLUE BUFFALO TASTEFULS CHICKEN IN GRAVY', '84024314070', '3', 6, 11)">
+                <td class="text-center font-bold">#1</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">BLUE BUFFALO TASTEFULS CHICKEN IN GRAVY</div>
+                            <span class="upc-pill">UPC: 84024314070</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 3</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 6, Pos 1 ➔ Bay 3, Sh 6, Pos 11</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 3, Shelf 6, Pos 11</td>
+            </tr>
+            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="bay_4" class="tab-content">
+            <div class="section-card">
+                <div class="flex-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-navy">Bay 4 Physical Action Sequence</h2>
+                        <p class="text-sm text-gray">Sorted priority: Set Aside (Picks) ➔ Fix in Bay (Shifts) ➔ Add to Shelf (Placements) ➔ Restock</p>
+                    </div>
+                    <div class="stats-pills">
+                        <span class="pill-stat">Total: <b>19</b></span>
+                        <span class="pill-stat stat-orange">Picks: <b>0</b></span>
+                        <span class="pill-stat stat-orange">Shifts: <b>0</b></span>
+                        <span class="pill-stat stat-green">Adds: <b>19</b></span>
+                        <span class="pill-stat stat-green">Restock: <b>0</b></span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th style="width: 280px;">Product</th>
+                                <th style="width: 220px;">Mobile Screen Banner</th>
+                                <th style="width: 90px;">Theme</th>
+                                <th style="width: 260px;">Movement Line on Mobile</th>
+                                <th>Associate Action Meaning</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+            <tr onclick="selectActionItem(1, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 9, Pos 1 ➔ Bay 4, Sh 9, Pos 15', 'Take staged item from cart and place on Bay 4, Shelf 9, Pos 15', 'FANCY FEAST CAT FD SALMON GRILLED', '05000050389', '4', 9, 15)">
+                <td class="text-center font-bold">#1</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/0192ddf6-9e51-8582-0f98-afd98143f43d.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=rp0x8wi8qopohSJqx2n7CMDnIDs%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD SALMON GRILLED</div>
+                            <span class="upc-pill">UPC: 05000050389</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 1 ➔ Bay 4, Sh 9, Pos 15</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 9, Pos 15</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(2, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 9, Pos 2 ➔ Bay 4, Sh 8, Pos 16', 'Take staged item from cart and place on Bay 4, Shelf 8, Pos 16', 'FANCY FEAST CAT FD BEEF/LIVER', '05000042914', '4', 8, 16)">
+                <td class="text-center font-bold">#2</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20251010/0199cefd-5f74-f833-6514-da398a17fbb2.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=98wjdfT7qua9Bu8MhEIu0GMcWL8%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD BEEF/LIVER</div>
+                            <span class="upc-pill">UPC: 05000042914</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 2 ➔ Bay 4, Sh 8, Pos 16</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 8, Pos 16</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(3, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 9, Pos 4 ➔ Bay 4, Sh 8, Pos 19', 'Take staged item from cart and place on Bay 4, Shelf 8, Pos 19', 'FANCY FEAST CAT FD CHUNKY CHCKN', '05000042694', '4', 8, 19)">
+                <td class="text-center font-bold">#3</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20251016/0199ee22-354e-efc7-ffa0-03f6352a5ae8.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=uj8RM9h4ENC2cG1vNKE10QlUGYs%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD CHUNKY CHCKN</div>
+                            <span class="upc-pill">UPC: 05000042694</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 4 ➔ Bay 4, Sh 8, Pos 19</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 8, Pos 19</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(4, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 9, Pos 8 ➔ Bay 4, Sh 9, Pos 7', 'Take staged item from cart and place on Bay 4, Shelf 9, Pos 7', 'FANCY FEAST CAT FD GRILLED CHICKEN', '05000004080', '4', 9, 7)">
+                <td class="text-center font-bold">#4</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20251010/0199cdab-d298-834c-b487-10dd4c110b7e.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=LjRF35N6BhazI4QqT7Nyngvmls0%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD GRILLED CHICKEN</div>
+                            <span class="upc-pill">UPC: 05000004080</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 8 ➔ Bay 4, Sh 9, Pos 7</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 9, Pos 7</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(5, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 9, Pos 11 ➔ Bay 4, Sh 9, Pos 11', 'Take staged item from cart and place on Bay 4, Shelf 9, Pos 11', 'FANCY FEAST CAT FOOD GRLD WHTFISH & TUNA', '05000010084', '4', 9, 11)">
+                <td class="text-center font-bold">#5</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FOOD GRLD WHTFISH & TUNA</div>
+                            <span class="upc-pill">UPC: 05000010084</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 11 ➔ Bay 4, Sh 9, Pos 11</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 9, Pos 11</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(6, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 9, Pos 14 ➔ Bay 4, Sh 9, Pos 13', 'Take staged item from cart and place on Bay 4, Shelf 9, Pos 13', 'FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP', '05000010206', '4', 9, 13)">
+                <td class="text-center font-bold">#6</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20250404/0195ff41-3ec8-80ef-f13c-7bbf13337d2d.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=tVC8PwUdzcAhXQJxc6EryFxJcg0%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP</div>
+                            <span class="upc-pill">UPC: 05000010206</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 9, Pos 14 ➔ Bay 4, Sh 9, Pos 13</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 9, Pos 13</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(7, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 8, Pos 6 ➔ Bay 4, Sh 9, Pos 13', 'Take staged item from cart and place on Bay 4, Shelf 9, Pos 13', 'FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP', '05000010206', '4', 9, 13)">
+                <td class="text-center font-bold">#7</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20250404/0195ff41-3ec8-80ef-f13c-7bbf13337d2d.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=tVC8PwUdzcAhXQJxc6EryFxJcg0%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP</div>
+                            <span class="upc-pill">UPC: 05000010206</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 6 ➔ Bay 4, Sh 9, Pos 13</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 9, Pos 13</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(8, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 8, Pos 1 ➔ Bay 4, Sh 8, Pos 5', 'Take staged item from cart and place on Bay 4, Shelf 8, Pos 5', 'FANCY FEAST CAT FOOD CHPD GRILL', '05000042924', '4', 8, 5)">
+                <td class="text-center font-bold">#8</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20260112/019bb0b7-1431-70a2-5606-67562ab9a9f2.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=JHO7LthnIKFcH1VH3J9S4Zvp2pk%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FOOD CHPD GRILL</div>
+                            <span class="upc-pill">UPC: 05000042924</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 1 ➔ Bay 4, Sh 8, Pos 5</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 8, Pos 5</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(9, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 8, Pos 4 ➔ Bay 4, Sh 8, Pos 7', 'Take staged item from cart and place on Bay 4, Shelf 8, Pos 7', 'FANCY FEAST CAT FD GRMET CHICKEN', '05000042994', '4', 8, 7)">
+                <td class="text-center font-bold">#9</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/01915a12-bef6-e15c-804e-2ec940f304f6.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=ua2P8R14fYf6AoHlJxcUPoqXcTY%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD GRMET CHICKEN</div>
+                            <span class="upc-pill">UPC: 05000042994</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 4 ➔ Bay 4, Sh 8, Pos 7</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 8, Pos 7</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(10, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 8, Pos 7 ➔ Bay 4, Sh 8, Pos 10', 'Take staged item from cart and place on Bay 4, Shelf 8, Pos 10', 'FANCY FEAST CAT FD TENDER BEEF', '05000042954', '4', 8, 10)">
+                <td class="text-center font-bold">#10</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/57f42c7a-c5e4-455b-b8b2-30daa8b912bc?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=1MliFQoRLs4fqTwq0r6SnT195K8%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD TENDER BEEF</div>
+                            <span class="upc-pill">UPC: 05000042954</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 7 ➔ Bay 4, Sh 8, Pos 10</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 8, Pos 10</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(11, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 8, Pos 13 ➔ Bay 4, Sh 9, Pos 17', 'Take staged item from cart and place on Bay 4, Shelf 9, Pos 17', 'FANCY FEAST CAT FD GRLD SFD FEAST/GRAY', '05000057216', '4', 9, 17)">
+                <td class="text-center font-bold">#11</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FD GRLD SFD FEAST/GRAY</div>
+                            <span class="upc-pill">UPC: 05000057216</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 13 ➔ Bay 4, Sh 9, Pos 17</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 9, Pos 17</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(12, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 8, Pos 17 ➔ Bay 4, Sh 8, Pos 13', 'Take staged item from cart and place on Bay 4, Shelf 8, Pos 13', 'FANCY FEAST CAT FOOD BEEF & CHICKEN', '05000042974', '4', 8, 13)">
+                <td class="text-center font-bold">#12</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/50abdf7a-438f-46ea-b460-b301012129a6?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=7wWrsLCxnNnMeBQiJYM7Tj0ESec%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">FANCY FEAST CAT FOOD BEEF & CHICKEN</div>
+                            <span class="upc-pill">UPC: 05000042974</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 8, Pos 17 ➔ Bay 4, Sh 8, Pos 13</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 8, Pos 13</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(13, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 7, Pos 4 ➔ Bay 4, Sh 4, Pos 12', 'Take staged item from cart and place on Bay 4, Shelf 4, Pos 12', 'XOXOS SALMON & TUNA PATE', '81833601358', '4', 4, 12)">
+                <td class="text-center font-bold">#13</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/5c6515f0-eef1-4049-a64f-fc9325cc8834?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=v8QUFDjZaPGJph95s9cY2mKfO1Q%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">XOXOS SALMON & TUNA PATE</div>
+                            <span class="upc-pill">UPC: 81833601358</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 4 ➔ Bay 4, Sh 4, Pos 12</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 4, Pos 12</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(14, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 7, Pos 6 ➔ Bay 4, Sh 4, Pos 9', 'Take staged item from cart and place on Bay 4, Shelf 4, Pos 9', 'XOXOS WHITEFISH & TUNA PATE', '81833601357', '4', 4, 9)">
+                <td class="text-center font-bold">#14</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/945eaac5-0e8f-4c34-8332-fc441593e671?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=vkc1n1C4NUGN6rmWHV53qqimahc%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">XOXOS WHITEFISH & TUNA PATE</div>
+                            <span class="upc-pill">UPC: 81833601357</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 6 ➔ Bay 4, Sh 4, Pos 9</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 4, Pos 9</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(15, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 7, Pos 7 ➔ Bay 4, Sh 4, Pos 15', 'Take staged item from cart and place on Bay 4, Shelf 4, Pos 15', 'XOXOS CHICKEN & TUNA PATE', '81833601359', '4', 4, 15)">
+                <td class="text-center font-bold">#15</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">XOXOS CHICKEN & TUNA PATE</div>
+                            <span class="upc-pill">UPC: 81833601359</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 7 ➔ Bay 4, Sh 4, Pos 15</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 4, Pos 15</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(16, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 7, Pos 11 ➔ Bay 4, Sh 7, Pos 5', 'Take staged item from cart and place on Bay 4, Shelf 7, Pos 5', 'BLUE BUFFALO TASTEFULS TUNA ENTREE', '84024314071', '4', 7, 5)">
+                <td class="text-center font-bold">#16</td>
+                <td>
+                    <div class="prod-cell">
+                        <div class="prod-thumb-placeholder">POG</div>
+                        <div>
+                            <div class="prod-title">BLUE BUFFALO TASTEFULS TUNA ENTREE</div>
+                            <span class="upc-pill">UPC: 84024314071</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 11 ➔ Bay 4, Sh 7, Pos 5</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 7, Pos 5</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(17, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 7, Pos 13 ➔ Bay 4, Sh 7, Pos 7', 'Take staged item from cart and place on Bay 4, Shelf 7, Pos 7', 'BLUE BUFFALO TASTEFULS TRKY & CHKN PATE', '84024314055', '4', 7, 7)">
+                <td class="text-center font-bold">#17</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/99c939fa-72d1-4285-a2a0-62cc78339f4d?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=1CuDhspkeDOI0ltZwE4WWDNVl4Y%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">BLUE BUFFALO TASTEFULS TRKY & CHKN PATE</div>
+                            <span class="upc-pill">UPC: 84024314055</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 13 ➔ Bay 4, Sh 7, Pos 7</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 7, Pos 7</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(18, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 7, Pos 16 ➔ Bay 4, Sh 7, Pos 10', 'Take staged item from cart and place on Bay 4, Shelf 7, Pos 10', 'BLUE BUFFALO TASTEFULS CHICKEN ENTREE', '84024314069', '4', 7, 10)">
+                <td class="text-center font-bold">#18</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/productimage/d3f14283-f03d-4f5b-b058-edbac6fa009a?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=6U7jP7OujhmqkhcfyuEpXO4xvtk%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">BLUE BUFFALO TASTEFULS CHICKEN ENTREE</div>
+                            <span class="upc-pill">UPC: 84024314069</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 16 ➔ Bay 4, Sh 7, Pos 10</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 7, Pos 10</td>
+            </tr>
+            
+            <tr onclick="selectActionItem(19, 'ADD TO SHELF BAY 4', 'green', 'Bay 1, Sh 7, Pos 17 ➔ Bay 4, Sh 7, Pos 11', 'Take staged item from cart and place on Bay 4, Shelf 7, Pos 11', 'BLUE WILDERNESS KITTEN CHKN WET CAT', '85961000620', '4', 7, 11)">
+                <td class="text-center font-bold">#19</td>
+                <td>
+                    <div class="prod-cell">
+                        <img src="https://bucket-us-west-2-mgmt-media-r3dev-epsilon.s3.amazonaws.com/master_data/cropped_images/20250626/0197aabc-2629-65c3-afc3-128facd01fdc.png?AWSAccessKeyId=ASIARX36UUOZWJITNVH3&Signature=2Az7QnSh%2BYBPjMYVXLCM7wlrlyI%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEO7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQDXCIqfwUrIBlr1kWlumgnCcekizOx%2FshRFhygB4%2BS06QIgNY72EeyI6Vb02%2F13u0U9d35zOEMnLKXSFYH33zYKPO8qngQIt%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAEGgwxMTk5ODc4MDcxNTUiDG3hqDLN56HFYC4ytCryA4mkh%2B%2Bo4r%2BP6OzT7eYWkLgzijv%2BNSm%2FpL9Ev53mpsYHQPY%2B7aXed2mtJJozS9Xu9vHsCrZpU4c5CMk6KjuIrtARwQnR7k6HwuEgxU5Yip2rB%2BcCAqdmorDrac9G2UUl26rlAguCHc5R1h4C9vkuC7Awkty0BlyBZ0Ygj2n%2FNuluoSJHV009va8SfPHfvgMwLgI1EeVwCPHFNjQ5DJxQ7vNCSK8s9fAmeyF8EepFbuCcfZHfhskRKjSAqXKTLZR%2B%2FW2jzlbCvtZq4mvMFNnl46SdE0%2B%2BvEbjYLHuTGqhmQ6h85pmqwqzjFQ3cfjBZkNWDOUjsJ4VUX1v%2BlXuC8S%2BKKuW0JYD1U7xF1PmH0wCa1MawZKL0Z%2F1XxiZ2zVwWxjJI9b44lHX7FwSWgTznu0a05xaVINEZfXS1orB8Jb94bNU8rFVnHpMFl%2Bfb5jefvgsbGTvIc%2FVjGtIOA%2FBRRZUeZhHN7GHMRunDGgFFoYbqL3EfPOaZwQ%2BcbUwRkvssdLhdCg6%2B5zZpgbD3XlZLy3c4RZyk6%2BYpeXBKPOiAb7XeTEgQaiIvRWSy5SUJ5A9dcLhuodHc5CL06WG2ZnrGg9mQ9oI5dKnlk%2Fx3Iur0wJQeQLlaUQfWdFhgrKNJl7eLNkiybVXFgB1c5XlRBqw3GHsFFxa%2BzCK6KTUBjqmAT0BiGlFnLkLQnTtm06btoYYgcIbP6JXoaQ%2B8p0B9Lh%2FpcHDGXJ9w8%2B3aLnPubiw7EU4eEhsl2h%2FdR01D6vNZ2zalGOhBMgFWOlpd1frJYEMsh%2BfVG64znY5AqHixj5jTakSSv%2BaU9yJxG3M%2BhFltlXh8FeOZTE0Pulb7DFPzL1%2F5EWN0XCHfXQDfGhNcGzgKU7uGeiLBJGygVY%2FJWhYR%2FNyuNqEaZM%3D&Expires=1787809600" alt="thumb" class="prod-thumb" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'><rect width=\'36\' height=\'36\' fill=\'%23D9E1F2\'/><text x=\'18\' y=\'22\' font-size=\'10\' text-anchor=\'middle\' fill=\'%231F4E79\'>POG</text></svg>'"/>
+                        <div>
+                            <div class="prod-title">BLUE WILDERNESS KITTEN CHKN WET CAT</div>
+                            <span class="upc-pill">UPC: 85961000620</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+                <td><span class="color-pill pill-green">GREEN</span></td>
+                <td class="font-mono text-sm">Bay 1, Sh 7, Pos 17 ➔ Bay 4, Sh 7, Pos 11</td>
+                <td class="text-sm text-gray">Take staged item from cart and place on Bay 4, Shelf 7, Pos 11</td>
+            </tr>
+            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+
+            <!-- Tab 6: Set Aside 1-to-1 Validation -->
+            <div id="tab_pairing" class="tab-content">
+                <div class="section-card">
+                    <div class="flex-between mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-navy">🔗 Set Aside 1-to-1 Cross-Bay Pairing Matrix</h2>
+                            <p class="text-sm text-gray">Ensures zero orphaned items staged on the cart and zero ghost additions across all bays</p>
+                        </div>
+                        <span class="badge badge-green">20 Cross-Bay Pairs Verified</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th>Product Title</th>
+                                    <th style="width: 160px;">UPC</th>
+                                    <th style="width: 220px;">Step 1: SET ASIDE (Pick Location)</th>
+                                    <th style="width: 220px;">Step 2: ADD TO SHELF (Target Home)</th>
+                                    <th style="width: 200px;">1-to-1 Pairing Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+        <tr>
+            <td class="text-center font-bold">#1</td>
+            <td class="font-semibold">FANCY FEAST CAT FD SALMON GRILLED</td>
+            <td><span class="upc-pill">UPC: 05000050389</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 9, Pos 1</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 9, Pos 15</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#2</td>
+            <td class="font-semibold">FANCY FEAST CAT FD BEEF/LIVER</td>
+            <td><span class="upc-pill">UPC: 05000042914</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 9, Pos 2</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 8, Pos 16</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#3</td>
+            <td class="font-semibold">FANCY FEAST CAT FD CHUNKY CHCKN</td>
+            <td><span class="upc-pill">UPC: 05000042694</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 9, Pos 4</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 8, Pos 19</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#4</td>
+            <td class="font-semibold">FANCY FEAST CAT FD GRILLED CHICKEN</td>
+            <td><span class="upc-pill">UPC: 05000004080</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 9, Pos 8</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 9, Pos 7</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#5</td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD GRLD WHTFISH & TUNA</td>
+            <td><span class="upc-pill">UPC: 05000010084</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 9, Pos 11</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 9, Pos 11</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#6</td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP</td>
+            <td><span class="upc-pill">UPC: 05000010206</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 9, Pos 14</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 9, Pos 13</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#7</td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP</td>
+            <td><span class="upc-pill">UPC: 05000010206</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 8, Pos 6</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 9, Pos 13</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#8</td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD CHPD GRILL</td>
+            <td><span class="upc-pill">UPC: 05000042924</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 8, Pos 1</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 8, Pos 5</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#9</td>
+            <td class="font-semibold">FANCY FEAST CAT FD GRMET CHICKEN</td>
+            <td><span class="upc-pill">UPC: 05000042994</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 8, Pos 4</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 8, Pos 7</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#10</td>
+            <td class="font-semibold">FANCY FEAST CAT FD TENDER BEEF</td>
+            <td><span class="upc-pill">UPC: 05000042954</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 8, Pos 7</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 8, Pos 10</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#11</td>
+            <td class="font-semibold">FANCY FEAST CAT FD GRLD SFD FEAST/GRAY</td>
+            <td><span class="upc-pill">UPC: 05000057216</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 8, Pos 13</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 9, Pos 17</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#12</td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD BEEF & CHICKEN</td>
+            <td><span class="upc-pill">UPC: 05000042974</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 8, Pos 17</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 8, Pos 13</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#13</td>
+            <td class="font-semibold">XOXOS SALMON & TUNA PATE</td>
+            <td><span class="upc-pill">UPC: 81833601358</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 7, Pos 4</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 4, Pos 12</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#14</td>
+            <td class="font-semibold">XOXOS WHITEFISH & TUNA PATE</td>
+            <td><span class="upc-pill">UPC: 81833601357</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 7, Pos 6</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 4, Pos 9</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#15</td>
+            <td class="font-semibold">XOXOS CHICKEN & TUNA PATE</td>
+            <td><span class="upc-pill">UPC: 81833601359</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 7, Pos 7</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 4, Pos 15</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#16</td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS TUNA ENTREE</td>
+            <td><span class="upc-pill">UPC: 84024314071</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 7, Pos 11</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 7, Pos 5</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#17</td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS TRKY & CHKN PATE</td>
+            <td><span class="upc-pill">UPC: 84024314055</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 7, Pos 13</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 7, Pos 7</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#18</td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS CHICKEN ENTREE</td>
+            <td><span class="upc-pill">UPC: 84024314069</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 7, Pos 16</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 7, Pos 10</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#19</td>
+            <td class="font-semibold">BLUE WILDERNESS KITTEN CHKN WET CAT</td>
+            <td><span class="upc-pill">UPC: 85961000620</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 7, Pos 17</td>
+            <td class="font-mono text-sm bg-green-light">Bay 4, Sh 7, Pos 11</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+        <tr>
+            <td class="text-center font-bold">#20</td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS CHICKEN IN GRAVY</td>
+            <td><span class="upc-pill">UPC: 84024314070</span></td>
+            <td class="font-mono text-sm bg-orange-light">Bay 1, Sh 6, Pos 1</td>
+            <td class="font-mono text-sm bg-green-light">Bay 3, Sh 6, Pos 11</td>
+            <td><span class="badge badge-green">MATCHED & VERIFIED ✅</span></td>
+        </tr>
+        
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 7: All Products Master Grid -->
+            <div id="tab_master" class="tab-content">
+                <div class="section-card">
+                    <div class="flex-between mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-navy">📋 All Products Master Mapping Grid</h2>
+                            <p class="text-sm text-gray">Master mapping cross-referencing raw backend API records with Android & iOS domain conversions</p>
+                        </div>
+                        <input type="text" id="masterSearch" placeholder="🔍 Search UPC or Title..." onkeyup="filterMasterTable()" style="padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-light); font-size: 13px; width: 240px;"/>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="report-table" id="masterTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;">#</th>
+                                    <th>Backend ID</th>
+                                    <th>UPC</th>
+                                    <th>Product Title</th>
+                                    <th>Screen Bay</th>
+                                    <th>Current Pos (Source)</th>
+                                    <th>Expected Pos (Target)</th>
+                                    <th>Backend Action</th>
+                                    <th>Mobile Converted Action</th>
+                                    <th>After Action State</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#1</td>
+            <td class="font-mono">13153243</td>
+            <td><span class="upc-pill">UPC: 05000050389</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD SALMON GRILLED</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 1</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 15</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#2</td>
+            <td class="font-mono">13153244</td>
+            <td><span class="upc-pill">UPC: 05000042914</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD BEEF/LIVER</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 2</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 16</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#3</td>
+            <td class="font-mono">13153245</td>
+            <td><span class="upc-pill">UPC: 05000042694</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD CHUNKY CHCKN</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 4</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 19</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#4</td>
+            <td class="font-mono">13153246</td>
+            <td><span class="upc-pill">UPC: 05000004080</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD GRILLED CHICKEN</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 8</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 7</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#5</td>
+            <td class="font-mono">13153247</td>
+            <td><span class="upc-pill">UPC: 05000010084</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD GRLD WHTFISH & TUNA</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 11</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 11</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#6</td>
+            <td class="font-mono">13153248</td>
+            <td><span class="upc-pill">UPC: 05000010206</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 14</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 13</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#7</td>
+            <td class="font-mono">13153249</td>
+            <td><span class="upc-pill">UPC: 05000010206</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 6</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 13</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#8</td>
+            <td class="font-mono">13153250</td>
+            <td><span class="upc-pill">UPC: 05000042924</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD CHPD GRILL</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 1</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 5</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#9</td>
+            <td class="font-mono">13153251</td>
+            <td><span class="upc-pill">UPC: 05000042994</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD GRMET CHICKEN</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 4</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 7</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#10</td>
+            <td class="font-mono">13153252</td>
+            <td><span class="upc-pill">UPC: 05000042954</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD TENDER BEEF</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 7</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 10</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#11</td>
+            <td class="font-mono">13153253</td>
+            <td><span class="upc-pill">UPC: 05000057216</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD GRLD SFD FEAST/GRAY</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 13</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 17</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#12</td>
+            <td class="font-mono">13153254</td>
+            <td><span class="upc-pill">UPC: 05000042974</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD BEEF & CHICKEN</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 17</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 13</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#13</td>
+            <td class="font-mono">13153256</td>
+            <td><span class="upc-pill">UPC: 81833601358</span></td>
+            <td class="font-semibold">XOXOS SALMON & TUNA PATE</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 4</td>
+            <td class="font-mono text-xs">Bay 4, Sh 4, Pos 12</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#14</td>
+            <td class="font-mono">13153257</td>
+            <td><span class="upc-pill">UPC: 81833601357</span></td>
+            <td class="font-semibold">XOXOS WHITEFISH & TUNA PATE</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 6</td>
+            <td class="font-mono text-xs">Bay 4, Sh 4, Pos 9</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#15</td>
+            <td class="font-mono">13153258</td>
+            <td><span class="upc-pill">UPC: 81833601359</span></td>
+            <td class="font-semibold">XOXOS CHICKEN & TUNA PATE</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 7</td>
+            <td class="font-mono text-xs">Bay 4, Sh 4, Pos 15</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#16</td>
+            <td class="font-mono">13153260</td>
+            <td><span class="upc-pill">UPC: 84024314071</span></td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS TUNA ENTREE</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 11</td>
+            <td class="font-mono text-xs">Bay 4, Sh 7, Pos 5</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#17</td>
+            <td class="font-mono">13153261</td>
+            <td><span class="upc-pill">UPC: 84024314055</span></td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS TRKY & CHKN PATE</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 13</td>
+            <td class="font-mono text-xs">Bay 4, Sh 7, Pos 7</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#18</td>
+            <td class="font-mono">13153262</td>
+            <td><span class="upc-pill">UPC: 84024314069</span></td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS CHICKEN ENTREE</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 16</td>
+            <td class="font-mono text-xs">Bay 4, Sh 7, Pos 10</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#19</td>
+            <td class="font-mono">13153263</td>
+            <td><span class="upc-pill">UPC: 85961000620</span></td>
+            <td class="font-semibold">BLUE WILDERNESS KITTEN CHKN WET CAT</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 17</td>
+            <td class="font-mono text-xs">Bay 4, Sh 7, Pos 11</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 4</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="set_aside">
+            <td class="text-center font-bold">#20</td>
+            <td class="font-mono">13153264</td>
+            <td><span class="upc-pill">UPC: 84024314070</span></td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS CHICKEN IN GRAVY</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 6, Pos 1</td>
+            <td class="font-mono text-xs">Bay 3, Sh 6, Pos 11</td>
+            <td><span class="badge-neutral font-mono text-xs">set_aside</span></td>
+            <td><span class="badge badge-orange">SET ASIDE FOR BAY 3</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#21</td>
+            <td class="font-mono">13153161</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 2</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#22</td>
+            <td class="font-mono">13153162</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 3</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#23</td>
+            <td class="font-mono">13153163</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 5, Pos 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#24</td>
+            <td class="font-mono">13153164</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 5, Pos 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#25</td>
+            <td class="font-mono">13153165</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 5, Pos 2</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#26</td>
+            <td class="font-mono">13153166</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 5, Pos 2</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#27</td>
+            <td class="font-mono">13153167</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 5, Pos 3</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#28</td>
+            <td class="font-mono">13153168</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 5, Pos 3</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#29</td>
+            <td class="font-mono">13153169</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 4, Pos 12</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#30</td>
+            <td class="font-mono">13153170</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 4, Pos 12</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#31</td>
+            <td class="font-mono">13153171</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 4, Pos 13</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#32</td>
+            <td class="font-mono">13153172</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 3, Pos 7</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="1" data-action="identify">
+            <td class="text-center font-bold">#33</td>
+            <td class="font-mono">13153173</td>
+            <td><span class="upc-pill">UPC: </span></td>
+            <td class="font-semibold">Unnamed Product</td>
+            <td class="text-center font-bold">Bay 1</td>
+            <td class="font-mono text-xs">Bay 1, Sh 3, Pos 7</td>
+            <td class="font-mono text-xs">Bay 1, Sh ?, Pos ?</td>
+            <td><span class="badge-neutral font-mono text-xs">identify</span></td>
+            <td><span class="badge badge-orange">IDENTIFY PRODUCT IN BAY 1</span></td>
+            <td class="text-sm font-medium">Left in Cart (Invader / Staged)</td>
+        </tr>
+        
+        <tr data-bay="3" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#34</td>
+            <td class="font-mono">13153264</td>
+            <td><span class="upc-pill">UPC: 84024314070</span></td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS CHICKEN IN GRAVY</td>
+            <td class="text-center font-bold">Bay 3</td>
+            <td class="font-mono text-xs">Bay 1, Sh 6, Pos 1</td>
+            <td class="font-mono text-xs">Bay 3, Sh 6, Pos 11</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 3</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#35</td>
+            <td class="font-mono">13153243</td>
+            <td><span class="upc-pill">UPC: 05000050389</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD SALMON GRILLED</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 1</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 15</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#36</td>
+            <td class="font-mono">13153244</td>
+            <td><span class="upc-pill">UPC: 05000042914</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD BEEF/LIVER</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 2</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 16</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#37</td>
+            <td class="font-mono">13153245</td>
+            <td><span class="upc-pill">UPC: 05000042694</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD CHUNKY CHCKN</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 4</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 19</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#38</td>
+            <td class="font-mono">13153246</td>
+            <td><span class="upc-pill">UPC: 05000004080</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD GRILLED CHICKEN</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 8</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 7</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#39</td>
+            <td class="font-mono">13153247</td>
+            <td><span class="upc-pill">UPC: 05000010084</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD GRLD WHTFISH & TUNA</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 11</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 11</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#40</td>
+            <td class="font-mono">13153248</td>
+            <td><span class="upc-pill">UPC: 05000010206</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 9, Pos 14</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 13</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#41</td>
+            <td class="font-mono">13153249</td>
+            <td><span class="upc-pill">UPC: 05000010206</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD GRLLD SLMN & SHRIMP</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 6</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 13</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#42</td>
+            <td class="font-mono">13153250</td>
+            <td><span class="upc-pill">UPC: 05000042924</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD CHPD GRILL</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 1</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 5</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#43</td>
+            <td class="font-mono">13153251</td>
+            <td><span class="upc-pill">UPC: 05000042994</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD GRMET CHICKEN</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 4</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 7</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#44</td>
+            <td class="font-mono">13153252</td>
+            <td><span class="upc-pill">UPC: 05000042954</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD TENDER BEEF</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 7</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 10</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#45</td>
+            <td class="font-mono">13153253</td>
+            <td><span class="upc-pill">UPC: 05000057216</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FD GRLD SFD FEAST/GRAY</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 13</td>
+            <td class="font-mono text-xs">Bay 4, Sh 9, Pos 17</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#46</td>
+            <td class="font-mono">13153254</td>
+            <td><span class="upc-pill">UPC: 05000042974</span></td>
+            <td class="font-semibold">FANCY FEAST CAT FOOD BEEF & CHICKEN</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 8, Pos 17</td>
+            <td class="font-mono text-xs">Bay 4, Sh 8, Pos 13</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#47</td>
+            <td class="font-mono">13153256</td>
+            <td><span class="upc-pill">UPC: 81833601358</span></td>
+            <td class="font-semibold">XOXOS SALMON & TUNA PATE</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 4</td>
+            <td class="font-mono text-xs">Bay 4, Sh 4, Pos 12</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#48</td>
+            <td class="font-mono">13153257</td>
+            <td><span class="upc-pill">UPC: 81833601357</span></td>
+            <td class="font-semibold">XOXOS WHITEFISH & TUNA PATE</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 6</td>
+            <td class="font-mono text-xs">Bay 4, Sh 4, Pos 9</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#49</td>
+            <td class="font-mono">13153258</td>
+            <td><span class="upc-pill">UPC: 81833601359</span></td>
+            <td class="font-semibold">XOXOS CHICKEN & TUNA PATE</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 7</td>
+            <td class="font-mono text-xs">Bay 4, Sh 4, Pos 15</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#50</td>
+            <td class="font-mono">13153260</td>
+            <td><span class="upc-pill">UPC: 84024314071</span></td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS TUNA ENTREE</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 11</td>
+            <td class="font-mono text-xs">Bay 4, Sh 7, Pos 5</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#51</td>
+            <td class="font-mono">13153261</td>
+            <td><span class="upc-pill">UPC: 84024314055</span></td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS TRKY & CHKN PATE</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 13</td>
+            <td class="font-mono text-xs">Bay 4, Sh 7, Pos 7</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#52</td>
+            <td class="font-mono">13153262</td>
+            <td><span class="upc-pill">UPC: 84024314069</span></td>
+            <td class="font-semibold">BLUE BUFFALO TASTEFULS CHICKEN ENTREE</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 16</td>
+            <td class="font-mono text-xs">Bay 4, Sh 7, Pos 10</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+        <tr data-bay="4" data-action="place_on_shelf_add_to_bay">
+            <td class="text-center font-bold">#53</td>
+            <td class="font-mono">13153263</td>
+            <td><span class="upc-pill">UPC: 85961000620</span></td>
+            <td class="font-semibold">BLUE WILDERNESS KITTEN CHKN WET CAT</td>
+            <td class="text-center font-bold">Bay 4</td>
+            <td class="font-mono text-xs">Bay 1, Sh 7, Pos 17</td>
+            <td class="font-mono text-xs">Bay 4, Sh 7, Pos 11</td>
+            <td><span class="badge-neutral font-mono text-xs">place_on_shelf_add_to_bay</span></td>
+            <td><span class="badge badge-green">ADD TO SHELF BAY 4</span></td>
+            <td class="text-sm font-medium">Put on Shelf</td>
+        </tr>
+        
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Side: Live Mobile Simulator -->
+        <div class="mobile-simulator">
+            <div class="phone-header">
+                <span>📱 Store Intelligence</span>
+                <span style="font-size: 11px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">Headless JVM / Swift</span>
+            </div>
+            
+            <div class="phone-tabs">
+                <button class="phone-tab-btn active" id="btnAndroid" onclick="switchPlatform('android')">🤖 Android (Compose)</button>
+                <button class="phone-tab-btn" id="btnIos" onclick="switchPlatform('ios')">🍎 iOS (SwiftUI)</button>
+            </div>
+
+            <div class="phone-screen" id="phoneScreen">
+                
+                <!-- Live Mobile Card Simulation -->
+                <div class="phone-card">
+                    <div class="phone-banner badge-orange" id="simBanner">SET ASIDE FOR BAY 2</div>
+                    
+                    <div class="flex-between mb-2">
+                        <span class="text-xs font-bold text-gray" id="simBayContext">BAY 1 &bull; STEP #1</span>
+                        <span class="upc-pill" id="simUpc">UPC: 023100110264</span>
+                    </div>
+
+                    <h3 class="text-sm font-bold text-navy" id="simTitle" style="margin-bottom: 8px;">Cesar Canine Cuisine Filet Mignon</h3>
+                    
+                    <div class="phone-movement" id="simMovement">
+                        Bay 1, Sh 5, Pos 1 ➔ Bay 2, Sh 3, Pos 4
+                    </div>
+
+                    <p class="text-xs text-gray" id="simMeaning" style="margin-top: 8px; line-height: 1.4;">
+                        Pick from Bay 1 shelf and stage on cart for Bay 2.
+                    </p>
+
+                    <div style="margin-top: 18px; display: flex; gap: 8px;">
+                        <button style="flex: 1; background: var(--navy-primary); color: #FFF; border: none; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer;">
+                            Mark Completed ✓
+                        </button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px; background: #FFF; border-radius: 12px; padding: 14px; border: 1px solid var(--border-light);">
+                    <div class="text-xs font-bold text-navy mb-1" id="platformTitle">Android Jetpack Compose UI State</div>
+                    <div class="text-xs text-gray" id="platformDetails">
+                        Rendered via <code>ActionListItemUiModel</code> inside <code>SmartphoneCompose.kt</code>.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    function openTab(evt, tabName) {
+        const tabContents = document.getElementsByClassName("tab-content");
+        for (let i = 0; i < tabContents.length; i++) {
+            tabContents[i].classList.remove("active");
+        }
+        const tabBtns = document.getElementsByClassName("tab-btn");
+        for (let i = 0; i < tabBtns.length; i++) {
+            tabBtns[i].classList.remove("active");
+        }
+        document.getElementById(tabName).classList.add("active");
+        if (evt) evt.currentTarget.classList.add("active");
+    }
+
+    function selectActionItem(stepIndex, bannerText, colorTheme, movement, meaning, title, upc, bay, sh, pos) {
+        document.getElementById('simBanner').innerText = bannerText;
+        document.getElementById('simBanner').className = 'phone-banner badge-' + colorTheme;
+        document.getElementById('simBayContext').innerText = 'BAY ' + bay + ' • STEP #' + stepIndex;
+        document.getElementById('simUpc').innerText = 'UPC: ' + upc;
+        document.getElementById('simTitle').innerText = title;
+        document.getElementById('simMovement').innerText = movement;
+        document.getElementById('simMeaning').innerText = meaning;
+    }
+
+    let currentPlatform = 'android';
+    function switchPlatform(platform) {
+        currentPlatform = platform;
+        document.getElementById('btnAndroid').classList.toggle('active', platform === 'android');
+        document.getElementById('btnIos').classList.toggle('active', platform === 'ios');
+        
+        if (platform === 'android') {
+            document.getElementById('platformTitle').innerText = 'Android Jetpack Compose UI State';
+            document.getElementById('platformDetails').innerHTML = 'Rendered via <code>ActionListItemUiModel</code> in <code>SmartphoneCompose.kt</code> / <code>ActionList.kt</code>.';
+        } else {
+            document.getElementById('platformTitle').innerText = 'iOS SwiftUI / Moya Target State';
+            document.getElementById('platformDetails').innerHTML = 'Rendered via <code>ActionListRetailerTarget.swift</code> in <code>ActionListViewController.swift</code>.';
+        }
+    }
+
+    function filterMasterTable() {
+        const input = document.getElementById("masterSearch");
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById("masterTable");
+        const trs = table.getElementsByTagName("tr");
+
+        for (let i = 1; i < trs.length; i++) {
+            const rowText = trs[i].textContent.toLowerCase();
+            trs[i].style.display = rowText.includes(filter) ? "" : "none";
+        }
+    }
+</script>
+
+<script src="../../assets/js/ir-report-export.js"></script>
+</body>
+</html>
