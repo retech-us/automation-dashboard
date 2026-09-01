@@ -112,7 +112,7 @@ python3 regression/cli.py tools call domain_parity --args-json '{"env":"epsilon"
 - [x] PR bot runner `regression/pr_bot.py` (tool pack → JSON report + markdown comment)
 - [x] Narrative is template/control-plane text only — **never overrides** tool verdict
 - [x] CLI `pr-bot run` (`--mode=smoke|impacted|full`, `--comment-out`, `--post-comment`)
-- [x] GitHub Actions `.github/workflows/regression-pr-bot.yml` (unittest + Gate A pack + PR comment)
+- [x] GitHub Actions `.github/workflows/regression-pr-bot.yml` (Gate A: on-demand + cron; not auto on PR)
 - [x] Tests green (Slice 1–7 = **73/73**)
 
 **Verified:**
@@ -139,6 +139,6 @@ See [GATES.md](./GATES.md).
 
 | Gate | Status |
 |------|--------|
-| A (PR bot) | ✅ |
+| A (PR bot) | ✅ on-demand + weekday cron (not on every PR) |
 | B (live nightly) | ✅ `gate-b run` + `.github/workflows/regression-gate-b.yml` |
 | C (release) | ✅ `gate-c run` + `.github/workflows/regression-gate-c.yml` |

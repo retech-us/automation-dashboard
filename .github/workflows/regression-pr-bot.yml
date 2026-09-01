@@ -1,25 +1,30 @@
-name: Regression PR Bot
+name: Regression Gate A (on demand)
 
+# On-demand from Actions UI + scheduled cron. Does NOT run on every PR.
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       mode:
         description: Pack mode (smoke | impacted | full)
         required: false
         default: smoke
+      env:
+        description: Target env slug
+        required: false
+        default: epsilon
+  schedule:
+    # Weekdays 06:00 UTC — adjust as needed
+    - cron: "0 6 * * 1-5"
 
 permissions:
   contents: read
-  pull-requests: write
 
 concurrency:
-  group: regression-pr-bot-${{ github.event.pull_request.number || github.ref }}
+  group: regression-gate-a
   cancel-in-progress: true
 
 jobs:
-  pr-bot:
+  gate-a:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,52 +50,26 @@ jobs:
             regression.tests.test_slice6_tools_api \
             regression.tests.test_slice7_pr_bot -v
 
-      - name: Run PR bot (Gate A offline pack)
+      - name: Run Gate A pack
         id: bot
         env:
           REGRESSION_NARRATIVE_MODE: template
         run: |
           MODE="${{ github.event.inputs.mode || 'smoke' }}"
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-            PR_NUM="${{ github.event.pull_request.number }}"
-            EXTRA=(--mode="$MODE" --git-base="$BASE_SHA" --sha="$HEAD_SHA" --pr="$PR_NUM")
-            if [ "$MODE" = "impacted" ]; then
-              EXTRA=(--mode=impacted --git-base="$BASE_SHA" --sha="$HEAD_SHA" --pr="$PR_NUM")
-            fi
-          else
-            EXTRA=(--mode="$MODE")
-          fi
-          set +e
+          ENV="${{ github.event.inputs.env || 'epsilon' }}"
           python3 regression/cli.py pr-bot run \
-            --env=epsilon \
-            --json-out=regression-pr-bot.json \
-            --comment-out=regression-pr-bot.md \
-            "${EXTRA[@]}"
-          CODE=$?
-          set -e
-          echo "exit_code=$CODE" >> "$GITHUB_OUTPUT"
-          exit $CODE
+            --env="$ENV" \
+            --mode="$MODE" \
+            --sha="${{ github.sha }}" \
+            --json-out=regression-gate-a.json \
+            --comment-out=regression-gate-a.md
 
-      - name: Upload bot artifacts
+      - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: regression-pr-bot
+          name: regression-gate-a
           path: |
-            regression-pr-bot.json
-            regression-pr-bot.md
+            regression-gate-a.json
+            regression-gate-a.md
           if-no-files-found: ignore
-
-      - name: Comment on PR
-        if: always() && github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ -f regression-pr-bot.md ]; then
-            gh pr comment "${{ github.event.pull_request.number }}" \
-              --body-file regression-pr-bot.md
-          else
-            echo "No comment file; skipping"
-          fi
