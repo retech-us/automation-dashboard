@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-01T02:45:50.617217+00:00",
+  "lastUpdated": "2026-09-01T03:06:14.271650+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -8,8 +8,8 @@
     "totalDefects": 1000,
     "openDefects": 223,
     "blockers": 145,
-    "inProgress": 339,
-    "inQa": 131,
+    "inProgress": 341,
+    "inQa": 129,
     "resolvedThisWeek": 40,
     "resolvedTotal": 307
   },
@@ -21,9 +21,9 @@
     "Lowest": 2
   },
   "byComponent": {
+    "General": 196,
     "BE REBM": 167,
     "ANDR": 234,
-    "General": 196,
     "BE CORE": 27,
     "DE": 59,
     "FE Hawkeye": 19,
@@ -40,14 +40,14 @@
     "AI CORE": 1
   },
   "byStatus": {
+    "UAT": 220,
     "Done": 247,
-    "QA": 131,
+    "QA": 129,
     "To  Do": 163,
     "Code Review": 29,
     "Staging": 16,
     "PRODUCTION READY": 39,
     "In Progress": 33,
-    "UAT": 218,
     "Dev Complete": 4,
     "Waiting for clarification": 60,
     "Invalid": 60
@@ -234,6 +234,59 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-20265",
+      "summary": "[BE] Accept Core obstruction-mask data and register feature configuration",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Shruti Adari",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/9f4b7953169a97c4d4cf4a0a111ed1e6?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSA-6.png",
+      "tester": "Raghav Galhotra",
+      "reporter": "Raghav Galhotra",
+      "created": "2026-08-05T10:23:40.638-0700",
+      "updated": "2026-08-31T19:49:45.713-0700",
+      "ageDays": 26,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20265"
+    },
+    {
+      "key": "REB3-20448",
+      "summary": "[BE REBM] AttributeError: 'NoneType' object has no attribute 'display_shelf - related to obstruction'",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "BE REBM",
+      "assignee": "Artem Kanarev",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
+      "tester": "Gautam Chakraborty",
+      "reporter": "Gautam Chakraborty",
+      "created": "2026-08-24T04:49:48.515-0700",
+      "updated": "2026-08-31T19:47:05.523-0700",
+      "ageDays": 7,
+      "staleDays": 0,
+      "labels": [
+        "Backend",
+        "REBM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20448"
+    },
     {
       "key": "REB3-20193",
       "summary": "[RSMN] Add visibility setting for suppressed invader, wandering, and extra facing tasks on shelf edge",
@@ -1602,34 +1655,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20264"
-    },
-    {
-      "key": "REB3-20448",
-      "summary": "[BE REBM] AttributeError: 'NoneType' object has no attribute 'display_shelf - related to obstruction'",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "BE REBM",
-      "assignee": "Artem Kanarev",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
-      "tester": "Gautam Chakraborty",
-      "reporter": "Gautam Chakraborty",
-      "created": "2026-08-24T04:49:48.515-0700",
-      "updated": "2026-08-30T23:49:43.172-0700",
-      "ageDays": 7,
-      "staleDays": 0,
-      "labels": [
-        "Backend",
-        "REBM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20448"
     },
     {
       "key": "REB3-20346",
@@ -6976,31 +7001,6 @@
       "staleDays": 10,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19659"
-    },
-    {
-      "key": "REB3-20265",
-      "summary": "[BE] Accept Core obstruction-mask data and register feature configuration",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Shruti Adari",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/9f4b7953169a97c4d4cf4a0a111ed1e6?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSA-6.png",
-      "tester": "Raghav Galhotra",
-      "reporter": "Raghav Galhotra",
-      "created": "2026-08-05T10:23:40.638-0700",
-      "updated": "2026-08-21T05:42:51.227-0700",
-      "ageDays": 26,
-      "staleDays": 10,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20265"
     },
     {
       "key": "REB3-20344",
@@ -14955,7 +14955,7 @@
       "reporter": "Josh Riley",
       "created": "2026-04-29T20:01:33.444-0700",
       "updated": "2026-08-21T04:28:50.759-0700",
-      "ageDays": 123,
+      "ageDays": 124,
       "staleDays": 10,
       "labels": [
         "AD-HOC",
@@ -23549,7 +23549,7 @@
       "reporter": "Juan Li",
       "created": "2026-06-17T19:52:14.575-0700",
       "updated": "2026-07-27T07:11:07.713-0700",
-      "ageDays": 74,
+      "ageDays": 75,
       "staleDays": 35,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19863"
@@ -26142,7 +26142,7 @@
       "reporter": "Ruslan Zhulduzbayev",
       "created": "2024-04-19T19:45:54.214-0700",
       "updated": "2026-07-21T03:05:30.252-0700",
-      "ageDays": 863,
+      "ageDays": 864,
       "staleDays": 41,
       "labels": [
         "Android"
