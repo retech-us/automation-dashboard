@@ -1,34 +1,34 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-02T04:05:52.211439+00:00",
+  "lastUpdated": "2026-09-02T04:30:35.959698+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 232,
+    "openDefects": 233,
     "blockers": 145,
-    "inProgress": 357,
+    "inProgress": 356,
     "inQa": 97,
     "resolvedThisWeek": 56,
     "resolvedTotal": 314
   },
   "byPriority": {
     "Highest": 145,
-    "High": 263,
-    "Medium": 535,
+    "High": 262,
+    "Medium": 536,
     "Low": 55,
     "Lowest": 2
   },
   "byComponent": {
-    "BE REBM": 168,
     "General": 193,
-    "DE": 58,
     "IOS": 219,
+    "HAWKEYE": 18,
+    "BE REBM": 167,
+    "DE": 58,
     "ANDR": 239,
     "PARENT-WORK-ITEM": 29,
     "QA": 5,
-    "HAWKEYE": 17,
     "BE CORE": 27,
     "BE ADMIN": 2,
     "FE Hawkeye": 18,
@@ -40,14 +40,14 @@
     "AI CORE": 1
   },
   "byStatus": {
+    "To  Do": 156,
+    "Code Review": 31,
     "Waiting for clarification": 77,
-    "To  Do": 155,
     "Invalid": 62,
-    "Code Review": 30,
     "UAT": 233,
     "Done": 252,
     "QA": 97,
-    "In Progress": 32,
+    "In Progress": 30,
     "Dev Complete": 7,
     "Staging": 16,
     "PRODUCTION READY": 39
@@ -233,6 +233,87 @@
   },
   "issues": [
     {
+      "key": "REB3-20476",
+      "summary": "[iOS] \"Go to Actions\" button displayed when no actions remain, causing navigation loop",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Nitish Kumar",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-08-26T01:14:19.558-0700",
+      "updated": "2026-09-01T21:29:35.863-0700",
+      "ageDays": 6,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20476"
+    },
+    {
+      "key": "REB3-20420",
+      "summary": "[iOS] Raw Backend Error Displayed When Completing Reset With Missing Post Photos",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Nitish Kumar",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-08-18T05:11:18.347-0700",
+      "updated": "2026-09-01T21:24:58.024-0700",
+      "ageDays": 14,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20420"
+    },
+    {
+      "key": "REB3-20524",
+      "summary": "[HAWKEYE] [SONA] Capture details are not showing for a camera ",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "HAWKEYE",
+      "assignee": "Irbaz Khan",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/9cfe0d88f797bd6a53e8076a137dc8e8?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FIK-6.png",
+      "tester": "Gautam Chakraborty",
+      "reporter": "Gautam Chakraborty",
+      "created": "2026-09-01T21:06:49.817-0700",
+      "updated": "2026-09-01T21:21:18.534-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PILOT",
+        "SONA"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20524"
+    },
+    {
       "key": "REB3-19827",
       "summary": "[SONA] OOS showing items that are recognized on realogram",
       "project": "Rebotics 3",
@@ -251,7 +332,7 @@
       "tester": "Vishal Kohli",
       "reporter": "Vishal Kohli",
       "created": "2026-06-12T05:08:47.539-0700",
-      "updated": "2026-09-01T20:52:52.569-0700",
+      "updated": "2026-09-01T21:07:39.654-0700",
       "ageDays": 81,
       "staleDays": 0,
       "labels": [
@@ -570,7 +651,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-08-27T21:13:43.225-0700",
       "updated": "2026-09-01T09:10:53.900-0700",
-      "ageDays": 4,
+      "ageDays": 5,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20501"
@@ -2456,7 +2537,7 @@
       "reporter": "Akanksha Jangir",
       "created": "2026-08-27T21:17:39.895-0700",
       "updated": "2026-09-01T04:46:35.898-0700",
-      "ageDays": 4,
+      "ageDays": 5,
       "staleDays": 0,
       "labels": [
         "AD-HOC",
@@ -2854,7 +2935,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-08-13T21:10:07.551-0700",
       "updated": "2026-09-01T00:38:41.359-0700",
-      "ageDays": 18,
+      "ageDays": 19,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20390"
@@ -3034,7 +3115,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-08-13T21:08:06.545-0700",
       "updated": "2026-09-01T00:15:32.381-0700",
-      "ageDays": 18,
+      "ageDays": 19,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20389"
@@ -3059,7 +3140,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-08-18T21:23:31.336-0700",
       "updated": "2026-09-01T00:14:36.184-0700",
-      "ageDays": 13,
+      "ageDays": 14,
       "staleDays": 0,
       "labels": [
         "ALBT",
@@ -3860,31 +3941,6 @@
         "SHIELD"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20065"
-    },
-    {
-      "key": "REB3-20420",
-      "summary": "[iOS] Raw Backend Error Displayed When Completing Reset With Missing Post Photos",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Nitish Kumar",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-08-18T05:11:18.347-0700",
-      "updated": "2026-08-31T04:34:50.643-0700",
-      "ageDays": 14,
-      "staleDays": 1,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20420"
     },
     {
       "key": "REB3-20510",
@@ -5976,33 +6032,6 @@
         "SHIELD"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-19870"
-    },
-    {
-      "key": "REB3-20476",
-      "summary": "[iOS] \"Go to Actions\" button displayed when no actions remain, causing navigation loop",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR BETA ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Nitish Kumar",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-08-26T01:14:19.558-0700",
-      "updated": "2026-08-26T02:30:47.546-0700",
-      "ageDays": 6,
-      "staleDays": 6,
-      "labels": [
-        "IOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20476"
     },
     {
       "key": "REB3-20456",
@@ -14507,7 +14536,7 @@
       "reporter": "Zhuogang Peng",
       "created": "2026-06-23T21:08:47.635-0700",
       "updated": "2026-08-21T04:29:07.690-0700",
-      "ageDays": 69,
+      "ageDays": 70,
       "staleDays": 11,
       "labels": [
         "AD-HOC",
@@ -18696,7 +18725,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-06-09T21:22:09.876-0700",
       "updated": "2026-08-18T01:23:58.085-0700",
-      "ageDays": 83,
+      "ageDays": 84,
       "staleDays": 14,
       "labels": [
         "AD-HOC",
@@ -23934,7 +23963,7 @@
       "created": "2026-06-16T04:54:24.927-0700",
       "updated": "2026-07-27T21:20:37.540-0700",
       "ageDays": 77,
-      "staleDays": 35,
+      "staleDays": 36,
       "labels": [
         "Backend",
         "Customer",
@@ -23963,7 +23992,7 @@
       "created": "2026-06-15T05:58:28.750-0700",
       "updated": "2026-07-27T21:20:30.694-0700",
       "ageDays": 78,
-      "staleDays": 35,
+      "staleDays": 36,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -23992,7 +24021,7 @@
       "created": "2026-06-11T13:00:56.430-0700",
       "updated": "2026-07-27T21:20:17.145-0700",
       "ageDays": 82,
-      "staleDays": 35,
+      "staleDays": 36,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -24021,7 +24050,7 @@
       "created": "2026-03-24T05:59:55.903-0700",
       "updated": "2026-07-27T21:20:02.973-0700",
       "ageDays": 161,
-      "staleDays": 35,
+      "staleDays": 36,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -24572,7 +24601,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-07-16T21:26:27.337-0700",
       "updated": "2026-07-26T21:52:21.163-0700",
-      "ageDays": 46,
+      "ageDays": 47,
       "staleDays": 36,
       "labels": [
         "Backend",
@@ -25613,7 +25642,7 @@
       "reporter": "Former user",
       "created": "2024-07-21T21:29:14.758-0700",
       "updated": "2026-07-22T18:36:53.249-0700",
-      "ageDays": 771,
+      "ageDays": 772,
       "staleDays": 41,
       "labels": [
         "ALBT"
@@ -27570,35 +27599,6 @@
         "Unplanned"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-17528"
-    },
-    {
-      "key": "REB3-19440",
-      "summary": "[ALBT][BE REBM] PT mapping not working with CROSS SECTION WANDERING ON",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.5",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "High",
-      "component": "BE REBM",
-      "assignee": "Artem Kanarev",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
-      "tester": "Gautam Chakraborty",
-      "reporter": "Gautam Chakraborty",
-      "created": "2026-04-13T00:33:59.354-0700",
-      "updated": "2026-07-16T02:56:08.563-0700",
-      "ageDays": 141,
-      "staleDays": 47,
-      "labels": [
-        "AD-HOC",
-        "ALBT",
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19440"
     }
   ]
 }
