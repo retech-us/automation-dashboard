@@ -1,15 +1,15 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-03T10:05:17.353067+00:00",
+  "lastUpdated": "2026-09-03T10:25:38.120907+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 241,
+    "openDefects": 240,
     "blockers": 150,
-    "inProgress": 380,
-    "inQa": 74,
+    "inProgress": 376,
+    "inQa": 79,
     "resolvedThisWeek": 54,
     "resolvedTotal": 305
   },
@@ -21,12 +21,12 @@
     "Lowest": 2
   },
   "byComponent": {
-    "General": 206,
+    "BE REBM": 164,
     "IOS": 221,
+    "General": 205,
     "DE": 56,
     "ANDR": 233,
     "QA": 5,
-    "BE REBM": 163,
     "BE CORE": 25,
     "BE ADMIN": 2,
     "HAWKEYE": 17,
@@ -40,16 +40,16 @@
     "AI CORE": 1
   },
   "byStatus": {
+    "QA": 79,
+    "Code Review": 25,
+    "Waiting for clarification": 77,
+    "Dev Complete": 6,
     "Staging": 19,
     "UAT": 253,
-    "In Progress": 39,
-    "To  Do": 165,
-    "Dev Complete": 6,
-    "Code Review": 24,
+    "In Progress": 34,
+    "To  Do": 163,
     "Invalid": 57,
-    "QA": 74,
     "Done": 248,
-    "Waiting for clarification": 76,
     "PRODUCTION READY": 39
   },
   "filterOptions": {
@@ -233,6 +233,248 @@
   },
   "issues": [
     {
+      "key": "REB3-20513",
+      "summary": "[BE REBM] The OOS/DVOID item with obstructed Reason is not working as expected",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.28 HF ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "BE REBM",
+      "assignee": "Raghav Galhotra",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/3d9d38d1b14302157c3417a9bbf53cf6?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FRG-4.png",
+      "tester": "Gautam Chakraborty",
+      "reporter": "Gautam Chakraborty",
+      "created": "2026-08-31T20:35:24.484-0700",
+      "updated": "2026-09-03T03:25:05.092-0700",
+      "ageDays": 2,
+      "staleDays": 0,
+      "labels": [
+        "ALBT",
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20513"
+    },
+    {
+      "key": "REB3-20563",
+      "summary": "[BE REBM] Scan create fails with TypeError: pre_update_scan_receiver missing 'created'",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.5",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Saharsh Solanki",
+      "reporter": "Saharsh Solanki",
+      "created": "2026-09-03T02:44:10.862-0700",
+      "updated": "2026-09-03T03:24:54.095-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20563"
+    },
+    {
+      "key": "REB3-20551",
+      "summary": "[iOS] Offline Completed Task Not Syncing When Device Comes Online",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.13 PRGM HF",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "REB3-18752 - [PRGM] Offline-First Survey Execution (Store-Scoped, Parallel, Offline-Eligible)",
+      "status": "Waiting for clarification",
+      "statusCategory": "new",
+      "priority": "Highest",
+      "component": "IOS",
+      "assignee": "anton.mitrofanov",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-09-03T01:06:51.670-0700",
+      "updated": "2026-09-03T03:21:33.091-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20551"
+    },
+    {
+      "key": "REB3-20562",
+      "summary": "Android: Incorrect Planogram Position Highlighted in Product Search Results",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Alexander Ryabchikov",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-09-03T02:40:58.153-0700",
+      "updated": "2026-09-03T03:20:41.562-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20562"
+    },
+    {
+      "key": "REB3-20560",
+      "summary": "Android | Recent Search Screen Displays Empty \"Today's Recent Searches\" Header When No Recent Searches Exist",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Alexander Ryabchikov",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-09-03T02:03:24.570-0700",
+      "updated": "2026-09-03T03:20:30.809-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20560"
+    },
+    {
+      "key": "REB3-20548",
+      "summary": "[iOS] Incorrect Error Message When Starting Task in Another Store with Existing In-Progress Task",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.13 PRGM HF",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "REB3-18752 - [PRGM] Offline-First Survey Execution (Store-Scoped, Parallel, Offline-Eligible)",
+      "status": "Dev Complete",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "IOS",
+      "assignee": "anton.mitrofanov",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-09-02T23:22:30.725-0700",
+      "updated": "2026-09-03T03:20:20.561-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20548"
+    },
+    {
+      "key": "REB3-20539",
+      "summary": "ANDR: Android: Multiple Facings of Same UPC Should Be Displayed as Separate Cards",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "General",
+      "assignee": "Alexander Ryabchikov",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-09-02T05:10:18.233-0700",
+      "updated": "2026-09-03T03:20:19.645-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20539"
+    },
+    {
+      "key": "REB3-20561",
+      "summary": "iOS: Recent Searches Header Uses Incorrect Text Capitalization Compared to Design",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-09-03T02:30:44.359-0700",
+      "updated": "2026-09-03T03:14:36.040-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20561"
+    },
+    {
+      "key": "REB3-20450",
+      "summary": "[ALBT][KRCS][HARR] IR Scanner \u2014 Locate Products in Current Planogram",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Story",
+      "epic": "REB3-16678 - MOBILE - POG Reset Labor Cost Reduction - Task Actions Redesign",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Vishal Kohli",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/9a9700fc7ae838f189eadfa192f2a8cb?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVK-6.png",
+      "tester": "Gaurav Jain",
+      "reporter": "Gaurav Jain",
+      "created": "2026-08-24T14:05:19.895-0700",
+      "updated": "2026-09-03T03:11:54.942-0700",
+      "ageDays": 9,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20450"
+    },
+    {
       "key": "REB3-20526",
       "summary": "[Frontend] [PRGE] Pre Photo and Offline Survey getting Enabled Together",
       "project": "Rebotics 3",
@@ -368,33 +610,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20466"
     },
     {
-      "key": "REB3-20562",
-      "summary": "Android: Incorrect Planogram Position Highlighted in Product Search Results",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Alexander Ryabchikov",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-09-03T02:40:58.153-0700",
-      "updated": "2026-09-03T02:48:21.128-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "IOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20562"
-    },
-    {
       "key": "REB3-19899",
       "summary": "[MJHD] Configurable Store Visit Images and Summary reports",
       "project": "Rebotics 3",
@@ -421,110 +636,6 @@
         "MJHD"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-19899"
-    },
-    {
-      "key": "REB3-20563",
-      "summary": "[BE REBM] Scan create fails with TypeError: pre_update_scan_receiver missing 'created'",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "Unversioned",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Saharsh Solanki",
-      "reporter": "Saharsh Solanki",
-      "created": "2026-09-03T02:44:10.862-0700",
-      "updated": "2026-09-03T02:44:46.774-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20563"
-    },
-    {
-      "key": "REB3-20561",
-      "summary": "iOS: Recent Searches Header Uses Incorrect Text Capitalization Compared to Design",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-09-03T02:30:44.359-0700",
-      "updated": "2026-09-03T02:42:58.485-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "IOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20561"
-    },
-    {
-      "key": "REB3-20450",
-      "summary": "[ALBT][KRCS][HARR] IR Scanner \u2014 Locate Products in Current Planogram",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Story",
-      "epic": "REB3-16678 - MOBILE - POG Reset Labor Cost Reduction - Task Actions Redesign",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Vishal Kohli",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/9a9700fc7ae838f189eadfa192f2a8cb?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVK-6.png",
-      "tester": "Gaurav Jain",
-      "reporter": "Gaurav Jain",
-      "created": "2026-08-24T14:05:19.895-0700",
-      "updated": "2026-09-03T02:42:40.959-0700",
-      "ageDays": 9,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20450"
-    },
-    {
-      "key": "REB3-20539",
-      "summary": "ANDR: Android: Multiple Facings of Same UPC Should Be Displayed as Separate Cards",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "General",
-      "assignee": "Alexander Ryabchikov",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-09-02T05:10:18.233-0700",
-      "updated": "2026-09-03T02:24:03.414-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "IOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20539"
     },
     {
       "key": "REB3-20540",
@@ -604,33 +715,6 @@
         "IOS"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20541"
-    },
-    {
-      "key": "REB3-20560",
-      "summary": "Android | Recent Search Screen Displays Empty \"Today's Recent Searches\" Header When No Recent Searches Exist",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Alexander Ryabchikov",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-09-03T02:03:24.570-0700",
-      "updated": "2026-09-03T02:08:20.876-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20560"
     },
     {
       "key": "REB3-20559",
@@ -799,62 +883,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20556"
     },
     {
-      "key": "REB3-20551",
-      "summary": "[iOS] Offline Completed Task Not Syncing When Device Comes Online",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.13 PRGM HF",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "REB3-18752 - [PRGM] Offline-First Survey Execution (Store-Scoped, Parallel, Offline-Eligible)",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "IOS",
-      "assignee": "anton.mitrofanov",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-09-03T01:06:51.670-0700",
-      "updated": "2026-09-03T01:50:38.158-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "IOS",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20551"
-    },
-    {
-      "key": "REB3-20548",
-      "summary": "[iOS] Incorrect Error Message When Starting Task in Another Store with Existing In-Progress Task",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.13 PRGM HF",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "REB3-18752 - [PRGM] Offline-First Survey Execution (Store-Scoped, Parallel, Offline-Eligible)",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "IOS",
-      "assignee": "anton.mitrofanov",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-09-02T23:22:30.725-0700",
-      "updated": "2026-09-03T01:50:07.216-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "IOS",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20548"
-    },
-    {
       "key": "REB3-20542",
       "summary": "[iOS] [IR] MultiUser- Enable Bay Assignment After Identify",
       "project": "Rebotics 3",
@@ -928,7 +956,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-01T03:20:24.307-0700",
       "updated": "2026-09-03T01:46:31.702-0700",
-      "ageDays": 1,
+      "ageDays": 2,
       "staleDays": 0,
       "labels": [
         "ANDR",
@@ -1247,34 +1275,6 @@
         "REBM"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20448"
-    },
-    {
-      "key": "REB3-20513",
-      "summary": "[BE REBM] The OOS/DVOID item with obstructed Reason is not working as expected",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.28 HF ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Code Review",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "BE REBM",
-      "assignee": "Raghav Galhotra",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/3d9d38d1b14302157c3417a9bbf53cf6?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FRG-4.png",
-      "tester": "Gautam Chakraborty",
-      "reporter": "Gautam Chakraborty",
-      "created": "2026-08-31T20:35:24.484-0700",
-      "updated": "2026-09-03T00:31:13.546-0700",
-      "ageDays": 2,
-      "staleDays": 0,
-      "labels": [
-        "ALBT",
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20513"
     },
     {
       "key": "REB3-20380",
@@ -2437,7 +2437,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-09-02T03:23:37.083-0700",
       "updated": "2026-09-02T07:07:23.355-0700",
-      "ageDays": 0,
+      "ageDays": 1,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20531"
@@ -2723,7 +2723,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-07-22T03:19:38.435-0700",
       "updated": "2026-09-02T05:07:38.574-0700",
-      "ageDays": 42,
+      "ageDays": 43,
       "staleDays": 0,
       "labels": [
         "IOS",
@@ -4152,7 +4152,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-08-31T03:07:17.239-0700",
       "updated": "2026-09-01T06:22:14.404-0700",
-      "ageDays": 2,
+      "ageDays": 3,
       "staleDays": 1,
       "labels": [
         "Android",
@@ -6250,7 +6250,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-11T03:23:49.885-0700",
       "updated": "2026-08-30T22:27:49.505-0700",
-      "ageDays": 22,
+      "ageDays": 23,
       "staleDays": 3,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20341"
@@ -6275,7 +6275,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-11T03:22:53.507-0700",
       "updated": "2026-08-30T22:27:48.993-0700",
-      "ageDays": 22,
+      "ageDays": 23,
       "staleDays": 3,
       "labels": [
         "AD-HOC",
@@ -7246,7 +7246,7 @@
       "created": "2026-08-13T03:43:23.856-0700",
       "updated": "2026-08-27T03:25:35.749-0700",
       "ageDays": 20,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [
         "ANDR"
       ],
@@ -7273,7 +7273,7 @@
       "created": "2026-08-13T05:20:35.331-0700",
       "updated": "2026-08-27T03:25:32.655-0700",
       "ageDays": 20,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [
         "ANDR"
       ],
@@ -7300,7 +7300,7 @@
       "created": "2026-08-17T02:47:44.532-0700",
       "updated": "2026-08-27T03:25:28.965-0700",
       "ageDays": 17,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [
         "ANDR"
       ],
@@ -7676,7 +7676,7 @@
       "reporter": "Artem Kanarev",
       "created": "2026-08-19T03:17:46.909-0700",
       "updated": "2026-08-26T00:04:06.727-0700",
-      "ageDays": 14,
+      "ageDays": 15,
       "staleDays": 8,
       "labels": [
         "AD-HOC",
@@ -7790,7 +7790,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-02-06T02:05:52.667-0800",
       "updated": "2026-08-25T04:34:51.008-0700",
-      "ageDays": 208,
+      "ageDays": 209,
       "staleDays": 8,
       "labels": [
         "Customer",
@@ -7848,7 +7848,7 @@
       "created": "2026-08-20T04:32:20.324-0700",
       "updated": "2026-08-25T03:15:25.005-0700",
       "ageDays": 13,
-      "staleDays": 8,
+      "staleDays": 9,
       "labels": [
         "ANDR"
       ],
@@ -8013,7 +8013,7 @@
       "created": "2026-05-07T05:53:33.068-0700",
       "updated": "2026-08-24T03:23:56.443-0700",
       "ageDays": 118,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "AD-HOC",
         "PRGM"
@@ -8041,7 +8041,7 @@
       "created": "2026-02-12T09:22:48.548-0800",
       "updated": "2026-08-24T03:16:19.771-0700",
       "ageDays": 202,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "Customer",
         "MJHD",
@@ -8072,7 +8072,7 @@
       "created": "2026-07-07T05:37:59.694-0700",
       "updated": "2026-08-24T03:15:22.115-0700",
       "ageDays": 57,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -8100,7 +8100,7 @@
       "created": "2026-07-07T05:37:45.581-0700",
       "updated": "2026-08-24T03:14:41.001-0700",
       "ageDays": 57,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -8128,7 +8128,7 @@
       "created": "2026-07-07T03:49:47.927-0700",
       "updated": "2026-08-24T03:13:54.864-0700",
       "ageDays": 57,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -8156,7 +8156,7 @@
       "created": "2026-07-14T01:00:22.188-0700",
       "updated": "2026-08-24T03:13:18.367-0700",
       "ageDays": 51,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "Customer",
         "iOS"
@@ -8184,7 +8184,7 @@
       "created": "2026-07-14T00:52:38.746-0700",
       "updated": "2026-08-24T03:12:53.180-0700",
       "ageDays": 51,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "Customer",
         "iOS"
@@ -8212,7 +8212,7 @@
       "created": "2026-07-13T07:00:35.248-0700",
       "updated": "2026-08-24T03:12:17.527-0700",
       "ageDays": 51,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -8241,7 +8241,7 @@
       "created": "2026-07-13T03:44:26.636-0700",
       "updated": "2026-08-24T03:11:33.403-0700",
       "ageDays": 51,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -8269,7 +8269,7 @@
       "created": "2026-07-10T01:35:34.660-0700",
       "updated": "2026-08-24T03:11:09.109-0700",
       "ageDays": 55,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -8298,7 +8298,7 @@
       "created": "2026-08-20T08:30:52.506-0700",
       "updated": "2026-08-24T03:09:19.722-0700",
       "ageDays": 13,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "ALBT",
         "ANDR"
@@ -8326,7 +8326,7 @@
       "created": "2026-08-19T06:07:17.512-0700",
       "updated": "2026-08-24T03:08:50.258-0700",
       "ageDays": 14,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "ALBT",
         "ANDR"
@@ -8354,7 +8354,7 @@
       "created": "2026-08-17T22:43:52.868-0700",
       "updated": "2026-08-24T03:08:17.777-0700",
       "ageDays": 16,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "Android"
       ],
@@ -8381,7 +8381,7 @@
       "created": "2026-08-17T22:42:29.421-0700",
       "updated": "2026-08-24T03:07:43.555-0700",
       "ageDays": 16,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "iOS"
       ],
@@ -8408,7 +8408,7 @@
       "created": "2026-08-17T01:22:09.723-0700",
       "updated": "2026-08-24T03:07:12.148-0700",
       "ageDays": 17,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20407"
     },
@@ -8433,7 +8433,7 @@
       "created": "2026-08-14T05:27:07.803-0700",
       "updated": "2026-08-24T03:06:52.433-0700",
       "ageDays": 19,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20397"
     },
@@ -8458,7 +8458,7 @@
       "created": "2026-08-14T05:25:13.376-0700",
       "updated": "2026-08-24T03:06:24.286-0700",
       "ageDays": 19,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20396"
     },
@@ -8483,7 +8483,7 @@
       "created": "2026-08-10T23:27:29.116-0700",
       "updated": "2026-08-24T03:05:55.792-0700",
       "ageDays": 23,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -8858,7 +8858,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-04T03:10:18.587-0700",
       "updated": "2026-08-24T02:56:41.832-0700",
-      "ageDays": 90,
+      "ageDays": 91,
       "staleDays": 10,
       "labels": [
         "Customer",
@@ -9692,7 +9692,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-11T03:14:14.923-0700",
       "updated": "2026-08-21T04:42:26.682-0700",
-      "ageDays": 22,
+      "ageDays": 23,
       "staleDays": 12,
       "labels": [
         "IOS",
@@ -10781,7 +10781,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-10T03:17:43.236-0700",
       "updated": "2026-08-21T04:42:17.752-0700",
-      "ageDays": 23,
+      "ageDays": 24,
       "staleDays": 12,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20298"
@@ -12001,7 +12001,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-07-31T03:16:20.481-0700",
       "updated": "2026-08-21T04:42:12.898-0700",
-      "ageDays": 33,
+      "ageDays": 34,
       "staleDays": 12,
       "labels": [
         "IOS",
@@ -12863,7 +12863,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-03-29T03:10:36.427-0700",
       "updated": "2026-08-21T04:42:06.981-0700",
-      "ageDays": 157,
+      "ageDays": 158,
       "staleDays": 12,
       "labels": [
         "AD-HOC",
@@ -14683,7 +14683,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-07-22T03:24:17.656-0700",
       "updated": "2026-08-21T04:29:16.175-0700",
-      "ageDays": 42,
+      "ageDays": 43,
       "staleDays": 12,
       "labels": [
         "AD-HOC",
@@ -15019,7 +15019,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-07-21T03:17:18.340-0700",
       "updated": "2026-08-21T04:29:13.556-0700",
-      "ageDays": 43,
+      "ageDays": 44,
       "staleDays": 12,
       "labels": [
         "Customer"
@@ -15073,7 +15073,7 @@
       "reporter": "Vikas thakur",
       "created": "2026-07-03T03:08:52.910-0700",
       "updated": "2026-08-21T04:29:13.453-0700",
-      "ageDays": 61,
+      "ageDays": 62,
       "staleDays": 12,
       "labels": [
         "Customer",
@@ -15652,7 +15652,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-06-17T03:09:31.322-0700",
       "updated": "2026-08-21T04:29:07.690-0700",
-      "ageDays": 77,
+      "ageDays": 78,
       "staleDays": 12,
       "labels": [
         "Customer",
@@ -18290,7 +18290,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-06-12T03:23:54.012-0700",
       "updated": "2026-08-21T04:23:34.334-0700",
-      "ageDays": 82,
+      "ageDays": 83,
       "staleDays": 12,
       "labels": [
         "ALBT",
@@ -19934,7 +19934,7 @@
       "created": "2026-08-11T09:23:04.690-0700",
       "updated": "2026-08-17T03:08:28.131-0700",
       "ageDays": 22,
-      "staleDays": 16,
+      "staleDays": 17,
       "labels": [
         "ad-hoc",
         "pilot",
@@ -20362,7 +20362,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-02-06T02:06:18.331-0800",
       "updated": "2026-08-13T02:16:01.885-0700",
-      "ageDays": 208,
+      "ageDays": 209,
       "staleDays": 21,
       "labels": [
         "IOS",
@@ -20390,7 +20390,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-02-06T02:06:16.197-0800",
       "updated": "2026-08-13T02:15:39.415-0700",
-      "ageDays": 208,
+      "ageDays": 209,
       "staleDays": 21,
       "labels": [
         "IOS",
@@ -20418,7 +20418,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-02-06T02:06:13.957-0800",
       "updated": "2026-08-13T02:15:20.156-0700",
-      "ageDays": 208,
+      "ageDays": 209,
       "staleDays": 21,
       "labels": [
         "IOS",
@@ -20446,7 +20446,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-02-06T02:06:04.844-0800",
       "updated": "2026-08-13T02:14:57.428-0700",
-      "ageDays": 208,
+      "ageDays": 209,
       "staleDays": 21,
       "labels": [
         "IOS",
@@ -20474,7 +20474,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-02-06T02:06:02.533-0800",
       "updated": "2026-08-13T02:14:38.786-0700",
-      "ageDays": 208,
+      "ageDays": 209,
       "staleDays": 21,
       "labels": [
         "IOS",
@@ -20502,7 +20502,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-02-06T02:06:00.366-0800",
       "updated": "2026-08-13T02:14:26.056-0700",
-      "ageDays": 208,
+      "ageDays": 209,
       "staleDays": 21,
       "labels": [
         "IOS",
@@ -21217,7 +21217,7 @@
       "created": "2026-07-13T00:19:51.847-0700",
       "updated": "2026-08-10T03:21:19.407-0700",
       "ageDays": 52,
-      "staleDays": 23,
+      "staleDays": 24,
       "labels": [
         "SHIELD"
       ],
@@ -21461,7 +21461,7 @@
       "created": "2025-07-01T11:20:42.329-0700",
       "updated": "2026-08-07T03:25:00.631-0700",
       "ageDays": 428,
-      "staleDays": 26,
+      "staleDays": 27,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-17349"
     },
@@ -21486,7 +21486,7 @@
       "created": "2025-12-17T04:12:50.046-0800",
       "updated": "2026-08-07T03:23:36.843-0700",
       "ageDays": 259,
-      "staleDays": 26,
+      "staleDays": 27,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18632"
     },
@@ -21560,7 +21560,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-06T03:10:04.926-0700",
       "updated": "2026-08-06T04:38:58.246-0700",
-      "ageDays": 27,
+      "ageDays": 28,
       "staleDays": 27,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20275"
@@ -22603,7 +22603,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-06-30T03:08:50.446-0700",
       "updated": "2026-08-05T05:40:42.791-0700",
-      "ageDays": 64,
+      "ageDays": 65,
       "staleDays": 28,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19948"
@@ -23372,7 +23372,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-02-06T02:05:57.924-0800",
       "updated": "2026-08-04T02:15:49.657-0700",
-      "ageDays": 208,
+      "ageDays": 209,
       "staleDays": 30,
       "labels": [
         "IOS",
@@ -23642,7 +23642,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-02-06T02:05:55.488-0800",
       "updated": "2026-08-03T04:33:40.924-0700",
-      "ageDays": 208,
+      "ageDays": 209,
       "staleDays": 30,
       "labels": [
         "IOS",
@@ -25326,7 +25326,7 @@
       "reporter": "Anil Melinmani",
       "created": "2026-07-17T03:15:32.475-0700",
       "updated": "2026-07-27T05:46:03.973-0700",
-      "ageDays": 47,
+      "ageDays": 48,
       "staleDays": 37,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20074"
@@ -25351,7 +25351,7 @@
       "reporter": "Anil Melinmani",
       "created": "2026-07-17T03:13:25.508-0700",
       "updated": "2026-07-27T05:45:55.452-0700",
-      "ageDays": 47,
+      "ageDays": 48,
       "staleDays": 37,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20073"
@@ -25433,7 +25433,7 @@
       "created": "2025-11-13T07:41:13.101-0800",
       "updated": "2026-07-27T03:25:24.622-0700",
       "ageDays": 293,
-      "staleDays": 37,
+      "staleDays": 38,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18374"
     },
@@ -26088,7 +26088,7 @@
       "created": "2026-07-20T22:11:15.647-0700",
       "updated": "2026-07-23T03:15:02.115-0700",
       "ageDays": 44,
-      "staleDays": 41,
+      "staleDays": 42,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20089"
     },
@@ -27213,7 +27213,7 @@
       "reporter": "Sarthak Jagdaley",
       "created": "2025-08-07T03:13:03.292-0700",
       "updated": "2026-07-22T17:22:47.434-0700",
-      "ageDays": 391,
+      "ageDays": 392,
       "staleDays": 42,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-17630"
@@ -27379,7 +27379,7 @@
       "reporter": "Former user",
       "created": "2023-07-21T03:10:01.481-0700",
       "updated": "2026-07-22T17:11:19.083-0700",
-      "ageDays": 1139,
+      "ageDays": 1140,
       "staleDays": 42,
       "labels": [
         "DataIngestion"
