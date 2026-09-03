@@ -1,14 +1,14 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-03T18:29:55.545266+00:00",
+  "lastUpdated": "2026-09-03T18:45:21.367243+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 239,
+    "openDefects": 238,
     "blockers": 150,
-    "inProgress": 383,
+    "inProgress": 384,
     "inQa": 70,
     "resolvedThisWeek": 49,
     "resolvedTotal": 308
@@ -21,12 +21,12 @@
     "Lowest": 2
   },
   "byComponent": {
+    "BE REBM": 160,
     "QA": 5,
     "IOS": 222,
     "BE CORE": 26,
     "General": 205,
     "ANDR": 232,
-    "BE REBM": 160,
     "MOBILE": 5,
     "DE": 56,
     "HAWKEYE": 17,
@@ -40,7 +40,8 @@
     "AI CORE": 1
   },
   "byStatus": {
-    "To  Do": 163,
+    "Code Review": 23,
+    "To  Do": 162,
     "UAT": 263,
     "QA": 70,
     "PRODUCTION READY": 40,
@@ -49,7 +50,6 @@
     "Invalid": 58,
     "In Progress": 32,
     "Waiting for clarification": 76,
-    "Code Review": 22,
     "Dev Complete": 5
   },
   "filterOptions": {
@@ -233,6 +233,34 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-20513",
+      "summary": "[BE REBM] The OOS/DVOID item with obstructed Reason is not working as expected",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.28 HF ALBT",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "BE REBM",
+      "assignee": "Raghav Galhotra",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/3d9d38d1b14302157c3417a9bbf53cf6?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FRG-4.png",
+      "tester": "Gautam Chakraborty",
+      "reporter": "Gautam Chakraborty",
+      "created": "2026-08-31T20:35:24.484-0700",
+      "updated": "2026-09-03T11:43:57.106-0700",
+      "ageDays": 2,
+      "staleDays": 0,
+      "labels": [
+        "ALBT",
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20513"
+    },
     {
       "key": "REB3-20509",
       "summary": "PRGM - Release Sign-off Checklist",
@@ -798,34 +826,6 @@
         "Customer"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20512"
-    },
-    {
-      "key": "REB3-20513",
-      "summary": "[BE REBM] The OOS/DVOID item with obstructed Reason is not working as expected",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.28 HF ALBT",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "High",
-      "component": "BE REBM",
-      "assignee": "Raghav Galhotra",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/3d9d38d1b14302157c3417a9bbf53cf6?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FRG-4.png",
-      "tester": "Gautam Chakraborty",
-      "reporter": "Gautam Chakraborty",
-      "created": "2026-08-31T20:35:24.484-0700",
-      "updated": "2026-09-03T05:10:16.245-0700",
-      "ageDays": 2,
-      "staleDays": 0,
-      "labels": [
-        "ALBT",
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20513"
     },
     {
       "key": "REB3-20074",
@@ -2465,7 +2465,7 @@
       "created": "2026-09-02T10:49:59.049-0700",
       "updated": "2026-09-02T11:34:36.086-0700",
       "ageDays": 1,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "iOS"
       ],
@@ -2492,7 +2492,7 @@
       "created": "2026-09-02T10:49:58.378-0700",
       "updated": "2026-09-02T11:34:28.832-0700",
       "ageDays": 1,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "iOS"
       ],
@@ -26597,7 +26597,7 @@
       "reporter": "Sriyuth Sagi",
       "created": "2025-05-21T11:38:09.253-0700",
       "updated": "2026-07-22T19:19:23.290-0700",
-      "ageDays": 469,
+      "ageDays": 470,
       "staleDays": 42,
       "labels": [
         "AD-HOC",
