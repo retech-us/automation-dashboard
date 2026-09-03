@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-03T14:37:49.553861+00:00",
+  "lastUpdated": "2026-09-03T14:47:54.854020+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -8,23 +8,24 @@
     "totalDefects": 1000,
     "openDefects": 238,
     "blockers": 150,
-    "inProgress": 383,
+    "inProgress": 382,
     "inQa": 72,
-    "resolvedThisWeek": 48,
-    "resolvedTotal": 307
+    "resolvedThisWeek": 49,
+    "resolvedTotal": 308
   },
   "byPriority": {
     "Highest": 150,
-    "High": 258,
-    "Medium": 536,
+    "High": 259,
+    "Medium": 535,
     "Low": 54,
     "Lowest": 2
   },
   "byComponent": {
-    "IOS": 222,
+    "MOBILE": 5,
     "General": 205,
+    "IOS": 222,
     "DE": 56,
-    "BE REBM": 161,
+    "BE REBM": 160,
     "ANDR": 233,
     "HAWKEYE": 17,
     "FE Hawkeye": 20,
@@ -33,23 +34,22 @@
     "BE ADMIN": 2,
     "PARENT-WORK-ITEM": 29,
     "BE SDK": 2,
-    "MOBILE": 4,
     "CVAT": 5,
     "FE REBM": 12,
     "Customer": 1,
     "AI CORE": 1
   },
   "byStatus": {
+    "Done": 250,
+    "Dev Complete": 6,
     "UAT": 261,
-    "In Progress": 33,
     "Staging": 22,
     "QA": 72,
     "Invalid": 58,
     "To  Do": 162,
+    "In Progress": 32,
     "Waiting for clarification": 76,
-    "Done": 249,
-    "Code Review": 23,
-    "Dev Complete": 5,
+    "Code Review": 22,
     "PRODUCTION READY": 39
   },
   "filterOptions": {
@@ -64,6 +64,7 @@
       "REB3: 1.16",
       "REB3: 1.17",
       "REB3: 1.32.6",
+      "REB3: 2025.08",
       "REB3: BE&FE backlog",
       "REB3: DE backlog",
       "REB3: Mobile backlog",
@@ -233,6 +234,58 @@
   },
   "issues": [
     {
+      "key": "REB3-17334",
+      "summary": "[FE REBM] [BE REBM] [Mobile] Overnight Resets - Retain Task Data",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "REB3: 2025.08",
+      "isReleased": true,
+      "releaseStatus": "Released",
+      "type": "New Feature",
+      "epic": "REB3-12731 - POG Reset Labor Cost Reduction - Task Actions Redesign (Intelligent Reset)",
+      "status": "Done",
+      "statusCategory": "done",
+      "priority": "High",
+      "component": "MOBILE",
+      "assignee": "Vishal Kohli",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/9a9700fc7ae838f189eadfa192f2a8cb?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVK-6.png",
+      "tester": "Vignesh Sankaranarayanan",
+      "reporter": "Vignesh Sankaranarayanan",
+      "created": "2025-06-30T10:07:38.486-0700",
+      "updated": "2026-09-03T07:44:49.756-0700",
+      "ageDays": 429,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-17334"
+    },
+    {
+      "key": "REB3-20566",
+      "summary": "ANDR: IR Search Placeholder Should Display \"Search UPC\" for UPC-Only Search",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Dev Complete",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Hemant Singh",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-09-03T05:37:12.948-0700",
+      "updated": "2026-09-03T07:38:38.043-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20566"
+    },
+    {
       "key": "REB3-20565",
       "summary": "iOS |  IR Search Placeholder Should Display \"Search UPC\" for UPC-Only Search",
       "project": "Rebotics 3",
@@ -258,33 +311,6 @@
         "iOS"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20565"
-    },
-    {
-      "key": "REB3-20566",
-      "summary": "ANDR: IR Search Placeholder Should Display \"Search UPC\" for UPC-Only Search",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.27 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Hemant Singh",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-09-03T05:37:12.948-0700",
-      "updated": "2026-09-03T07:18:12.811-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20566"
     },
     {
       "key": "REB3-20525",
@@ -16279,7 +16305,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-02-04T06:40:27.651-0800",
       "updated": "2026-08-21T04:28:57.644-0700",
-      "ageDays": 210,
+      "ageDays": 211,
       "staleDays": 13,
       "labels": [
         "AD-HOC",
@@ -17134,7 +17160,7 @@
       "reporter": "Zhuogang Peng",
       "created": "2026-03-30T07:46:36.628-0700",
       "updated": "2026-08-21T04:28:50.688-0700",
-      "ageDays": 156,
+      "ageDays": 157,
       "staleDays": 13,
       "labels": [
         "Customer",
@@ -18029,7 +18055,7 @@
       "reporter": "Akanksha Jangir",
       "created": "2026-06-01T07:46:39.648-0700",
       "updated": "2026-08-21T04:28:41.358-0700",
-      "ageDays": 93,
+      "ageDays": 94,
       "staleDays": 13,
       "labels": [
         "AD-HOC",
@@ -18200,7 +18226,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-06-08T07:47:29.467-0700",
       "updated": "2026-08-21T04:28:38.471-0700",
-      "ageDays": 86,
+      "ageDays": 87,
       "staleDays": 13,
       "labels": [
         "Customer"
@@ -18282,7 +18308,7 @@
       "reporter": "Vignesh Sankaranarayanan",
       "created": "2025-07-09T07:43:16.905-0700",
       "updated": "2026-08-21T04:28:38.226-0700",
-      "ageDays": 420,
+      "ageDays": 421,
       "staleDays": 13,
       "labels": [
         "ALBT",
@@ -21372,7 +21398,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-07-17T07:39:25.806-0700",
       "updated": "2026-08-10T02:51:43.788-0700",
-      "ageDays": 47,
+      "ageDays": 48,
       "staleDays": 24,
       "labels": [
         "AD-HOC",
@@ -21511,7 +21537,7 @@
       "reporter": "Farid Khalikov",
       "created": "2026-07-27T07:42:57.074-0700",
       "updated": "2026-08-07T04:01:08.668-0700",
-      "ageDays": 37,
+      "ageDays": 38,
       "staleDays": 27,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20157"
@@ -21881,7 +21907,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-06-10T07:47:26.520-0700",
       "updated": "2026-08-05T05:40:59.649-0700",
-      "ageDays": 84,
+      "ageDays": 85,
       "staleDays": 29,
       "labels": [
         "ALBT",
@@ -26216,7 +26242,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T07:46:29.540-0700",
       "updated": "2026-07-23T02:28:07.237-0700",
-      "ageDays": 93,
+      "ageDays": 94,
       "staleDays": 42,
       "labels": [
         "Customer"
@@ -27545,34 +27571,6 @@
         "IOS"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-19938"
-    },
-    {
-      "key": "REB3-19968",
-      "summary": "[BE REBM]Sentry noise from malformed remote-action payloads",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.5",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-19950 - [REBM][BE] Sentry optimization \u2014 Phase 2",
-      "status": "Code Review",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Saharsh Solanki",
-      "reporter": "Saharsh Solanki",
-      "created": "2026-07-02T03:44:43.276-0700",
-      "updated": "2026-07-22T03:32:05.744-0700",
-      "ageDays": 63,
-      "staleDays": 43,
-      "labels": [
-        "Backend",
-        "SHIELD"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19968"
     }
   ]
 }
