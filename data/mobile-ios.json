@@ -15,42 +15,95 @@
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/33818248488",
   "topFailures": [
     {
-      "name": "Tracked Capture Screen",
+      "name": "Navigate through all the steps of the task",
+      "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
       "status": "broken",
-      "category": "unknown",
-      "feature": "Tracked Capture Screen",
-      "reason": "0 failed \u00b7 5 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/#behaviors/5445a981cb84d4d2ee7ec384c2f5b499/"
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Task task_navigation failed to create: Auth /2fa/verify/ failed after retries (token_type=simple). lastBody=<html>",
+      "feature": "Navigation through steps of the task"
     },
     {
-      "name": "Verify Task Tab Filters",
+      "name": "Navigate through all the steps of the task",
+      "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
       "status": "broken",
       "category": "unknown",
-      "feature": "Verify Task Tab Filters",
-      "reason": "0 failed \u00b7 4 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/#behaviors/02cf72a8233db55503cd639fe3b2dcf3/"
+      "reason": "Test failed: 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "feature": "Navigation through steps of the task"
     },
     {
-      "name": "validate Out Of Shelf Tab features",
+      "name": "Navigate through task with action step included",
+      "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
       "status": "broken",
-      "category": "unknown",
-      "feature": "validate Out Of Shelf Tab features",
-      "reason": "0 failed \u00b7 3 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/#behaviors/42b6d485af5a8f3e38bb238436aa517b/"
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': Task task_action_list failed to create: Auth /2fa/verify/ failed after retries (token_type=simple). lastBody=<html>",
+      "feature": "Navigation through steps of the task"
     },
     {
-      "name": "Navigation through steps of the task",
+      "name": "Navigate through task with survey",
+      "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Task task_with_survey failed to create: Auth /2fa/verify/ failed after retries (token_type=simple). lastBody=<html>",
+      "feature": "Navigation through steps of the task"
+    },
+    {
+      "name": "Navigate through task with survey",
+      "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
       "status": "broken",
       "category": "unknown",
-      "feature": "Navigation through steps of the task",
-      "reason": "0 failed \u00b7 2 broken in feature",
-      "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/#behaviors/ce28f8b6aef55381deeeba12a1429b3f/"
+      "reason": "Test failed: 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "feature": "Navigation through steps of the task"
+    },
+    {
+      "name": "Tracked Capture Screen Camera icon",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen Camera icon",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from planogram level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from planogram level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from section level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
     }
   ],
-  "failureCategories": {},
+  "failureCategories": {
+    "login": 7,
+    "locator": 2,
+    "timeout": 7,
+    "unknown": 17
+  },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
@@ -67,5 +120,19 @@
     }
   ],
   "platform": "iOS",
+  "branch": "develop",
+  "commit": "9a68769",
+  "jobs": [
+    {
+      "name": "android-tests",
+      "status": "failure"
+    },
+    {
+      "name": "ios-tests",
+      "status": "failure"
+    }
+  ],
+  "runId": "33818248488",
+  "runNumber": 287,
   "environment": "CI"
 }
