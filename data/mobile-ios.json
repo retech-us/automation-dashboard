@@ -5,18 +5,26 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-09-03T05:31:12Z",
-  "durationMs": 20937146,
+  "finishedAt": "2026-09-04T06:02:33Z",
+  "durationMs": 22660369,
   "summary": {
     "total": 25,
-    "passed": 12,
+    "passed": 11,
     "failed": 0,
-    "broken": 13,
+    "broken": 14,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/33695733871",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/33818248488",
   "topFailures": [
+    {
+      "name": "Navigate through all the steps of the task",
+      "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Task task_navigation failed to create: Auth /2fa/verify/ failed after retries (token_type=simple). lastBody=<html>",
+      "feature": "Navigation through steps of the task"
+    },
     {
       "name": "Navigate through all the steps of the task",
       "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
@@ -26,19 +34,19 @@
       "feature": "Navigation through steps of the task"
     },
     {
-      "name": "Navigate through all the steps of the task",
-      "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
+      "name": "Navigate through task with action step included",
+      "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 60 seconds",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': Task task_action_list failed to create: Auth /2fa/verify/ failed after retries (token_type=simple). lastBody=<html>",
       "feature": "Navigation through steps of the task"
     },
     {
-      "name": "Navigate through task with action step included",
-      "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
-      "status": "failed",
-      "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': Status should be 'Completed' expected [Completed] but found [Not started]",
+      "name": "Navigate through task with survey",
+      "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
+      "status": "broken",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Task task_with_survey failed to create: Auth /2fa/verify/ failed after retries (token_type=simple). lastBody=<html>",
       "feature": "Navigation through steps of the task"
     },
     {
@@ -53,16 +61,16 @@
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -88,35 +96,27 @@
       "category": "unknown",
       "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen section rejection",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': No selectable reason option found within 40s",
-      "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
-    "locator": 6,
-    "timeout": 9,
-    "assertion": 1,
-    "unknown": 14
+    "login": 7,
+    "locator": 2,
+    "timeout": 7,
+    "unknown": 17
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 12,
-    "review": 13,
+    "passed": 11,
+    "review": 14,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 48.0,
+      "passPct": 44.0,
       "total": 25,
-      "failed": 13
+      "failed": 14
     }
   ],
   "platform": "iOS",
@@ -132,7 +132,7 @@
       "status": "failure"
     }
   ],
-  "runId": "33695733871",
-  "runNumber": 286,
+  "runId": "33818248488",
+  "runNumber": 287,
   "environment": "CI"
 }
