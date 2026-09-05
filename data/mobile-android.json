@@ -5,24 +5,24 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-09-04T06:02:33Z",
-  "durationMs": 22660369,
+  "finishedAt": "2026-09-05T04:17:17Z",
+  "durationMs": 16461912,
   "summary": {
     "total": 25,
-    "passed": 11,
+    "passed": 14,
     "failed": 0,
-    "broken": 14,
+    "broken": 11,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/android/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/33818248488",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/33930014624",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
       "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
       "status": "broken",
-      "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Task task_navigation failed to create: Auth /2fa/verify/ failed after retries (token_type=simple). lastBody=<html>",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Could not start or resume task. Status: UNKNOWN",
       "feature": "Navigation through steps of the task"
     },
     {
@@ -37,16 +37,16 @@
       "name": "Navigate through task with action step included",
       "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
       "status": "broken",
-      "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': Task task_action_list failed to create: Auth /2fa/verify/ failed after retries (token_type=simple). lastBody=<html>",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': Could not start or resume task. Status: UNKNOWN",
       "feature": "Navigation through steps of the task"
     },
     {
       "name": "Navigate through task with survey",
       "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
       "status": "broken",
-      "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Task task_with_survey failed to create: Auth /2fa/verify/ failed after retries (token_type=simple). lastBody=<html>",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Could not start or resume task. Status: UNKNOWN",
       "feature": "Navigation through steps of the task"
     },
     {
@@ -61,62 +61,61 @@
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
       "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from planogram level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen section rejection",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
+      "status": "broken",
       "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': No selectable reason option found within 40s",
       "feature": "Tracked Capture Screen"
     },
     {
-      "name": "Tracked Capture Screen View POG from planogram level",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
+      "name": "Tracked Capture Screen section rejection",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen View POG from planogram level",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen View POG from section level",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
       "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
-    "login": 7,
-    "locator": 2,
-    "timeout": 7,
-    "unknown": 17
+    "locator": 3,
+    "timeout": 5,
+    "unknown": 21
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 11,
-    "review": 14,
+    "passed": 14,
+    "review": 11,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 44.0,
+      "passPct": 56.0,
       "total": 25,
-      "failed": 14
+      "failed": 11
     }
   ],
   "platform": "Android",
@@ -132,7 +131,7 @@
       "status": "failure"
     }
   ],
-  "runId": "33818248488",
-  "runNumber": 287,
+  "runId": "33930014624",
+  "runNumber": 288,
   "environment": "CI"
 }
