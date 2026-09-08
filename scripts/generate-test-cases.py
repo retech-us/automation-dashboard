@@ -207,7 +207,7 @@ class JiraClient:
 
         try:
             while len(issues) < limit:
-                # Query Jira API - Try v3 first, fallback to v2
+                # Query Jira API using JQL endpoint
                 params = {
                     "jql": jql,
                     "startAt": start_at,
@@ -215,20 +215,25 @@ class JiraClient:
                     "fields": "key,summary,description,issuetype,status,attachment"
                 }
 
-                try:
-                    response = self._api_call("GET", "/rest/api/3/search", params)
-                except Exception as e:
-                    if "410" in str(e):
-                        logger.info("API v3 not available, trying v2...")
-                        response = self._api_call("GET", "/rest/api/2/search", params)
-                    else:
-                        raise
+                response = self._api_call("GET", "/rest/api/3/search/jql", params)
                 fetched_issues = response.get("issues", [])
 
                 if not fetched_issues:
                     break
 
-                issues.extend(fetched_issues)
+                # Flatten Jira API structure for easier access
+                for api_issue in fetched_issues:
+                    raw_desc = api_issue.get("fields", {}).get("description", "")
+                    issue = {
+                        "key": api_issue.get("key"),
+                        "summary": api_issue.get("fields", {}).get("summary", ""),
+                        "description": DescriptionParser.to_plain_text(raw_desc),
+                        "issuetype": api_issue.get("fields", {}).get("issuetype", {}),
+                        "status": api_issue.get("fields", {}).get("status", {}),
+                        "attachment": api_issue.get("fields", {}).get("attachment", []),
+                        "fields": api_issue.get("fields", {})  # Keep full nested structure
+                    }
+                    issues.append(issue)
                 start_at += len(fetched_issues)
 
                 logger.info(f"  Fetched {len(fetched_issues)} issues (total: {len(issues)})")
@@ -313,7 +318,7 @@ class PreconditionExtractor:
         import re
 
         preconditions = []
-        description = issue.get("fields", {}).get("description", "") or ""
+        description = issue.get("description", "") or ""
 
         # Extract from description - look for patterns
         patterns = [
@@ -439,7 +444,7 @@ class BDDGenerator:
     def _extract_ac(self, issue: Dict[str, Any]) -> str:
         """Extract acceptance criteria from issue"""
         import re
-        description = issue.get("fields", {}).get("description", "") or ""
+        description = issue.get("description", "") or ""
         ac_matches = re.findall(r"AC\d+:\s*([^\n]+)", description)
         if ac_matches:
             return "\n".join([f"  {ac}" for ac in ac_matches])
@@ -522,7 +527,7 @@ class BDDGenerator:
 
             # Build user prompt
             issue_summary = issue.get('summary', 'No summary')
-            issue_desc = issue.get('fields', {}).get('description', 'No description') or 'No description'
+            issue_desc = issue.get('description', 'No description') or 'No description'
             acceptance_criteria = self._extract_ac(issue)
 
             # Sanitize content
@@ -531,7 +536,7 @@ class BDDGenerator:
 
             user_prompt = f"""
 Issue Summary: {issue_summary}
-Issue Type: {issue.get('fields', {}).get('issuetype', {}).get('name', 'Unknown')}
+Issue Type: {issue.get('issuetype', {}).get('name', 'Unknown')}
 
 Description:
 {issue_desc}
@@ -587,6 +592,47 @@ Generate comprehensive BDD test scenarios for this issue.
         except Exception as e:
             logger.error(f"  Error generating scenarios: {e}")
             return []
+
+
+class DescriptionParser:
+    """Parses Jira description format to plain text"""
+
+    @staticmethod
+    def to_plain_text(description) -> str:
+        """Convert Jira description to plain text
+        Handles both v2 (string) and v3 (rich text object) formats"""
+        if isinstance(description, str):
+            return description
+        if isinstance(description, dict):
+            # Jira v3 rich text format
+            if description.get("type") == "doc":
+                return DescriptionParser._extract_text_from_doc(description)
+        return ""
+
+    @staticmethod
+    def _extract_text_from_doc(doc: dict) -> str:
+        """Extract plain text from Jira v3 document structure"""
+        texts = []
+        content = doc.get("content", [])
+        for block in content:
+            DescriptionParser._extract_from_block(block, texts)
+        return " ".join(texts)
+
+    @staticmethod
+    def _extract_from_block(block: dict, texts: list) -> None:
+        """Recursively extract text from document blocks"""
+        if block.get("type") == "paragraph":
+            for item in block.get("content", []):
+                if item.get("type") == "text":
+                    text = item.get("text", "")
+                    if text.strip():
+                        texts.append(text)
+        elif block.get("type") in ("orderedList", "bulletList"):
+            for item in block.get("content", []):
+                DescriptionParser._extract_from_block(item, texts)
+        elif block.get("type") == "listItem":
+            for item in block.get("content", []):
+                DescriptionParser._extract_from_block(item, texts)
 
 
 class PIISanitizer:
