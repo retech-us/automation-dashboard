@@ -72,6 +72,7 @@ class ConfigManager:
         # AI Provider Configuration
         self.anthropic_api_key = os.getenv('ANTHROPIC_API_KEY', '')
         self.openai_api_key = os.getenv('OPENAI_API_KEY', '')
+        self.openai_api_base = os.getenv('OPENAI_API_BASE', 'https://api.openai.com/v1')
         self.ai_provider = self._determine_provider()
 
         self.enabled = os.getenv('TEST_CASE_CREATOR_ENABLED', 'true').lower() == 'true'
@@ -392,8 +393,11 @@ class BDDGenerator:
         """Initialize OpenAI client"""
         try:
             import openai
-            self.client = openai.OpenAI(api_key=self.config.openai_api_key)
-            logger.info(f"✓ OpenAI client initialized (model: {self.config.model})")
+            self.client = openai.OpenAI(
+                api_key=self.config.openai_api_key,
+                base_url=self.config.openai_api_base
+            )
+            logger.info(f"✓ OpenAI client initialized (model: {self.config.model}, endpoint: {self.config.openai_api_base})")
         except ImportError:
             logger.error("✗ openai SDK not installed: pip install openai")
             self.client = None
