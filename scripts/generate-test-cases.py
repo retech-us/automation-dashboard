@@ -420,13 +420,21 @@ class BDDGenerator:
             logger.error(f"  Anthropic API error: {e}")
             return None
 
-    def _call_openai(self, user_prompt: str) -> Optional[str]:
-        """Call OpenAI API"""
+    def _call_openai(self, user_prompt: str, temperature: float = None) -> Optional[str]:
+        """Call OpenAI API
+
+        Args:
+            user_prompt: The user prompt for generation
+            temperature: Optional temperature override (0.0-1.0)
+        """
         try:
+            # Use provided temperature or default
+            temp = temperature if temperature is not None else 0.3
+
             response = self.client.chat.completions.create(
                 model=self.config.model,
                 max_tokens=8000,  # Increased from 4000 to handle complete responses
-                temperature=0.3,  # Lower temperature for more consistent JSON output
+                temperature=temp,
                 messages=[
                     {"role": "system", "content": self._load_system_prompt()},
                     {"role": "user", "content": user_prompt}
@@ -524,9 +532,19 @@ class BDDGenerator:
         self,
         issue: Dict[str, Any],
         preconditions: List[str],
-        test_types: List[str] = None
+        test_types: List[str] = None,
+        custom_requirements: str = None,
+        temperature: float = 0.3
     ) -> List[Dict[str, Any]]:
-        """Generate BDD scenarios using Claude"""
+        """Generate BDD scenarios using Claude
+
+        Args:
+            issue: Jira issue data
+            preconditions: List of preconditions for the scenario
+            test_types: Types of scenarios to generate (positive, negative, edge-case, etc.)
+            custom_requirements: Custom requirements or notes for generation
+            temperature: AI temperature/creativity level (0.0-1.0)
+        """
         if not self.client:
             logger.error("Claude client not initialized")
             return []
@@ -563,17 +581,21 @@ Preconditions:
 {chr(10).join([f"  - {pre}" for pre in preconditions])}
 
 Test Types Requested: {', '.join(test_types)}
-
-Generate comprehensive BDD test scenarios for this issue.
 """
 
-            logger.info(f"  Calling {self.provider.upper()} ({self.config.model}) for BDD generation...")
+            if custom_requirements:
+                user_prompt += f"\nCustom Requirements/Notes:\n{custom_requirements}\n"
 
-            # Call AI provider
+            user_prompt += "\nGenerate comprehensive BDD test scenarios for this issue."
+
+            logger.info(f"  Calling {self.provider.upper()} ({self.config.model}) for BDD generation...")
+            logger.info(f"    Temperature: {temperature}, Test Types: {', '.join(test_types)}")
+
+            # Call AI provider with temperature
             if self.provider == 'anthropic':
                 response_text = self._call_anthropic(user_prompt)
             elif self.provider == 'openai':
-                response_text = self._call_openai(user_prompt)
+                response_text = self._call_openai(user_prompt, temperature=temperature)
             else:
                 logger.error("No AI provider initialized")
                 return []
@@ -754,12 +776,18 @@ class TestCaseGenerator:
         self.jira = JiraClient(self.config)
         self.generator = BDDGenerator(self.config)
 
-    def run(self, issue_keys: List[str] = None) -> bool:
+    def run(self, issue_keys: List[str] = None, test_config: Dict[str, Any] = None) -> bool:
         """Execute test case generation pipeline
 
         Args:
             issue_keys: Optional list of specific issue keys to process (e.g., ['REB3-123', 'REB3-456'])
                        If None, processes up to max_issues
+            test_config: Optional test configuration dictionary with:
+                - test_types: List of test types to generate (positive, negative, edge-case, etc.)
+                - priorities: List of priority levels (P1, P2, P3)
+                - max_scenarios: Maximum scenarios per issue
+                - custom_requirements: Custom requirements text
+                - temperature: AI temperature/creativity level
         """
         logger.info("=" * 60)
         logger.info("Test Case Creator - BDD Scenario Generator")
@@ -775,6 +803,24 @@ class TestCaseGenerator:
         # Validate Jira credentials
         if not self.jira.validate_credentials():
             return False
+
+        # Use default test config if not provided
+        if test_config is None:
+            test_config = {
+                'test_types': ['positive', 'negative', 'edge-case'],
+                'priorities': ['P1', 'P2', 'P3'],
+                'max_scenarios': 10,
+                'custom_requirements': None,
+                'temperature': 0.3
+            }
+
+        logger.info(f"Test Configuration:")
+        logger.info(f"  Test Types: {', '.join(test_config['test_types'])}")
+        logger.info(f"  Priorities: {', '.join(test_config['priorities'])}")
+        logger.info(f"  Max Scenarios: {test_config['max_scenarios']}")
+        logger.info(f"  Temperature: {test_config['temperature']}")
+        if test_config.get('custom_requirements'):
+            logger.info(f"  Custom Requirements: {test_config['custom_requirements']}")
 
         # Fetch issues
         if issue_keys:
@@ -797,6 +843,7 @@ class TestCaseGenerator:
         results = {
             "timestamp": datetime.now().isoformat(),
             "model": self.config.model,
+            "testConfiguration": test_config,
             "totalIssues": len(issues),
             "successfulGenerations": 0,
             "failedGenerations": 0,
@@ -810,8 +857,14 @@ class TestCaseGenerator:
                 # Extract preconditions
                 preconditions = PreconditionExtractor.extract(issue)
 
-                # Generate scenarios
-                scenarios = self.generator.generate_scenarios(issue, preconditions)
+                # Generate scenarios with custom configuration
+                scenarios = self.generator.generate_scenarios(
+                    issue,
+                    preconditions,
+                    test_types=test_config.get('test_types'),
+                    custom_requirements=test_config.get('custom_requirements'),
+                    temperature=test_config.get('temperature')
+                )
 
                 if scenarios:
                     results["testCases"].append({
@@ -846,6 +899,109 @@ class TestCaseGenerator:
             logger.info(f"Summary: {results['successfulGenerations']}/{results['totalIssues']} successful")
         except Exception as e:
             logger.error(f"✗ Failed to save results: {e}")
+
+
+def get_test_configuration() -> Dict[str, Any]:
+    """Interactive configuration settings for test case generation"""
+    print("\n" + "=" * 60)
+    print("Test Generation Configuration")
+    print("=" * 60)
+
+    config = {}
+
+    # Test types selection
+    print("\nTest Types to Generate (select multiple, comma-separated):")
+    print("  1. positive    - Happy path scenarios")
+    print("  2. negative    - Error/failure scenarios")
+    print("  3. edge-case   - Boundary conditions")
+    print("  4. performance - Performance scenarios")
+    print("  5. security    - Security scenarios")
+    print("  6. usability   - User experience scenarios")
+    print("  7. design      - Design validation scenarios")
+
+    test_types_input = input("\nEnter options (default: 1,2,3): ").strip()
+    if not test_types_input:
+        test_types_input = "1,2,3"
+
+    type_map = {
+        '1': 'positive',
+        '2': 'negative',
+        '3': 'edge-case',
+        '4': 'performance',
+        '5': 'security',
+        '6': 'usability',
+        '7': 'design'
+    }
+
+    selected_types = []
+    for t in test_types_input.split(','):
+        t = t.strip()
+        if t in type_map:
+            selected_types.append(type_map[t])
+
+    config['test_types'] = selected_types if selected_types else ['positive', 'negative', 'edge-case']
+    print(f"✓ Selected test types: {', '.join(config['test_types'])}")
+
+    # Priority filter
+    print("\nPriority Levels (select multiple, comma-separated):")
+    print("  1. P1 - Critical")
+    print("  2. P2 - High")
+    print("  3. P3 - Medium")
+
+    priority_input = input("Enter options (default: 1,2,3): ").strip()
+    if not priority_input:
+        priority_input = "1,2,3"
+
+    priority_map = {'1': 'P1', '2': 'P2', '3': 'P3'}
+    selected_priorities = []
+    for p in priority_input.split(','):
+        p = p.strip()
+        if p in priority_map:
+            selected_priorities.append(priority_map[p])
+
+    config['priorities'] = selected_priorities if selected_priorities else ['P1', 'P2', 'P3']
+    print(f"✓ Selected priorities: {', '.join(config['priorities'])}")
+
+    # Number of scenarios
+    print("\nNumber of Scenarios per Issue (1-20):")
+    scenarios_input = input("Enter number (default: 10): ").strip()
+    try:
+        config['max_scenarios'] = int(scenarios_input) if scenarios_input else 10
+        config['max_scenarios'] = max(1, min(20, config['max_scenarios']))
+    except ValueError:
+        config['max_scenarios'] = 10
+    print(f"✓ Max scenarios per issue: {config['max_scenarios']}")
+
+    # Custom requirements/notes
+    print("\nCustom Requirements (optional, press Enter to skip):")
+    print("  Example: 'Focus on API validation', 'Include load testing', etc.")
+    custom_requirements = input("Enter custom requirements: ").strip()
+    config['custom_requirements'] = custom_requirements if custom_requirements else None
+    if custom_requirements:
+        print(f"✓ Custom requirements: {custom_requirements}")
+
+    # Temperature (creativity level)
+    print("\nCreativity Level (0.0 = Deterministic, 1.0 = Creative):")
+    temp_input = input("Enter value 0.0-1.0 (default: 0.3): ").strip()
+    try:
+        config['temperature'] = float(temp_input) if temp_input else 0.3
+        config['temperature'] = max(0.0, min(1.0, config['temperature']))
+    except ValueError:
+        config['temperature'] = 0.3
+    print(f"✓ Temperature: {config['temperature']}")
+
+    print("\n" + "=" * 60)
+    print("Configuration Summary")
+    print("=" * 60)
+    print(f"Test Types: {', '.join(config['test_types'])}")
+    print(f"Priorities: {', '.join(config['priorities'])}")
+    print(f"Max Scenarios: {config['max_scenarios']}")
+    print(f"Temperature: {config['temperature']}")
+    if config['custom_requirements']:
+        print(f"Requirements: {config['custom_requirements']}")
+    print("=" * 60)
+
+    return config
 
 
 def select_issues_interactive(jira_client: 'JiraClient', max_issues: int = 50) -> List[str]:
@@ -902,6 +1058,11 @@ def main():
             action="store_true",
             help="Show interactive menu to select issues"
         )
+        parser.add_argument(
+            "--skip-config",
+            action="store_true",
+            help="Skip configuration prompt and use defaults"
+        )
 
         args = parser.parse_args()
 
@@ -921,8 +1082,26 @@ def main():
             if issue_keys is None:
                 sys.exit(1)
 
-        # Run generator
-        success = generator.run(issue_keys=issue_keys if issue_keys else None)
+        # Get test configuration (unless skipped)
+        test_config = None
+        if not args.skip_config and sys.stdin.isatty():
+            test_config = get_test_configuration()
+        else:
+            # Use defaults
+            test_config = {
+                'test_types': ['positive', 'negative', 'edge-case'],
+                'priorities': ['P1', 'P2', 'P3'],
+                'max_scenarios': 10,
+                'custom_requirements': None,
+                'temperature': 0.3
+            }
+            print("\nUsing default configuration (use --interactive to customize)")
+
+        # Run generator with configuration
+        success = generator.run(
+            issue_keys=issue_keys if issue_keys else None,
+            test_config=test_config
+        )
         sys.exit(0 if success else 1)
 
     except Exception as e:
