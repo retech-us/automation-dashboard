@@ -154,6 +154,48 @@
   letter-spacing: 0.5px;
 }
 
+/* Filter Section */
+.filter-section {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+}
+
+.filter-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--text-secondary, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+}
+
+.filter-select {
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
 /* Filter Controls */
 .filter-controls {
   display: flex;
@@ -244,13 +286,30 @@
   white-space: nowrap;
 }
 
+.issue-meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
 .issue-type {
-  font-size: 12px;
-  color: var(--text-secondary, #666);
-  background: var(--bg-primary, #ffffff);
+  font-size: 11px;
+  color: #3b82f6;
+  background: #dbeafe;
   display: inline-block;
   padding: 2px 6px;
   border-radius: 3px;
+  font-weight: 500;
+}
+
+.issue-status {
+  font-size: 11px;
+  color: #10b981;
+  background: #dcfce7;
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
 }
 
 /* Selection Summary */

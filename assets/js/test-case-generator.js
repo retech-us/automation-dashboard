@@ -7,6 +7,11 @@ class TestCaseGenerator {
   constructor() {
     this.isGenerating = false;
     this.jiraIssues = [];
+    this.generatedIssueKeys = [];
+    this.sprints = new Set();
+    this.versions = new Set();
+    this.types = new Set();
+    this.statuses = new Set();
     this.init();
   }
 
@@ -94,6 +99,39 @@ class TestCaseGenerator {
           <div class="generator-step" id="step-select">
             <h3 class="step-title">Step 1: Select Issues to Generate Test Cases For</h3>
 
+            <div class="filter-section">
+              <h4 class="filter-title">Filter by:</h4>
+              <div class="filter-grid">
+                <div class="filter-group">
+                  <label for="filter-sprint">Sprint:</label>
+                  <select id="filter-sprint" class="input filter-select">
+                    <option value="">All Sprints</option>
+                  </select>
+                </div>
+
+                <div class="filter-group">
+                  <label for="filter-version">Fix Version:</label>
+                  <select id="filter-version" class="input filter-select">
+                    <option value="">All Versions</option>
+                  </select>
+                </div>
+
+                <div class="filter-group">
+                  <label for="filter-type">Issue Type:</label>
+                  <select id="filter-type" class="input filter-select">
+                    <option value="">All Types</option>
+                  </select>
+                </div>
+
+                <div class="filter-group">
+                  <label for="filter-status">Status:</label>
+                  <select id="filter-status" class="input filter-select">
+                    <option value="">All Statuses</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <div class="filter-controls">
               <input
                 type="text"
@@ -114,6 +152,9 @@ class TestCaseGenerator {
 
             <div class="selection-summary">
               <span id="selected-count">0</span> / <span id="total-count">0</span> issues selected
+              <span id="already-generated" style="color: #10b981; margin-left: 16px; font-size: 12px; display: none;">
+                ✓ <span id="already-generated-count">0</span> already have test cases
+              </span>
             </div>
           </div>
 
@@ -200,7 +241,13 @@ class TestCaseGenerator {
 
     // Issue search
     const searchInput = modal.querySelector('#issue-search');
-    searchInput.addEventListener('input', (e) => this.filterIssues(e.target.value));
+    searchInput.addEventListener('input', (e) => this.filterIssues());
+
+    // Filter dropdowns
+    const filterSelects = modal.querySelectorAll('.filter-select');
+    filterSelects.forEach(select => {
+      select.addEventListener('change', () => this.filterIssues());
+    });
 
     // Select all checkbox
     const selectAllCheckbox = modal.querySelector('#select-all-checkbox');
@@ -230,13 +277,66 @@ class TestCaseGenerator {
     try {
       const response = await fetch('/api/jira-issues');
       const data = await response.json();
-
       this.jiraIssues = data.issues || [];
+
+      // Load already-generated test cases
+      try {
+        const tcResponse = await fetch('/api/test-cases');
+        const tcData = await tcResponse.json();
+        this.generatedIssueKeys = (tcData.testCases || []).map(tc => tc.issueKey);
+      } catch (e) {
+        this.generatedIssueKeys = [];
+      }
+
+      // Filter out already-generated issues
+      const availableIssues = this.jiraIssues.filter(issue => !this.generatedIssueKeys.includes(issue.key));
+      this.jiraIssues = availableIssues;
+
+      // Collect unique values for filters
+      this.jiraIssues.forEach(issue => {
+        const type = issue.fields?.issuetype?.name;
+        if (type) this.types.add(type);
+        const status = issue.fields?.status?.name;
+        if (status) this.statuses.add(status);
+      });
+
+      this.populateFilterDropdowns();
       this.renderIssuesList();
+
+      // Show count of already generated
+      if (this.generatedIssueKeys.length > 0) {
+        const alreadyGenElement = document.getElementById('already-generated');
+        if (alreadyGenElement) {
+          alreadyGenElement.style.display = 'inline-block';
+          document.getElementById('already-generated-count').textContent = this.generatedIssueKeys.length;
+        }
+      }
     } catch (error) {
       console.error('Error loading Jira issues:', error);
       const issuesList = document.getElementById('issues-list');
       issuesList.innerHTML = `<div class="error">Failed to load issues: ${error.message}</div>`;
+    }
+  }
+
+  populateFilterDropdowns() {
+    const typeSelect = document.getElementById('filter-type');
+    if (typeSelect) {
+      Array.from(this.types).sort().forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+        typeSelect.appendChild(option);
+      });
+    }
+
+    const statusSelect = document.getElementById('filter-status');
+    if (statusSelect) {
+      Array.from(this.statuses).sort().forEach(status => {
+        const option = document.createElement('option');
+        option.value = status;
+        option.textContent = status;
+        statusSelect.appendChild(option);
+      });
     }
   }
 
@@ -247,7 +347,7 @@ class TestCaseGenerator {
     totalCount.textContent = this.jiraIssues.length;
 
     if (this.jiraIssues.length === 0) {
-      issuesList.innerHTML = '<div class="empty-state">No Jira issues available. Generate mock data first using: python test-local.py</div>';
+      issuesList.innerHTML = '<div class="empty-state">No Jira issues available or all have test cases generated</div>';
       return;
     }
 
@@ -262,7 +362,10 @@ class TestCaseGenerator {
         <div class="issue-info">
           <div class="issue-key">${issue.key}</div>
           <div class="issue-summary">${issue.summary}</div>
-          <div class="issue-type">${issue.fields?.issuetype?.name || 'Unknown'}</div>
+          <div class="issue-meta">
+            <span class="issue-type">${issue.fields?.issuetype?.name || 'Unknown'}</span>
+            <span class="issue-status">${issue.fields?.status?.name || 'Unknown'}</span>
+          </div>
         </div>
       </div>
     `).join('');
@@ -273,17 +376,30 @@ class TestCaseGenerator {
     });
   }
 
-  filterIssues(searchTerm) {
+  filterIssues() {
+    const searchTerm = document.getElementById('issue-search').value.toLowerCase();
+    const typeFilter = document.getElementById('filter-type').value;
+    const statusFilter = document.getElementById('filter-status').value;
+
     const issuesList = document.getElementById('issues-list');
     const items = issuesList.querySelectorAll('.issue-item');
 
     items.forEach(item => {
       const key = item.querySelector('.issue-key').textContent;
       const summary = item.querySelector('.issue-summary').textContent;
-      const matches = key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                     summary.toLowerCase().includes(searchTerm.toLowerCase());
-      item.style.display = matches ? '' : 'none';
+      const type = item.querySelector('.issue-type').textContent;
+      const status = item.querySelector('.issue-status').textContent;
+
+      const matchesSearch = key.toLowerCase().includes(searchTerm) ||
+                           summary.toLowerCase().includes(searchTerm);
+      const matchesType = !typeFilter || type === typeFilter;
+      const matchesStatus = !statusFilter || status === statusFilter;
+
+      const shouldShow = matchesSearch && matchesType && matchesStatus;
+      item.style.display = shouldShow ? '' : 'none';
     });
+
+    this.updateSelectionCount();
   }
 
   toggleSelectAll(checked) {
