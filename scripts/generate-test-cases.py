@@ -27,6 +27,13 @@ import base64
 import urllib.request
 import urllib.error
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed, will use system environment variables
+
 # Configure logging with UTF-8 encoding
 class UTF8StreamHandler(logging.StreamHandler):
     """Stream handler that supports UTF-8 encoding"""
@@ -158,7 +165,12 @@ class JiraClient:
         url = f"{self.base_url}{endpoint}"
 
         try:
-            if method == "POST":
+            if method == "GET" and data:
+                from urllib.parse import urlencode
+                query_string = urlencode(data)
+                url = f"{url}?{query_string}"
+                req = urllib.request.Request(url, headers=self.auth_header, method=method)
+            elif method == "POST":
                 payload = json.dumps(data).encode('utf-8') if data else None
                 req = urllib.request.Request(url, data=payload, headers=self.auth_header, method=method)
             else:
@@ -189,14 +201,14 @@ class JiraClient:
         try:
             while len(issues) < limit:
                 # Query Jira API
-                payload = {
+                params = {
                     "jql": jql,
                     "startAt": start_at,
                     "maxResults": min(100, limit - len(issues)),
-                    "fields": ["key", "summary", "description", "issuetype", "status", "attachment"]
+                    "fields": "key,summary,description,issuetype,status,attachment"
                 }
 
-                response = self._api_call("POST", "/rest/api/3/search/jql", payload)
+                response = self._api_call("GET", "/rest/api/3/search", params)
                 fetched_issues = response.get("issues", [])
 
                 if not fetched_issues:

@@ -18,6 +18,13 @@ import subprocess
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed, will use system environment variables
+
 # Configuration
 PORT = 6060
 HOST = 'localhost'
