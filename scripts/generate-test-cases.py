@@ -425,14 +425,25 @@ class BDDGenerator:
         try:
             response = self.client.chat.completions.create(
                 model=self.config.model,
-                max_tokens=4000,
+                max_tokens=8000,  # Increased from 4000 to handle complete responses
+                temperature=0.3,  # Lower temperature for more consistent JSON output
                 messages=[
+                    {"role": "system", "content": self._load_system_prompt()},
                     {"role": "user", "content": user_prompt}
-                ]
+                ],
+                timeout=300  # 5 minute timeout
             )
-            return response.choices[0].message.content.strip()
+            response_text = response.choices[0].message.content.strip()
+            if not response_text:
+                logger.warning("  Empty response from OpenAI API")
+                return None
+            logger.debug(f"  API response (first 200 chars): {response_text[:200]}")
+            return response_text
         except Exception as e:
             logger.error(f"  OpenAI API error: {e}")
+            if self.config.debug:
+                import traceback
+                logger.debug(f"  Traceback: {traceback.format_exc()}")
             return None
 
     def _load_system_prompt(self) -> str:
@@ -568,15 +579,78 @@ Generate comprehensive BDD test scenarios for this issue.
                 return []
 
             if not response_text:
+                logger.error("  Empty response from AI provider")
                 return []
 
             # Parse JSON response
             try:
                 scenarios = json.loads(response_text)
             except json.JSONDecodeError as e:
-                logger.error(f"  Failed to parse Claude response as JSON: {e}")
-                logger.debug(f"  Response: {response_text[:200]}...")
-                return []
+                logger.error(f"  Failed to parse response as JSON: {e}")
+                logger.error(f"  Response length: {len(response_text)} chars")
+                logger.error(f"  Response preview: {response_text[:300]}")
+
+                # Try to extract JSON from markdown code blocks
+                if "```json" in response_text or "```" in response_text:
+                    logger.info("  Attempting to extract JSON from markdown code block...")
+                    try:
+                        # Find JSON start
+                        json_start = response_text.find("```json")
+                        if json_start == -1:
+                            json_start = response_text.find("```")
+                        if json_start != -1:
+                            json_start = response_text.find("\n", json_start) + 1
+                        else:
+                            logger.error("  Could not find code block markers")
+                            return []
+
+                        # Find JSON end (look for closing ```)
+                        json_end = response_text.find("```", json_start)
+                        if json_end == -1:
+                            json_end = len(response_text)
+
+                        json_text = response_text[json_start:json_end].strip()
+
+                        # Try to parse - if it fails, try to fix common issues
+                        try:
+                            scenarios = json.loads(json_text)
+                            logger.info("  ✓ Successfully extracted JSON from markdown")
+                        except json.JSONDecodeError as parse_error:
+                            logger.warning(f"  JSON parsing error: {parse_error}")
+                            logger.warning(f"  Response appears truncated. Attempting recovery...")
+
+                            # Try to fix incomplete JSON by closing unclosed structures
+                            json_fixed = json_text.rstrip()
+                            # Count unclosed brackets
+                            open_brackets = json_fixed.count('[') - json_fixed.count(']')
+                            open_braces = json_fixed.count('{') - json_fixed.count('}')
+                            open_quotes = json_fixed.count('"') % 2
+
+                            logger.warning(f"  Missing: {open_brackets} brackets, {open_braces} braces, {'1 quote' if open_quotes else 'no quotes'}")
+
+                            try:
+                                # Close any open structures
+                                if open_quotes:
+                                    json_fixed += '"'
+                                json_fixed += ']}' * (max(open_brackets, open_braces))
+                                json_fixed = json_fixed.rstrip(',')  # Remove trailing commas
+
+                                scenarios = json.loads(json_fixed)
+                                logger.info("  ✓ Successfully recovered truncated JSON")
+                            except Exception as recovery_error:
+                                logger.error(f"  Could not recover JSON: {recovery_error}")
+                                logger.error(f"  Saving raw response for debugging...")
+                                with open("debug_api_response.txt", "w") as f:
+                                    f.write(response_text)
+                                logger.error("  Full response saved to debug_api_response.txt")
+                                return []
+
+                    except Exception as inner_e:
+                        logger.error(f"  Failed to extract JSON from markdown: {inner_e}")
+                        return []
+                else:
+                    logger.error("  Response does not contain markdown code blocks")
+                    return []
 
             if not isinstance(scenarios, list):
                 logger.error(f"  Expected JSON array, got {type(scenarios)}")
