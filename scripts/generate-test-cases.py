@@ -207,7 +207,7 @@ class JiraClient:
 
         try:
             while len(issues) < limit:
-                # Query Jira API
+                # Query Jira API - Try v3 first, fallback to v2
                 params = {
                     "jql": jql,
                     "startAt": start_at,
@@ -215,7 +215,14 @@ class JiraClient:
                     "fields": "key,summary,description,issuetype,status,attachment"
                 }
 
-                response = self._api_call("GET", "/rest/api/3/search", params)
+                try:
+                    response = self._api_call("GET", "/rest/api/3/search", params)
+                except Exception as e:
+                    if "410" in str(e):
+                        logger.info("API v3 not available, trying v2...")
+                        response = self._api_call("GET", "/rest/api/2/search", params)
+                    else:
+                        raise
                 fetched_issues = response.get("issues", [])
 
                 if not fetched_issues:
