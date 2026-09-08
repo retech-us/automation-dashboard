@@ -15,6 +15,9 @@ class TestCaseGenerator {
     this.createModal();
     this.wireEventListeners();
 
+    // Add button to Jira tab
+    this.addButtonToJiraTab();
+
     // Load Jira issues when modal opens
     const generateBtn = document.getElementById('generate-test-cases-btn');
     if (generateBtn) {
@@ -22,6 +25,50 @@ class TestCaseGenerator {
     }
 
     console.log('✓ Test Case Generator initialized');
+  }
+
+  addButtonToJiraTab() {
+    // Try to add button immediately, with retries if panel not ready
+    const tryAddButton = () => {
+      const jiraPanel = document.getElementById('panel-jira');
+      if (!jiraPanel) {
+        // Retry after a short delay if panel not found
+        setTimeout(tryAddButton, 100);
+        return;
+      }
+
+      // Check if button already exists
+      if (document.getElementById('generate-test-cases-btn')) return;
+
+      // Create button
+      const btn = document.createElement('button');
+      btn.id = 'generate-test-cases-btn';
+      btn.className = 'btn btn--primary';
+      btn.type = 'button';
+      btn.textContent = '⚡ Generate Test Cases';
+      btn.title = 'Generate BDD scenarios from Jira issues using Claude AI';
+
+      // Insert at the top of Jira panel
+      const jiraHeader = jiraPanel.querySelector('.tab-panel__header');
+      if (jiraHeader) {
+        // Add to existing header
+        jiraHeader.appendChild(btn);
+      } else {
+        // Create a toolbar if no header exists
+        const jiraContent = jiraPanel.querySelector('#jira-content');
+        if (jiraContent) {
+          let toolbar = jiraPanel.querySelector('[data-jira-toolbar]');
+          if (!toolbar) {
+            toolbar = document.createElement('div');
+            toolbar.setAttribute('data-jira-toolbar', 'true');
+            jiraContent.parentNode.insertBefore(toolbar, jiraContent);
+          }
+          toolbar.appendChild(btn);
+        }
+      }
+    };
+
+    tryAddButton();
   }
 
   createModal() {
@@ -137,18 +184,6 @@ class TestCaseGenerator {
     `;
 
     document.body.appendChild(modal);
-
-    // Create generate button in header if it doesn't exist
-    const header = document.querySelector('.header__meta');
-    if (header && !document.getElementById('generate-test-cases-btn')) {
-      const btn = document.createElement('button');
-      btn.id = 'generate-test-cases-btn';
-      btn.className = 'btn btn--primary';
-      btn.type = 'button';
-      btn.textContent = '⚡ Generate Test Cases';
-      btn.title = 'Generate BDD scenarios from Jira issues using Claude AI';
-      header.insertBefore(btn, header.firstChild);
-    }
   }
 
   wireEventListeners() {
