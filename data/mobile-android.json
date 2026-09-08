@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-09-07T07:26:33Z",
-  "durationMs": 27864700,
+  "finishedAt": "2026-09-08T05:06:35Z",
+  "durationMs": 19521456,
   "summary": {
     "total": 25,
-    "passed": 13,
+    "passed": 10,
     "failed": 0,
-    "broken": 12,
+    "broken": 15,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/android/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/34067284515",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/34170503951",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -36,9 +36,9 @@
     {
       "name": "Navigate through task with action step included",
       "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': Could not start or resume task. Status: UNKNOWN",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': expected [200] but found [502]",
       "feature": "Navigation through steps of the task"
     },
     {
@@ -77,16 +77,16 @@
       "name": "Tracked Capture Screen View POG from planogram level",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
       "feature": "Tracked Capture Screen"
     },
     {
-      "name": "Tracked Capture Screen View POG from section level",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
+      "name": "Tracked Capture Screen View POG from planogram level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
       "status": "broken",
       "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -99,23 +99,24 @@
     }
   ],
   "failureCategories": {
-    "locator": 2,
-    "timeout": 7,
-    "unknown": 22
+    "locator": 1,
+    "timeout": 4,
+    "assertion": 1,
+    "unknown": 30
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 13,
-    "review": 12,
+    "passed": 10,
+    "review": 15,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 52.0,
+      "passPct": 40.0,
       "total": 25,
-      "failed": 12
+      "failed": 15
     }
   ],
   "platform": "Android",
@@ -131,7 +132,7 @@
       "status": "failure"
     }
   ],
-  "runId": "34067284515",
-  "runNumber": 290,
+  "runId": "34170503951",
+  "runNumber": 291,
   "environment": "CI"
 }
