@@ -680,8 +680,13 @@ class TestCaseGenerator:
         self.jira = JiraClient(self.config)
         self.generator = BDDGenerator(self.config)
 
-    def run(self) -> bool:
-        """Execute test case generation pipeline"""
+    def run(self, issue_keys: List[str] = None) -> bool:
+        """Execute test case generation pipeline
+
+        Args:
+            issue_keys: Optional list of specific issue keys to process (e.g., ['REB3-123', 'REB3-456'])
+                       If None, processes up to max_issues
+        """
         logger.info("=" * 60)
         logger.info("Test Case Creator - BDD Scenario Generator")
         logger.info("=" * 60)
@@ -698,9 +703,21 @@ class TestCaseGenerator:
             return False
 
         # Fetch issues
-        logger.info(f"Fetching issues (max {self.config.max_issues})...")
-        issues = self.jira.fetch_issues(limit=self.config.max_issues)
-        logger.info(f"Found {len(issues)} issues to process")
+        if issue_keys:
+            logger.info(f"Fetching {len(issue_keys)} specific issues: {', '.join(issue_keys)}")
+            issues = []
+            for key in issue_keys:
+                jql = f"key = {key}"
+                try:
+                    fetched = self.jira.fetch_issues(limit=1, jql=jql)
+                    issues.extend(fetched)
+                except Exception as e:
+                    logger.warning(f"Failed to fetch {key}: {e}")
+            logger.info(f"Successfully fetched {len(issues)} issues")
+        else:
+            logger.info(f"Fetching issues (max {self.config.max_issues})...")
+            issues = self.jira.fetch_issues(limit=self.config.max_issues)
+            logger.info(f"Found {len(issues)} issues to process")
 
         # Generate test cases
         results = {
@@ -757,12 +774,83 @@ class TestCaseGenerator:
             logger.error(f"✗ Failed to save results: {e}")
 
 
+def select_issues_interactive(jira_client: 'JiraClient', max_issues: int = 50) -> List[str]:
+    """Interactive menu to select specific Jira issues"""
+    print("\n" + "=" * 60)
+    print("Jira Issue Selector")
+    print("=" * 60)
+    print("\nOptions:")
+    print("1. Generate for specific issue(s) - Enter comma-separated keys")
+    print("2. Generate for all issues (up to " + str(max_issues) + ")")
+    print("3. Cancel")
+    print()
+
+    choice = input("Select option (1-3): ").strip()
+
+    if choice == "1":
+        keys_input = input("\nEnter Jira issue key(s) (comma-separated, e.g., REB3-123,REB3-456): ").strip()
+        issue_keys = [k.strip().upper() for k in keys_input.split(",") if k.strip()]
+        if issue_keys:
+            print(f"\n✓ Selected {len(issue_keys)} issue(s): {', '.join(issue_keys)}")
+            return issue_keys
+        else:
+            print("✗ No valid issue keys provided")
+            return None
+
+    elif choice == "2":
+        print(f"\n✓ Will generate for all issues (max {max_issues})")
+        return []  # Empty list means fetch all
+
+    elif choice == "3":
+        print("✗ Cancelled")
+        return None
+
+    else:
+        print("✗ Invalid option")
+        return None
+
+
 def main():
     """Entry point for the script"""
     try:
+        import argparse
+
+        parser = argparse.ArgumentParser(
+            description="Generate BDD test cases from Jira issues"
+        )
+        parser.add_argument(
+            "--issues",
+            type=str,
+            help="Comma-separated list of issue keys to process (e.g., REB3-123,REB3-456)"
+        )
+        parser.add_argument(
+            "--interactive",
+            action="store_true",
+            help="Show interactive menu to select issues"
+        )
+
+        args = parser.parse_args()
+
         generator = TestCaseGenerator()
-        success = generator.run()
+
+        # Determine which issues to process
+        issue_keys = None
+
+        if args.issues:
+            # Issues provided via command-line
+            issue_keys = [k.strip().upper() for k in args.issues.split(",") if k.strip()]
+            print(f"Processing specified issues: {', '.join(issue_keys)}\n")
+
+        elif args.interactive or sys.stdin.isatty():
+            # Interactive mode or running in terminal
+            issue_keys = select_issues_interactive(generator.jira, generator.config.max_issues)
+            if issue_keys is None:
+                sys.exit(1)
+
+        # Run generator
+        success = generator.run(issue_keys=issue_keys if issue_keys else None)
         sys.exit(0 if success else 1)
+
     except Exception as e:
         logger.error(f"Fatal error: {e}")
         sys.exit(1)
