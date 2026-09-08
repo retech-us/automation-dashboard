@@ -169,6 +169,7 @@ class JiraClient:
                 from urllib.parse import urlencode
                 query_string = urlencode(data)
                 url = f"{url}?{query_string}"
+                logger.debug(f"Calling Jira API: {method} {url}")
                 req = urllib.request.Request(url, headers=self.auth_header, method=method)
             elif method == "POST":
                 payload = json.dumps(data).encode('utf-8') if data else None
@@ -180,8 +181,14 @@ class JiraClient:
                 response_data = json.loads(response.read().decode('utf-8'))
                 return response_data
         except urllib.error.HTTPError as e:
-            error_msg = f"Jira API error {e.code}: {e.reason}"
+            error_msg = f"Jira API error {e.code}: {e.reason} - URL: {url}"
             logger.error(error_msg)
+            if self.config.debug:
+                try:
+                    error_body = e.read().decode('utf-8')
+                    logger.debug(f"Error response: {error_body}")
+                except:
+                    pass
             raise Exception(error_msg)
         except Exception as e:
             logger.error(f"API call failed: {e}")
