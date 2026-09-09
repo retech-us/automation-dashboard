@@ -292,7 +292,8 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
             # Build command to run generator
             cmd = [
                 sys.executable,
-                'scripts/generate-test-cases.py'
+                'scripts/generate-test-cases.py',
+                '--skip-config'  # Skip interactive config when called from server
             ]
 
             # Add issue keys if provided
