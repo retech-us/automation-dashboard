@@ -1042,8 +1042,15 @@ def select_issues_interactive(jira_client: 'JiraClient', max_issues: int = 50) -
 
 def main():
     """Entry point for the script"""
+    import sys
+    import traceback
+
     try:
         import argparse
+
+        # Ensure logs are flushed immediately
+        logging.getLogger().handlers[0].flush()
+        logging.getLogger().handlers[1].flush()
 
         # Log environment for debugging
         logger.info("=== Script Environment ===")
@@ -1078,12 +1085,16 @@ def main():
 
         logger.info(f"Parsed args: issues={args.issues}, interactive={args.interactive}, skip_config={args.skip_config}")
 
+        logger.info("Creating TestCaseGenerator...")
         generator = TestCaseGenerator()
+        logger.info("TestCaseGenerator created successfully")
 
         # Determine which issues to process
+        logger.info("Processing issue_keys...")
         issue_keys = None
 
         if args.issues:
+            logger.info("Using provided issue keys")
             # Issues provided via command-line
             issue_keys = [k.strip().upper() for k in args.issues.split(",") if k.strip()]
             print(f"Processing specified issues: {', '.join(issue_keys)}\n")
@@ -1095,11 +1106,14 @@ def main():
                 sys.exit(1)
 
         # Get test configuration (unless skipped)
+        logger.info("Getting test configuration...")
         test_config = None
         if not args.skip_config and sys.stdin.isatty():
+            logger.info("Interactive mode - getting test configuration")
             test_config = get_test_configuration()
         else:
             # Use defaults
+            logger.info("Using default configuration")
             test_config = {
                 'test_types': ['positive', 'negative', 'edge-case'],
                 'priorities': ['P1', 'P2', 'P3'],
@@ -1110,14 +1124,27 @@ def main():
             print("\nUsing default configuration (use --interactive to customize)")
 
         # Run generator with configuration
-        success = generator.run(
-            issue_keys=issue_keys if issue_keys else None,
-            test_config=test_config
-        )
-        sys.exit(0 if success else 1)
+        logger.info(f"All preconditions met. Starting generator.run() with {len(issue_keys) if issue_keys else 0} issues...")
+        sys.stdout.flush()
+        sys.stderr.flush()
+        logger.info("About to call generator.run()")
+        try:
+            success = generator.run(
+                issue_keys=issue_keys if issue_keys else None,
+                test_config=test_config
+            )
+            logger.info(f"generator.run() completed with success={success}")
+            sys.exit(0 if success else 1)
+        except Exception as e:
+            logger.error(f"generator.run() failed: {e}", exc_info=True)
+            raise
 
     except Exception as e:
-        logger.error(f"Fatal error: {e}")
+        logger.error(f"Fatal error: {e}", exc_info=True)
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        print(f"ERROR: {e}", file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
         sys.exit(1)
 
 

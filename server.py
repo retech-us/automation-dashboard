@@ -334,11 +334,16 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 else:
                     error_msg = result.stderr or result.stdout or "Unknown error"
                     logger.error(f"❌ Generator failed with return code {result.returncode}")
-                    logger.error(f"STDOUT: {result.stdout[:500]}")
-                    logger.error(f"STDERR: {result.stderr[:500]}")
+                    logger.error(f"FULL STDOUT:\n{result.stdout}")
+                    logger.error(f"FULL STDERR:\n{result.stderr}")
+
+                    # Try to extract meaningful error from output
+                    error_lines = (result.stderr or result.stdout or "").split('\n')
+                    meaningful_error = next((line for line in error_lines if 'error' in line.lower() or 'failed' in line.lower()), error_msg)
+
                     return self._send_json_response({
                         "status": "error",
-                        "message": f"Test case generation failed: {error_msg[:200]}"
+                        "message": f"Test case generation failed: {meaningful_error[:200]}"
                     }, 500)
             except subprocess.TimeoutExpired:
                 logger.error("❌ Test case generation timed out (5 minutes)")
