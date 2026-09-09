@@ -74,8 +74,38 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
             return self._handle_verify_credentials()
         elif self.path == '/api/generate-test-cases':
             return self._handle_generate_test_cases()
+        elif self.path == '/api/debug-credentials':
+            return self._handle_debug_credentials()
         else:
             self.send_error(404, "Not Found")
+
+    def _handle_debug_credentials(self):
+        """DEBUG: Echo back received credentials"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+            request_data = json.loads(body) if body else {}
+
+            logger.info(f"DEBUG: Received credentials:")
+            logger.info(f"  jira_base_url: {request_data.get('jira_base_url')}")
+            logger.info(f"  jira_user_email: {request_data.get('jira_user_email')}")
+            logger.info(f"  ai_provider: {request_data.get('ai_provider')}")
+            logger.info(f"  anthropic_api_key present: {'anthropic_api_key' in request_data}")
+            logger.info(f"  openai_api_key present: {'openai_api_key' in request_data}")
+
+            return self._send_json_response({
+                "status": "debug",
+                "received": {
+                    "jira_base_url": request_data.get('jira_base_url'),
+                    "jira_user_email": request_data.get('jira_user_email'),
+                    "ai_provider": request_data.get('ai_provider'),
+                    "has_anthropic_key": 'anthropic_api_key' in request_data,
+                    "has_openai_key": 'openai_api_key' in request_data,
+                }
+            })
+        except Exception as e:
+            logger.error(f"Debug error: {e}", exc_info=True)
+            return self._send_json_response({"error": str(e)}, 500)
 
     def _handle_verify_credentials(self):
         """POST /api/verify-credentials - Verify user credentials"""
@@ -270,7 +300,11 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 cmd.append('--issues')
                 cmd.append(','.join(issue_keys))
 
+            logger.info(f"Python executable: {sys.executable}")
+            logger.info(f"Working directory: {os.getcwd()}")
             logger.info(f"Running generator with command: {' '.join(cmd)}")
+            logger.info(f"Issue keys: {issue_keys}")
+            logger.info(f"AI Provider: {ai_provider}")
 
             # Run generator with credentials
             try:

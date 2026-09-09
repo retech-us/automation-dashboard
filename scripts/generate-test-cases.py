@@ -1045,6 +1045,16 @@ def main():
     try:
         import argparse
 
+        # Log environment for debugging
+        logger.info("=== Script Environment ===")
+        logger.info(f"JIRA_BASE_URL: {os.getenv('JIRA_BASE_URL', 'NOT SET')}")
+        logger.info(f"JIRA_USER_EMAIL: {os.getenv('JIRA_USER_EMAIL', 'NOT SET')}")
+        logger.info(f"JIRA_API_TOKEN: {'SET' if os.getenv('JIRA_API_TOKEN') else 'NOT SET'}")
+        logger.info(f"ANTHROPIC_API_KEY: {'SET' if os.getenv('ANTHROPIC_API_KEY') else 'NOT SET'}")
+        logger.info(f"OPENAI_API_KEY: {'SET' if os.getenv('OPENAI_API_KEY') else 'NOT SET'}")
+        logger.info(f"Script started with args: {sys.argv[1:]}")
+        logger.info("=== End Environment ===")
+
         parser = argparse.ArgumentParser(
             description="Generate BDD test cases from Jira issues"
         )
@@ -1065,6 +1075,8 @@ def main():
         )
 
         args = parser.parse_args()
+
+        logger.info(f"Parsed args: issues={args.issues}, interactive={args.interactive}, skip_config={args.skip_config}")
 
         generator = TestCaseGenerator()
 
