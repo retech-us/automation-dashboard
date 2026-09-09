@@ -25,18 +25,29 @@
   left: 0;
   width: 100%;
   height: 100%;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.3s ease;
-  z-index: 1000;
+  z-index: 10000 !important;
+  visibility: visible !important;
 }
 
 .modal.is-open {
   pointer-events: auto;
-  opacity: 1;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Credentials modal should be on top of all other modals */
+#credentials-modal {
+  z-index: 20000 !important;
+}
+
+#credentials-modal.is-open {
+  z-index: 20000 !important;
 }
 
 .modal__overlay {

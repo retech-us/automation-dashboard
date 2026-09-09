@@ -410,7 +410,7 @@ class BDDGenerator:
         try:
             response = self.client.messages.create(
                 model=self.config.model,
-                max_tokens=4000,
+                max_tokens=2000,
                 messages=[
                     {"role": "user", "content": user_prompt}
                 ]
@@ -433,7 +433,7 @@ class BDDGenerator:
 
             response = self.client.chat.completions.create(
                 model=self.config.model,
-                max_tokens=8000,  # Increased from 4000 to handle complete responses
+                max_tokens=2000,  # Optimized for faster generation
                 temperature=temp,
                 messages=[
                     {"role": "system", "content": self._load_system_prompt()},

@@ -5,6 +5,7 @@
 
 class TestCaseGenerator {
   constructor() {
+    console.log('🚀 TestCaseGenerator constructor called');
     this.isGenerating = false;
     this.jiraIssues = [];
     this.generatedIssueKeys = [];
@@ -16,64 +17,75 @@ class TestCaseGenerator {
   }
 
   async init() {
+    console.log('🔧 TestCaseGenerator.init() starting');
     // Create modal HTML
     this.createModal();
     this.wireEventListeners();
 
-    // Add button to Jira tab
+    // Add button to Jira tab (and attach event listener when done)
     this.addButtonToJiraTab();
-
-    // Load Jira issues when modal opens
-    const generateBtn = document.getElementById('generate-test-cases-btn');
-    if (generateBtn) {
-      generateBtn.addEventListener('click', () => this.openModal());
-    }
 
     console.log('✓ Test Case Generator initialized');
   }
 
   addButtonToJiraTab() {
-    // Try to add button immediately, with retries if panel not ready
+    // Create the button element (reusable)
+    const createButton = () => {
+      const btn = document.createElement('button');
+      btn.id = 'generate-test-cases-btn';
+      btn.className = 'btn';
+      btn.type = 'button';
+      btn.textContent = '⚡ Generate Test Cases';
+      btn.title = 'Generate BDD scenarios from Jira issues using Claude AI';
+      btn.style.cssText = 'background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 12px; padding: 10px 18px; cursor: pointer; font-weight: 600; white-space: nowrap;';
+      btn.addEventListener('click', () => {
+        console.log('🔘 Generate Test Cases button clicked');
+        this.openModal();
+      });
+      return btn;
+    };
+
+    // Try to add button, with retries and re-adds since jira-tracker clears headerActions
     const tryAddButton = () => {
       const jiraPanel = document.getElementById('panel-jira');
       if (!jiraPanel) {
-        // Retry after a short delay if panel not found
+        console.log('⏳ Waiting for #panel-jira...');
+        setTimeout(tryAddButton, 100);
+        return;
+      }
+
+      const headerActions = jiraPanel.querySelector('#jira-header-actions');
+      if (!headerActions) {
+        console.log('⏳ Waiting for #jira-header-actions...');
         setTimeout(tryAddButton, 100);
         return;
       }
 
       // Check if button already exists
-      if (document.getElementById('generate-test-cases-btn')) return;
-
-      // Create button
-      const btn = document.createElement('button');
-      btn.id = 'generate-test-cases-btn';
-      btn.className = 'btn btn--primary';
-      btn.type = 'button';
-      btn.textContent = '⚡ Generate Test Cases';
-      btn.title = 'Generate BDD scenarios from Jira issues using Claude AI';
-
-      // Insert at the top of Jira panel
-      const jiraHeader = jiraPanel.querySelector('.tab-panel__header');
-      if (jiraHeader) {
-        // Add to existing header
-        jiraHeader.appendChild(btn);
-      } else {
-        // Create a toolbar if no header exists
-        const jiraContent = jiraPanel.querySelector('#jira-content');
-        if (jiraContent) {
-          let toolbar = jiraPanel.querySelector('[data-jira-toolbar]');
-          if (!toolbar) {
-            toolbar = document.createElement('div');
-            toolbar.setAttribute('data-jira-toolbar', 'true');
-            jiraContent.parentNode.insertBefore(toolbar, jiraContent);
-          }
-          toolbar.appendChild(btn);
-        }
+      if (document.getElementById('generate-test-cases-btn')) {
+        console.log('✓ Button already exists');
+        return;
       }
+
+      // Add button
+      const btn = createButton();
+      headerActions.appendChild(btn);
+      console.log('✓ Button added to #jira-header-actions');
     };
 
+    // Initial add
     tryAddButton();
+
+    // Re-add button periodically (jira-tracker clears headerActions with innerHTML)
+    // Check every 2 seconds if button is still there, re-add if missing
+    setInterval(() => {
+      const headerActions = document.getElementById('jira-header-actions');
+      if (headerActions && !document.getElementById('generate-test-cases-btn')) {
+        const btn = createButton();
+        headerActions.insertBefore(btn, headerActions.firstChild);
+        console.log('🔄 Button was removed, re-added to #jira-header-actions');
+      }
+    }, 2000);
   }
 
   createModal() {
@@ -255,22 +267,34 @@ class TestCaseGenerator {
   }
 
   async openModal() {
+    console.log('📂 openModal() called');
+
     // Always check for valid credentials first
     if (!window.credentialsManager) {
+      console.error('❌ credentialsManager not initialized');
       alert('Credentials manager not initialized. Please refresh the page.');
       return;
     }
 
+    console.log('✓ credentialsManager exists');
+
     // Check if valid session exists
-    if (window.credentialsManager.isSessionValid()) {
+    const isSessionValid = window.credentialsManager.isSessionValid();
+    console.log('Session valid?', isSessionValid);
+
+    if (isSessionValid) {
+      console.log('✓ Valid session found - opening generator modal');
       // Valid session - open generator directly
       const modal = document.getElementById('test-case-generator-modal');
       modal.classList.add('is-open');
       await this.loadJiraIssues();
       this.showStep('select');
     } else {
+      console.log('❌ No valid session - opening credentials dialog');
       // No valid session - open credentials dialog
+      console.log('Calling credentialsManager.openModal()...');
       window.credentialsManager.openModal();
+      console.log('credentialsManager.openModal() returned');
     }
   }
 
@@ -501,6 +525,17 @@ class TestCaseGenerator {
     this.isGenerating = true;
     this.showStep('progress');
 
+    // Disable action button during generation
+    const actionBtn = document.querySelector('#modal-action-btn');
+    if (actionBtn) {
+      actionBtn.disabled = true;
+      actionBtn.style.opacity = '0.5';
+      actionBtn.style.cursor = 'not-allowed';
+    }
+
+    // Update progress
+    this.updateProgress(0, `Initializing test case generation for ${issueKeys.length} issue(s)...`);
+
     try {
       // Get credentials from session
       if (!window.credentialsManager) {
@@ -516,6 +551,8 @@ class TestCaseGenerator {
         window.credentialsManager.openModal();
         return;
       }
+
+      this.updateProgress(10, 'Validating credentials...');
 
       // Prepare request data with credentials
       const requestData = {
@@ -539,6 +576,8 @@ class TestCaseGenerator {
         }
       }
 
+      this.updateProgress(20, 'Sending request to server...');
+
       // Start generation
       const response = await fetch('/api/generate-test-cases', {
         method: 'POST',
@@ -548,14 +587,19 @@ class TestCaseGenerator {
         body: JSON.stringify(requestData)
       });
 
+      this.updateProgress(50, 'Processing results...');
+
       const result = await response.json();
 
       if (response.ok && result.status === 'success') {
+        this.updateProgress(90, 'Finalizing...');
         // Show results
         this.displayResults(result.data);
+        this.updateProgress(100, 'Complete!');
         this.showStep('results');
       } else {
-        this.showError(result.message || 'Unknown error occurred');
+        const errorMsg = result.message || `Server error: ${response.status}`;
+        this.showError(errorMsg);
         this.showStep('results');
       }
     } catch (error) {
@@ -564,7 +608,27 @@ class TestCaseGenerator {
       this.showStep('results');
     } finally {
       this.isGenerating = false;
+      // Re-enable button
+      if (actionBtn) {
+        actionBtn.disabled = false;
+        actionBtn.style.opacity = '1';
+        actionBtn.style.cursor = 'pointer';
+      }
     }
+  }
+
+  updateProgress(percent, message) {
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+
+    if (progressFill) {
+      progressFill.style.width = percent + '%';
+    }
+    if (progressText) {
+      progressText.textContent = message;
+    }
+
+    console.log(`Progress: ${percent}% - ${message}`);
   }
 
   displayResults(data) {

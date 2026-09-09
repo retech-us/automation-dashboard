@@ -5,12 +5,14 @@
 
 class CredentialsManager {
   constructor() {
+    console.log('🔑 CredentialsManager: Constructor called');
     this.sessionStorageKey = 'jira_ai_session';
     this.sessionExpiryKey = 'jira_ai_session_expiry';
     this.initializeUI();
   }
 
   initializeUI() {
+    console.log('🔑 CredentialsManager: initializeUI() called');
     const form = document.getElementById('credentials-form');
     const submitBtn = document.getElementById('credentials-submit');
     const cancelBtn = document.getElementById('credentials-cancel');
@@ -252,21 +254,45 @@ class CredentialsManager {
   }
 
   openModal() {
+    console.log('🔑 CredentialsManager.openModal() called');
     const modal = document.getElementById('credentials-modal');
     if (modal) {
-      modal.style.display = 'flex';
+      console.log('✓ Found credentials-modal element');
+      console.log('Modal HTML:', modal.outerHTML.substring(0, 200));
+
+      // Remove inline display: none style
+      modal.style.display = '';
+      console.log('✓ Cleared inline display style');
+
+      // Add is-open class for opacity animation
+      modal.classList.add('is-open');
+      console.log('✓ Added is-open class to modal');
+
+      // Debug: Check computed styles
+      const computed = window.getComputedStyle(modal);
+      console.log('Modal computed display:', computed.display);
+      console.log('Modal computed opacity:', computed.opacity);
+      console.log('Modal computed visibility:', computed.visibility);
+      console.log('Modal z-index:', computed.zIndex);
+
       // Focus first input
       const firstInput = modal.querySelector('input[type="url"]');
       if (firstInput) {
+        console.log('✓ Found first input, focusing...');
         setTimeout(() => firstInput.focus(), 100);
       }
+    } else {
+      console.error('❌ credentials-modal element not found in DOM');
+      // Try to find it another way
+      const allModals = document.querySelectorAll('[id*="credentials"]');
+      console.log('Elements with "credentials" in ID:', allModals.length, allModals);
     }
   }
 
   closeModal() {
     const modal = document.getElementById('credentials-modal');
     if (modal) {
-      modal.style.display = 'none';
+      modal.classList.remove('is-open');
     }
   }
 
@@ -290,12 +316,56 @@ class CredentialsManager {
       expiresIn: `${expiry.hours}h ${expiry.minutes}m`,
     };
   }
+
+  // Diagnostic function for debugging
+  diagnose() {
+    console.log('=== CREDENTIALS MANAGER DIAGNOSTIC ===');
+    console.log('Manager initialized?', !!credentialsManager);
+    console.log('Window.credentialsManager exists?', !!window.credentialsManager);
+
+    const modal = document.getElementById('credentials-modal');
+    console.log('Modal element exists?', !!modal);
+    if (modal) {
+      const computed = window.getComputedStyle(modal);
+      console.log('Modal display:', computed.display);
+      console.log('Modal opacity:', computed.opacity);
+      console.log('Modal z-index:', computed.zIndex);
+      console.log('Modal classes:', modal.className);
+    }
+
+    const session = sessionStorage.getItem(this.sessionStorageKey);
+    console.log('Session in storage?', !!session);
+    if (session) {
+      const data = JSON.parse(session);
+      console.log('Session user:', data.jira_user_email);
+      console.log('Session provider:', data.ai_provider);
+      console.log('Session created:', data.created_at);
+      console.log('Session expires:', data.expires_at);
+    }
+
+    console.log('isSessionValid?', this.isSessionValid());
+    console.log('=== END DIAGNOSTIC ===');
+  }
 }
 
 // Initialize on page load
 let credentialsManager;
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('🔑 CredentialsManager: DOMContentLoaded event fired');
   credentialsManager = new CredentialsManager();
+
+  // Export for use in other scripts (must be after initialization)
+  window.credentialsManager = credentialsManager;
+  console.log('🔑 CredentialsManager: Exported to window.credentialsManager');
+
+  // Verify the credentials-modal element exists
+  const modal = document.getElementById('credentials-modal');
+  console.log('🔑 Credentials modal element in DOM?', !!modal);
+  if (modal) {
+    console.log('🔑 Modal HTML present, length:', modal.innerHTML.length);
+  } else {
+    console.error('❌ credentials-modal element NOT found in DOM!');
+  }
 
   // Check if session exists and is valid
   const session = credentialsManager.getSession();
@@ -304,8 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (status) {
       console.log(`✓ Active session for ${status.user} (${status.provider}), expires in ${status.expiresIn}`);
     }
+  } else {
+    console.log('🔑 No active session on page load');
   }
 });
-
-// Export for use in other scripts
-window.credentialsManager = credentialsManager;

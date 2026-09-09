@@ -274,6 +274,9 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
             # Run generator with credentials
             try:
+                logger.info(f"Running command: {' '.join(cmd)}")
+                logger.info(f"Environment: JIRA_BASE_URL={env.get('JIRA_BASE_URL')}, AI_PROVIDER={ai_provider}")
+
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, env=env)
 
                 if result.returncode == 0:
@@ -282,35 +285,38 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
                     if tc_file.exists():
                         with open(tc_file, 'r') as f:
                             data = json.load(f)
-                        logger.info(f"Successfully generated test cases")
+                        logger.info(f"✓ Successfully generated test cases for {data.get('totalIssues', 0)} issues")
                         return self._send_json_response({
                             "status": "success",
                             "message": f"Generated test cases for {data.get('totalIssues', 0)} issues",
                             "data": data
                         })
                     else:
+                        logger.warning("Generation complete but no results file found")
                         return self._send_json_response({
                             "status": "success",
                             "message": "Generation complete but no results file found"
                         })
                 else:
                     error_msg = result.stderr or result.stdout or "Unknown error"
-                    logger.error(f"Generator failed: {error_msg}")
+                    logger.error(f"❌ Generator failed with return code {result.returncode}")
+                    logger.error(f"STDOUT: {result.stdout[:500]}")
+                    logger.error(f"STDERR: {result.stderr[:500]}")
                     return self._send_json_response({
                         "status": "error",
-                        "message": f"Test case generation failed: {error_msg}"
+                        "message": f"Test case generation failed: {error_msg[:200]}"
                     }, 500)
             except subprocess.TimeoutExpired:
-                logger.error("Test case generation timed out")
+                logger.error("❌ Test case generation timed out (5 minutes)")
                 return self._send_json_response({
                     "status": "error",
                     "message": "Test case generation timed out (5 minutes)"
                 }, 500)
             except Exception as e:
-                logger.error(f"Error running generator: {e}")
+                logger.error(f"❌ Error running generator: {str(e)}", exc_info=True)
                 return self._send_json_response({
                     "status": "error",
-                    "message": f"Failed to run generator: {str(e)}"
+                    "message": f"Failed to run generator: {str(e)[:200]}"
                 }, 500)
 
         except json.JSONDecodeError:
