@@ -255,19 +255,23 @@ class TestCaseGenerator {
   }
 
   async openModal() {
-    // Check if credentials session is valid
-    if (window.credentialsManager && !window.credentialsManager.isSessionValid()) {
-      // No valid session - open credentials dialog
-      window.credentialsManager.openModal();
+    // Always check for valid credentials first
+    if (!window.credentialsManager) {
+      alert('Credentials manager not initialized. Please refresh the page.');
       return;
     }
 
-    const modal = document.getElementById('test-case-generator-modal');
-    modal.classList.add('is-open');
-
-    // Load Jira issues
-    await this.loadJiraIssues();
-    this.showStep('select');
+    // Check if valid session exists
+    if (window.credentialsManager.isSessionValid()) {
+      // Valid session - open generator directly
+      const modal = document.getElementById('test-case-generator-modal');
+      modal.classList.add('is-open');
+      await this.loadJiraIssues();
+      this.showStep('select');
+    } else {
+      // No valid session - open credentials dialog
+      window.credentialsManager.openModal();
+    }
   }
 
   // Make this method accessible to credentials manager
@@ -498,16 +502,50 @@ class TestCaseGenerator {
     this.showStep('progress');
 
     try {
+      // Get credentials from session
+      if (!window.credentialsManager) {
+        this.showError('Credentials manager not available');
+        this.showStep('results');
+        return;
+      }
+
+      const session = window.credentialsManager.getSession();
+      if (!session) {
+        this.showError('Session expired. Please enter credentials again.');
+        this.showStep('results');
+        window.credentialsManager.openModal();
+        return;
+      }
+
+      // Prepare request data with credentials
+      const requestData = {
+        issueKeys: issueKeys,
+        maxIssues: issueKeys.length,
+        // Jira credentials
+        jira_base_url: session.jira_base_url,
+        jira_user_email: session.jira_user_email,
+        jira_api_token: session.jira_api_token,
+        // AI provider
+        ai_provider: session.ai_provider
+      };
+
+      // Add AI provider credentials
+      if (session.ai_provider === 'anthropic') {
+        requestData.anthropic_api_key = session.anthropic_api_key;
+      } else if (session.ai_provider === 'openai') {
+        requestData.openai_api_key = session.openai_api_key;
+        if (session.openai_api_base) {
+          requestData.openai_api_base = session.openai_api_base;
+        }
+      }
+
       // Start generation
       const response = await fetch('/api/generate-test-cases', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          issueKeys: issueKeys,
-          maxIssues: issueKeys.length
-        })
+        body: JSON.stringify(requestData)
       });
 
       const result = await response.json();

@@ -70,10 +70,79 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
         logger.info(f"POST {self.path} - {self.client_address[0]}")
 
         # API endpoints
-        if self.path == '/api/generate-test-cases':
+        if self.path == '/api/verify-credentials':
+            return self._handle_verify_credentials()
+        elif self.path == '/api/generate-test-cases':
             return self._handle_generate_test_cases()
         else:
             self.send_error(404, "Not Found")
+
+    def _handle_verify_credentials(self):
+        """POST /api/verify-credentials - Verify user credentials"""
+        try:
+            # Read request body
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+
+            if not body:
+                return self._send_json_response({"valid": False, "error": "No credentials provided"}, 400)
+
+            request_data = json.loads(body)
+
+            # Extract credentials
+            jira_url = request_data.get('jira_base_url', '').strip()
+            jira_email = request_data.get('jira_user_email', '').strip()
+            jira_token = request_data.get('jira_api_token', '').strip()
+            ai_provider = request_data.get('ai_provider', '').strip()
+
+            # Validate Jira credentials
+            if not all([jira_url, jira_email, jira_token]):
+                return self._send_json_response({"valid": False, "error": "Missing Jira credentials"}, 400)
+
+            # Validate AI provider credentials
+            if ai_provider == 'anthropic':
+                anthropic_key = request_data.get('anthropic_api_key', '').strip()
+                if not anthropic_key:
+                    return self._send_json_response({"valid": False, "error": "Missing Claude API key"}, 400)
+                if not anthropic_key.startswith('sk-ant-'):
+                    return self._send_json_response({"valid": False, "error": "Invalid Claude API key format"}, 400)
+            elif ai_provider == 'openai':
+                openai_key = request_data.get('openai_api_key', '').strip()
+                if not openai_key:
+                    return self._send_json_response({"valid": False, "error": "Missing OpenAI API key"}, 400)
+                if not openai_key.startswith('sk-'):
+                    return self._send_json_response({"valid": False, "error": "Invalid OpenAI API key format"}, 400)
+            else:
+                return self._send_json_response({"valid": False, "error": "Invalid AI provider"}, 400)
+
+            # Test Jira connection
+            import base64
+            import urllib.request
+            import urllib.error
+
+            credentials = f"{jira_email}:{jira_token}"
+            encoded = base64.b64encode(credentials.encode()).decode()
+            url = f"{jira_url}/rest/api/3/myself"
+
+            try:
+                headers = {
+                    'Authorization': f'Basic {encoded}',
+                    'Content-Type': 'application/json'
+                }
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    jira_user = json.loads(response.read().decode('utf-8'))
+                    logger.info(f"✓ Credentials verified for {jira_user.get('displayName', 'User')}")
+                    return self._send_json_response({"valid": True, "user": jira_user.get('displayName', 'User')})
+            except Exception as e:
+                logger.error(f"Jira verification failed: {e}")
+                return self._send_json_response({"valid": False, "error": f"Jira verification failed: {str(e)}"}, 400)
+
+        except json.JSONDecodeError:
+            return self._send_json_response({"valid": False, "error": "Invalid JSON"}, 400)
+        except Exception as e:
+            logger.error(f"Error verifying credentials: {e}")
+            return self._send_json_response({"valid": False, "error": str(e)}, 500)
 
     def _handle_get_jira_issues(self):
         """GET /api/jira-issues - Return all Jira issues from mock data"""
@@ -119,7 +188,7 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
             return self._send_json_response({"error": str(e)}, 500)
 
     def _handle_generate_test_cases(self):
-        """POST /api/generate-test-cases - Trigger test case generation"""
+        """POST /api/generate-test-cases - Trigger test case generation with user credentials"""
         try:
             # Read request body
             content_length = int(self.headers.get('Content-Length', 0))
@@ -136,15 +205,76 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
             logger.info(f"Generating test cases for {len(issue_keys)} issues...")
 
+            # Set up environment with user credentials
+            env = os.environ.copy()
+
+            # Jira credentials (required)
+            jira_url = request_data.get('jira_base_url', '').strip()
+            jira_email = request_data.get('jira_user_email', '').strip()
+            jira_token = request_data.get('jira_api_token', '').strip()
+            ai_provider = request_data.get('ai_provider', '').strip()
+
+            if not all([jira_url, jira_email, jira_token, ai_provider]):
+                logger.error("Missing required credentials")
+                return self._send_json_response({
+                    "status": "error",
+                    "message": "Missing required credentials"
+                }, 400)
+
+            # Set Jira environment variables
+            env['JIRA_BASE_URL'] = jira_url
+            env['JIRA_USER_EMAIL'] = jira_email
+            env['JIRA_API_TOKEN'] = jira_token
+
+            # Set AI provider credentials
+            if ai_provider == 'anthropic':
+                anthropic_key = request_data.get('anthropic_api_key', '').strip()
+                if not anthropic_key:
+                    return self._send_json_response({
+                        "status": "error",
+                        "message": "Missing Claude API key"
+                    }, 400)
+                env['ANTHROPIC_API_KEY'] = anthropic_key
+                # Remove OpenAI key if set
+                env.pop('OPENAI_API_KEY', None)
+                logger.info(f"Using Claude (Anthropic) provider")
+            elif ai_provider == 'openai':
+                openai_key = request_data.get('openai_api_key', '').strip()
+                if not openai_key:
+                    return self._send_json_response({
+                        "status": "error",
+                        "message": "Missing OpenAI API key"
+                    }, 400)
+                env['OPENAI_API_KEY'] = openai_key
+                # Set custom endpoint if provided
+                openai_base = request_data.get('openai_api_base', '').strip()
+                if openai_base:
+                    env['OPENAI_API_BASE'] = openai_base
+                    logger.info(f"Using OpenAI with custom endpoint: {openai_base}")
+                else:
+                    logger.info(f"Using OpenAI provider")
+            else:
+                return self._send_json_response({
+                    "status": "error",
+                    "message": "Invalid AI provider"
+                }, 400)
+
             # Build command to run generator
             cmd = [
                 sys.executable,
                 'scripts/generate-test-cases.py'
             ]
 
-            # Run generator
+            # Add issue keys if provided
+            if issue_keys:
+                cmd.append('--issues')
+                cmd.append(','.join(issue_keys))
+
+            logger.info(f"Running generator with command: {' '.join(cmd)}")
+
+            # Run generator with credentials
             try:
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, env=env)
 
                 if result.returncode == 0:
                     # Load generated test cases

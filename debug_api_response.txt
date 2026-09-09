@@ -1,0 +1,316 @@
+```json
+[
+  {
+    "id": "SC-001",
+    "title": "API returns OOS data for store with scans in specific category",
+    "type": "positive",
+    "category": "functional",
+    "priority": "P1",
+    "preconditions": [
+      "Given OOS Data API is deployed and accessible",
+      "And Store 1234 has distribution lists for oral care and grooming categories",
+      "And user has taken photos in oral care category on July 1",
+      "And user has NOT taken photos in grooming category on July 1",
+      "And JWT authentication token is available"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When API client sends GET request to /api/oos-data?store_number=1234&scan_date=2024-07-01",
+        "expectedResult": "API returns HTTP 200 status code"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then response contains OOS records for oral care category only",
+        "expectedResult": "JSON response includes Store Number, Store Name, Scan Date, EAN, Product Name, User Response, Assortment Flag fields"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And response does NOT contain grooming category records",
+        "expectedResult": "No grooming products appear in response data"
+      },
+      {
+        "stepNumber": 4,
+        "action": "Then verify all records have scan_date = '2024-07-01'",
+        "expectedResult": "All returned records match the requested date"
+      }
+    ],
+    "expectedResult": "API returns filtered OOS data only for categories where scans occurred, excluding categories without scans",
+    "automationHint": "RestAssured: given().auth().oauth2(token).when().get('/api/oos-data?store_number=1234&scan_date=2024-07-01').then().statusCode(200).body('data', hasSize(greaterThan(0))).body('data[0].category', not(equalTo('grooming')));",
+    "tags": ["@positive", "@api", "@critical", "@smoke"],
+    "coverage": ["Filtering by category with scans", "Store-specific data retrieval"]
+  },
+  {
+    "id": "SC-002",
+    "title": "API returns OOS data for all categories when store has complete scan coverage",
+    "type": "positive",
+    "category": "functional",
+    "priority": "P1",
+    "preconditions": [
+      "Given OOS Data API is deployed and accessible",
+      "And Store 2345 has distribution lists for multiple categories",
+      "And user has taken photos in ALL categories on July 1",
+      "And JWT authentication token is available"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When API client sends GET request to /api/oos-data?store_number=2345&scan_date=2024-07-01",
+        "expectedResult": "API returns HTTP 200 status code"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then response contains OOS records for all categories with scans",
+        "expectedResult": "JSON response includes records from all scanned categories"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And verify response structure matches specification",
+        "expectedResult": "Each record contains: Store Number, Store Name, Scan Date, EAN, Product Name, User Response, Assortment Flag"
+      },
+      {
+        "stepNumber": 4,
+        "action": "Then validate data types for each field",
+        "expectedResult": "Store Number is numeric, Scan Date is valid date format, EAN is numeric string"
+      }
+    ],
+    "expectedResult": "API successfully returns complete OOS data for store with full category scan coverage",
+    "automationHint": "RestAssured: JsonPath json = response.jsonPath(); assert json.getList('data.store_number').contains('2345'); assert json.getList('data.scan_date').every(date -> date.equals('2024-07-01'));",
+    "tags": ["@positive", "@api", "@critical"],
+    "coverage": ["Complete category coverage", "Data structure validation"]
+  },
+  {
+    "id": "SC-003",
+    "title": "API returns empty dataset for store with no scans on specified date",
+    "type": "positive",
+    "category": "functional",
+    "priority": "P1",
+    "preconditions": [
+      "Given OOS Data API is deployed and accessible",
+      "And Store 9876 has NO scans on July 1",
+      "And Store 9876 has distribution lists configured",
+      "And JWT authentication token is available"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When API client sends GET request to /api/oos-data?store_number=9876&scan_date=2024-07-01",
+        "expectedResult": "API returns HTTP 200 status code"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then response body contains empty data array",
+        "expectedResult": "Response JSON: {\"data\": [], \"message\": \"No scans found for specified store and date\"}"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And response does NOT contain any OOS records",
+        "expectedResult": "Data array length is 0"
+      }
+    ],
+    "expectedResult": "API correctly returns empty result set for store without scans, no error thrown",
+    "automationHint": "RestAssured: given().auth().oauth2(token).when().get('/api/oos-data?store_number=9876&scan_date=2024-07-01').then().statusCode(200).body('data', hasSize(0));",
+    "tags": ["@positive", "@api", "@edge-case"],
+    "coverage": ["No scan scenario", "Empty result handling"]
+  },
+  {
+    "id": "SC-004",
+    "title": "API rejects request with invalid store number format",
+    "type": "negative",
+    "category": "validation",
+    "priority": "P1",
+    "preconditions": [
+      "Given OOS Data API is deployed and accessible",
+      "And JWT authentication token is available"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When API client sends GET request with invalid store_number: /api/oos-data?store_number=ABC123&scan_date=2024-07-01",
+        "expectedResult": "API returns HTTP 400 Bad Request status"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then response contains error message",
+        "expectedResult": "Error JSON: {\"error\": \"Invalid store_number format\", \"message\": \"Store number must be numeric\"}"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And no OOS data is returned",
+        "expectedResult": "Response does not contain data array"
+      }
+    ],
+    "expectedResult": "API properly validates store number format and rejects invalid input with clear error message",
+    "automationHint": "RestAssured: given().auth().oauth2(token).when().get('/api/oos-data?store_number=ABC123&scan_date=2024-07-01').then().statusCode(400).body('error', equalTo('Invalid store_number format'));",
+    "tags": ["@negative", "@validation", "@api"],
+    "coverage": ["Input validation", "Error handling"]
+  },
+  {
+    "id": "SC-005",
+    "title": "API rejects request with missing required parameters",
+    "type": "negative",
+    "category": "validation",
+    "priority": "P2",
+    "preconditions": [
+      "Given OOS Data API is deployed and accessible",
+      "And JWT authentication token is available"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When API client sends GET request without store_number parameter: /api/oos-data?scan_date=2024-07-01",
+        "expectedResult": "API returns HTTP 400 Bad Request status"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then response contains validation error",
+        "expectedResult": "Error JSON: {\"error\": \"Missing required parameter\", \"message\": \"store_number is required\"}"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And API does not process the request",
+        "expectedResult": "No database query is executed, no data returned"
+      }
+    ],
+    "expectedResult": "API enforces required parameters and returns descriptive error for missing fields",
+    "automationHint": "RestAssured: given().auth().oauth2(token).when().get('/api/oos-data?scan_date=2024-07-01').then().statusCode(400).body('message', containsString('store_number is required'));",
+    "tags": ["@negative", "@validation", "@api"],
+    "coverage": ["Required field validation", "Parameter enforcement"]
+  },
+  {
+    "id": "SC-006",
+    "title": "API rejects request with invalid date format",
+    "type": "negative",
+    "category": "validation",
+    "priority": "P2",
+    "preconditions": [
+      "Given OOS Data API is deployed and accessible",
+      "And JWT authentication token is available"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When API client sends GET request with invalid date format: /api/oos-data?store_number=1234&scan_date=01-07-2024",
+        "expectedResult": "API returns HTTP 400 Bad Request status"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then response contains date validation error",
+        "expectedResult": "Error JSON: {\"error\": \"Invalid date format\", \"message\": \"Date must be in YYYY-MM-DD format\"}"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And no data processing occurs",
+        "expectedResult": "Request is rejected before database query"
+      }
+    ],
+    "expectedResult": "API validates date format and rejects non-standard date inputs with clear guidance",
+    "automationHint": "RestAssured: given().auth().oauth2(token).when().get('/api/oos-data?store_number=1234&scan_date=01-07-2024').then().statusCode(400).body('error', equalTo('Invalid date format'));",
+    "tags": ["@negative", "@validation", "@api"],
+    "coverage": ["Date format validation", "Input sanitization"]
+  },
+  {
+    "id": "SC-007",
+    "title": "API handles future date request with appropriate response",
+    "type": "edge-case",
+    "category": "validation",
+    "priority": "P2",
+    "preconditions": [
+      "Given OOS Data API is deployed and accessible",
+      "And current date is before the requested scan date",
+      "And JWT authentication token is available"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When API client sends GET request with future date: /api/oos-data?store_number=1234&scan_date=2025-12-31",
+        "expectedResult": "API returns HTTP 200 status code"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then response contains empty data array",
+        "expectedResult": "Response JSON: {\"data\": [], \"message\": \"No scans found for future date\"}"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And no error is thrown",
+        "expectedResult": "Valid response structure maintained"
+      }
+    ],
+    "expectedResult": "API gracefully handles future date requests by returning empty result set without error",
+    "automationHint": "RestAssured: String futureDate = LocalDate.now().plusDays(30).toString(); given().auth().oauth2(token).when().get('/api/oos-data?store_number=1234&scan_date=' + futureDate).then().statusCode(200).body('data', hasSize(0));",
+    "tags": ["@edge-case", "@api", "@boundary"],
+    "coverage": ["Temporal boundary testing", "Future date handling"]
+  },
+  {
+    "id": "SC-008",
+    "title": "API correctly filters multiple stores with mixed scan coverage",
+    "type": "positive",
+    "category": "functional",
+    "priority": "P1",
+    "preconditions": [
+      "Given OOS Data API is deployed and accessible",
+      "And Store 1234 has scans in oral care only on July 1",
+      "And Store 2345 has scans in all categories on July 1",
+      "And Store 9876 has no scans on July 1",
+      "And JWT authentication token is available"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When API client sends bulk request for all three stores: /api/oos-data?store_numbers=1234,2345,9876&scan_date=2024-07-01",
+        "expectedResult": "API returns HTTP 200 status code"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then response contains OOS data for Store 1234 (oral care only)",
+        "expectedResult": "Store 1234 records present, limited to oral care category"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And response contains OOS data for Store 2345 (all categories)",
+        "expectedResult": "Store 2345 records present for all scanned categories"
+      },
+      {
+        "stepNumber": 4,
+        "action": "And response contains NO data for Store 9876",
+        "expectedResult": "No records with store_number = 9876 in response"
+      }
+    ],
+    "expectedResult": "API correctly applies filtering logic across multiple stores with varying scan coverage",
+    "automationHint": "RestAssured: List<String> storeNumbers = response.jsonPath().getList('data.store_number'); assert storeNumbers.contains('1234'); assert storeNumbers.contains('2345'); assert !storeNumbers.contains('9876');",
+    "tags": ["@positive", "@api", "@critical", "@multi-store"],
+    "coverage": ["Multi-store filtering", "Mixed scan coverage scenario"]
+  },
+  {
+    "id": "SC-009",
+    "title": "API returns correct data structure matching sample file specification",
+    "type": "positive",
+    "category": "functional",
+    "priority": "P1",
+    "preconditions": [
+      "Given OOS Data API is deployed and accessible",
+      "And Store 1234 has OOS data available",
+      "And sample file specification is defined",
+      "And JWT authentication token is available"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When API client sends GET request to /api/oos-data?store_number=1234&scan_date=2024-07-01",
+        "expectedResult": "API returns HTTP 200 status code with data"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then verify each record contains Store Number field",
+        "expectedResult": "Store Number field is present and populated"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And verify each record contains Store Name, Scan Date, EAN, Product Name, User Response, Assortment Flag fields",
+        "expectedResult": "All 7 required fields are present in each record"
+      },
+      {
+        "stepNumber": 4,
+        "action": "Then validate field values match expected data types",
+        "expectedResult": "Store Number is string/numeric, Scan Date is ISO format, EAN
