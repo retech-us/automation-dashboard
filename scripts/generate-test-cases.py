@@ -429,7 +429,7 @@ class BDDGenerator:
         try:
             response = self.client.messages.create(
                 model=self.config.model,
-                max_tokens=2000,
+                max_tokens=4000,
                 messages=[
                     {"role": "user", "content": user_prompt}
                 ]
@@ -452,7 +452,7 @@ class BDDGenerator:
 
             response = self.client.chat.completions.create(
                 model=self.config.model,
-                max_tokens=2000,  # Optimized for faster generation
+                max_tokens=4000,  # Increased to handle complete responses
                 temperature=temp,
                 messages=[
                     {"role": "system", "content": self._load_system_prompt()},
@@ -660,9 +660,20 @@ Test Types Requested: {', '.join(test_types)}
                             logger.warning(f"  JSON parsing error: {parse_error}")
                             logger.warning(f"  Response appears truncated. Attempting recovery...")
 
-                            # Try to fix incomplete JSON by closing unclosed structures
                             json_fixed = json_text.rstrip()
-                            # Count unclosed brackets
+
+                            # Remove incomplete trailing object/item
+                            # Find the last complete closing bracket or brace
+                            last_complete_idx = -1
+                            for i in range(len(json_fixed) - 1, -1, -1):
+                                if json_fixed[i] in ']}':
+                                    last_complete_idx = i
+                                    break
+
+                            if last_complete_idx > 0:
+                                json_fixed = json_fixed[:last_complete_idx + 1]
+
+                            # Close any remaining open structures
                             open_brackets = json_fixed.count('[') - json_fixed.count(']')
                             open_braces = json_fixed.count('{') - json_fixed.count('}')
                             open_quotes = json_fixed.count('"') % 2
@@ -673,11 +684,15 @@ Test Types Requested: {', '.join(test_types)}
                                 # Close any open structures
                                 if open_quotes:
                                     json_fixed += '"'
-                                json_fixed += ']}' * (max(open_brackets, open_braces))
+                                # Properly close arrays and objects
+                                for _ in range(open_brackets):
+                                    json_fixed += ']'
+                                for _ in range(open_braces):
+                                    json_fixed += '}'
                                 json_fixed = json_fixed.rstrip(',')  # Remove trailing commas
 
                                 scenarios = json.loads(json_fixed)
-                                logger.info("  ✓ Successfully recovered truncated JSON")
+                                logger.info(f"  ✓ Successfully recovered truncated JSON ({len(scenarios)} scenarios recovered)")
                             except Exception as recovery_error:
                                 logger.error(f"  Could not recover JSON: {recovery_error}")
                                 logger.error(f"  Saving raw response for debugging...")
