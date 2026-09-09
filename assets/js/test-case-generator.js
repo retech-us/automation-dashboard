@@ -255,12 +255,30 @@ class TestCaseGenerator {
   }
 
   async openModal() {
+    // Check if credentials session is valid
+    if (window.credentialsManager && !window.credentialsManager.isSessionValid()) {
+      // No valid session - open credentials dialog
+      window.credentialsManager.openModal();
+      return;
+    }
+
     const modal = document.getElementById('test-case-generator-modal');
     modal.classList.add('is-open');
 
     // Load Jira issues
     await this.loadJiraIssues();
     this.showStep('select');
+  }
+
+  // Make this method accessible to credentials manager
+  openGenerator() {
+    const modal = document.getElementById('test-case-generator-modal');
+    if (modal) {
+      modal.classList.add('is-open');
+    }
+    this.loadJiraIssues().then(() => {
+      this.showStep('select');
+    });
   }
 
   closeModal() {
@@ -560,7 +578,9 @@ class TestCaseGenerator {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     window.testCaseGenerator = new TestCaseGenerator();
+    window.testCaseGeneratorUI = window.testCaseGenerator;  // Alias for credentials manager
   });
 } else {
   window.testCaseGenerator = new TestCaseGenerator();
+  window.testCaseGeneratorUI = window.testCaseGenerator;  // Alias for credentials manager
 }

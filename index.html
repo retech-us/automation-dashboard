@@ -177,6 +177,104 @@
     <p>Store Intell QA · Built with AI-assisted automation · <a href="https://retech-us.github.io/automation-dashboard/" style="color:#93c5fd">automation-dashboard</a></p>
   </footer>
 
+  <!-- Credentials Dialog -->
+  <div id="credentials-modal" class="modal" style="display: none;">
+    <div class="modal__overlay"></div>
+    <div class="modal__content" style="max-width: 600px;">
+      <div class="modal__header">
+        <h2 class="modal__title">🔐 Jira & AI Configuration</h2>
+        <button class="modal__close" id="credentials-modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal__body" style="max-height: 70vh; overflow-y: auto;">
+        <form id="credentials-form" style="display: flex; flex-direction: column; gap: 16px;">
+
+          <div style="background: var(--bg-secondary, #f9fafb); padding: 12px; border-radius: 6px; border-left: 3px solid #3b82f6;">
+            <p style="margin: 0; font-size: 13px; color: var(--text-secondary, #666);">
+              ℹ️ Enter your credentials. Session expires after your chosen duration. You'll be asked again upon expiry.
+            </p>
+          </div>
+
+          <fieldset style="display: flex; flex-direction: column; gap: 12px; border: none; padding: 0; margin: 0;">
+            <legend style="font-weight: 600; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Jira Configuration</legend>
+
+            <div>
+              <label for="jira-url" style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Jira Base URL *</label>
+              <input id="jira-url" type="url" name="jira_url" placeholder="https://your-domain.atlassian.net" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; font-size: 13px; background: var(--bg-primary, #fff);" />
+              <p style="font-size: 11px; color: var(--text-secondary, #999); margin: 4px 0 0 0;">Example: https://retech.atlassian.net</p>
+            </div>
+
+            <div>
+              <label for="jira-email" style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Jira Email *</label>
+              <input id="jira-email" type="email" name="jira_email" placeholder="your-email@company.com" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; font-size: 13px; background: var(--bg-primary, #fff);" />
+            </div>
+
+            <div>
+              <label for="jira-token" style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Jira API Token *</label>
+              <input id="jira-token" type="password" name="jira_token" placeholder="Enter your Jira API token" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; font-size: 13px; background: var(--bg-primary, #fff);" />
+              <p style="font-size: 11px; color: var(--text-secondary, #999); margin: 4px 0 0 0;"><a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" style="color: #3b82f6; text-decoration: none;">Create API token →</a></p>
+            </div>
+          </fieldset>
+
+          <fieldset style="display: flex; flex-direction: column; gap: 12px; border: none; padding: 0; margin: 0;">
+            <legend style="font-weight: 600; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">AI Provider</legend>
+
+            <div style="display: flex; gap: 12px;">
+              <label style="flex: 1; cursor: pointer;">
+                <input type="radio" name="ai_provider" value="anthropic" checked style="margin-right: 6px;" />
+                <span style="font-size: 13px;">Claude (Anthropic)</span>
+              </label>
+              <label style="flex: 1; cursor: pointer;">
+                <input type="radio" name="ai_provider" value="openai" style="margin-right: 6px;" />
+                <span style="font-size: 13px;">OpenAI</span>
+              </label>
+            </div>
+
+            <div id="anthropic-key-group">
+              <label for="anthropic-key" style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Claude API Key *</label>
+              <input id="anthropic-key" type="password" name="anthropic_key" placeholder="sk-ant-..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; font-size: 13px; background: var(--bg-primary, #fff);" />
+              <p style="font-size: 11px; color: var(--text-secondary, #999); margin: 4px 0 0 0;"><a href="https://console.anthropic.com/" target="_blank" style="color: #3b82f6; text-decoration: none;">Get Claude API key →</a></p>
+            </div>
+
+            <div id="openai-key-group" style="display: none;">
+              <label for="openai-key" style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">OpenAI API Key *</label>
+              <input id="openai-key" type="password" name="openai_key" placeholder="sk-..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; font-size: 13px; background: var(--bg-primary, #fff);" />
+              <p style="font-size: 11px; color: var(--text-secondary, #999); margin: 4px 0 0 0;"><a href="https://platform.openai.com/api-keys" target="_blank" style="color: #3b82f6; text-decoration: none;">Get OpenAI API key →</a></p>
+            </div>
+
+            <div id="openai-base-url-group" style="display: none;">
+              <label for="openai-base-url" style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">OpenAI Base URL (Optional)</label>
+              <input id="openai-base-url" type="url" name="openai_base_url" placeholder="https://api.openai.com/v1" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; font-size: 13px; background: var(--bg-primary, #fff);" />
+              <p style="font-size: 11px; color: var(--text-secondary, #999); margin: 4px 0 0 0;">Custom endpoint (leave blank for default)</p>
+            </div>
+          </fieldset>
+
+          <fieldset style="display: flex; flex-direction: column; gap: 12px; border: none; padding: 0; margin: 0;">
+            <legend style="font-weight: 600; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Session Duration</legend>
+
+            <div>
+              <label for="session-duration" style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Remember for (minimum 2 hours)</label>
+              <select id="session-duration" name="session_duration" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; font-size: 13px; background: var(--bg-primary, #fff);">
+                <option value="7200">2 hours (minimum)</option>
+                <option value="14400">4 hours</option>
+                <option value="28800">8 hours</option>
+                <option value="86400">24 hours</option>
+                <option value="604800">7 days</option>
+              </select>
+              <p style="font-size: 11px; color: var(--text-secondary, #999); margin: 4px 0 0 0;">Session will expire after this duration and you'll need to re-enter credentials.</p>
+            </div>
+          </fieldset>
+
+          <div id="credentials-error" style="display: none; padding: 8px 12px; background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; color: #7f1d1d; font-size: 12px;"></div>
+
+        </form>
+      </div>
+      <div class="modal__footer">
+        <button id="credentials-cancel" class="btn btn--ghost" type="button">Cancel</button>
+        <button id="credentials-submit" class="btn" type="button" style="background: #3b82f6; color: white;">Save & Continue</button>
+      </div>
+    </div>
+  </div>
+
   <button id="chat-toggle" class="chat-toggle" type="button" aria-expanded="false" aria-controls="chat-panel">
     Ask dashboard
   </button>
@@ -212,6 +310,7 @@
 
   <script src="assets/bootstrap.js?v=20260817p"></script>
   <script src="assets/js/auth-gate.js?v=20260817p"></script>
+  <script src="assets/js/credentials-manager.js?v=20260909p"></script>
   <script src="assets/js/live-tracker.js?v=20260817p"></script>
   <script src="assets/js/jira-tracker.js?v=20260817p"></script>
   <script src="assets/js/app.v16.js?v=20260817p"></script>
