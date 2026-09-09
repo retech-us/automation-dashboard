@@ -146,19 +146,31 @@ class JiraClient:
         """Validate Jira credentials by calling /myself endpoint"""
         try:
             url = f"{self.base_url}/rest/api/3/myself"
+            logger.info(f"Testing Jira connection to: {url}")
             req = urllib.request.Request(url, headers=self.auth_header)
             with urllib.request.urlopen(req, timeout=5) as response:
                 user = json.loads(response.read())
                 logger.info(f"✓ Jira auth OK: {user.get('displayName', 'Unknown')}")
                 return True
         except urllib.error.HTTPError as e:
+            error_body = ""
+            try:
+                error_body = e.read().decode('utf-8')[:500]
+            except:
+                pass
             if e.code == 401:
                 logger.error("✗ Jira authentication failed: Invalid credentials")
+            elif e.code == 404:
+                logger.error(f"✗ Jira endpoint not found (404): {url}")
             else:
-                logger.error(f"✗ Jira API error: {e.code}")
+                logger.error(f"✗ Jira API error {e.code}: {e.reason}")
+            if error_body:
+                logger.error(f"  Error response: {error_body}")
             return False
         except Exception as e:
             logger.error(f"✗ Jira connectivity failed: {e}")
+            import traceback
+            logger.error(f"  Traceback: {traceback.format_exc()}")
             return False
 
     def _api_call(self, method: str, endpoint: str, data: Dict = None) -> Dict[str, Any]:
@@ -241,8 +253,20 @@ class JiraClient:
 
                 logger.info(f"  Fetched {len(fetched_issues)} issues (total: {len(issues)})")
 
+        except urllib.error.HTTPError as e:
+            error_body = ""
+            try:
+                error_body = e.read().decode('utf-8')[:500]
+            except:
+                pass
+            logger.error(f"Failed to fetch issues (HTTP {e.code}): {e.reason}")
+            if error_body:
+                logger.error(f"  Error response: {error_body}")
+            return issues[:limit]
         except Exception as e:
+            import traceback
             logger.error(f"Failed to fetch issues: {e}")
+            logger.error(f"  Traceback: {traceback.format_exc()}")
             return issues[:limit]
 
         logger.info(f"✓ Total issues fetched: {len(issues)}")
