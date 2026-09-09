@@ -175,14 +175,17 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
             return self._send_json_response({"valid": False, "error": str(e)}, 500)
 
     def _handle_get_jira_issues(self):
-        """GET /api/jira-issues - Return all Jira issues from mock data"""
+        """GET /api/jira-issues - Return all Jira issues (uses mock data as fallback)"""
         try:
+            # For now, return mock data - in production, this would fetch from real Jira
             jira_file = Path('data/jira.json')
             if jira_file.exists():
                 with open(jira_file, 'r') as f:
                     data = json.load(f)
+                logger.info(f"Loaded {len(data.get('issues', []))} mock Jira issues")
                 return self._send_json_response(data)
             else:
+                logger.warning("No mock Jira data found")
                 return self._send_json_response({"issues": [], "total": 0})
         except Exception as e:
             logger.error(f"Error loading Jira issues: {e}")

@@ -196,7 +196,9 @@ class JiraClient:
             raise
 
     def fetch_issues(self, limit: int = 50, jql: str = None) -> List[Dict[str, Any]]:
-        """Fetch Jira issues for test case generation"""
+        """Fetch Jira issues for test case generation
+        Falls back to mock data if Jira instance returns 0 issues (for local development)
+        """
         logger.info(f"Fetching up to {limit} issues from Jira...")
 
         # Default JQL query
@@ -244,6 +246,23 @@ class JiraClient:
             return issues[:limit]
 
         logger.info(f"✓ Total issues fetched: {len(issues)}")
+
+        # Fallback to mock data if no issues found (for local development)
+        if len(issues) == 0:
+            logger.warning("No issues found in Jira, trying mock data...")
+            try:
+                import json
+                from pathlib import Path
+                mock_file = Path('data/jira.json')
+                if mock_file.exists():
+                    with open(mock_file, 'r') as f:
+                        mock_data = json.load(f)
+                    mock_issues = mock_data.get('issues', [])
+                    logger.info(f"Loaded {len(mock_issues)} mock issues from data/jira.json")
+                    return mock_issues[:limit]
+            except Exception as e:
+                logger.debug(f"Could not load mock data: {e}")
+
         return issues[:limit]
 
     def download_attachment(self, attachment_url: str) -> Optional[bytes]:
