@@ -380,23 +380,27 @@ class TestCaseGenerator {
 
       // Check if we have stored credentials
       const credentials = window.credentialsManager?.getSession();
-      console.log('Credentials found:', credentials ? 'YES' : 'NO', credentials);
 
-      if (credentials && credentials.jira_base_url && credentials.jira_email && credentials.jira_api_token) {
-        console.log('📡 Fetching LIVE Jira data with credentials:');
-        console.log('   Base URL:', credentials.jira_base_url);
-        console.log('   Email:', credentials.jira_email);
-        console.log('   Token:', credentials.jira_api_token ? '(set)' : '(missing)');
+      // Check for correct field names: jira_base_url, jira_user_email, jira_api_token
+      const hasCredentials = credentials &&
+                            credentials.jira_base_url &&
+                            credentials.jira_user_email &&
+                            credentials.jira_api_token;
+
+      console.log('🔐 Credentials:', hasCredentials ? '✓ Found' : '✗ Not found');
+
+      if (hasCredentials) {
+        console.log('📡 Fetching LIVE Jira data...');
+        console.log('   URL: ' + credentials.jira_base_url);
+        console.log('   Email: ' + credentials.jira_user_email);
 
         // Use new endpoint that accepts credentials
         const fetchPayload = {
           jira_base_url: credentials.jira_base_url,
-          jira_email: credentials.jira_email,
+          jira_email: credentials.jira_user_email,  // Note: API expects 'jira_email', session has 'jira_user_email'
           jira_api_token: credentials.jira_api_token,
           jira_project_key: 'REB3'
         };
-
-        console.log('📤 Sending to /api/jira-issues-live:', fetchPayload);
 
         const response = await fetch('/api/jira-issues-live', {
           method: 'POST',
@@ -407,15 +411,16 @@ class TestCaseGenerator {
         console.log('📥 Response status:', response.status);
 
         const data = await response.json();
-        console.log('📥 Response data:', data);
 
         if (response.ok) {
           console.log(`✅ SUCCESS! Fetched ${data.issues?.length || 0} LIVE Jira issues`);
-          console.log('First issue:', data.issues?.[0]?.key, '-', data.issues?.[0]?.summary);
+          if (data.issues?.length > 0) {
+            console.log('First issue: ' + data.issues[0].key + ' - ' + data.issues[0].summary);
+          }
           this.jiraIssues = data.issues || [];
         } else {
           console.error('❌ Live fetch failed:', data.error);
-          console.log('Falling back to cached data...');
+          console.log('⏸️ Falling back to cached data...');
           // Fall back to cached data
           const fallbackResponse = await fetch('/api/jira-issues');
           const fallbackData = await fallbackResponse.json();
@@ -423,8 +428,6 @@ class TestCaseGenerator {
         }
       } else {
         console.log('⚠️ No credentials found, loading cached Jira issues...');
-        console.log('credentialsManager:', window.credentialsManager ? 'exists' : 'missing');
-        console.log('credentials:', credentials);
 
         // No credentials, use cached data
         const response = await fetch('/api/jira-issues');
