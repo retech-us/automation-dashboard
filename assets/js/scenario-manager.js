@@ -351,8 +351,11 @@ class ScenarioManager {
         .then(data => {
             if (data.status === 'approved') {
                 console.log(`✓ Scenario approved: ${scenarioId}`);
-                this.showNotification('Scenario approved! Ready to sync to Jira.', 'success');
+                this.showNotification('✓ Approved! Syncing to Jira...', 'success');
                 this.refreshScenarioList();
+
+                // Auto-sync to Jira silently after approval (silent=true)
+                setTimeout(() => this.syncSingleScenario(scenarioId, true), 500);
             } else {
                 this.showNotification('Failed to approve scenario', 'error');
             }
@@ -481,17 +484,17 @@ class ScenarioManager {
         });
     }
 
-    syncSingleScenario(scenarioId) {
+    syncSingleScenario(scenarioId, silent = false) {
         const credentials = window.credentialsManager?.getSession();
         if (!credentials) {
-            this.showNotification('Session expired. Please enter credentials again.', 'error');
+            if (!silent) this.showNotification('Session expired. Please enter credentials again.', 'error');
             window.credentialsManager?.openModal();
             return;
         }
 
         const scenario = this.currentScenarios.find(s => s.id === scenarioId);
         if (!scenario) {
-            this.showNotification('Scenario not found', 'error');
+            if (!silent) this.showNotification('Scenario not found', 'error');
             return;
         }
 
@@ -511,15 +514,24 @@ class ScenarioManager {
         .then(data => {
             if (data.status === 'synced') {
                 console.log(`✓ Scenario synced: ${data.jira_child_issue_key}`);
-                this.showNotification(`✓ Synced to ${data.jira_child_issue_key}`, 'success');
+                if (!silent) {
+                    this.showNotification(`✓ Synced to ${data.jira_child_issue_key}`, 'success');
+                } else {
+                    console.log(`🔗 Auto-synced ${data.jira_child_issue_key}`);
+                }
                 this.refreshScenarioList();
             } else {
-                this.showNotification(`Sync failed: ${data.error}`, 'error');
+                const errorMsg = `Sync failed: ${data.error}`;
+                if (!silent) {
+                    this.showNotification(errorMsg, 'error');
+                } else {
+                    console.error(`⚠️ ${errorMsg}`);
+                }
             }
         })
         .catch(e => {
             console.error('❌ Error syncing:', e);
-            this.showNotification('Error syncing to Jira', 'error');
+            if (!silent) this.showNotification('Error syncing to Jira', 'error');
         })
         .finally(() => {
             this.syncInProgress = false;
