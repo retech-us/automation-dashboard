@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-09T13:11:57.568800",
+  "timestamp": "2026-09-10T13:56:37.083071",
   "model": "azure_ai/claude-sonnet-4-5",
   "testConfiguration": {
     "test_types": [
@@ -17,7 +17,323 @@
     "temperature": 0.3
   },
   "totalIssues": 1,
-  "successfulGenerations": 0,
-  "failedGenerations": 1,
-  "testCases": []
+  "successfulGenerations": 1,
+  "failedGenerations": 0,
+  "testCases": [
+    {
+      "issueKey": "TEST-101",
+      "summary": "Test Issue 1: Sample Requirement",
+      "scenarios": [
+        {
+          "id": "SC-001",
+          "title": "Successfully validate first acceptance criterion with valid input",
+          "type": "positive",
+          "category": "functional",
+          "priority": "P1",
+          "preconditions": [
+            "Given first acceptance criterion is configured",
+            "And second acceptance criterion is configured",
+            "And system is in ready state"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When user accesses the feature",
+              "expectedResult": "Feature interface is displayed and accessible"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When user provides valid input meeting first criterion",
+              "expectedResult": "System accepts the input without errors"
+            },
+            {
+              "stepNumber": 3,
+              "action": "When user submits the request",
+              "expectedResult": "System processes request successfully"
+            },
+            {
+              "stepNumber": 4,
+              "action": "Then system confirms successful completion",
+              "expectedResult": "Success message is displayed and data is saved"
+            }
+          ],
+          "expectedResult": "First acceptance criterion is successfully validated and system responds with confirmation",
+          "automationHint": "Selenium: driver.findElement(By.id('feature-input')).sendKeys('valid-data'); driver.findElement(By.xpath('//button[@type=\"submit\"]')).click(); assert driver.findElement(By.className('success-message')).isDisplayed();",
+          "tags": [
+            "@positive",
+            "@smoke",
+            "@critical"
+          ],
+          "coverage": [
+            "AC1"
+          ]
+        },
+        {
+          "id": "SC-002",
+          "title": "Successfully validate second acceptance criterion with valid configuration",
+          "type": "positive",
+          "category": "functional",
+          "priority": "P1",
+          "preconditions": [
+            "Given first acceptance criterion is configured",
+            "And second acceptance criterion is configured",
+            "And system has valid configuration"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When user initiates the process",
+              "expectedResult": "Process starts and UI updates accordingly"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When user provides input meeting second criterion",
+              "expectedResult": "System validates input against second criterion"
+            },
+            {
+              "stepNumber": 3,
+              "action": "When validation completes",
+              "expectedResult": "System confirms second criterion is satisfied"
+            },
+            {
+              "stepNumber": 4,
+              "action": "Then system proceeds to next step",
+              "expectedResult": "Workflow continues without interruption"
+            }
+          ],
+          "expectedResult": "Second acceptance criterion is successfully validated and workflow proceeds as expected",
+          "automationHint": "Selenium: WebElement input = driver.findElement(By.name('criterion-input')); input.sendKeys('valid-value'); driver.findElement(By.id('validate-btn')).click(); WebDriverWait wait = new WebDriverWait(driver, 10); wait.until(ExpectedConditions.visibilityOfElementLocated(By.className('validation-success')));",
+          "tags": [
+            "@positive",
+            "@smoke",
+            "@critical"
+          ],
+          "coverage": [
+            "AC2"
+          ]
+        },
+        {
+          "id": "SC-003",
+          "title": "Verify both acceptance criteria work together in complete workflow",
+          "type": "positive",
+          "category": "functional",
+          "priority": "P1",
+          "preconditions": [
+            "Given first acceptance criterion is configured",
+            "And second acceptance criterion is configured",
+            "And all system dependencies are available"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When user starts the complete workflow",
+              "expectedResult": "System initializes and displays workflow interface"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When user completes first criterion requirements",
+              "expectedResult": "First criterion validation passes successfully"
+            },
+            {
+              "stepNumber": 3,
+              "action": "When user completes second criterion requirements",
+              "expectedResult": "Second criterion validation passes successfully"
+            },
+            {
+              "stepNumber": 4,
+              "action": "When user finalizes the workflow",
+              "expectedResult": "System confirms both criteria are met"
+            },
+            {
+              "stepNumber": 5,
+              "action": "Then workflow completes successfully",
+              "expectedResult": "Success confirmation displayed and data persisted"
+            }
+          ],
+          "expectedResult": "Complete workflow executes successfully with both acceptance criteria validated",
+          "automationHint": "Selenium: Execute full workflow; verify each criterion step; assert final state with driver.findElement(By.id('workflow-complete')).isDisplayed(); verify database records created;",
+          "tags": [
+            "@positive",
+            "@integration",
+            "@critical"
+          ],
+          "coverage": [
+            "AC1",
+            "AC2"
+          ]
+        },
+        {
+          "id": "SC-004",
+          "title": "Invalid input fails first acceptance criterion validation",
+          "type": "negative",
+          "category": "validation",
+          "priority": "P1",
+          "preconditions": [
+            "Given first acceptance criterion is configured",
+            "And system is ready to accept input"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When user provides invalid input for first criterion",
+              "expectedResult": "System captures the invalid input"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When system validates the input",
+              "expectedResult": "Validation detects input does not meet first criterion"
+            },
+            {
+              "stepNumber": 3,
+              "action": "Then system displays appropriate error message",
+              "expectedResult": "Clear error message indicates first criterion not met"
+            },
+            {
+              "stepNumber": 4,
+              "action": "And system prevents further processing",
+              "expectedResult": "Workflow is blocked and no data is saved"
+            }
+          ],
+          "expectedResult": "Invalid input is rejected with clear error message and no data persistence occurs",
+          "automationHint": "Selenium: driver.findElement(By.id('input-field')).sendKeys('invalid-data'); driver.findElement(By.id('submit-btn')).click(); assert driver.findElement(By.className('error-message')).getText().contains('criterion'); verify no database changes;",
+          "tags": [
+            "@negative",
+            "@validation",
+            "@critical"
+          ],
+          "coverage": [
+            "AC1"
+          ]
+        },
+        {
+          "id": "SC-005",
+          "title": "Missing required configuration fails second acceptance criterion",
+          "type": "negative",
+          "category": "validation",
+          "priority": "P2",
+          "preconditions": [
+            "Given first acceptance criterion is configured",
+            "And second acceptance criterion configuration is missing or invalid"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When user attempts to proceed with workflow",
+              "expectedResult": "System checks configuration requirements"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When system validates second criterion configuration",
+              "expectedResult": "System detects missing or invalid configuration"
+            },
+            {
+              "stepNumber": 3,
+              "action": "Then system displays configuration error",
+              "expectedResult": "Error message indicates second criterion cannot be validated"
+            },
+            {
+              "stepNumber": 4,
+              "action": "And system prevents workflow continuation",
+              "expectedResult": "User cannot proceed until configuration is corrected"
+            }
+          ],
+          "expectedResult": "Missing configuration is detected and workflow is blocked with appropriate error message",
+          "automationHint": "Selenium: Simulate missing config; attempt workflow; assert driver.findElement(By.className('config-error')).isDisplayed(); verify workflow state remains unchanged;",
+          "tags": [
+            "@negative",
+            "@configuration",
+            "@error-handling"
+          ],
+          "coverage": [
+            "AC2"
+          ]
+        },
+        {
+          "id": "SC-006",
+          "title": "Empty input at acceptance criterion boundary",
+          "type": "edge-case",
+          "category": "validation",
+          "priority": "P2",
+          "preconditions": [
+            "Given first acceptance criterion is configured",
+            "And second acceptance criterion is configured",
+            "And system accepts input"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When user submits empty input for first criterion",
+              "expectedResult": "System receives empty input value"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When system validates empty input",
+              "expectedResult": "Validation logic handles empty case"
+            },
+            {
+              "stepNumber": 3,
+              "action": "Then system responds appropriately to empty input",
+              "expectedResult": "Either accepts as valid (if allowed) or rejects with clear message"
+            }
+          ],
+          "expectedResult": "Empty input is handled correctly according to business rules without system errors",
+          "automationHint": "Selenium: driver.findElement(By.id('input-field')).sendKeys(''); driver.findElement(By.id('submit-btn')).click(); verify response (error or success based on requirements); assert no exceptions thrown;",
+          "tags": [
+            "@edge-case",
+            "@boundary",
+            "@validation"
+          ],
+          "coverage": [
+            "AC1"
+          ]
+        },
+        {
+          "id": "SC-007",
+          "title": "Maximum allowed input length for acceptance criteria",
+          "type": "edge-case",
+          "category": "validation",
+          "priority": "P2",
+          "preconditions": [
+            "Given first acceptance criterion is configured",
+            "And second acceptance criterion is configured",
+            "And system has input length constraints"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When user provides input at maximum allowed length",
+              "expectedResult": "System accepts input at boundary length"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When system validates maximum length input",
+              "expectedResult": "Validation passes for maximum allowed length"
+            },
+            {
+              "stepNumber": 3,
+              "action": "When user attempts input exceeding maximum length",
+              "expectedResult": "System either truncates or rejects input"
+            },
+            {
+              "stepNumber": 4,
+              "action": "Then system handles boundary condition correctly",
+              "expectedResult": "Maximum length enforced without errors or data corruption"
+            }
+          ],
+          "expectedResult": "Input length boundaries are enforced correctly for both acceptance criteria",
+          "automationHint": "Selenium: String maxInput = generateString(MAX_LENGTH); driver.findElement(By.id('input')).sendKeys(maxInput); verify acceptance; String overMax = generateString(MAX_LENGTH + 1); test rejection or truncation;",
+          "tags": [
+            "@edge-case",
+            "@boundary",
+            "@length-validation"
+          ],
+          "coverage": [
+            "AC1",
+            "AC2"
+          ]
+        }
+      ],
+      "generatedAt": "2026-09-10T13:57:17.098174"
+    }
+  ]
 }

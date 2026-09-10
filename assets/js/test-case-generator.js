@@ -643,12 +643,12 @@ class TestCaseGenerator {
     // Show scenarios preview
     const preview = document.getElementById('scenarios-preview');
     if (data.testCases && data.testCases.length > 0) {
-      preview.innerHTML = data.testCases.map(tc => `
+      preview.innerHTML = data.testCases.map((tc, tcIdx) => `
         <div class="scenario-group">
           <div class="scenario-group-title">
             <strong>${tc.issueKey}</strong>: ${tc.summary}
           </div>
-          <div class="scenarios-list">
+          <div class="scenarios-list" id="scenarios-list-${tcIdx}">
             ${(tc.scenarios || []).slice(0, 3).map((scenario, idx) => `
               <div class="scenario-item">
                 <div class="scenario-badge scenario-badge--${scenario.type}">${scenario.type}</div>
@@ -659,11 +659,45 @@ class TestCaseGenerator {
               </div>
             `).join('')}
             ${tc.scenarios && tc.scenarios.length > 3 ? `
-              <div class="scenario-more">+${tc.scenarios.length - 3} more scenarios...</div>
+              <div class="scenario-more" data-group="${tcIdx}" data-expanded="false">
+                <span class="scenario-more-text">+${tc.scenarios.length - 3} more scenarios...</span>
+              </div>
+              <div class="hidden-scenarios" id="hidden-scenarios-${tcIdx}" style="display: none;">
+                ${(tc.scenarios || []).slice(3).map((scenario, idx) => `
+                  <div class="scenario-item">
+                    <div class="scenario-badge scenario-badge--${scenario.type}">${scenario.type}</div>
+                    <div class="scenario-title">${scenario.title}</div>
+                    <div class="scenario-meta">
+                      Priority: ${scenario.priority} • Category: ${scenario.category}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
             ` : ''}
           </div>
         </div>
       `).join('');
+
+      // Add click handlers for expanding scenarios
+      document.querySelectorAll('.scenario-more').forEach(el => {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', (e) => {
+          const groupIdx = e.currentTarget.dataset.group;
+          const isExpanded = e.currentTarget.dataset.expanded === 'true';
+          const hiddenDiv = document.getElementById(`hidden-scenarios-${groupIdx}`);
+
+          if (isExpanded) {
+            hiddenDiv.style.display = 'none';
+            e.currentTarget.dataset.expanded = 'false';
+            e.currentTarget.querySelector('.scenario-more-text').textContent =
+              `+${Array.from(hiddenDiv.children).length} more scenarios...`;
+          } else {
+            hiddenDiv.style.display = 'block';
+            e.currentTarget.data.expanded = 'true';
+            e.currentTarget.querySelector('.scenario-more-text').textContent = 'Show less...';
+          }
+        });
+      });
     } else {
       preview.innerHTML = '<div class="empty-state">No test cases generated</div>';
     }

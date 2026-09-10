@@ -501,10 +501,48 @@
 
 .scenario-more {
   text-align: center;
-  padding: 8px;
+  padding: 12px 8px;
   color: #3b82f6;
   font-size: 12px;
   font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.scenario-more:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.scenario-more:active {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.scenario-more-text {
+  display: inline-block;
+}
+
+.hidden-scenarios {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Error Message */
