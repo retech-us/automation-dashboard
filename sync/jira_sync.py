@@ -72,7 +72,7 @@ class JiraClient:
         return None
 
     def create_child_issue(self, parent_key: str, scenario_data: Dict) -> Optional[Dict]:
-        """Create a QC test case issue linked to parent REB3 issue"""
+        """Create a test case issue linked to parent REB3 issue"""
         try:
             parent = self.get_issue(parent_key)
             if not parent:
@@ -83,13 +83,16 @@ class JiraClient:
             qc_counter = get_qc_counter()
             qc_number = qc_counter.get_next_qc_number()
 
+            # Extract project key from parent issue
+            project_key = parent_key.split('-')[0]  # e.g., "REB3" from "REB3-20607"
+
             # Format scenario details for Jira
             description = self._format_scenario_description(scenario_data)
 
             payload = {
                 "fields": {
-                    "project": {"key": "QC"},  # Create in QC project
-                    "summary": f"[{parent_key}] {scenario_data.get('title', 'Test Case')[:200]}",
+                    "project": {"key": project_key},  # Create in same project as parent
+                    "summary": f"[TC: {qc_number}] {scenario_data.get('title', 'Test Case')[:200]}",
                     "description": {
                         "version": 3,
                         "type": "doc",
@@ -133,9 +136,9 @@ class JiraClient:
 
             if status == 201:
                 child_key = response.get('key')
-                logger.info(f"✓ Created QC test case {child_key} (linked to {parent_key})")
+                logger.info(f"✓ Created test case {child_key} ({qc_number}) for {parent_key}")
 
-                # Link the QC issue to the parent REB3 issue
+                # Link the issue to the parent REB3 issue
                 self._link_issues(parent_key, child_key, "relates to")
 
                 return {
@@ -144,11 +147,11 @@ class JiraClient:
                     "qc_number": qc_number
                 }
             else:
-                logger.error(f"Failed to create QC issue: {response}")
+                logger.error(f"Failed to create test case: {response}")
                 return None
 
         except Exception as e:
-            logger.error(f"Error creating QC test case: {e}")
+            logger.error(f"Error creating test case: {e}")
             return None
 
     def update_child_issue(self, child_key: str, scenario_data: Dict) -> bool:
