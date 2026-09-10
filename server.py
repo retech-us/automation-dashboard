@@ -294,9 +294,9 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 'Accept': 'application/json'
             }
 
-            # Query Jira for project issues using POST with JSON body (v2 API for compatibility)
+            # Query Jira for project issues using /rest/api/3/search/jql endpoint (required by Jira)
             jql = f'project = "{jira_project}" ORDER BY updated DESC'
-            url = f"{jira_url}/rest/api/2/search"
+            url = f"{jira_url}/rest/api/3/search/jql"
 
             payload = {
                 'jql': jql,

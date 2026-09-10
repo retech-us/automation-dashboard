@@ -50,12 +50,12 @@ try {
     exit 1
 }
 
-# Test 3: Fetch REB3 Issues (using v2 API for compatibility)
+# Test 3: Fetch REB3 Issues (using /rest/api/3/search/jql endpoint)
 Write-Host "`n[TEST 3] Fetching REB3 Issues..." -ForegroundColor Yellow
 
 try {
     $jql = "project = REB3 ORDER BY updated DESC"
-    $url = "$jiraBaseUrl/rest/api/2/search"
+    $url = "$jiraBaseUrl/rest/api/3/search/jql"
     $body = @{
         jql = $jql
         maxResults = 10
@@ -63,7 +63,7 @@ try {
     } | ConvertTo-Json
 
     Write-Host "URL: $url"
-    Write-Host "Method: POST with JSON body (v2 API)"
+    Write-Host "Method: POST with JSON body"
     $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Post -Body $body
 
     $issueCount = $response.issues.Count
