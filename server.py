@@ -16,7 +16,7 @@ import logging
 import sys
 import subprocess
 from pathlib import Path
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, quote
 
 # Load environment variables from .env file
 try:
@@ -175,18 +175,88 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
             return self._send_json_response({"valid": False, "error": str(e)}, 500)
 
     def _handle_get_jira_issues(self):
-        """GET /api/jira-issues - Return all Jira issues (uses mock data as fallback)"""
+        """GET /api/jira-issues - Fetch live Jira issues or return cached data"""
         try:
-            # For now, return mock data - in production, this would fetch from real Jira
+            # Try to fetch live data from Jira if credentials are available
+            jira_url = os.getenv('JIRA_BASE_URL', '').strip()
+            jira_email = os.getenv('JIRA_USER_EMAIL', '').strip()
+            jira_token = os.getenv('JIRA_API_TOKEN', '').strip()
+            jira_project = os.getenv('JIRA_PROJECT_KEY', 'REB3').strip()
+
+            if jira_url and jira_email and jira_token:
+                logger.info(f"Fetching live Jira issues from {jira_url} for project {jira_project}...")
+                try:
+                    import base64
+                    import urllib.request
+                    import urllib.error
+
+                    # Create auth header
+                    credentials = f"{jira_email}:{jira_token}"
+                    encoded = base64.b64encode(credentials.encode()).decode()
+
+                    headers = {
+                        'Authorization': f'Basic {encoded}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+
+                    # Query Jira for REB3 issues
+                    jql = f'project = "{jira_project}" ORDER BY updated DESC'
+                    url = f"{jira_url}/rest/api/3/search?jql={quote(jql)}&maxResults=50&fields=key,summary,status,issuetype,priority,fixVersions,components"
+
+                    req = urllib.request.Request(url, headers=headers)
+                    with urllib.request.urlopen(req, timeout=10) as response:
+                        response_data = json.loads(response.read().decode('utf-8'))
+
+                        # Format response for dashboard
+                        issues = []
+                        for issue in response_data.get('issues', []):
+                            fields = issue.get('fields', {})
+                            issues.append({
+                                'key': issue['key'],
+                                'summary': fields.get('summary', 'No Summary'),
+                                'type': fields.get('issuetype', {}).get('name', 'Task'),
+                                'status': fields.get('status', {}).get('name', 'To Do'),
+                                'priority': fields.get('priority', {}).get('name', 'Medium'),
+                                'fields': {
+                                    'issuetype': fields.get('issuetype', {}),
+                                    'status': fields.get('status', {}),
+                                }
+                            })
+
+                        data = {
+                            'expand': 'names,schema',
+                            'startAt': 0,
+                            'maxResults': len(issues),
+                            'total': response_data.get('total', len(issues)),
+                            'issues': issues
+                        }
+
+                        # Also cache to file for fallback
+                        jira_file = Path('data/jira.json')
+                        jira_file.parent.mkdir(parents=True, exist_ok=True)
+                        with open(jira_file, 'w') as f:
+                            json.dump(data, f, indent=2)
+
+                        logger.info(f"✓ Successfully fetched {len(issues)} LIVE Jira issues from {jira_project}")
+                        return self._send_json_response(data)
+
+                except (urllib.error.HTTPError, urllib.error.URLError, Exception) as e:
+                    logger.warning(f"Failed to fetch live Jira data: {e}")
+                    # Fall back to cached file
+                    pass
+
+            # Fallback: Load from cached file
             jira_file = Path('data/jira.json')
             if jira_file.exists():
                 with open(jira_file, 'r') as f:
                     data = json.load(f)
-                logger.info(f"Loaded {len(data.get('issues', []))} mock Jira issues")
+                logger.info(f"Loaded {len(data.get('issues', []))} cached Jira issues from file")
                 return self._send_json_response(data)
             else:
-                logger.warning("No mock Jira data found")
+                logger.warning("No Jira data available (no credentials and no cached file)")
                 return self._send_json_response({"issues": [], "total": 0})
+
         except Exception as e:
             logger.error(f"Error loading Jira issues: {e}")
             return self._send_json_response({"error": str(e)}, 500)
