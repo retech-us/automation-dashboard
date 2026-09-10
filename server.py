@@ -294,16 +294,22 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 'Accept': 'application/json'
             }
 
-            # Query Jira for project issues
+            # Query Jira for project issues using POST with JSON body (modern API)
             jql = f'project = "{jira_project}" ORDER BY updated DESC'
-            url = f"{jira_url}/rest/api/3/search?jql={quote(jql)}&maxResults=50&fields=key,summary,status,issuetype,priority,fixVersions,components"
+            url = f"{jira_url}/rest/api/3/search"
+
+            payload = {
+                'jql': jql,
+                'maxResults': 50,
+                'fields': ['key', 'summary', 'status', 'issuetype', 'priority', 'fixVersions', 'components']
+            }
 
             logger.info(f"🔗 Jira URL: {jira_url}")
             logger.info(f"🔍 JQL Query: {jql}")
-            logger.info(f"📍 Full URL: {url[:100]}...")
+            logger.info(f"📍 API Endpoint: {url}")
 
-            req = urllib.request.Request(url, headers=headers)
-            logger.info(f"📤 Sending request to Jira...")
+            req = urllib.request.Request(url, headers=headers, data=json.dumps(payload).encode('utf-8'), method='POST')
+            logger.info(f"📤 Sending POST request to Jira...")
 
             try:
                 with urllib.request.urlopen(req, timeout=10) as response:
