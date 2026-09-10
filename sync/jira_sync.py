@@ -13,6 +13,7 @@ import urllib.error
 
 from database.models import db_manager
 from database.repositories import RepositoryFactory
+from sync.qc_counter import get_qc_counter
 
 logger = logging.getLogger(__name__)
 
@@ -71,26 +72,38 @@ class JiraClient:
         return None
 
     def create_child_issue(self, parent_key: str, scenario_data: Dict) -> Optional[Dict]:
-        """Create a child issue for a test scenario"""
+        """Create a QC test case issue linked to parent REB3 issue"""
         try:
             parent = self.get_issue(parent_key)
             if not parent:
                 logger.error(f"Parent issue {parent_key} not found")
                 return None
 
-            issue_key = parent_key.split('-')[0]  # Get project key
+            # Get next QC number (QC-100, QC-101, etc.)
+            qc_counter = get_qc_counter()
+            qc_number = qc_counter.get_next_qc_number()
 
             # Format scenario details for Jira
             description = self._format_scenario_description(scenario_data)
 
             payload = {
                 "fields": {
-                    "project": {"key": issue_key},
-                    "summary": scenario_data.get('title', 'Test Scenario')[:255],
+                    "project": {"key": "QC"},  # Create in QC project
+                    "summary": f"[{parent_key}] {scenario_data.get('title', 'Test Case')[:200]}",
                     "description": {
                         "version": 3,
                         "type": "doc",
                         "content": [
+                            {
+                                "type": "heading",
+                                "attrs": {"level": 2},
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Inhouse TC Generator"
+                                    }
+                                ]
+                            },
                             {
                                 "type": "paragraph",
                                 "content": [
@@ -99,35 +112,43 @@ class JiraClient:
                                         "text": description
                                     }
                                 ]
+                            },
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": f"\n\nGenerated from: {parent_key}\nTest Case Series: {qc_number}"
+                                    }
+                                ]
                             }
                         ]
                     },
-                    "issuetype": {"name": "Story"},
-                    "parent": {"key": parent_key},
-                    "labels": scenario_data.get('tags', []) + ["test-scenario"]
+                    "issuetype": {"name": "Test Case"},
+                    "labels": scenario_data.get('tags', []) + ["generated-tc", "inhouse-tc-generator"]
                 }
             }
-
-            # Add custom fields if available
-            custom_fields = self._get_custom_fields_mapping(issue_key)
-            if custom_fields:
-                payload["fields"].update(custom_fields)
 
             status, response = self._make_request('POST', '/issues', payload)
 
             if status == 201:
                 child_key = response.get('key')
-                logger.info(f"✓ Created child issue {child_key} for {parent_key}")
+                logger.info(f"✓ Created QC test case {child_key} (linked to {parent_key})")
+
+                # Link the QC issue to the parent REB3 issue
+                self._link_issues(parent_key, child_key, "relates to")
+
                 return {
                     "key": child_key,
-                    "url": f"{self.base_url}/browse/{child_key}"
+                    "url": f"{self.base_url}/browse/{child_key}",
+                    "qc_number": qc_number
                 }
             else:
-                logger.error(f"Failed to create child issue: {response}")
+                logger.error(f"Failed to create QC issue: {response}")
                 return None
 
         except Exception as e:
-            logger.error(f"Error creating child issue: {e}")
+            logger.error(f"Error creating QC test case: {e}")
             return None
 
     def update_child_issue(self, child_key: str, scenario_data: Dict) -> bool:
@@ -236,6 +257,30 @@ class JiraClient:
 
         except Exception as e:
             logger.error(f"Error transitioning issue: {e}")
+            return False
+
+    def _link_issues(self, from_key: str, to_key: str, link_type: str = "relates to") -> bool:
+        """Link two issues together"""
+        try:
+            payload = {
+                "linkType": {
+                    "name": link_type
+                },
+                "fromIssueKey": from_key,
+                "toIssueKey": to_key
+            }
+
+            status, response = self._make_request('POST', '/issuelinks', payload)
+
+            if status == 201:
+                logger.info(f"✓ Linked {from_key} → {to_key} ({link_type})")
+                return True
+            else:
+                logger.warning(f"Failed to link issues: {response}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error linking issues: {e}")
             return False
 
     def _format_scenario_description(self, scenario_data: Dict) -> str:
