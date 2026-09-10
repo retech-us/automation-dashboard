@@ -72,6 +72,8 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
         # API endpoints
         if self.path == '/api/verify-credentials':
             return self._handle_verify_credentials()
+        elif self.path == '/api/jira-issues-live':
+            return self._handle_get_jira_issues_live()
         elif self.path == '/api/generate-test-cases':
             return self._handle_generate_test_cases()
         elif self.path == '/api/debug-credentials':
@@ -175,9 +177,9 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
             return self._send_json_response({"valid": False, "error": str(e)}, 500)
 
     def _handle_get_jira_issues(self):
-        """GET /api/jira-issues - Fetch live Jira issues or return cached data"""
+        """GET /api/jira-issues - Return cached Jira issues or fetch live if credentials available"""
         try:
-            # Try to fetch live data from Jira if credentials are available
+            # Try environment variables first
             jira_url = os.getenv('JIRA_BASE_URL', '').strip()
             jira_email = os.getenv('JIRA_USER_EMAIL', '').strip()
             jira_token = os.getenv('JIRA_API_TOKEN', '').strip()
@@ -259,6 +261,81 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         except Exception as e:
             logger.error(f"Error loading Jira issues: {e}")
+            return self._send_json_response({"error": str(e)}, 500)
+
+    def _handle_get_jira_issues_live(self):
+        """POST /api/jira-issues-live - Fetch live Jira issues with provided credentials"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+            request_data = json.loads(body) if body else {}
+
+            jira_url = request_data.get('jira_base_url', '').strip()
+            jira_email = request_data.get('jira_email', '').strip()
+            jira_token = request_data.get('jira_api_token', '').strip()
+            jira_project = request_data.get('jira_project_key', 'REB3').strip()
+
+            if not (jira_url and jira_email and jira_token):
+                return self._send_json_response({"error": "Missing Jira credentials"}, 400)
+
+            logger.info(f"Fetching live Jira issues for {jira_project}...")
+
+            try:
+                import base64
+                import urllib.request
+                import urllib.error
+
+                # Create auth header
+                credentials = f"{jira_email}:{jira_token}"
+                encoded = base64.b64encode(credentials.encode()).decode()
+
+                headers = {
+                    'Authorization': f'Basic {encoded}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+
+                # Query Jira for project issues
+                jql = f'project = "{jira_project}" ORDER BY updated DESC'
+                url = f"{jira_url}/rest/api/3/search?jql={quote(jql)}&maxResults=50&fields=key,summary,status,issuetype,priority,fixVersions,components"
+
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    response_data = json.loads(response.read().decode('utf-8'))
+
+                    # Format response for dashboard
+                    issues = []
+                    for issue in response_data.get('issues', []):
+                        fields = issue.get('fields', {})
+                        issues.append({
+                            'key': issue['key'],
+                            'summary': fields.get('summary', 'No Summary'),
+                            'type': fields.get('issuetype', {}).get('name', 'Task'),
+                            'status': fields.get('status', {}).get('name', 'To Do'),
+                            'priority': fields.get('priority', {}).get('name', 'Medium'),
+                            'fields': {
+                                'issuetype': fields.get('issuetype', {}),
+                                'status': fields.get('status', {}),
+                            }
+                        })
+
+                    data = {
+                        'expand': 'names,schema',
+                        'startAt': 0,
+                        'maxResults': len(issues),
+                        'total': response_data.get('total', len(issues)),
+                        'issues': issues
+                    }
+
+                    logger.info(f"✓ Successfully fetched {len(issues)} LIVE Jira issues from {jira_project}")
+                    return self._send_json_response(data)
+
+            except (urllib.error.HTTPError, urllib.error.URLError, Exception) as e:
+                logger.error(f"Failed to fetch from Jira: {e}")
+                return self._send_json_response({"error": f"Failed to fetch from Jira: {str(e)}"}, 500)
+
+        except Exception as e:
+            logger.error(f"Error in _handle_get_jira_issues_live: {e}")
             return self._send_json_response({"error": str(e)}, 500)
 
     def _handle_get_test_cases(self):
