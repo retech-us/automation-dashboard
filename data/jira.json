@@ -1,17 +1,17 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-10T11:22:29.703518+00:00",
+  "lastUpdated": "2026-09-10T11:32:52.216454+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 223,
+    "openDefects": 224,
     "blockers": 145,
     "inProgress": 291,
     "inQa": 50,
     "resolvedThisWeek": 149,
-    "resolvedTotal": 436
+    "resolvedTotal": 435
   },
   "byPriority": {
     "Highest": 145,
@@ -21,8 +21,8 @@
     "Lowest": 0
   },
   "byComponent": {
-    "General": 220,
-    "ANDR": 237,
+    "General": 221,
+    "ANDR": 236,
     "IOS": 226,
     "BE REBM": 160,
     "FE Hawkeye": 22,
@@ -41,15 +41,15 @@
     "AI CORE": 1
   },
   "byStatus": {
-    "To  Do": 167,
+    "To  Do": 168,
+    "Dev Complete": 15,
     "In Progress": 36,
-    "Dev Complete": 13,
-    "Code Review": 20,
     "UAT": 166,
     "QA": 50,
-    "Done": 381,
+    "Done": 380,
     "Invalid": 55,
     "Waiting for clarification": 56,
+    "Code Review": 18,
     "Staging": 17,
     "PRODUCTION READY": 39
   },
@@ -234,6 +234,31 @@
   },
   "issues": [
     {
+      "key": "REB3-20618",
+      "summary": "[ANDR] \"Set Items Aside\" title capitalization does not match design",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.29 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Alexander Ryabchikov",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-09-10T03:19:47.372-0700",
+      "updated": "2026-09-10T04:32:12.395-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20618"
+    },
+    {
       "key": "REB3-20616",
       "summary": "[ANDR] Pick From action icon color and navigation arrow do not match Figma design",
       "project": "Rebotics 3",
@@ -247,18 +272,97 @@
       "statusCategory": "new",
       "priority": "Medium",
       "component": "General",
-      "assignee": "Hemant Singh",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
+      "assignee": "Alexander Ryabchikov",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/e5cc68d595569d06e515fafd531d87ed?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAR-2.png",
       "tester": "Rohan Patil",
       "reporter": "Rohan Patil",
       "created": "2026-09-10T03:06:20.089-0700",
-      "updated": "2026-09-10T04:10:06.433-0700",
+      "updated": "2026-09-10T04:31:38.215-0700",
       "ageDays": 0,
       "staleDays": 0,
       "labels": [
         "ANDR"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20616"
+    },
+    {
+      "key": "REB3-20615",
+      "summary": "[ANDR] Remove \"MOVE FROM BAY X\" label from Pick From item cards as per latest Figma",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.29 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Dev Complete",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Hemant Singh",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-09-10T02:59:06.757-0700",
+      "updated": "2026-09-10T04:29:39.248-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20615"
+    },
+    {
+      "key": "REB3-20620",
+      "summary": "Offline survey template not working for the online task",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Unassigned",
+      "assigneeAvatar": null,
+      "tester": "Gaurav Tripathi",
+      "reporter": "Gaurav Tripathi",
+      "created": "2026-09-10T04:28:51.337-0700",
+      "updated": "2026-09-10T04:28:51.475-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20620"
+    },
+    {
+      "key": "REB3-20613",
+      "summary": "[ANDR] \"Undo\" label displayed instead of \"Undo All\" in Remove Items header",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.29 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Dev Complete",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Hemant Singh",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-09-10T02:51:59.932-0700",
+      "updated": "2026-09-10T04:28:29.126-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20613"
     },
     {
       "key": "REB3-20583",
@@ -473,33 +577,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20619"
     },
     {
-      "key": "REB3-20615",
-      "summary": "[ANDR] Remove \"MOVE FROM BAY X\" label from Pick From item cards as per latest Figma",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.29 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Code Review",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Hemant Singh",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-09-10T02:59:06.757-0700",
-      "updated": "2026-09-10T03:49:16.379-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20615"
-    },
-    {
       "key": "REB3-20460",
       "summary": "[IR] [iOS] Complete Action Generation Before Starting Execution",
       "project": "Rebotics 3",
@@ -683,33 +760,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20606"
     },
     {
-      "key": "REB3-20618",
-      "summary": "[ANDR] \"Set Items Aside\" title capitalization does not match design",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.29 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Hemant Singh",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-09-10T03:19:47.372-0700",
-      "updated": "2026-09-10T03:21:27.303-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20618"
-    },
-    {
       "key": "REB3-20152",
       "summary": "[PRGM][ANDR] Add Retry on task level for offline task when task get stuck and not completing",
       "project": "Rebotics 3",
@@ -845,33 +895,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20591"
-    },
-    {
-      "key": "REB3-20613",
-      "summary": "[ANDR] \"Undo\" label displayed instead of \"Undo All\" in Remove Items header",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.29 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Code Review",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Hemant Singh",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/ff268d3b2cc2f54b61539134edf3ef53?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FHS-0.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-09-10T02:51:59.932-0700",
-      "updated": "2026-09-10T03:05:08.967-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20613"
     },
     {
       "key": "REB3-20534",
@@ -5829,7 +5852,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-05T04:23:31.553-0700",
       "updated": "2026-09-07T23:52:16.059-0700",
-      "ageDays": 35,
+      "ageDays": 36,
       "staleDays": 2,
       "labels": [
         "Android",
@@ -6500,7 +6523,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-07-24T04:29:04.511-0700",
       "updated": "2026-09-07T23:52:00.812-0700",
-      "ageDays": 47,
+      "ageDays": 48,
       "staleDays": 2,
       "labels": [
         "andr",
@@ -7720,7 +7743,7 @@
       "created": "2026-09-03T22:16:44.569-0700",
       "updated": "2026-09-04T04:25:13.450-0700",
       "ageDays": 6,
-      "staleDays": 5,
+      "staleDays": 6,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20568"
     },
@@ -7745,7 +7768,7 @@
       "created": "2026-09-02T10:49:59.049-0700",
       "updated": "2026-09-04T04:25:03.031-0700",
       "ageDays": 7,
-      "staleDays": 5,
+      "staleDays": 6,
       "labels": [
         "iOS"
       ],
@@ -8464,7 +8487,7 @@
       "created": "2026-05-14T04:04:31.568-0700",
       "updated": "2026-09-03T04:32:44.293-0700",
       "ageDays": 119,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19637"
     },
@@ -12011,7 +12034,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-05-29T04:24:18.635-0700",
       "updated": "2026-08-27T03:26:48.714-0700",
-      "ageDays": 103,
+      "ageDays": 104,
       "staleDays": 14,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19729"
@@ -12554,7 +12577,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-08-20T04:32:20.324-0700",
       "updated": "2026-08-25T03:15:25.005-0700",
-      "ageDays": 20,
+      "ageDays": 21,
       "staleDays": 16,
       "labels": [
         "ANDR"
@@ -15880,7 +15903,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2025-12-08T03:28:07.226-0800",
       "updated": "2026-08-21T04:42:06.538-0700",
-      "ageDays": 275,
+      "ageDays": 276,
       "staleDays": 19,
       "labels": [
         "Customer",
@@ -17049,7 +17072,7 @@
       "created": "2026-08-18T00:32:31.208-0700",
       "updated": "2026-08-21T04:29:21.027-0700",
       "ageDays": 23,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Backend",
         "REBM",
@@ -17078,7 +17101,7 @@
       "created": "2026-08-07T05:27:44.402-0700",
       "updated": "2026-08-21T04:29:19.033-0700",
       "ageDays": 33,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20286"
     },
@@ -17103,7 +17126,7 @@
       "created": "2026-07-08T00:53:26.738-0700",
       "updated": "2026-08-21T04:29:18.279-0700",
       "ageDays": 64,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -17132,7 +17155,7 @@
       "created": "2026-07-14T21:55:27.853-0700",
       "updated": "2026-08-21T04:29:18.060-0700",
       "ageDays": 57,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -17160,7 +17183,7 @@
       "created": "2026-07-01T02:54:39.242-0700",
       "updated": "2026-08-21T04:29:17.662-0700",
       "ageDays": 71,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "ANDR",
@@ -17190,7 +17213,7 @@
       "created": "2026-07-29T01:30:18.179-0700",
       "updated": "2026-08-21T04:29:16.711-0700",
       "ageDays": 43,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Backend",
         "Customer",
@@ -17219,7 +17242,7 @@
       "created": "2026-07-01T00:48:39.530-0700",
       "updated": "2026-08-21T04:29:16.700-0700",
       "ageDays": 71,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19955"
     },
@@ -17244,7 +17267,7 @@
       "created": "2026-06-23T08:12:51.242-0700",
       "updated": "2026-08-21T04:29:16.401-0700",
       "ageDays": 78,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -17272,7 +17295,7 @@
       "created": "2026-07-14T04:44:32.730-0700",
       "updated": "2026-08-21T04:29:16.320-0700",
       "ageDays": 57,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -17301,7 +17324,7 @@
       "created": "2026-07-28T23:19:19.312-0700",
       "updated": "2026-08-21T04:29:15.876-0700",
       "ageDays": 43,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "SHIELD"
       ],
@@ -17328,7 +17351,7 @@
       "created": "2026-06-30T22:55:35.304-0700",
       "updated": "2026-08-21T04:29:15.868-0700",
       "ageDays": 71,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "BE",
         "Backend",
@@ -17358,7 +17381,7 @@
       "created": "2026-07-16T10:56:24.073-0700",
       "updated": "2026-08-21T04:29:15.253-0700",
       "ageDays": 55,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "SHIELD"
       ],
@@ -17385,7 +17408,7 @@
       "created": "2026-07-14T02:45:20.616-0700",
       "updated": "2026-08-21T04:29:15.233-0700",
       "ageDays": 58,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "PILOT",
         "SHIELD"
@@ -17413,7 +17436,7 @@
       "created": "2026-06-30T22:32:53.319-0700",
       "updated": "2026-08-21T04:29:14.765-0700",
       "ageDays": 71,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19953"
     },
@@ -17438,7 +17461,7 @@
       "created": "2026-06-22T10:11:59.874-0700",
       "updated": "2026-08-21T04:29:14.504-0700",
       "ageDays": 79,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "BE",
         "Customer"
@@ -17466,7 +17489,7 @@
       "created": "2026-07-16T04:08:48.911-0700",
       "updated": "2026-08-21T04:29:14.318-0700",
       "ageDays": 56,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "HAWKEYE",
         "SHIELD"
@@ -17494,7 +17517,7 @@
       "created": "2026-07-21T08:24:28.759-0700",
       "updated": "2026-08-21T04:29:14.302-0700",
       "ageDays": 50,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -17521,7 +17544,7 @@
       "created": "2026-07-05T23:29:55.145-0700",
       "updated": "2026-08-21T04:29:14.162-0700",
       "ageDays": 66,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -17550,7 +17573,7 @@
       "created": "2026-06-18T23:47:32.601-0700",
       "updated": "2026-08-21T04:29:13.738-0700",
       "ageDays": 83,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "FE",
         "SHIELD"
@@ -17578,7 +17601,7 @@
       "created": "2026-07-21T03:17:18.340-0700",
       "updated": "2026-08-21T04:29:13.556-0700",
       "ageDays": 51,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -17605,7 +17628,7 @@
       "created": "2026-07-27T06:40:48.968-0700",
       "updated": "2026-08-21T04:29:13.543-0700",
       "ageDays": 44,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "SHIELD"
       ],
@@ -17632,7 +17655,7 @@
       "created": "2026-07-03T03:08:52.910-0700",
       "updated": "2026-08-21T04:29:13.453-0700",
       "ageDays": 69,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer",
         "FE"
@@ -17660,7 +17683,7 @@
       "created": "2026-06-18T01:41:20.716-0700",
       "updated": "2026-08-21T04:29:13.069-0700",
       "ageDays": 84,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "PILOT",
         "WTRS"
@@ -17688,7 +17711,7 @@
       "created": "2026-07-15T22:44:56.956-0700",
       "updated": "2026-08-21T04:29:12.888-0700",
       "ageDays": 56,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -17716,7 +17739,7 @@
       "created": "2026-08-10T07:16:00.596-0700",
       "updated": "2026-08-21T04:29:12.803-0700",
       "ageDays": 30,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20318"
     },
@@ -17741,7 +17764,7 @@
       "created": "2026-07-21T02:51:25.208-0700",
       "updated": "2026-08-21T04:29:12.778-0700",
       "ageDays": 51,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -17768,7 +17791,7 @@
       "created": "2026-04-08T23:49:39.871-0700",
       "updated": "2026-08-21T04:29:11.810-0700",
       "ageDays": 154,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -17795,7 +17818,7 @@
       "created": "2026-06-17T23:40:55.156-0700",
       "updated": "2026-08-21T04:29:11.751-0700",
       "ageDays": 84,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "SHIELD"
       ],
@@ -17822,7 +17845,7 @@
       "created": "2026-07-15T00:34:28.116-0700",
       "updated": "2026-08-21T04:29:11.747-0700",
       "ageDays": 57,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -17850,7 +17873,7 @@
       "created": "2026-07-21T02:17:47.569-0700",
       "updated": "2026-08-21T04:29:11.598-0700",
       "ageDays": 51,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -17877,7 +17900,7 @@
       "created": "2026-06-24T21:45:11.871-0700",
       "updated": "2026-08-21T04:29:11.396-0700",
       "ageDays": 77,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "SHIELD"
       ],
@@ -17904,7 +17927,7 @@
       "created": "2026-07-24T03:40:29.969-0700",
       "updated": "2026-08-21T04:29:11.287-0700",
       "ageDays": 48,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Backend",
         "REBM"
@@ -17932,7 +17955,7 @@
       "created": "2026-08-05T05:30:19.302-0700",
       "updated": "2026-08-21T04:29:09.723-0700",
       "ageDays": 35,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -17961,7 +17984,7 @@
       "created": "2026-06-17T09:28:23.128-0700",
       "updated": "2026-08-21T04:29:09.673-0700",
       "ageDays": 84,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "HAWKEYE",
         "SHIELD"
@@ -17989,7 +18012,7 @@
       "created": "2026-07-09T15:21:19.469-0700",
       "updated": "2026-08-21T04:29:09.627-0700",
       "ageDays": 62,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -18017,7 +18040,7 @@
       "created": "2026-07-15T00:24:48.022-0700",
       "updated": "2026-08-21T04:29:09.156-0700",
       "ageDays": 57,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -18045,7 +18068,7 @@
       "created": "2026-07-01T14:58:22.525-0700",
       "updated": "2026-08-21T04:29:09.143-0700",
       "ageDays": 70,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -18074,7 +18097,7 @@
       "created": "2026-04-07T06:19:28.729-0700",
       "updated": "2026-08-21T04:29:08.527-0700",
       "ageDays": 155,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19406"
     },
@@ -18099,7 +18122,7 @@
       "created": "2026-07-09T02:39:06.601-0700",
       "updated": "2026-08-21T04:29:07.906-0700",
       "ageDays": 63,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Backend",
         "PILOT",
@@ -18128,7 +18151,7 @@
       "created": "2026-06-17T03:09:31.322-0700",
       "updated": "2026-08-21T04:29:07.690-0700",
       "ageDays": 85,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer",
         "HAWKEYE"
@@ -18156,7 +18179,7 @@
       "created": "2026-06-16T06:00:41.083-0700",
       "updated": "2026-08-21T04:29:03.666-0700",
       "ageDays": 85,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -18185,7 +18208,7 @@
       "created": "2026-06-23T12:14:25.076-0700",
       "updated": "2026-08-21T04:29:02.890-0700",
       "ageDays": 78,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -18214,7 +18237,7 @@
       "created": "2026-06-16T05:18:01.221-0700",
       "updated": "2026-08-21T04:29:02.306-0700",
       "ageDays": 85,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "HAWKEYE",
         "SHIELD"
@@ -18242,7 +18265,7 @@
       "created": "2026-06-04T22:27:49.919-0700",
       "updated": "2026-08-21T04:29:01.928-0700",
       "ageDays": 97,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -18270,7 +18293,7 @@
       "created": "2026-05-12T18:21:57.219-0700",
       "updated": "2026-08-21T04:29:00.547-0700",
       "ageDays": 120,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer",
@@ -18299,7 +18322,7 @@
       "created": "2026-06-04T22:15:11.838-0700",
       "updated": "2026-08-21T04:29:00.219-0700",
       "ageDays": 97,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19779"
     },
@@ -18324,7 +18347,7 @@
       "created": "2025-07-01T21:56:37.187-0700",
       "updated": "2026-08-21T04:28:59.527-0700",
       "ageDays": 435,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Spillover"
       ],
@@ -18351,7 +18374,7 @@
       "created": "2026-05-29T06:09:02.396-0700",
       "updated": "2026-08-21T04:28:59.389-0700",
       "ageDays": 103,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "SHIELD"
       ],
@@ -18378,7 +18401,7 @@
       "created": "2025-08-21T23:27:23.792-0700",
       "updated": "2026-08-21T04:28:59.336-0700",
       "ageDays": 384,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-17769"
     },
@@ -18403,7 +18426,7 @@
       "created": "2026-02-06T05:26:45.615-0800",
       "updated": "2026-08-21T04:28:59.322-0700",
       "ageDays": 215,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "SHIELD"
       ],
@@ -18430,7 +18453,7 @@
       "created": "2026-05-04T14:02:00.572-0700",
       "updated": "2026-08-21T04:28:59.112-0700",
       "ageDays": 128,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "ALBT",
@@ -18459,7 +18482,7 @@
       "created": "2025-11-03T04:26:53.937-0800",
       "updated": "2026-08-21T04:28:59.068-0700",
       "ageDays": 310,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "PILOT"
@@ -18487,7 +18510,7 @@
       "created": "2026-03-04T21:36:01.843-0800",
       "updated": "2026-08-21T04:28:58.723-0700",
       "ageDays": 189,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "Backend",
@@ -18518,7 +18541,7 @@
       "created": "2026-06-16T03:35:26.454-0700",
       "updated": "2026-08-21T04:28:58.267-0700",
       "ageDays": 86,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19848"
     },
@@ -18543,7 +18566,7 @@
       "created": "2025-08-20T22:38:00.617-0700",
       "updated": "2026-08-21T04:28:58.067-0700",
       "ageDays": 385,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -18570,7 +18593,7 @@
       "created": "2025-06-13T00:38:42.034-0700",
       "updated": "2026-08-21T04:28:57.881-0700",
       "ageDays": 454,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "DE"
@@ -18598,7 +18621,7 @@
       "created": "2026-02-04T06:40:27.651-0800",
       "updated": "2026-08-21T04:28:57.644-0700",
       "ageDays": 217,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "ALBT",
@@ -18627,7 +18650,7 @@
       "created": "2025-10-27T02:30:20.447-0700",
       "updated": "2026-08-21T04:28:57.571-0700",
       "ageDays": 318,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "SHIELD"
       ],
@@ -18654,7 +18677,7 @@
       "created": "2026-05-03T23:32:21.241-0700",
       "updated": "2026-08-21T04:28:57.477-0700",
       "ageDays": 129,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer",
         "core"
@@ -18682,7 +18705,7 @@
       "created": "2026-05-12T14:24:21.680-0700",
       "updated": "2026-08-21T04:28:57.238-0700",
       "ageDays": 120,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19616"
     },
@@ -18707,7 +18730,7 @@
       "created": "2025-08-19T10:12:24.345-0700",
       "updated": "2026-08-21T04:28:56.480-0700",
       "ageDays": 386,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -18734,7 +18757,7 @@
       "created": "2026-05-03T22:00:51.727-0700",
       "updated": "2026-08-21T04:28:55.508-0700",
       "ageDays": 129,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "Backend",
@@ -18764,7 +18787,7 @@
       "created": "2026-02-03T23:03:32.248-0800",
       "updated": "2026-08-21T04:28:55.416-0700",
       "ageDays": 218,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -18791,7 +18814,7 @@
       "created": "2025-10-21T22:04:08.268-0700",
       "updated": "2026-08-21T04:28:55.160-0700",
       "ageDays": 323,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AHLD",
         "Customer"
@@ -18819,7 +18842,7 @@
       "created": "2026-05-28T01:24:01.611-0700",
       "updated": "2026-08-21T04:28:54.726-0700",
       "ageDays": 105,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -18846,7 +18869,7 @@
       "created": "2026-05-12T10:15:33.971-0700",
       "updated": "2026-08-21T04:28:54.333-0700",
       "ageDays": 120,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Innovation",
@@ -18875,7 +18898,7 @@
       "created": "2026-06-03T23:22:14.133-0700",
       "updated": "2026-08-21T04:28:54.328-0700",
       "ageDays": 98,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -18902,7 +18925,7 @@
       "created": "2025-08-19T04:18:22.853-0700",
       "updated": "2026-08-21T04:28:54.160-0700",
       "ageDays": 387,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -18929,7 +18952,7 @@
       "created": "2026-06-15T02:50:47.663-0700",
       "updated": "2026-08-21T04:28:54.092-0700",
       "ageDays": 87,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -18956,7 +18979,7 @@
       "created": "2026-04-30T00:56:06.340-0700",
       "updated": "2026-08-21T04:28:53.791-0700",
       "ageDays": 133,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Backend",
         "PRGM"
@@ -18984,7 +19007,7 @@
       "created": "2026-02-17T07:27:59.301-0800",
       "updated": "2026-08-21T04:28:53.778-0700",
       "ageDays": 204,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer",
@@ -19013,7 +19036,7 @@
       "created": "2025-02-27T00:33:34.119-0800",
       "updated": "2026-08-21T04:28:53.760-0700",
       "ageDays": 560,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer",
         "REGRESSION"
@@ -19041,7 +19064,7 @@
       "created": "2025-10-06T04:19:10.206-0700",
       "updated": "2026-08-21T04:28:53.475-0700",
       "ageDays": 339,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -19068,7 +19091,7 @@
       "created": "2026-01-27T01:54:19.613-0800",
       "updated": "2026-08-21T04:28:53.432-0700",
       "ageDays": 226,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18816"
     },
@@ -19093,7 +19116,7 @@
       "created": "2026-04-01T05:25:34.487-0700",
       "updated": "2026-08-21T04:28:53.327-0700",
       "ageDays": 161,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19369"
     },
@@ -19118,7 +19141,7 @@
       "created": "2026-05-11T06:16:22.225-0700",
       "updated": "2026-08-21T04:28:52.813-0700",
       "ageDays": 121,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -19145,7 +19168,7 @@
       "created": "2026-06-15T01:35:49.971-0700",
       "updated": "2026-08-21T04:28:52.671-0700",
       "ageDays": 87,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "SHIELD"
       ],
@@ -19172,7 +19195,7 @@
       "created": "2026-01-20T17:46:15.899-0800",
       "updated": "2026-08-21T04:28:51.483-0700",
       "ageDays": 232,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "PILOT"
@@ -19200,7 +19223,7 @@
       "created": "2026-02-16T23:50:41.729-0800",
       "updated": "2026-08-21T04:28:51.221-0700",
       "ageDays": 205,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer",
         "REGRESSION"
@@ -19228,7 +19251,7 @@
       "created": "2026-05-11T03:28:59.856-0700",
       "updated": "2026-08-21T04:28:51.183-0700",
       "ageDays": 122,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Backend",
         "Customer",
@@ -19257,7 +19280,7 @@
       "created": "2025-01-29T07:34:58.789-0800",
       "updated": "2026-08-21T04:28:51.081-0700",
       "ageDays": 588,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -19284,7 +19307,7 @@
       "created": "2025-09-30T12:27:31.059-0700",
       "updated": "2026-08-21T04:28:51.063-0700",
       "ageDays": 344,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -19312,7 +19335,7 @@
       "created": "2025-08-19T03:39:13.789-0700",
       "updated": "2026-08-21T04:28:50.999-0700",
       "ageDays": 387,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -19339,7 +19362,7 @@
       "created": "2026-06-03T09:33:29.250-0700",
       "updated": "2026-08-21T04:28:50.898-0700",
       "ageDays": 98,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -19367,7 +19390,7 @@
       "created": "2026-04-29T20:01:33.444-0700",
       "updated": "2026-08-21T04:28:50.759-0700",
       "ageDays": 133,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -19397,7 +19420,7 @@
       "created": "2026-06-15T01:29:35.577-0700",
       "updated": "2026-08-21T04:28:50.713-0700",
       "ageDays": 87,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "HAWKEYE",
         "SHIELD"
@@ -19425,7 +19448,7 @@
       "created": "2026-05-26T08:36:41.112-0700",
       "updated": "2026-08-21T04:28:50.712-0700",
       "ageDays": 106,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALL",
         "Customer"
@@ -19453,7 +19476,7 @@
       "created": "2026-03-30T07:46:36.628-0700",
       "updated": "2026-08-21T04:28:50.688-0700",
       "ageDays": 163,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer",
         "QKTP",
@@ -19482,7 +19505,7 @@
       "created": "2025-12-29T00:20:18.068-0800",
       "updated": "2026-08-21T04:28:49.745-0700",
       "ageDays": 255,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer",
         "HAWKEYE"
@@ -19510,7 +19533,7 @@
       "created": "2026-02-13T05:24:09.725-0800",
       "updated": "2026-08-21T04:28:49.606-0700",
       "ageDays": 208,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -19537,7 +19560,7 @@
       "created": "2024-12-04T00:52:50.329-0800",
       "updated": "2026-08-21T04:28:49.528-0700",
       "ageDays": 645,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Android",
         "Customer"
@@ -19565,7 +19588,7 @@
       "created": "2025-09-26T05:38:14.612-0700",
       "updated": "2026-08-21T04:28:49.421-0700",
       "ageDays": 348,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -19592,7 +19615,7 @@
       "created": "2026-03-26T07:58:00.931-0700",
       "updated": "2026-08-21T04:28:49.245-0700",
       "ageDays": 167,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "Backend",
@@ -19622,7 +19645,7 @@
       "created": "2025-07-30T00:20:01.662-0700",
       "updated": "2026-08-21T04:28:49.202-0700",
       "ageDays": 407,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer",
@@ -19651,7 +19674,7 @@
       "created": "2026-06-03T09:28:24.133-0700",
       "updated": "2026-08-21T04:28:49.152-0700",
       "ageDays": 98,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -19679,7 +19702,7 @@
       "created": "2026-04-29T09:06:00.615-0700",
       "updated": "2026-08-21T04:28:48.350-0700",
       "ageDays": 133,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "ALBT"
@@ -19707,7 +19730,7 @@
       "created": "2024-10-18T23:12:03.824-0700",
       "updated": "2026-08-21T04:28:47.441-0700",
       "ageDays": 691,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Android",
         "Customer"
@@ -19735,7 +19758,7 @@
       "created": "2026-04-23T06:19:06.943-0700",
       "updated": "2026-08-21T04:28:46.422-0700",
       "ageDays": 139,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALL",
         "Customer"
@@ -19763,7 +19786,7 @@
       "created": "2025-07-28T02:24:22.939-0700",
       "updated": "2026-08-21T04:28:46.107-0700",
       "ageDays": 409,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Android",
         "Customer"
@@ -19791,7 +19814,7 @@
       "created": "2025-12-18T06:05:55.762-0800",
       "updated": "2026-08-21T04:28:45.966-0700",
       "ageDays": 265,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -19818,7 +19841,7 @@
       "created": "2026-05-07T05:48:29.734-0700",
       "updated": "2026-08-21T04:28:45.931-0700",
       "ageDays": 125,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19581"
     },
@@ -19843,7 +19866,7 @@
       "created": "2026-05-17T23:18:39.321-0700",
       "updated": "2026-08-21T04:28:45.903-0700",
       "ageDays": 115,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "IOS"
       ],
@@ -19870,7 +19893,7 @@
       "created": "2025-09-17T02:50:04.012-0700",
       "updated": "2026-08-21T04:28:45.606-0700",
       "ageDays": 358,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Backend",
         "REBM",
@@ -19899,7 +19922,7 @@
       "created": "2024-04-11T16:36:13.488-0700",
       "updated": "2026-08-21T04:28:45.463-0700",
       "ageDays": 881,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer",
@@ -19929,7 +19952,7 @@
       "created": "2025-12-02T23:39:05.626-0800",
       "updated": "2026-08-21T04:28:44.225-0700",
       "ageDays": 281,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "Backend",
@@ -19958,8 +19981,8 @@
       "reporter": "Gaurav Jain",
       "created": "2026-04-21T04:23:34.040-0700",
       "updated": "2026-08-21T04:28:44.197-0700",
-      "ageDays": 141,
-      "staleDays": 19,
+      "ageDays": 142,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -19987,8 +20010,8 @@
       "reporter": "Vishal Kohli",
       "created": "2026-02-12T03:30:12.449-0800",
       "updated": "2026-08-21T04:28:43.371-0700",
-      "ageDays": 209,
-      "staleDays": 19,
+      "ageDays": 210,
+      "staleDays": 20,
       "labels": [
         "SHIELD"
       ],
@@ -20015,7 +20038,7 @@
       "created": "2026-06-01T22:35:59.829-0700",
       "updated": "2026-08-21T04:28:43.138-0700",
       "ageDays": 100,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -20044,7 +20067,7 @@
       "created": "2025-09-15T04:18:43.514-0700",
       "updated": "2026-08-21T04:28:43.086-0700",
       "ageDays": 360,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-17960"
     },
@@ -20069,7 +20092,7 @@
       "created": "2026-05-07T03:38:34.456-0700",
       "updated": "2026-08-21T04:28:42.813-0700",
       "ageDays": 126,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT"
       ],
@@ -20096,7 +20119,7 @@
       "created": "2026-05-14T11:15:50.021-0700",
       "updated": "2026-08-21T04:28:42.759-0700",
       "ageDays": 118,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Backend",
         "REBM"
@@ -20124,7 +20147,7 @@
       "created": "2026-06-09T22:57:05.014-0700",
       "updated": "2026-08-21T04:28:41.730-0700",
       "ageDays": 92,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -20153,7 +20176,7 @@
       "created": "2024-03-12T02:03:12.302-0700",
       "updated": "2026-08-21T04:28:41.693-0700",
       "ageDays": 912,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "BE",
         "Customer"
@@ -20181,7 +20204,7 @@
       "created": "2025-07-11T14:59:32.355-0700",
       "updated": "2026-08-21T04:28:41.661-0700",
       "ageDays": 425,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -20209,7 +20232,7 @@
       "created": "2026-04-16T14:29:50.032-0700",
       "updated": "2026-08-21T04:28:41.632-0700",
       "ageDays": 146,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -20235,8 +20258,8 @@
       "reporter": "Vishal Kohli",
       "created": "2026-02-12T03:29:29.746-0800",
       "updated": "2026-08-21T04:28:41.607-0700",
-      "ageDays": 209,
-      "staleDays": 19,
+      "ageDays": 210,
+      "staleDays": 20,
       "labels": [
         "SHIELD"
       ],
@@ -20263,7 +20286,7 @@
       "created": "2025-08-28T23:57:04.138-0700",
       "updated": "2026-08-21T04:28:41.496-0700",
       "ageDays": 377,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -20290,7 +20313,7 @@
       "created": "2026-06-01T07:46:39.648-0700",
       "updated": "2026-08-21T04:28:41.358-0700",
       "ageDays": 100,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "ALBT",
@@ -20320,7 +20343,7 @@
       "created": "2026-05-13T23:52:36.291-0700",
       "updated": "2026-08-21T04:28:41.322-0700",
       "ageDays": 119,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "Backend",
@@ -20351,7 +20374,7 @@
       "created": "2025-11-21T01:36:39.561-0800",
       "updated": "2026-08-21T04:28:41.262-0700",
       "ageDays": 293,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -20378,7 +20401,7 @@
       "created": "2026-03-09T05:50:51.521-0700",
       "updated": "2026-08-21T04:28:41.179-0700",
       "ageDays": 184,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC"
       ],
@@ -20405,7 +20428,7 @@
       "created": "2026-05-05T03:40:27.661-0700",
       "updated": "2026-08-21T04:28:41.171-0700",
       "ageDays": 128,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Backend",
         "Customer",
@@ -20434,7 +20457,7 @@
       "created": "2026-05-13T20:38:07.119-0700",
       "updated": "2026-08-21T04:28:38.474-0700",
       "ageDays": 119,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "IOS"
       ],
@@ -20461,7 +20484,7 @@
       "created": "2026-06-08T07:47:29.467-0700",
       "updated": "2026-08-21T04:28:38.471-0700",
       "ageDays": 93,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -20488,7 +20511,7 @@
       "created": "2026-05-31T23:04:19.889-0700",
       "updated": "2026-08-21T04:28:38.429-0700",
       "ageDays": 101,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -20516,7 +20539,7 @@
       "created": "2026-05-05T03:29:20.917-0700",
       "updated": "2026-08-21T04:28:38.226-0700",
       "ageDays": 128,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -20543,7 +20566,7 @@
       "created": "2025-07-09T07:43:16.905-0700",
       "updated": "2026-08-21T04:28:38.226-0700",
       "ageDays": 427,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer",
@@ -20572,7 +20595,7 @@
       "created": "2025-11-14T00:55:42.133-0800",
       "updated": "2026-08-21T04:28:38.198-0700",
       "ageDays": 300,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18382"
     },
@@ -20597,7 +20620,7 @@
       "created": "2026-04-16T02:18:48.008-0700",
       "updated": "2026-08-21T04:28:38.185-0700",
       "ageDays": 147,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -20624,7 +20647,7 @@
       "created": "2026-03-09T00:38:39.811-0700",
       "updated": "2026-08-21T04:28:38.180-0700",
       "ageDays": 185,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer",
         "Spillover",
@@ -20653,7 +20676,7 @@
       "created": "2025-08-22T00:06:03.136-0700",
       "updated": "2026-08-21T04:28:38.179-0700",
       "ageDays": 384,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "Customer"
       ],
@@ -20680,7 +20703,7 @@
       "created": "2026-06-12T03:23:54.012-0700",
       "updated": "2026-08-21T04:23:34.334-0700",
       "ageDays": 90,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "ALBT",
         "Customer"
@@ -20759,7 +20782,7 @@
       "reporter": "Anil Melinmani",
       "created": "2025-10-15T04:24:03.711-0700",
       "updated": "2026-08-21T04:21:22.218-0700",
-      "ageDays": 329,
+      "ageDays": 330,
       "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18149"
@@ -21986,7 +22009,7 @@
       "created": "2026-07-22T00:06:38.180-0700",
       "updated": "2026-08-18T04:23:33.441-0700",
       "ageDays": 50,
-      "staleDays": 22,
+      "staleDays": 23,
       "labels": [
         "SHIELD",
         "iOS"
@@ -22014,7 +22037,7 @@
       "created": "2026-07-22T00:23:25.361-0700",
       "updated": "2026-08-18T04:22:47.061-0700",
       "ageDays": 50,
-      "staleDays": 22,
+      "staleDays": 23,
       "labels": [
         "SHIELD",
         "iOS"
@@ -22042,7 +22065,7 @@
       "created": "2026-07-22T00:14:40.934-0700",
       "updated": "2026-08-18T04:22:44.421-0700",
       "ageDays": 50,
-      "staleDays": 22,
+      "staleDays": 23,
       "labels": [
         "SHIELD",
         "iOS"
@@ -22069,7 +22092,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-12T04:24:21.941-0700",
       "updated": "2026-08-18T02:21:10.806-0700",
-      "ageDays": 28,
+      "ageDays": 29,
       "staleDays": 23,
       "labels": [
         "Android",
@@ -22240,7 +22263,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-12T04:30:37.930-0700",
       "updated": "2026-08-17T22:28:08.057-0700",
-      "ageDays": 28,
+      "ageDays": 29,
       "staleDays": 23,
       "labels": [
         "IOS",
@@ -22780,7 +22803,7 @@
       "created": "2026-07-22T00:25:20.615-0700",
       "updated": "2026-08-12T04:23:08.102-0700",
       "ageDays": 50,
-      "staleDays": 28,
+      "staleDays": 29,
       "labels": [
         "SHIELD",
         "iOS"
@@ -23217,7 +23240,7 @@
       "created": "2026-07-22T00:17:21.504-0700",
       "updated": "2026-08-10T04:23:58.395-0700",
       "ageDays": 50,
-      "staleDays": 30,
+      "staleDays": 31,
       "labels": [
         "SHIELD",
         "iOS"
@@ -25076,7 +25099,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-07-22T04:28:20.179-0700",
       "updated": "2026-08-05T05:40:28.061-0700",
-      "ageDays": 49,
+      "ageDays": 50,
       "staleDays": 35,
       "labels": [
         "AD-HOC",
@@ -26604,7 +26627,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-07-16T04:28:18.696-0700",
       "updated": "2026-07-28T09:08:59.342-0700",
-      "ageDays": 55,
+      "ageDays": 56,
       "staleDays": 43,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20059"
@@ -27530,35 +27553,6 @@
         "SHIELD"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-19734"
-    },
-    {
-      "key": "REB3-19733",
-      "summary": "[Andr] Another user can resume the already in-progress task of other user.",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Done",
-      "statusCategory": "done",
-      "priority": "Medium",
-      "component": "ANDR",
-      "assignee": "Gaurav Tripathi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
-      "tester": "Gaurav Tripathi",
-      "reporter": "Gaurav Tripathi",
-      "created": "2026-05-31T23:22:40.357-0700",
-      "updated": "2026-07-25T09:13:46.263-0700",
-      "ageDays": 101,
-      "staleDays": 46,
-      "labels": [
-        "Android",
-        "PILOT",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19733"
     }
   ]
 }
