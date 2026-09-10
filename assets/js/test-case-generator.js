@@ -350,13 +350,21 @@ class TestCaseGenerator {
   }
 
   closeModal() {
+    console.log('🔴 closeModal() called - isGenerating:', this.isGenerating);
     const modal = document.getElementById('test-case-generator-modal');
     modal.classList.remove('is-open');
 
-    // Reset to step 1
-    if (!this.isGenerating) {
-      this.showStep('select');
+    // If generation is in progress, stop it
+    if (this.isGenerating) {
+      console.log('⏸️ Stopping generation...');
+      this.isGenerating = false;
+      // Show alert to user
+      alert('Generation cancelled.');
     }
+
+    // Reset to step 1
+    this.showStep('select');
+    console.log('✓ Modal closed and reset to step 1');
   }
 
   async loadJiraIssues() {
