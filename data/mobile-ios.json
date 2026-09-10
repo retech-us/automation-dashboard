@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-09-09T05:15:08Z",
-  "durationMs": 19981726,
+  "finishedAt": "2026-09-10T06:15:54Z",
+  "durationMs": 23591648,
   "summary": {
     "total": 25,
-    "passed": 14,
-    "failed": 0,
-    "broken": 11,
+    "passed": 12,
+    "failed": 1,
+    "broken": 12,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/34291310263",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/34417573424",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -60,9 +60,9 @@
     {
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': expected [200] but found [502]",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -93,29 +93,30 @@
       "name": "Tracked Capture Screen section rejection",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': No selectable reason option found within 40s",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
-    "locator": 3,
-    "timeout": 1,
-    "unknown": 28
+    "locator": 2,
+    "timeout": 7,
+    "assertion": 1,
+    "unknown": 20
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 14,
-    "review": 11,
+    "passed": 12,
+    "review": 13,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 56.0,
+      "passPct": 48.0,
       "total": 25,
-      "failed": 11
+      "failed": 13
     }
   ],
   "platform": "iOS",
@@ -131,7 +132,7 @@
       "status": "failure"
     }
   ],
-  "runId": "34291310263",
-  "runNumber": 292,
+  "runId": "34417573424",
+  "runNumber": 293,
   "environment": "CI"
 }
