@@ -33,6 +33,7 @@ class TestCaseGenerator {
 
   addMainGenerateButton() {
     // Add button to main Generate Test Cases tab
+    const self = this; // Preserve context
     const tryAddButton = () => {
       const generateContainer = document.getElementById('generate-btn-main');
       if (!generateContainer) {
@@ -41,17 +42,25 @@ class TestCaseGenerator {
         return;
       }
 
+      console.log('✓ Found #generate-btn-main, attaching listener');
+
       // Add click listener to main button
-      generateContainer.addEventListener('click', () => {
+      generateContainer.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         console.log('🔘 Main Generate Test Cases button clicked');
-        this.openModal();
+        console.log('Opening modal...');
+        self.openModal();
       });
 
-      console.log('✓ Main button listener attached');
+      console.log('✓ Main button listener attached to #generate-btn-main');
     };
 
-    // Initial add
+    // Initial add with retry
     tryAddButton();
+
+    // Also retry after a delay
+    setTimeout(tryAddButton, 500);
   }
 
   addButtonToJiraTab() {
@@ -295,6 +304,15 @@ class TestCaseGenerator {
   async openModal() {
     console.log('📂 openModal() called');
 
+    // Check if modal exists
+    const modal = document.getElementById('test-case-generator-modal');
+    if (!modal) {
+      console.error('❌ Modal not found!');
+      alert('Modal not initialized. Please refresh the page.');
+      return;
+    }
+    console.log('✓ Modal found');
+
     // Always check for valid credentials first
     if (!window.credentialsManager) {
       console.error('❌ credentialsManager not initialized');
@@ -311,8 +329,8 @@ class TestCaseGenerator {
     if (isSessionValid) {
       console.log('✓ Valid session found - opening generator modal');
       // Valid session - open generator directly
-      const modal = document.getElementById('test-case-generator-modal');
       modal.classList.add('is-open');
+      console.log('✓ Added is-open class to modal');
       await this.loadJiraIssues();
       this.showStep('select');
     } else {
