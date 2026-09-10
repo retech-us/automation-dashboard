@@ -32,35 +32,26 @@ class TestCaseGenerator {
   }
 
   addMainGenerateButton() {
-    // Add button to main Generate Test Cases tab
-    const self = this; // Preserve context
-    const tryAddButton = () => {
-      const generateContainer = document.getElementById('generate-btn-main');
-      if (!generateContainer) {
-        console.log('⏳ Waiting for #generate-btn-main...');
-        setTimeout(tryAddButton, 100);
-        return;
-      }
+    // Use event delegation - attach listener to document
+    const self = this;
 
-      console.log('✓ Found #generate-btn-main, attaching listener');
+    // Listen for clicks on the main generate button using event delegation
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('#generate-btn-main');
+      if (!btn) return;
 
-      // Add click listener to main button
-      generateContainer.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('🔘 Main Generate Test Cases button clicked');
-        console.log('Opening modal...');
-        self.openModal();
+      console.log('🔘 Main Generate Test Cases button clicked!');
+      console.log('Button element:', btn);
+      e.preventDefault();
+      e.stopPropagation();
+
+      console.log('Calling openModal()...');
+      self.openModal().catch(err => {
+        console.error('Error in openModal:', err);
       });
+    }, true); // Use capture phase to ensure we catch the click
 
-      console.log('✓ Main button listener attached to #generate-btn-main');
-    };
-
-    // Initial add with retry
-    tryAddButton();
-
-    // Also retry after a delay
-    setTimeout(tryAddButton, 500);
+    console.log('✓ Main button listener attached via event delegation');
   }
 
   addButtonToJiraTab() {
@@ -124,10 +115,12 @@ class TestCaseGenerator {
   }
 
   createModal() {
+    console.log('Creating modal...');
     // Create modal overlay
     const modal = document.createElement('div');
     modal.id = 'test-case-generator-modal';
     modal.className = 'modal modal--test-generator';
+    console.log('Modal element created:', modal);
     modal.innerHTML = `
       <div class="modal__overlay"></div>
       <div class="modal__content">
@@ -272,9 +265,12 @@ class TestCaseGenerator {
     `;
 
     document.body.appendChild(modal);
+    console.log('✓ Modal appended to body');
+    console.log('Modal in DOM:', document.getElementById('test-case-generator-modal'));
   }
 
   wireEventListeners() {
+    console.log('Wiring event listeners...');
     const modal = document.getElementById('test-case-generator-modal');
     const overlay = modal.querySelector('.modal__overlay');
     const closeBtn = modal.querySelector('.modal__close');
