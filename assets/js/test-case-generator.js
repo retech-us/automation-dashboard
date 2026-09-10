@@ -450,10 +450,27 @@ class TestCaseGenerator {
 
       // Collect unique values for filters
       this.jiraIssues.forEach(issue => {
+        // Collect type
         const type = issue.fields?.issuetype?.name;
         if (type) this.types.add(type);
+
+        // Collect status
         const status = issue.fields?.status?.name;
         if (status) this.statuses.add(status);
+
+        // Collect sprint
+        const sprint = issue.fields?.sprint;
+        if (sprint && sprint.name) {
+          this.sprints.add(sprint.name);
+        }
+
+        // Collect version (fixVersions)
+        const versions = issue.fields?.fixVersions;
+        if (Array.isArray(versions)) {
+          versions.forEach(v => {
+            if (v && v.name) this.versions.add(v.name);
+          });
+        }
       });
 
       this.populateFilterDropdowns();
@@ -475,6 +492,29 @@ class TestCaseGenerator {
   }
 
   populateFilterDropdowns() {
+    // Populate Sprint filter
+    const sprintSelect = document.getElementById('filter-sprint');
+    if (sprintSelect) {
+      Array.from(this.sprints).sort().forEach(sprint => {
+        const option = document.createElement('option');
+        option.value = sprint;
+        option.textContent = sprint;
+        sprintSelect.appendChild(option);
+      });
+    }
+
+    // Populate Version filter
+    const versionSelect = document.getElementById('filter-version');
+    if (versionSelect) {
+      Array.from(this.versions).sort().forEach(version => {
+        const option = document.createElement('option');
+        option.value = version;
+        option.textContent = version;
+        versionSelect.appendChild(option);
+      });
+    }
+
+    // Populate Type filter
     const typeSelect = document.getElementById('filter-type');
     if (typeSelect) {
       Array.from(this.types).sort().forEach(type => {
@@ -485,6 +525,7 @@ class TestCaseGenerator {
       });
     }
 
+    // Populate Status filter
     const statusSelect = document.getElementById('filter-status');
     if (statusSelect) {
       Array.from(this.statuses).sort().forEach(status => {
@@ -534,24 +575,34 @@ class TestCaseGenerator {
 
   filterIssues() {
     const searchTerm = document.getElementById('issue-search').value.toLowerCase();
+    const sprintFilter = document.getElementById('filter-sprint').value;
+    const versionFilter = document.getElementById('filter-version').value;
     const typeFilter = document.getElementById('filter-type').value;
     const statusFilter = document.getElementById('filter-status').value;
 
     const issuesList = document.getElementById('issues-list');
     const items = issuesList.querySelectorAll('.issue-item');
 
-    items.forEach(item => {
+    items.forEach((item, idx) => {
       const key = item.querySelector('.issue-key').textContent;
       const summary = item.querySelector('.issue-summary').textContent;
       const type = item.querySelector('.issue-type').textContent;
       const status = item.querySelector('.issue-status').textContent;
 
+      // Get issue data for sprint/version filtering
+      const issue = this.jiraIssues[idx];
+      const sprintName = issue?.fields?.sprint?.name || '';
+      const versions = issue?.fields?.fixVersions || [];
+      const versionNames = versions.map(v => v.name).join(', ');
+
       const matchesSearch = key.toLowerCase().includes(searchTerm) ||
                            summary.toLowerCase().includes(searchTerm);
+      const matchesSprint = !sprintFilter || sprintName === sprintFilter;
+      const matchesVersion = !versionFilter || versionNames.includes(versionFilter);
       const matchesType = !typeFilter || type === typeFilter;
       const matchesStatus = !statusFilter || status === statusFilter;
 
-      const shouldShow = matchesSearch && matchesType && matchesStatus;
+      const shouldShow = matchesSearch && matchesSprint && matchesVersion && matchesType && matchesStatus;
       item.style.display = shouldShow ? '' : 'none';
     });
 
