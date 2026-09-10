@@ -1,0 +1,35 @@
+modules:
+  issue-panel:
+    - key: inhouse-tc-panel
+      resource: issue-panel-resource
+      title: 🧪 Inhouse TC Generator
+      description: Display test cases generated from this issue
+      provider:
+        key: inhouse-tc-backend
+      target:
+        - type: issue.property
+          key: inhouse-tc-data
+
+resources:
+  - key: issue-panel-resource
+    path: src/index.jsx
+
+backends:
+  - key: inhouse-tc-backend
+    handler: src/resolver.js
+
+permissions:
+  - key: read:jira-work
+    reason: Read issue details to fetch generated test cases
+  - key: write:jira-work
+    reason: Update issue with test case information
+
+app:
+  key: com.inhouse.tc-generator
+  name: Inhouse TC Generator
+  description: Display and manage test cases generated from Jira issues
+  vendor:
+    name: Inhouse Tools
+    url: https://internal.company.com
+  version: 1.0.0
+  licensing: free
