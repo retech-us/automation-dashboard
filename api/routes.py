@@ -16,6 +16,7 @@ from database.repositories import (
     ScenarioRepository, SyncRepository, JiraIssueRepository,
     ProjectSettingsRepository
 )
+from sync.jira_sync import sync_engine
 
 logger = logging.getLogger(__name__)
 
@@ -582,46 +583,106 @@ class APIRoutes:
             except ValueError:
                 return self._send_response({"error": "Invalid scenario ID"}, 400)
 
-            scenario_repo = repos.get_scenario_repo()
-            sync_repo = repos.get_sync_repo()
+            # Get Jira credentials
+            jira_base_url = request_data.get('jira_base_url', '').strip()
+            jira_email = request_data.get('jira_email', '').strip()
+            jira_token = request_data.get('jira_api_token', '').strip()
 
-            # Get scenario
-            scenario = scenario_repo.get_scenario(scenario_uuid)
-            if not scenario:
-                return self._send_response({"error": "Scenario not found"}, 404)
-
-            # Update sync status
-            jira_child_issue_key = request_data.get('jira_child_issue_key')
-            jira_child_issue_url = request_data.get('jira_child_issue_url')
-
-            success = scenario_repo.update_scenario_sync_status(
-                scenario_uuid,
-                'synced',
-                jira_child_issue_key,
-                jira_child_issue_url
-            )
-
-            if success:
-                sync_repo.record_sync(
-                    scenario_id=scenario_uuid,
-                    sync_direction='to_jira',
-                    sync_type='create',
-                    new_state={'jira_child_issue_key': jira_child_issue_key},
-                    sync_status='success',
-                    synced_by=request_data.get('synced_by', 'system')
-                )
+            if not all([jira_base_url, jira_email, jira_token]):
+                return self._send_response({"error": "Missing Jira credentials"}, 400)
 
             db_session.close()
+
+            # Trigger sync via engine
+            success, child_key = sync_engine.sync_scenario_to_jira(
+                scenario_uuid, jira_base_url, jira_email, jira_token
+            )
 
             if success:
                 return self._send_response({
                     "status": "synced",
-                    "jira_child_issue_key": jira_child_issue_key
+                    "jira_child_issue_key": child_key
                 })
             else:
-                return self._send_response({"error": "Failed to sync"}, 500)
+                return self._send_response({
+                    "status": "error",
+                    "error": child_key  # Error message
+                }, 500)
         except Exception as e:
             logger.error(f"Error syncing scenario: {e}")
+            return self._send_response({"error": str(e)}, 500)
+
+    def POST_api_jira_sync_batch(self, body: str) -> Tuple[str, int, str]:
+        """POST /api/jira/sync-batch - Sync multiple scenarios to Jira"""
+        try:
+            request_data = self._parse_json_body(body)
+
+            scenario_ids = request_data.get('scenario_ids', [])
+            jira_base_url = request_data.get('jira_base_url', '').strip()
+            jira_email = request_data.get('jira_email', '').strip()
+            jira_token = request_data.get('jira_api_token', '').strip()
+
+            if not all([scenario_ids, jira_base_url, jira_email, jira_token]):
+                return self._send_response({"error": "Missing required fields"}, 400)
+
+            # Convert string IDs to UUIDs
+            try:
+                scenario_uuids = [UUID(s) for s in scenario_ids]
+            except ValueError:
+                return self._send_response({"error": "Invalid scenario IDs"}, 400)
+
+            # Trigger batch sync
+            results = sync_engine.sync_batch_scenarios(
+                scenario_uuids, jira_base_url, jira_email, jira_token
+            )
+
+            return self._send_response({
+                "status": "completed",
+                "results": results
+            })
+        except Exception as e:
+            logger.error(f"Error in batch sync: {e}")
+            return self._send_response({"error": str(e)}, 500)
+
+    def POST_api_jira_sync_pending(self, body: str) -> Tuple[str, int, str]:
+        """POST /api/jira/sync-pending - Sync all pending scenarios to Jira"""
+        try:
+            request_data = self._parse_json_body(body)
+
+            jira_base_url = request_data.get('jira_base_url', '').strip()
+            jira_email = request_data.get('jira_email', '').strip()
+            jira_token = request_data.get('jira_api_token', '').strip()
+            limit = request_data.get('limit', 50)
+
+            if not all([jira_base_url, jira_email, jira_token]):
+                return self._send_response({"error": "Missing Jira credentials"}, 400)
+
+            # Trigger sync
+            results = sync_engine.sync_pending_scenarios(
+                jira_base_url, jira_email, jira_token, limit
+            )
+
+            return self._send_response({
+                "status": "completed",
+                "results": results
+            })
+        except Exception as e:
+            logger.error(f"Error syncing pending: {e}")
+            return self._send_response({"error": str(e)}, 500)
+
+    def POST_api_jira_webhook(self, body: str) -> Tuple[str, int, str]:
+        """POST /api/jira/webhook - Handle Jira webhook events"""
+        try:
+            webhook_data = self._parse_json_body(body)
+
+            success = sync_engine.handle_jira_webhook(webhook_data)
+
+            if success:
+                return self._send_response({"status": "processed"})
+            else:
+                return self._send_response({"status": "error"}, 400)
+        except Exception as e:
+            logger.error(f"Error handling webhook: {e}")
             return self._send_response({"error": str(e)}, 500)
 
     # ==================== ANALYTICS ENDPOINTS ====================
