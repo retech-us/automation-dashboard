@@ -734,9 +734,24 @@ class TestCaseGenerator {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           const scenario = JSON.parse(e.target.dataset.scenarioJson);
-          alert(`✓ Approved: ${scenario.title}\n\nScenario will be ready to sync to Jira.\nClose this modal and scroll down to approve and sync all scenarios.`);
+
+          // Save approval to session storage
+          const approvals = JSON.parse(sessionStorage.getItem('scenario_approvals') || '{}');
+          approvals[scenario.title] = { status: 'approved', timestamp: Date.now() };
+          sessionStorage.setItem('scenario_approvals', JSON.stringify(approvals));
+
+          // Disable this button and enable reject
           e.target.style.opacity = '0.5';
           e.target.disabled = true;
+
+          // Find sibling reject button and enable it
+          const rejectBtn = e.target.parentElement.querySelector('.scenario-reject-btn');
+          if (rejectBtn) {
+            rejectBtn.style.opacity = '1';
+            rejectBtn.disabled = false;
+          }
+
+          alert(`✓ Approved: ${scenario.title}\n\nScenario will be ready to sync to Jira.`);
         });
       });
 
@@ -744,11 +759,32 @@ class TestCaseGenerator {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           const scenario = JSON.parse(e.target.dataset.scenarioJson);
+
+          // Check if already approved
+          const approvals = JSON.parse(sessionStorage.getItem('scenario_approvals') || '{}');
+          if (approvals[scenario.title]?.status === 'approved') {
+            alert('This scenario is already approved. Unapprove it first before rejecting.');
+            return;
+          }
+
           const reason = prompt(`Reject: ${scenario.title}\n\nProvide rejection reason:`);
           if (reason) {
-            alert(`✗ Rejected: ${scenario.title}\n\nReason: ${reason}`);
+            // Save rejection to session storage
+            approvals[scenario.title] = { status: 'rejected', reason, timestamp: Date.now() };
+            sessionStorage.setItem('scenario_approvals', JSON.stringify(approvals));
+
+            // Disable this button and enable approve
             e.target.style.opacity = '0.5';
             e.target.disabled = true;
+
+            // Find sibling approve button and enable it
+            const approveBtn = e.target.parentElement.querySelector('.scenario-approve-btn');
+            if (approveBtn) {
+              approveBtn.style.opacity = '1';
+              approveBtn.disabled = false;
+            }
+
+            alert(`✗ Rejected: ${scenario.title}\n\nReason: ${reason}`);
           }
         });
       });

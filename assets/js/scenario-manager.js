@@ -13,7 +13,7 @@ class ScenarioManager {
     }
 
     init() {
-        logger.info('ScenarioManager: Initializing');
+        console.log('📋 ScenarioManager: Initializing');
         this.setupEventListeners();
         this.createUIElements();
     }
@@ -21,7 +21,7 @@ class ScenarioManager {
     setupEventListeners() {
         // Listen for scenario generation completion
         document.addEventListener('scenarios-generated', (e) => {
-            logger.info('ScenarioManager: scenarios-generated event received');
+            console.log('📋 scenarios-generated event received');
             if (e.detail.testCases) {
                 const scenarios = this.processScenarios(e.detail.testCases);
                 this.displayScenarios(scenarios);
@@ -30,24 +30,38 @@ class ScenarioManager {
     }
 
     processScenarios(testCases) {
+        // Get approvals from session storage
+        const approvals = JSON.parse(sessionStorage.getItem('scenario_approvals') || '{}');
+
         // Convert testCases format to flat scenarios array
         return testCases.flatMap(tc =>
-            (tc.scenarios || []).map(s => ({
-                id: s.id || Math.random().toString(36).substr(2, 9),
-                title: s.title,
-                type: s.type || 'positive',
-                status: 'draft',
-                priority: s.priority || 'medium',
-                category: s.category || '',
-                preconditions: s.preconditions || [],
-                steps: s.steps || [],
-                expected_result: s.expectedResult || s.expected_result || '',
-                automation_hint: s.automationHint || s.automation_hint || '',
-                tags: s.tags || [],
-                jira_issue_key: tc.issueKey || '',
-                jira_sync_status: 'pending',
-                jira_child_issue_key: null
-            }))
+            (tc.scenarios || []).map(s => {
+                const approval = approvals[s.title];
+                let status = 'draft';
+                if (approval?.status === 'approved') {
+                    status = 'approved';
+                } else if (approval?.status === 'rejected') {
+                    status = 'rejected';
+                }
+
+                return {
+                    id: s.id || Math.random().toString(36).substr(2, 9),
+                    title: s.title,
+                    type: s.type || 'positive',
+                    status: status,
+                    priority: s.priority || 'medium',
+                    category: s.category || '',
+                    preconditions: s.preconditions || [],
+                    steps: s.steps || [],
+                    expected_result: s.expectedResult || s.expected_result || '',
+                    automation_hint: s.automationHint || s.automation_hint || '',
+                    tags: s.tags || [],
+                    jira_issue_key: tc.issueKey || '',
+                    jira_sync_status: 'pending',
+                    jira_child_issue_key: null,
+                    rejection_reason: approval?.reason || null
+                };
+            })
         );
     }
 
@@ -106,10 +120,35 @@ class ScenarioManager {
             </div>
         `;
 
-        // Insert after test case generator results
-        const resultsSection = document.querySelector('.results-section');
-        if (resultsSection) {
-            resultsSection.insertAdjacentHTML('afterend', panel);
+        // Try multiple insertion points
+        let inserted = false;
+
+        // Try 1: Insert after test case generator modal
+        const modal = document.getElementById('test-case-generator-modal');
+        if (modal && modal.parentElement) {
+            modal.insertAdjacentHTML('afterend', panel);
+            inserted = true;
+            console.log('✓ Panel inserted after modal');
+        }
+
+        // Try 2: Insert into main container
+        if (!inserted) {
+            const container = document.querySelector('main.container');
+            if (container) {
+                container.insertAdjacentHTML('beforeend', panel);
+                inserted = true;
+                console.log('✓ Panel inserted into main container');
+            }
+        }
+
+        // Try 3: Insert into body
+        if (!inserted) {
+            document.body.insertAdjacentHTML('beforeend', panel);
+            inserted = true;
+            console.log('✓ Panel inserted into body');
+        }
+
+        if (inserted) {
             this.attachPanelListeners();
         }
     }
@@ -132,7 +171,7 @@ class ScenarioManager {
     }
 
     displayScenarios(scenarios) {
-        logger.info(`ScenarioManager: Displaying ${scenarios.length} scenarios`);
+        console.log(`📋 Displaying ${scenarios.length} scenarios`);
         this.currentScenarios = scenarios;
         this.renderScenarioList(scenarios);
     }
@@ -321,7 +360,7 @@ class ScenarioManager {
         .then(r => r.json())
         .then(data => {
             if (data.status === 'approved') {
-                logger.info(`Scenario ${scenarioId} approved`);
+                console.log(`✓ Scenario approved: ${scenarioId}`);
                 this.showNotification('Scenario approved! Ready to sync to Jira.', 'success');
                 this.refreshScenarioList();
             } else {
@@ -329,7 +368,7 @@ class ScenarioManager {
             }
         })
         .catch(e => {
-            logger.error('Error approving scenario:', e);
+            console.error('❌ Error approving scenario:', e);
             this.showNotification('Error approving scenario', 'error');
         });
     }
@@ -386,7 +425,7 @@ class ScenarioManager {
         .then(r => r.json())
         .then(data => {
             if (data.status === 'rejected') {
-                logger.info(`Scenario ${scenarioId} rejected`);
+                console.log(`✗ Scenario rejected: ${scenarioId}`);
                 this.showNotification('Scenario rejected', 'info');
                 this.refreshScenarioList();
             } else {
@@ -394,7 +433,7 @@ class ScenarioManager {
             }
         })
         .catch(e => {
-            logger.error('Error rejecting scenario:', e);
+            console.error('❌ Error rejecting scenario:', e);
             this.showNotification('Error rejecting scenario', 'error');
         });
     }
@@ -481,7 +520,7 @@ class ScenarioManager {
         .then(r => r.json())
         .then(data => {
             if (data.status === 'synced') {
-                logger.info(`Scenario synced: ${data.jira_child_issue_key}`);
+                console.log(`✓ Scenario synced: ${data.jira_child_issue_key}`);
                 this.showNotification(`✓ Synced to ${data.jira_child_issue_key}`, 'success');
                 this.refreshScenarioList();
             } else {
@@ -489,7 +528,7 @@ class ScenarioManager {
             }
         })
         .catch(e => {
-            logger.error('Error syncing:', e);
+            console.error('❌ Error syncing:', e);
             this.showNotification('Error syncing to Jira', 'error');
         })
         .finally(() => {
@@ -527,7 +566,7 @@ class ScenarioManager {
         .then(data => {
             if (data.status === 'completed') {
                 const results = data.results;
-                logger.info(`Sync complete: ${results.successful}/${results.total}`);
+                console.log(`✓ Sync complete: ${results.successful}/${results.total}`);
                 this.showSyncResults(results);
                 this.refreshScenarioList();
             } else {
@@ -536,7 +575,7 @@ class ScenarioManager {
             }
         })
         .catch(e => {
-            logger.error('Error syncing:', e);
+            console.error('❌ Error syncing:', e);
             this.showNotification('Error syncing to Jira', 'error');
             this.hideSyncProgress();
         })
@@ -585,22 +624,64 @@ class ScenarioManager {
 
                 ${results.synced_issues && results.synced_issues.length > 0 ? `
                     <div class="synced-issues">
-                        <strong>Created Issues:</strong>
+                        <strong>✓ Created as Child Issues in Jira:</strong>
                         <ul>
                             ${results.synced_issues.map(key => `
                                 <li>
                                     <a href="https://retech.atlassian.net/browse/${key}" target="_blank">
-                                        ${key}
+                                        ${key} →
                                     </a>
                                 </li>
                             `).join('')}
                         </ul>
+                        <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                            These scenarios are now linked to your Jira ticket as child issues and have been removed from the pending list.
+                        </p>
                     </div>
                 ` : ''}
             `;
 
             resultsContainer.classList.remove('hidden');
         }
+
+        // Remove synced scenarios from the display
+        if (results.synced_issues && results.synced_issues.length > 0) {
+            setTimeout(() => {
+                this.removeSyncedScenariosFromUI(results.synced_issues);
+                this.updateBatchSyncButton();
+            }, 1000);
+        }
+
+        // Show success notification
+        this.showNotification(`✓ Successfully synced ${results.successful} scenario(s) to Jira!`, 'success');
+    }
+
+    removeSyncedScenariosFromUI(syncedIssueKeys) {
+        const container = document.getElementById('scenarios-container');
+        if (!container) return;
+
+        // Filter out synced scenarios from current scenarios
+        this.currentScenarios = this.currentScenarios.filter(scenario => {
+            // Keep scenarios that don't have a Jira child issue key yet
+            return !scenario.jira_child_issue_key;
+        });
+
+        // Re-render the list (will now exclude synced scenarios)
+        if (this.currentScenarios.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state" style="padding: 60px 20px; text-align: center;">
+                    <p style="font-size: 18px; margin-bottom: 10px;">✓ All scenarios synced!</p>
+                    <p style="color: #666;">All approved scenarios have been successfully added to Jira as child issues.</p>
+                    <p style="color: #999; font-size: 12px; margin-top: 15px;">
+                        To view them, open your Jira ticket and check the child issues section.
+                    </p>
+                </div>
+            `;
+        } else {
+            this.renderScenarioList(this.currentScenarios);
+        }
+
+        console.log(`✓ Removed ${syncedIssueKeys.length} synced scenarios from UI`);
     }
 
     updateBatchSyncButton() {
@@ -624,7 +705,7 @@ class ScenarioManager {
     refreshScenarioList() {
         // Refresh is handled by scenario generation
         // This is a placeholder for manual refresh
-        logger.info('Scenario list refresh triggered');
+        console.log('🔄 Scenario list refresh triggered');
     }
 
     showNotification(message, type = 'info') {
@@ -643,6 +724,6 @@ class ScenarioManager {
 document.addEventListener('DOMContentLoaded', () => {
     if (window.scenarioManager === undefined) {
         window.scenarioManager = new ScenarioManager();
-        logger.info('ScenarioManager initialized');
+        console.log('✓ ScenarioManager initialized');
     }
 });
