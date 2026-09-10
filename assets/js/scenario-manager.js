@@ -120,36 +120,26 @@ class ScenarioManager {
             </div>
         `;
 
-        // Try multiple insertion points
-        let inserted = false;
-
-        // Try 1: Insert after test case generator modal
-        const modal = document.getElementById('test-case-generator-modal');
-        if (modal && modal.parentElement) {
-            modal.insertAdjacentHTML('afterend', panel);
-            inserted = true;
-            console.log('✓ Panel inserted after modal');
-        }
-
-        // Try 2: Insert into main container
-        if (!inserted) {
-            const container = document.querySelector('main.container');
-            if (container) {
-                container.insertAdjacentHTML('beforeend', panel);
-                inserted = true;
-                console.log('✓ Panel inserted into main container');
-            }
-        }
-
-        // Try 3: Insert into body
-        if (!inserted) {
-            document.body.insertAdjacentHTML('beforeend', panel);
-            inserted = true;
-            console.log('✓ Panel inserted into body');
-        }
-
-        if (inserted) {
+        // Insert into the Generate Test Cases tab container
+        const scenarioContainer = document.getElementById('scenario-manager-container');
+        if (scenarioContainer) {
+            scenarioContainer.innerHTML = panel;
+            console.log('✓ Panel inserted into scenario-manager-container');
             this.attachPanelListeners();
+        } else {
+            console.warn('⚠️ scenario-manager-container not found, panel will be inserted when tab loads');
+            // Fallback: wait for container and insert when available
+            const tryInsert = () => {
+                const container = document.getElementById('scenario-manager-container');
+                if (container) {
+                    container.innerHTML = panel;
+                    console.log('✓ Panel inserted into scenario-manager-container (delayed)');
+                    this.attachPanelListeners();
+                } else {
+                    setTimeout(tryInsert, 500);
+                }
+            };
+            tryInsert();
         }
     }
 

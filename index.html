@@ -104,6 +104,7 @@
       <button type="button" class="tab-btn" role="tab" id="tab-ai" data-tab="ai" aria-controls="panel-ai" aria-selected="false">AI usage</button>
       <button type="button" class="tab-btn" role="tab" id="tab-suites" data-tab="suites" aria-controls="panel-suites" aria-selected="false">Suite details</button>
       <button type="button" class="tab-btn" role="tab" id="tab-jira" data-tab="jira" aria-controls="panel-jira" aria-selected="false">🎯 Jira Quality &amp; Delivery</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-generate" data-tab="generate" aria-controls="panel-generate" aria-selected="false">⚡ Generate Test Cases</button>
       <button type="button" class="tab-btn" role="tab" id="tab-live" data-tab="live" aria-controls="panel-live" aria-selected="false">
         <span class="live-pulse-dot" id="live-tab-dot" hidden></span> Live Run
       </button>
@@ -156,6 +157,20 @@
         </div>
         <div id="jira-content" style="padding:24px;"></div>
       </section>
+    </div>
+
+    <div id="panel-generate" class="tab-panel" role="tabpanel" aria-labelledby="tab-generate" hidden>
+      <div id="generate-test-cases-container" style="padding: 20px;">
+        <div style="text-align: center; padding: 60px 20px;">
+          <h2>⚡ Generate Test Cases from Jira</h2>
+          <p style="color: #666; margin: 20px 0;">Click the button below to generate BDD test scenarios from Jira issues</p>
+          <button id="generate-btn-main" class="btn" type="button" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 12px; padding: 12px 24px; cursor: pointer; font-weight: 600; font-size: 16px;">
+            ⚡ Generate Test Cases
+          </button>
+        </div>
+        <!-- Scenario Manager Panel will be inserted here -->
+        <div id="scenario-manager-container"></div>
+      </div>
     </div>
 
     <div id="panel-live" class="tab-panel" role="tabpanel" aria-labelledby="tab-live" hidden>

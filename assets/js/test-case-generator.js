@@ -22,10 +22,36 @@ class TestCaseGenerator {
     this.createModal();
     this.wireEventListeners();
 
-    // Add button to Jira tab (and attach event listener when done)
+    // Add main button to Generate tab
+    this.addMainGenerateButton();
+
+    // Also add button to Jira tab header for quick access
     this.addButtonToJiraTab();
 
     console.log('✓ Test Case Generator initialized');
+  }
+
+  addMainGenerateButton() {
+    // Add button to main Generate Test Cases tab
+    const tryAddButton = () => {
+      const generateContainer = document.getElementById('generate-btn-main');
+      if (!generateContainer) {
+        console.log('⏳ Waiting for #generate-btn-main...');
+        setTimeout(tryAddButton, 100);
+        return;
+      }
+
+      // Add click listener to main button
+      generateContainer.addEventListener('click', () => {
+        console.log('🔘 Main Generate Test Cases button clicked');
+        this.openModal();
+      });
+
+      console.log('✓ Main button listener attached');
+    };
+
+    // Initial add
+    tryAddButton();
   }
 
   addButtonToJiraTab() {
