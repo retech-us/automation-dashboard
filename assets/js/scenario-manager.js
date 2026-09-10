@@ -21,8 +21,34 @@ class ScenarioManager {
     setupEventListeners() {
         // Listen for scenario generation completion
         document.addEventListener('scenarios-generated', (e) => {
-            this.displayScenarios(e.detail.scenarios);
+            logger.info('ScenarioManager: scenarios-generated event received');
+            if (e.detail.testCases) {
+                const scenarios = this.processScenarios(e.detail.testCases);
+                this.displayScenarios(scenarios);
+            }
         });
+    }
+
+    processScenarios(testCases) {
+        // Convert testCases format to flat scenarios array
+        return testCases.flatMap(tc =>
+            (tc.scenarios || []).map(s => ({
+                id: s.id || Math.random().toString(36).substr(2, 9),
+                title: s.title,
+                type: s.type || 'positive',
+                status: 'draft',
+                priority: s.priority || 'medium',
+                category: s.category || '',
+                preconditions: s.preconditions || [],
+                steps: s.steps || [],
+                expected_result: s.expectedResult || s.expected_result || '',
+                automation_hint: s.automationHint || s.automation_hint || '',
+                tags: s.tags || [],
+                jira_issue_key: tc.issueKey || '',
+                jira_sync_status: 'pending',
+                jira_child_issue_key: null
+            }))
+        );
     }
 
     createUIElements() {

@@ -656,6 +656,17 @@ class TestCaseGenerator {
                 <div class="scenario-meta">
                   Priority: ${scenario.priority} • Category: ${scenario.category}
                 </div>
+                <div class="scenario-actions" style="margin-top: 8px; display: flex; gap: 8px;">
+                  <button class="scenario-expand-btn" data-scenario-json='${JSON.stringify(scenario).replace(/'/g, "&apos;")}' style="padding: 4px 8px; font-size: 12px; border: 1px solid #0066cc; color: #0066cc; background: white; border-radius: 4px; cursor: pointer;">
+                    👁️ View Details
+                  </button>
+                  <button class="scenario-approve-btn" data-scenario-json='${JSON.stringify(scenario).replace(/'/g, "&apos;")}' style="padding: 4px 8px; font-size: 12px; border: none; background: #4caf50; color: white; border-radius: 4px; cursor: pointer;">
+                    ✓ Approve
+                  </button>
+                  <button class="scenario-reject-btn" data-scenario-json='${JSON.stringify(scenario).replace(/'/g, "&apos;")}' style="padding: 4px 8px; font-size: 12px; border: none; background: #f44336; color: white; border-radius: 4px; cursor: pointer;">
+                    ✗ Reject
+                  </button>
+                </div>
               </div>
             `).join('')}
             ${tc.scenarios && tc.scenarios.length > 3 ? `
@@ -669,6 +680,17 @@ class TestCaseGenerator {
                     <div class="scenario-title">${scenario.title}</div>
                     <div class="scenario-meta">
                       Priority: ${scenario.priority} • Category: ${scenario.category}
+                    </div>
+                    <div class="scenario-actions" style="margin-top: 8px; display: flex; gap: 8px;">
+                      <button class="scenario-expand-btn" data-scenario-json='${JSON.stringify(scenario).replace(/'/g, "&apos;")}' style="padding: 4px 8px; font-size: 12px; border: 1px solid #0066cc; color: #0066cc; background: white; border-radius: 4px; cursor: pointer;">
+                        👁️ View Details
+                      </button>
+                      <button class="scenario-approve-btn" data-scenario-json='${JSON.stringify(scenario).replace(/'/g, "&apos;")}' style="padding: 4px 8px; font-size: 12px; border: none; background: #4caf50; color: white; border-radius: 4px; cursor: pointer;">
+                        ✓ Approve
+                      </button>
+                      <button class="scenario-reject-btn" data-scenario-json='${JSON.stringify(scenario).replace(/'/g, "&apos;")}' style="padding: 4px 8px; font-size: 12px; border: none; background: #f44336; color: white; border-radius: 4px; cursor: pointer;">
+                        ✗ Reject
+                      </button>
                     </div>
                   </div>
                 `).join('')}
@@ -693,14 +715,96 @@ class TestCaseGenerator {
               `+${Array.from(hiddenDiv.children).length} more scenarios...`;
           } else {
             hiddenDiv.style.display = 'block';
-            e.currentTarget.data.expanded = 'true';
+            e.currentTarget.dataset.expanded = 'true';
             e.currentTarget.querySelector('.scenario-more-text').textContent = 'Show less...';
           }
         });
       });
+
+      // Add handlers for scenario action buttons
+      document.querySelectorAll('.scenario-expand-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const scenario = JSON.parse(e.target.dataset.scenarioJson);
+          this.showScenarioDetails(scenario);
+        });
+      });
+
+      document.querySelectorAll('.scenario-approve-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const scenario = JSON.parse(e.target.dataset.scenarioJson);
+          alert(`✓ Approved: ${scenario.title}\n\nScenario will be ready to sync to Jira.\nClose this modal and scroll down to approve and sync all scenarios.`);
+          e.target.style.opacity = '0.5';
+          e.target.disabled = true;
+        });
+      });
+
+      document.querySelectorAll('.scenario-reject-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const scenario = JSON.parse(e.target.dataset.scenarioJson);
+          const reason = prompt(`Reject: ${scenario.title}\n\nProvide rejection reason:`);
+          if (reason) {
+            alert(`✗ Rejected: ${scenario.title}\n\nReason: ${reason}`);
+            e.target.style.opacity = '0.5';
+            e.target.disabled = true;
+          }
+        });
+      });
+
+      // Trigger ScenarioManager to display full workflow
+      if (window.scenarioManager) {
+        window.scenarioManager.displayScenarios(this.flattenScenarios(data.testCases));
+      }
+
+      // Dispatch event for ScenarioManager to pick up
+      const event = new CustomEvent('scenarios-generated', {
+        detail: { testCases: data.testCases }
+      });
+      document.dispatchEvent(event);
     } else {
       preview.innerHTML = '<div class="empty-state">No test cases generated</div>';
     }
+  }
+
+  showScenarioDetails(scenario) {
+    const details = `
+Scenario: ${scenario.title}
+
+Type: ${scenario.type}
+Priority: ${scenario.priority}
+Category: ${scenario.category}
+
+Preconditions:
+${(scenario.preconditions || []).map((p, i) => `${i + 1}. ${p}`).join('\n')}
+
+Steps:
+${(scenario.steps || []).map((s, i) => {
+  if (typeof s === 'object' && s.action) {
+    return `${s.step || i + 1}. ${s.action}`;
+  }
+  return `${i + 1}. ${s}`;
+}).join('\n')}
+
+Expected Result:
+${scenario.expectedResult || scenario.expected_result || 'N/A'}
+
+Automation Hint:
+${scenario.automationHint || scenario.automation_hint || 'N/A'}
+
+Tags: ${(scenario.tags || []).join(', ') || 'None'}
+    `;
+    alert(details);
+  }
+
+  flattenScenarios(testCases) {
+    return testCases.flatMap(tc =>
+      (tc.scenarios || []).map(s => ({
+        ...s,
+        jira_issue_key: tc.issueKey
+      }))
+    );
   }
 
   showError(message) {
