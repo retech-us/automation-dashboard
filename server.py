@@ -299,9 +299,17 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 jql = f'project = "{jira_project}" ORDER BY updated DESC'
                 url = f"{jira_url}/rest/api/3/search?jql={quote(jql)}&maxResults=50&fields=key,summary,status,issuetype,priority,fixVersions,components"
 
+                logger.info(f"🔗 Jira URL: {jira_url}")
+                logger.info(f"🔍 JQL Query: {jql}")
+                logger.info(f"📍 Full URL: {url[:100]}...")  # Log first 100 chars
+
                 req = urllib.request.Request(url, headers=headers)
-                with urllib.request.urlopen(req, timeout=10) as response:
-                    response_data = json.loads(response.read().decode('utf-8'))
+                logger.info(f"📤 Sending request to Jira...")
+
+                try:
+                    with urllib.request.urlopen(req, timeout=10) as response:
+                        logger.info(f"✓ Jira response: {response.status}")
+                        response_data = json.loads(response.read().decode('utf-8'))
 
                     # Format response for dashboard
                     issues = []
@@ -330,8 +338,16 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
                     logger.info(f"✓ Successfully fetched {len(issues)} LIVE Jira issues from {jira_project}")
                     return self._send_json_response(data)
 
-            except (urllib.error.HTTPError, urllib.error.URLError, Exception) as e:
-                logger.error(f"Failed to fetch from Jira: {e}")
+            except urllib.error.HTTPError as e:
+                error_body = ''
+                try:
+                    error_body = e.read().decode('utf-8')[:200]
+                except:
+                    pass
+                logger.error(f"❌ Jira HTTP Error {e.code}: {error_body}")
+                return self._send_json_response({"error": f"Jira API Error {e.code}: {error_body}"}, 500)
+            except (urllib.error.URLError, Exception) as e:
+                logger.error(f"❌ Failed to fetch from Jira: {e}")
                 return self._send_json_response({"error": f"Failed to fetch from Jira: {str(e)}"}, 500)
 
         except Exception as e:
