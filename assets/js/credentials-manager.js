@@ -88,9 +88,17 @@ class CredentialsManager {
       // Close modal
       this.closeModal();
 
-      // Trigger test case generation
-      if (window.testCaseGeneratorUI) {
-        window.testCaseGeneratorUI.openGenerator();
+      // Show project selector
+      if (window.projectSelector) {
+        console.log('🎯 Opening project selector...');
+        window.projectSelector.reset();
+        window.projectSelector.openModal(credentials);
+      } else {
+        console.warn('⚠️ projectSelector not initialized');
+        // Fallback to generator
+        if (window.testCaseGeneratorUI) {
+          window.testCaseGeneratorUI.openGenerator();
+        }
       }
     } catch (error) {
       this.showError(`Error: ${error.message}`);

@@ -14,6 +14,7 @@ import urllib.error
 from database.models import db_manager
 from database.repositories import RepositoryFactory
 from sync.qc_counter import get_qc_counter
+from sync.custom_fields import CustomFieldsManager
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ class JiraClient:
         self.email = email
         self.api_token = api_token
         self.session_counter = 0
+        self.custom_fields = CustomFieldsManager(jira_base_url, email, api_token)
 
     def _make_request(self, method: str, endpoint: str, payload: Optional[Dict] = None) -> Tuple[int, Dict]:
         """Make HTTP request to Jira API"""
@@ -140,6 +142,9 @@ class JiraClient:
 
                 # Link the issue to the parent REB3 issue
                 self._link_issues(parent_key, child_key, "relates to")
+
+                # Update parent issue with custom field
+                self.custom_fields.add_test_case_to_issue(parent_key, child_key, qc_number)
 
                 return {
                     "key": child_key,

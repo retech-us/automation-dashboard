@@ -633,3 +633,130 @@
     width: 100%;
   }
 }
+
+/* Project Selector Modal Styles */
+#project-selector-modal {
+  z-index: 15000 !important;
+}
+
+#project-selector-modal.is-open {
+  z-index: 15000 !important;
+}
+
+.modal__description {
+  margin: 0 0 16px 0;
+  color: var(--text-secondary, #666);
+  font-size: 14px;
+}
+
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.project-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg-primary, #ffffff);
+}
+
+.project-item:hover {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.project-item input[type="radio"]:checked {
+  border-color: #3b82f6;
+}
+
+.project-radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.project-radio input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.project-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-name {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary, #000);
+  margin-bottom: 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.project-details {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  margin-bottom: 4px;
+}
+
+.project-type {
+  font-size: 11px;
+  color: #3b82f6;
+  background: #dbeafe;
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+/* Loading Spinner */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dark Theme for Project Selector */
+[data-theme="dark"] .project-item {
+  background: #2a2a2a;
+  border-color: #333;
+}
+
+[data-theme="dark"] .project-item:hover {
+  background: #333;
+  border-color: #3b82f6;
+}
+
+[data-theme="dark"] .project-name {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .project-details {
+  color: #999;
+}

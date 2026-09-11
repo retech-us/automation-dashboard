@@ -2,188 +2,351 @@
 [
   {
     "id": "SC-001",
-    "title": "Verify system meets first acceptance criterion under normal conditions",
+    "title": "User is prevented from starting offline survey when online survey is in progress",
     "type": "positive",
     "category": "functional",
     "priority": "P1",
     "preconditions": [
-      "Given first acceptance criterion is configured",
-      "And second acceptance criterion is configured",
-      "And system is in ready state"
+      "Given user is logged in to the iOS application",
+      "And one online survey is in 'In Progress' state",
+      "And at least one offline survey is available in 'Ready' state",
+      "And internet connection is available"
     ],
     "steps": [
       {
         "stepNumber": 1,
-        "action": "When user initiates the primary workflow",
-        "expectedResult": "System responds and workflow begins successfully"
+        "action": "When user attempts to start an offline survey",
+        "expectedResult": "System detects existing online survey in progress"
       },
       {
         "stepNumber": 2,
-        "action": "When user completes required actions for first criterion",
-        "expectedResult": "System validates and accepts the actions"
+        "action": "Then system displays notification message",
+        "expectedResult": "User sees message: 'Please complete the ongoing online survey before starting an offline survey'"
       },
       {
         "stepNumber": 3,
-        "action": "Then system confirms first acceptance criterion is met",
-        "expectedResult": "Success message displayed and criterion status updated"
+        "action": "And offline survey remains in 'Ready' state",
+        "expectedResult": "Offline survey is not started and status unchanged"
+      },
+      {
+        "stepNumber": 4,
+        "action": "And user is redirected to the in-progress online survey",
+        "expectedResult": "Online survey screen is displayed for completion"
       }
     ],
-    "expectedResult": "First acceptance criterion is successfully validated and system confirms completion",
-    "automationHint": "Selenium: driver.findElement(By.id('workflow-start')).click(); WebDriverWait wait = new WebDriverWait(driver, 10); wait.until(ExpectedConditions.visibilityOfElementLocated(By.className('success-message'))); assert driver.findElement(By.xpath('//div[@data-criterion=\"AC1\"]')).getText().contains('Complete');",
-    "tags": ["@positive", "@smoke", "@critical"],
-    "coverage": ["AC1"]
+    "expectedResult": "User is prevented from starting offline survey and notified to complete online survey first; offline survey remains in Ready state",
+    "automationHint": "XCUITest: XCUIApplication().buttons['start_offline_survey'].tap(); XCTAssertTrue(app.alerts['survey_conflict_alert'].exists); XCTAssertEqual(app.staticTexts['alert_message'].label, 'Please complete the ongoing online survey before starting an offline survey'); verify survey status remains 'Ready' in database;",
+    "tags": ["@positive", "@critical", "@ios", "@survey-conflict"],
+    "coverage": ["Primary bug fix validation"]
   },
   {
     "id": "SC-002",
-    "title": "Verify system meets second acceptance criterion with valid input",
+    "title": "Offline survey syncs successfully after online survey is completed",
     "type": "positive",
     "category": "functional",
     "priority": "P1",
     "preconditions": [
-      "Given first acceptance criterion is configured",
-      "And second acceptance criterion is configured",
-      "And user has valid credentials"
+      "Given user is logged in to the iOS application",
+      "And one offline survey was completed while internet was unavailable",
+      "And offline survey is in 'Completed' state waiting to sync",
+      "And no online surveys are in 'In Progress' state",
+      "And internet connection is now available"
     ],
     "steps": [
       {
         "stepNumber": 1,
-        "action": "When user navigates to second criterion validation screen",
-        "expectedResult": "Validation screen loads with all required fields"
+        "action": "When system detects internet connection is available",
+        "expectedResult": "Sync process is automatically triggered"
       },
       {
         "stepNumber": 2,
-        "action": "When user provides valid input for second criterion",
-        "expectedResult": "Input is accepted and validation begins"
+        "action": "Then system checks for any in-progress online surveys",
+        "expectedResult": "No conflicts detected; sync proceeds"
       },
       {
         "stepNumber": 3,
-        "action": "When user submits the validation request",
-        "expectedResult": "System processes request successfully"
+        "action": "And offline survey data is uploaded to server",
+        "expectedResult": "Survey data successfully transmitted and acknowledged"
       },
       {
         "stepNumber": 4,
-        "action": "Then system confirms second acceptance criterion is met",
-        "expectedResult": "Confirmation message appears and status updated to complete"
+        "action": "Then offline survey status changes to 'Synced'",
+        "expectedResult": "Survey marked as synced in local database and UI updated"
       }
     ],
-    "expectedResult": "Second acceptance criterion is successfully validated with valid input and system confirms completion",
-    "automationHint": "Selenium: driver.findElement(By.id('criterion-input')).sendKeys('valid_data'); driver.findElement(By.cssSelector('button[type=\"submit\"]')).click(); assert driver.findElement(By.className('criterion-complete')).isDisplayed();",
-    "tags": ["@positive", "@smoke", "@critical"],
-    "coverage": ["AC2"]
+    "expectedResult": "Completed offline survey syncs successfully when internet is available and no online survey conflicts exist",
+    "automationHint": "XCUITest: Mock network availability; trigger sync; verify API call with URLSession; assert survey status updated to 'Synced'; check server received data via API validation;",
+    "tags": ["@positive", "@smoke", "@sync", "@ios"],
+    "coverage": ["Expected sync behavior validation"]
   },
   {
     "id": "SC-003",
-    "title": "Verify both acceptance criteria can be met in sequence",
+    "title": "User can start offline survey when no online surveys are in progress",
     "type": "positive",
     "category": "functional",
     "priority": "P1",
     "preconditions": [
-      "Given first acceptance criterion is configured",
-      "And second acceptance criterion is configured",
-      "And system allows sequential validation"
+      "Given user is logged in to the iOS application",
+      "And no online surveys are in 'In Progress' state",
+      "And at least one offline survey is available in 'Ready' state",
+      "And internet connection may or may not be available"
     ],
     "steps": [
       {
         "stepNumber": 1,
-        "action": "When user completes first acceptance criterion",
-        "expectedResult": "First criterion marked as complete"
+        "action": "When user selects an offline survey to start",
+        "expectedResult": "System checks for in-progress online surveys"
       },
       {
         "stepNumber": 2,
-        "action": "When user proceeds to second acceptance criterion",
-        "expectedResult": "Second criterion workflow becomes available"
+        "action": "Then system allows offline survey to start",
+        "expectedResult": "Offline survey opens and status changes to 'In Progress'"
       },
       {
         "stepNumber": 3,
-        "action": "When user completes second acceptance criterion",
-        "expectedResult": "Second criterion marked as complete"
+        "action": "And user completes the offline survey",
+        "expectedResult": "Survey is marked as 'Completed' locally"
       },
       {
         "stepNumber": 4,
-        "action": "Then system shows both criteria as satisfied",
-        "expectedResult": "Overall status displays as complete with both criteria validated"
+        "action": "Then survey is queued for sync when internet becomes available",
+        "expectedResult": "Survey added to sync queue with 'Pending Sync' status"
       }
     ],
-    "expectedResult": "Both acceptance criteria are successfully met in sequence and system reflects complete status",
-    "automationHint": "Selenium: Complete AC1 workflow, verify status; proceed to AC2 workflow, verify status; assert driver.findElement(By.id('overall-status')).getText().equals('All Criteria Met');",
-    "tags": ["@positive", "@integration", "@critical"],
-    "coverage": ["AC1", "AC2"]
+    "expectedResult": "User successfully starts and completes offline survey when no online survey conflicts exist; survey queued for sync",
+    "automationHint": "XCUITest: app.tables['survey_list'].cells['offline_survey_ready'].tap(); XCTAssertTrue(app.navigationBars['Survey'].exists); complete survey steps; verify status changes to 'Completed'; assert sync queue contains survey ID;",
+    "tags": ["@positive", "@smoke", "@offline", "@ios"],
+    "coverage": ["Normal offline survey workflow"]
   },
   {
     "id": "SC-004",
-    "title": "Verify system rejects invalid input for first criterion",
+    "title": "Multiple offline surveys do not sync when online survey is in progress",
     "type": "negative",
-    "category": "validation",
+    "category": "functional",
     "priority": "P1",
     "preconditions": [
-      "Given first acceptance criterion is configured",
-      "And validation rules are active"
+      "Given user is logged in to the iOS application",
+      "And one online survey is in 'In Progress' state",
+      "And multiple offline surveys are completed and waiting to sync",
+      "And internet connection becomes available"
     ],
     "steps": [
       {
         "stepNumber": 1,
-        "action": "When user attempts to validate first criterion with invalid data",
-        "expectedResult": "System captures the invalid input"
+        "action": "When internet connection is restored",
+        "expectedResult": "System detects network availability"
       },
       {
         "stepNumber": 2,
-        "action": "When validation is triggered",
-        "expectedResult": "System detects invalid data and rejects submission"
+        "action": "Then system checks for in-progress online surveys",
+        "expectedResult": "Conflict detected with online survey in progress"
       },
       {
         "stepNumber": 3,
-        "action": "Then error message displays indicating validation failure",
-        "expectedResult": "Clear error message shown and criterion remains incomplete"
+        "action": "And sync process is blocked for all offline surveys",
+        "expectedResult": "No offline surveys begin syncing; all remain in 'Pending Sync' state"
+      },
+      {
+        "stepNumber": 4,
+        "action": "Then user sees notification about sync delay",
+        "expectedResult": "Message displayed: 'Offline surveys will sync after completing the online survey'"
       }
     ],
-    "expectedResult": "Invalid input for first criterion is rejected with appropriate error message and no state change",
-    "automationHint": "Selenium: driver.findElement(By.id('criterion-input')).sendKeys('invalid_data'); driver.findElement(By.id('validate-btn')).click(); assert driver.findElement(By.className('error-message')).isDisplayed(); assert driver.findElement(By.id('criterion-status')).getText().equals('Incomplete');",
-    "tags": ["@negative", "@validation"],
-    "coverage": ["AC1"]
+    "expectedResult": "Multiple completed offline surveys do not sync while online survey is in progress; user is notified of sync delay",
+    "automationHint": "XCUITest: Mock multiple completed surveys in sync queue; simulate network restoration; verify no API sync calls made; assert all surveys remain in 'Pending Sync' status; check notification banner appears;",
+    "tags": ["@negative", "@critical", "@sync-blocking", "@ios"],
+    "coverage": ["Bug scenario - sync blocking with multiple surveys"]
   },
   {
     "id": "SC-005",
-    "title": "Verify system handles missing required data for second criterion",
+    "title": "Offline survey sync fails when started despite online survey in progress",
     "type": "negative",
-    "category": "validation",
+    "category": "functional",
     "priority": "P2",
     "preconditions": [
-      "Given second acceptance criterion is configured",
-      "And required fields are defined"
+      "Given user is logged in to the iOS application",
+      "And one online survey is in 'In Progress' state",
+      "And user bypasses validation and starts offline survey (edge case/bug scenario)",
+      "And offline survey is completed",
+      "And internet connection is available"
     ],
     "steps": [
       {
         "stepNumber": 1,
-        "action": "When user navigates to second criterion validation",
-        "expectedResult": "Validation form loads with required fields"
+        "action": "When system attempts to sync the offline survey",
+        "expectedResult": "Sync process initiates"
       },
       {
         "stepNumber": 2,
-        "action": "When user submits form without required data",
-        "expectedResult": "System detects missing required fields"
+        "action": "Then server detects conflict with in-progress online survey",
+        "expectedResult": "Server returns error: 'Cannot sync offline survey while online survey is in progress'"
       },
       {
         "stepNumber": 3,
-        "action": "Then validation error displays for missing fields",
-        "expectedResult": "Error message indicates which fields are required and submission is blocked"
+        "action": "And offline survey remains in 'Pending Sync' state",
+        "expectedResult": "Survey not marked as synced; stays in queue"
+      },
+      {
+        "stepNumber": 4,
+        "action": "Then error message is logged and user is notified",
+        "expectedResult": "User sees sync failure notification with retry option"
       }
     ],
-    "expectedResult": "Missing required data prevents second criterion validation and displays appropriate error",
-    "automationHint": "Selenium: driver.findElement(By.id('submit-btn')).click(); assert driver.findElements(By.className('field-error')).size() > 0; assert driver.findElement(By.id('form-error')).getText().contains('required');",
-    "tags": ["@negative", "@validation"],
-    "coverage": ["AC2"]
+    "expectedResult": "Sync fails when attempted with conflicting online survey; offline survey remains unsynced with error notification",
+    "automationHint": "XCUITest: Mock server response with 409 Conflict status; trigger sync; verify error handling; assert survey status unchanged; check error log contains conflict message;",
+    "tags": ["@negative", "@error-handling", "@sync-failure", "@ios"],
+    "coverage": ["Server-side conflict validation"]
   },
   {
     "id": "SC-006",
-    "title": "Verify system behavior when preconditions are not met",
+    "title": "User attempts to start offline survey without internet connection while online survey is in progress",
     "type": "edge-case",
     "category": "functional",
     "priority": "P2",
     "preconditions": [
-      "Given system is accessible",
-      "And first acceptance criterion is NOT configured",
-      "And second acceptance criterion is NOT configured"
+      "Given user is logged in to the iOS application",
+      "And one online survey is in 'In Progress' state",
+      "And at least one offline survey is available in 'Ready' state",
+      "And internet connection is NOT available"
     ],
     "steps": [
       {
-        "stepNumber
+        "stepNumber": 1,
+        "action": "When user attempts to start an offline survey",
+        "expectedResult": "System checks local database for in-progress surveys"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then system detects online survey in 'In Progress' state",
+        "expectedResult": "Conflict detected even without internet connection"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And system displays offline-appropriate notification",
+        "expectedResult": "Message: 'Complete the in-progress survey before starting a new one'"
+      },
+      {
+        "stepNumber": 4,
+        "action": "Then offline survey remains in 'Ready' state",
+        "expectedResult": "Survey not started; status unchanged"
+      }
+    ],
+    "expectedResult": "Offline survey is blocked even without internet when online survey is in progress; user notified appropriately",
+    "automationHint": "XCUITest: Disable network via Network Link Conditioner; verify local database query for in-progress surveys; assert alert appears; check offline survey status remains 'Ready';",
+    "tags": ["@edge-case", "@offline-mode", "@conflict-detection", "@ios"],
+    "coverage": ["Offline conflict detection"]
+  },
+  {
+    "id": "SC-007",
+    "title": "Sync queue processes correctly after online survey is completed and submitted",
+    "type": "positive",
+    "category": "functional",
+    "priority": "P1",
+    "preconditions": [
+      "Given user is logged in to the iOS application",
+      "And one online survey was in 'In Progress' state",
+      "And multiple offline surveys are completed and in sync queue",
+      "And internet connection is available"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When user completes and submits the online survey",
+        "expectedResult": "Online survey status changes to 'Submitted'"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then system automatically checks sync queue",
+        "expectedResult": "Pending offline surveys detected in queue"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And sync process begins for all queued offline surveys",
+        "expectedResult": "Each offline survey syncs sequentially or in parallel"
+      },
+      {
+        "stepNumber": 4,
+        "action": "Then all offline surveys are marked as 'Synced'",
+        "expectedResult": "Sync queue is cleared; all surveys show 'Synced' status"
+      }
+    ],
+    "expectedResult": "After online survey completion, all queued offline surveys sync successfully and automatically",
+    "automationHint": "XCUITest: Complete online survey; verify sync queue processing triggered; mock API responses for each survey; assert all surveys transition to 'Synced'; check queue is empty;",
+    "tags": ["@positive", "@smoke", "@sync-queue", "@ios"],
+    "coverage": ["Post-conflict sync resolution"]
+  },
+  {
+    "id": "SC-008",
+    "title": "Application handles rapid network state changes during sync conflict",
+    "type": "edge-case",
+    "category": "functional",
+    "priority": "P3",
+    "preconditions": [
+      "Given user is logged in to the iOS application",
+      "And one online survey is in 'In Progress' state",
+      "And one offline survey is completed and waiting to sync",
+      "And internet connection is unstable (toggling on/off)"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When internet connection toggles from offline to online",
+        "expectedResult": "Sync attempt is initiated"
+      },
+      {
+        "stepNumber": 2,
+        "action": "And connection drops before sync completes",
+        "expectedResult": "Sync is interrupted and rolled back"
+      },
+      {
+        "stepNumber": 3,
+        "action": "Then offline survey remains in 'Pending Sync' state",
+        "expectedResult": "Survey not marked as synced; data integrity maintained"
+      },
+      {
+        "stepNumber": 4,
+        "action": "And no duplicate sync attempts occur when connection restores",
+        "expectedResult": "System waits for stable connection and online survey completion"
+      }
+    ],
+    "expectedResult": "Application handles network instability gracefully; no data corruption or duplicate syncs occur during conflict state",
+    "automationHint": "XCUITest: Use Network Link Conditioner to simulate unstable network; monitor sync state transitions; verify no partial data uploads; assert idempotency of sync operations;",
+    "tags": ["@edge-case", "@network-instability", "@data-integrity", "@ios"],
+    "coverage": ["Network resilience during conflicts"]
+  },
+  {
+    "id": "SC-009",
+    "title": "User receives clear notification when attempting offline survey with multiple online surveys in progress",
+    "type": "edge-case",
+    "category": "ux",
+    "priority": "P2",
+    "preconditions": [
+      "Given user is logged in to the iOS application",
+      "And multiple online surveys are in 'In Progress' state",
+      "And at least one offline survey is available in 'Ready' state",
+      "And internet connection is available"
+    ],
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "When user attempts to start an offline survey",
+        "expectedResult": "System detects multiple in-progress online surveys"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Then system displays comprehensive notification",
+        "expectedResult": "Message: 'You have 2 online surveys in progress. Please complete them before starting an offline survey'"
+      },
+      {
+        "stepNumber": 3,
+        "action": "And notification includes option to view in-progress surveys",
+        "expectedResult": "Button or link to navigate to in-progress survey list"
+      },
+      {
+        "stepNumber": 4,
+        "action": "Then offline survey remains in 'Ready' state",
+        "expectedResult": "Survey not started; user can navigate to complete online surveys"
+      }
+    ],
+    "expectedResult": "User receives clear, actionable notification about multiple in-progress surveys; can easily navigate to complete them",
+    "automationHint": "X

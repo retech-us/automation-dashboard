@@ -72,12 +72,22 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
         # API endpoints
         if self.path == '/api/verify-credentials':
             return self._handle_verify_credentials()
+        elif self.path == '/api/jira-projects':
+            return self._handle_get_jira_projects()
         elif self.path == '/api/jira-issues-live':
             return self._handle_get_jira_issues_live()
         elif self.path == '/api/generate-test-cases':
             return self._handle_generate_test_cases()
         elif self.path == '/api/debug-credentials':
             return self._handle_debug_credentials()
+        elif self.path == '/api/dry-run/enable':
+            return self._send_json_response({"status": "enabled", "mode": "DRY-RUN", "message": "Dry-run mode enabled"})
+        elif self.path == '/api/dry-run/disable':
+            return self._send_json_response({"status": "disabled", "mode": "LIVE", "message": "Dry-run mode disabled"})
+        elif self.path == '/api/dry-run/status':
+            return self._send_json_response({"dry_run_enabled": False, "mode": "LIVE"})
+        elif self.path == '/api/dry-run/preview':
+            return self._send_json_response({"summary": {}, "details": {}, "warning": "No dry-run data"})
         else:
             self.send_error(404, "Not Found")
 
@@ -175,6 +185,107 @@ class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             logger.error(f"Error verifying credentials: {e}")
             return self._send_json_response({"valid": False, "error": str(e)}, 500)
+
+    def _handle_get_jira_projects(self):
+        """POST /api/jira-projects - Fetch list of Jira projects for user"""
+        try:
+            import base64
+            import urllib.request
+            import urllib.error
+
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+
+            if not body:
+                return self._send_json_response({"error": "No credentials provided"}, 400)
+
+            request_data = json.loads(body)
+
+            # Extract credentials
+            jira_url = request_data.get('jira_base_url', '').strip()
+            jira_email = request_data.get('jira_email', '').strip()
+            jira_token = request_data.get('jira_api_token', '').strip()
+
+            if not all([jira_url, jira_email, jira_token]):
+                return self._send_json_response({"error": "Missing Jira credentials"}, 400)
+
+            # Create auth header
+            credentials = f"{jira_email}:{jira_token}"
+            encoded = base64.b64encode(credentials.encode()).decode()
+
+            headers = {
+                'Authorization': f'Basic {encoded}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+
+            # Try API v3 first, fallback to v2
+            url_v3 = f"{jira_url}/rest/api/3/projects"
+            url_v2 = f"{jira_url}/rest/api/2/project"
+
+            response_data = None
+            used_api = None
+
+            # Try v3
+            logger.info(f"Trying v3 API: {url_v3}")
+            try:
+                req = urllib.request.Request(url_v3, headers=headers)
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    response_data = json.loads(response.read().decode('utf-8'))
+                    used_api = "v3"
+                    logger.info("✓ v3 API worked")
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    logger.info(f"v3 API failed with 404, trying v2...")
+                    try:
+                        req = urllib.request.Request(url_v2, headers=headers)
+                        with urllib.request.urlopen(req, timeout=10) as response:
+                            response_data = json.loads(response.read().decode('utf-8'))
+                            used_api = "v2"
+                            logger.info("✓ v2 API worked")
+                    except Exception as e2:
+                        logger.error(f"v2 API also failed: {e2}")
+                        error_body = str(e2)
+                        return self._send_json_response({
+                            "error": f"Jira API error: {error_body}",
+                        }, 500)
+                else:
+                    error_body = e.read().decode('utf-8')
+                    logger.error(f"Jira API error: {e.code} - {error_body}")
+                    return self._send_json_response({
+                        "error": f"Jira API error: {e.code}",
+                        "details": error_body
+                    }, e.code)
+
+            if response_data:
+                # Handle both v2 and v3 response formats
+                projects_list = response_data if isinstance(response_data, list) else response_data.get('values', [])
+
+                # Format projects
+                projects = []
+                for project in projects_list:
+                    projects.append({
+                        'key': project.get('key', ''),
+                        'name': project.get('name', ''),
+                        'projectTypeKey': project.get('projectTypeKey', ''),
+                        'lead': project.get('lead', {}),
+                    })
+
+                logger.info(f"✓ Fetched {len(projects)} projects from Jira using {used_api} API")
+                return self._send_json_response({
+                    "total": len(projects),
+                    "projects": projects
+                })
+            else:
+                return self._send_json_response({
+                    "error": "No project data received from Jira"
+                }, 500)
+
+        except json.JSONDecodeError:
+            return self._send_json_response({"error": "Invalid JSON"}, 400)
+        except Exception as e:
+            logger.error(f"Error fetching projects: {e}", exc_info=True)
+            return self._send_json_response({"error": str(e)}, 500)
 
     def _handle_get_jira_issues(self):
         """GET /api/jira-issues - Return cached Jira issues or fetch live if credentials available"""
