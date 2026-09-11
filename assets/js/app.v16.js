@@ -2,7 +2,7 @@
  * Public automation dashboard — release confidence for technical + non-technical audiences.
  */
 
-const BUILD_TAG = '20260807d';
+const BUILD_TAG = '20260901a';
 const DASHBOARD_VERSION = window.DASHBOARD_VERSION || '16';
 
 const REPO_DISPLAY = {
@@ -2709,10 +2709,20 @@ function resolveInitialTrendRange() {
 function resolveInitialTab() {
   const params = new URLSearchParams(window.location.search);
   const fromUrl = (params.get('tab') || '').toLowerCase();
-  if (DASHBOARD_TABS.includes(fromUrl)) return fromUrl;
+  if (fromUrl === 'about') {
+    try { localStorage.removeItem('dashboard.activeTab'); } catch { /* ignore */ }
+    params.delete('tab');
+    window.history.replaceState({}, '', params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname);
+  } else if (DASHBOARD_TABS.includes(fromUrl)) {
+    return fromUrl;
+  }
   try {
     const saved = localStorage.getItem('dashboard.activeTab');
-    if (DASHBOARD_TABS.includes(saved)) return saved;
+    if (saved === 'about') {
+      localStorage.removeItem('dashboard.activeTab');
+    } else if (DASHBOARD_TABS.includes(saved)) {
+      return saved;
+    }
   } catch { /* ignore */ }
   return 'overview';
 }

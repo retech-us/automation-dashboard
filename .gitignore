@@ -1,14 +1,19 @@
 .DS_Store
 **/.DS_Store
+
+# Python
 scripts/__pycache__/
 **/__pycache__/
 tests/__pycache__/
 *.pyc
+*.pyo
 
 # Environment variables (secrets)
 .env
 .env.local
 .env.*.local
+.env.*
+!.env.example
 
 # Python
 *.egg-info/
@@ -21,6 +26,8 @@ venv/
 
 # Pytest
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 htmlcov/
 .coverage
 
@@ -33,3 +40,29 @@ scripts/logs/*.log
 *.swp
 *.swo
 *~
+
+# Secrets / local credentials
+mobile-backend-integration-tests/config/test-accounts.json
+**/credentials.json
+**/secrets.json
+
+# Runner / test runtime artifacts
+current_raw_backend_actions.json
+current_task_validation_report.html
+raw_backend_actions_task_*.json
+**/raw_backend_actions_task_*.json
+
+# Generated Intelligent Reset HTML reports (created by runner / tests)
+IR_Task_*.html
+IR_Backward_Compatibility_Test_Report_*.html
+**/IR_Task_*.html
+**/IR_Backward_Compatibility_Test_Report_*.html
+
+# Test output directories
+test-reports/
+**/test-reports/
+mobile-backend-integration-tests/test-reports/
+
+# Local scratch / exports
+*.csv
+!**/fixtures/**/*.csv

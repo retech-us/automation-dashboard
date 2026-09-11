@@ -1,0 +1,88 @@
+id: "intelligent_reset_full_lifecycle"
+name: "Intelligent Reset Full Real Lifecycle & Multi-Bay HTML Validation Dashboard"
+description: "Executes 100% real calls against Epsilon: Task Def creation -> Task Occurrence provision -> 4-Bay scan uploads -> Action List fetch -> Mobile 3-Layer Logic -> HTML Dashboard Generation"
+platforms:
+  - "android"
+  - "ios"
+
+setup:
+  account: "standard_user"
+
+steps:
+  - id: "step_1_auth"
+    name: "2FA Authentication on Epsilon"
+    action: "login"
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+
+  - id: "step_2_create_task_def"
+    name: "Create Intelligent Reset Task Definition (POST /api/v1/tasks/defs/)"
+    action: "create_task_def"
+    params:
+      store_id: 30248
+      category_id: 9999
+      category_name: "PET CAT CAN"
+      category_custom_id: "3206"
+      pog_id: 4139874
+    assertions:
+      state:
+        has_error: false
+
+  - id: "step_3_get_task_occurrence"
+    name: "Get Provisioned Task Occurrence ID (GET /api/v1/tasks/)"
+    action: "get_task_occurrence"
+    params:
+      store_id: 30248
+    assertions:
+      state:
+        has_error: false
+
+  - id: "step_4_upload_bays"
+    name: "Upload Bay Scans for Bays 1 through 4 (POST /api/v4/scans/ & /actions/)"
+    action: "upload_bays"
+    params:
+      store_id: 30248
+      pog_id: 4139874
+      sections:
+        - name: "1"
+          id: 5454639
+        - name: "2"
+          id: 5454638
+        - name: "3"
+          id: 5454637
+        - name: "4"
+          id: 5454636
+    assertions:
+      state:
+        has_error: false
+
+  - id: "step_5_fetch_action_list"
+    name: "Fetch Live Retailer Action List (GET /api/v1/tasks/<id>/action-list/retailer/)"
+    action: "fetch_action_list"
+    assertions:
+      state:
+        has_error: false
+
+  - id: "step_5b_native_mobile_verification"
+    name: "Compile and Execute Genuine Kotlin & Swift Unit Tests on Repositories"
+    action: "execute_native_code"
+    params:
+      flavor: "staging"
+      test_filter: "com.retechlabs.rebotics.pog.reset.data.response.actionlist.mapper.ActionListDomainMapperTest.CAT1*"
+    assertions:
+      state:
+        has_error: false
+
+  - id: "step_6_execute_mobile_engine_and_report"
+    name: "Execute 3-Layer Mobile Engine and Generate Multi-Bay HTML Dashboard"
+    action: "execute_mobile_engine"
+    params:
+      store_id: 30248
+      pog_id: 4139874
+      pog_name: "PET CAT CAN"
+      available_bays: ["1", "2", "3", "4"]
+    assertions:
+      state:
+        has_error: false

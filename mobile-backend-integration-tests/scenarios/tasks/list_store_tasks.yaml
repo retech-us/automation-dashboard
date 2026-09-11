@@ -1,0 +1,30 @@
+id: "list_store_tasks"
+name: "List Store Active Tasks"
+description: "Verifies mobile production retrieval of assigned store task list"
+platforms:
+  - "android"
+  - "ios"
+
+setup:
+  account: "standard_user"
+
+steps:
+  - id: "step_auth"
+    action: "login"
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+      actions:
+        - "AUTH_INITIATED"
+        - "AUTH_SUCCESS"
+
+  - id: "step_list_tasks"
+    action: "fetch_tasks"
+    assertions:
+      state:
+        is_logged_in: true
+        has_error: false
+        has_tasks: true
+      actions:
+        - "TASKS_LIST_LOADED"
