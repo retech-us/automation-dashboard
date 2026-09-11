@@ -5,24 +5,24 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-09-10T06:15:54Z",
-  "durationMs": 23591648,
+  "finishedAt": "2026-09-11T07:17:06Z",
+  "durationMs": 27306857,
   "summary": {
     "total": 25,
-    "passed": 12,
-    "failed": 1,
-    "broken": 12,
+    "passed": 8,
+    "failed": 0,
+    "broken": 17,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/android/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/34417573424",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/34542807624",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
       "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 60 seconds",
       "feature": "Navigation through steps of the task"
     },
     {
@@ -37,16 +37,8 @@
       "name": "Navigate through task with action step included",
       "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': Could not start or resume task. Status: UNKNOWN",
-      "feature": "Navigation through steps of the task"
-    },
-    {
-      "name": "Navigate through task with survey",
-      "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 80 seconds",
       "feature": "Navigation through steps of the task"
     },
     {
@@ -60,9 +52,9 @@
     {
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
-      "status": "failed",
-      "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': expected [200] but found [502]",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -96,27 +88,34 @@
       "category": "unknown",
       "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen section rejection",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': No selectable reason option found within 40s",
+      "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
-    "locator": 2,
-    "timeout": 7,
-    "assertion": 1,
-    "unknown": 20
+    "locator": 4,
+    "timeout": 5,
+    "unknown": 24
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 12,
-    "review": 13,
+    "passed": 8,
+    "review": 17,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 48.0,
+      "passPct": 32.0,
       "total": 25,
-      "failed": 13
+      "failed": 17
     }
   ],
   "platform": "Android",
@@ -132,7 +131,7 @@
       "status": "failure"
     }
   ],
-  "runId": "34417573424",
-  "runNumber": 293,
+  "runId": "34542807624",
+  "runNumber": 294,
   "environment": "CI"
 }
