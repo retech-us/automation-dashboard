@@ -4,18 +4,44 @@
 # Python
 scripts/__pycache__/
 **/__pycache__/
+tests/__pycache__/
 *.pyc
 *.pyo
+
+# Environment variables (secrets)
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+
+# Python
+*.egg-info/
+dist/
+build/
+.Python
+env/
+venv/
+.venv/
+
+# Pytest
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-.venv/
-venv/
+htmlcov/
+.coverage
 
-# Secrets / local credentials — never commit
-.env
-.env.*
-!.env.example
+# Logs
+scripts/logs/*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Secrets / local credentials
 mobile-backend-integration-tests/config/test-accounts.json
 **/credentials.json
 **/secrets.json

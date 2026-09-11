@@ -1,0 +1,718 @@
+#!/usr/bin/env python3
+"""
+Local development server for automation-dashboard
+Serves on localhost:6060
+
+Usage:
+    python3 server.py
+    Then visit: http://localhost:6060
+"""
+
+import http.server
+import socketserver
+import os
+import json
+import logging
+import sys
+import subprocess
+from pathlib import Path
+from urllib.parse import urlparse, parse_qs, quote
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed, will use system environment variables
+
+# Configuration
+PORT = 6060
+HOST = 'localhost'
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+class DashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
+    """Custom HTTP handler for dashboard"""
+
+    def do_GET(self):
+        """Handle GET requests"""
+        # Log request
+        logger.info(f"GET {self.path} - {self.client_address[0]}")
+
+        # API endpoints
+        if self.path == '/api/jira-issues':
+            return self._handle_get_jira_issues()
+        elif self.path == '/api/test-cases':
+            return self._handle_get_test_cases()
+        elif self.path.startswith('/api/test-cases/'):
+            issue_key = self.path.split('/')[-1]
+            return self._handle_get_test_case_for_issue(issue_key)
+
+        # Serve static files from current directory
+        if self.path == '/' or self.path == '/index.html':
+            self.path = '/index.html'
+
+        # Try to serve the file
+        try:
+            return super().do_GET()
+        except Exception as e:
+            logger.error(f"Error serving {self.path}: {e}")
+            self.send_error(500, str(e))
+
+    def do_POST(self):
+        """Handle POST requests"""
+        logger.info(f"POST {self.path} - {self.client_address[0]}")
+
+        # API endpoints
+        if self.path == '/api/verify-credentials':
+            return self._handle_verify_credentials()
+        elif self.path == '/api/jira-projects':
+            return self._handle_get_jira_projects()
+        elif self.path == '/api/jira-issues-live':
+            return self._handle_get_jira_issues_live()
+        elif self.path == '/api/generate-test-cases':
+            return self._handle_generate_test_cases()
+        elif self.path == '/api/debug-credentials':
+            return self._handle_debug_credentials()
+        elif self.path == '/api/dry-run/enable':
+            return self._send_json_response({"status": "enabled", "mode": "DRY-RUN", "message": "Dry-run mode enabled"})
+        elif self.path == '/api/dry-run/disable':
+            return self._send_json_response({"status": "disabled", "mode": "LIVE", "message": "Dry-run mode disabled"})
+        elif self.path == '/api/dry-run/status':
+            return self._send_json_response({"dry_run_enabled": False, "mode": "LIVE"})
+        elif self.path == '/api/dry-run/preview':
+            return self._send_json_response({"summary": {}, "details": {}, "warning": "No dry-run data"})
+        else:
+            self.send_error(404, "Not Found")
+
+    def _handle_debug_credentials(self):
+        """DEBUG: Echo back received credentials"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+            request_data = json.loads(body) if body else {}
+
+            logger.info(f"DEBUG: Received credentials:")
+            logger.info(f"  jira_base_url: {request_data.get('jira_base_url')}")
+            logger.info(f"  jira_user_email: {request_data.get('jira_user_email')}")
+            logger.info(f"  ai_provider: {request_data.get('ai_provider')}")
+            logger.info(f"  anthropic_api_key present: {'anthropic_api_key' in request_data}")
+            logger.info(f"  openai_api_key present: {'openai_api_key' in request_data}")
+
+            return self._send_json_response({
+                "status": "debug",
+                "received": {
+                    "jira_base_url": request_data.get('jira_base_url'),
+                    "jira_user_email": request_data.get('jira_user_email'),
+                    "ai_provider": request_data.get('ai_provider'),
+                    "has_anthropic_key": 'anthropic_api_key' in request_data,
+                    "has_openai_key": 'openai_api_key' in request_data,
+                }
+            })
+        except Exception as e:
+            logger.error(f"Debug error: {e}", exc_info=True)
+            return self._send_json_response({"error": str(e)}, 500)
+
+    def _handle_verify_credentials(self):
+        """POST /api/verify-credentials - Verify user credentials"""
+        try:
+            # Read request body
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+
+            if not body:
+                return self._send_json_response({"valid": False, "error": "No credentials provided"}, 400)
+
+            request_data = json.loads(body)
+
+            # Extract credentials
+            jira_url = request_data.get('jira_base_url', '').strip()
+            jira_email = request_data.get('jira_user_email', '').strip()
+            jira_token = request_data.get('jira_api_token', '').strip()
+            ai_provider = request_data.get('ai_provider', '').strip()
+
+            # Validate Jira credentials
+            if not all([jira_url, jira_email, jira_token]):
+                return self._send_json_response({"valid": False, "error": "Missing Jira credentials"}, 400)
+
+            # Validate AI provider credentials
+            if ai_provider == 'anthropic':
+                anthropic_key = request_data.get('anthropic_api_key', '').strip()
+                if not anthropic_key:
+                    return self._send_json_response({"valid": False, "error": "Missing Claude API key"}, 400)
+                if not anthropic_key.startswith('sk-ant-'):
+                    return self._send_json_response({"valid": False, "error": "Invalid Claude API key format"}, 400)
+            elif ai_provider == 'openai':
+                openai_key = request_data.get('openai_api_key', '').strip()
+                if not openai_key:
+                    return self._send_json_response({"valid": False, "error": "Missing OpenAI API key"}, 400)
+                if not openai_key.startswith('sk-'):
+                    return self._send_json_response({"valid": False, "error": "Invalid OpenAI API key format"}, 400)
+            else:
+                return self._send_json_response({"valid": False, "error": "Invalid AI provider"}, 400)
+
+            # Test Jira connection
+            import base64
+            import urllib.request
+            import urllib.error
+
+            credentials = f"{jira_email}:{jira_token}"
+            encoded = base64.b64encode(credentials.encode()).decode()
+            url = f"{jira_url}/rest/api/3/myself"
+
+            try:
+                headers = {
+                    'Authorization': f'Basic {encoded}',
+                    'Content-Type': 'application/json'
+                }
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    jira_user = json.loads(response.read().decode('utf-8'))
+                    logger.info(f"✓ Credentials verified for {jira_user.get('displayName', 'User')}")
+                    return self._send_json_response({"valid": True, "user": jira_user.get('displayName', 'User')})
+            except Exception as e:
+                logger.error(f"Jira verification failed: {e}")
+                return self._send_json_response({"valid": False, "error": f"Jira verification failed: {str(e)}"}, 400)
+
+        except json.JSONDecodeError:
+            return self._send_json_response({"valid": False, "error": "Invalid JSON"}, 400)
+        except Exception as e:
+            logger.error(f"Error verifying credentials: {e}")
+            return self._send_json_response({"valid": False, "error": str(e)}, 500)
+
+    def _handle_get_jira_projects(self):
+        """POST /api/jira-projects - Fetch list of Jira projects for user"""
+        try:
+            import base64
+            import urllib.request
+            import urllib.error
+
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+
+            if not body:
+                return self._send_json_response({"error": "No credentials provided"}, 400)
+
+            request_data = json.loads(body)
+
+            # Extract credentials
+            jira_url = request_data.get('jira_base_url', '').strip()
+            jira_email = request_data.get('jira_email', '').strip()
+            jira_token = request_data.get('jira_api_token', '').strip()
+
+            if not all([jira_url, jira_email, jira_token]):
+                return self._send_json_response({"error": "Missing Jira credentials"}, 400)
+
+            # Create auth header
+            credentials = f"{jira_email}:{jira_token}"
+            encoded = base64.b64encode(credentials.encode()).decode()
+
+            headers = {
+                'Authorization': f'Basic {encoded}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+
+            # Try API v3 first, fallback to v2
+            url_v3 = f"{jira_url}/rest/api/3/projects"
+            url_v2 = f"{jira_url}/rest/api/2/project"
+
+            response_data = None
+            used_api = None
+
+            # Try v3
+            logger.info(f"Trying v3 API: {url_v3}")
+            try:
+                req = urllib.request.Request(url_v3, headers=headers)
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    response_data = json.loads(response.read().decode('utf-8'))
+                    used_api = "v3"
+                    logger.info("✓ v3 API worked")
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    logger.info(f"v3 API failed with 404, trying v2...")
+                    try:
+                        req = urllib.request.Request(url_v2, headers=headers)
+                        with urllib.request.urlopen(req, timeout=10) as response:
+                            response_data = json.loads(response.read().decode('utf-8'))
+                            used_api = "v2"
+                            logger.info("✓ v2 API worked")
+                    except Exception as e2:
+                        logger.error(f"v2 API also failed: {e2}")
+                        error_body = str(e2)
+                        return self._send_json_response({
+                            "error": f"Jira API error: {error_body}",
+                        }, 500)
+                else:
+                    error_body = e.read().decode('utf-8')
+                    logger.error(f"Jira API error: {e.code} - {error_body}")
+                    return self._send_json_response({
+                        "error": f"Jira API error: {e.code}",
+                        "details": error_body
+                    }, e.code)
+
+            if response_data:
+                # Handle both v2 and v3 response formats
+                projects_list = response_data if isinstance(response_data, list) else response_data.get('values', [])
+
+                # Format projects
+                projects = []
+                for project in projects_list:
+                    projects.append({
+                        'key': project.get('key', ''),
+                        'name': project.get('name', ''),
+                        'projectTypeKey': project.get('projectTypeKey', ''),
+                        'lead': project.get('lead', {}),
+                    })
+
+                logger.info(f"✓ Fetched {len(projects)} projects from Jira using {used_api} API")
+                return self._send_json_response({
+                    "total": len(projects),
+                    "projects": projects
+                })
+            else:
+                return self._send_json_response({
+                    "error": "No project data received from Jira"
+                }, 500)
+
+        except json.JSONDecodeError:
+            return self._send_json_response({"error": "Invalid JSON"}, 400)
+        except Exception as e:
+            logger.error(f"Error fetching projects: {e}", exc_info=True)
+            return self._send_json_response({"error": str(e)}, 500)
+
+    def _handle_get_jira_issues(self):
+        """GET /api/jira-issues - Return cached Jira issues or fetch live if credentials available"""
+        try:
+            # Try environment variables first
+            jira_url = os.getenv('JIRA_BASE_URL', '').strip()
+            jira_email = os.getenv('JIRA_USER_EMAIL', '').strip()
+            jira_token = os.getenv('JIRA_API_TOKEN', '').strip()
+            jira_project = os.getenv('JIRA_PROJECT_KEY', 'REB3').strip()
+
+            if jira_url and jira_email and jira_token:
+                logger.info(f"Fetching live Jira issues from {jira_url} for project {jira_project}...")
+                try:
+                    import base64
+                    import urllib.request
+                    import urllib.error
+
+                    # Create auth header
+                    credentials = f"{jira_email}:{jira_token}"
+                    encoded = base64.b64encode(credentials.encode()).decode()
+
+                    headers = {
+                        'Authorization': f'Basic {encoded}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+
+                    # Query Jira for REB3 issues
+                    jql = f'project = "{jira_project}" ORDER BY updated DESC'
+                    url = f"{jira_url}/rest/api/3/search?jql={quote(jql)}&maxResults=50&fields=key,summary,status,issuetype,priority,fixVersions,components"
+
+                    req = urllib.request.Request(url, headers=headers)
+                    with urllib.request.urlopen(req, timeout=10) as response:
+                        response_data = json.loads(response.read().decode('utf-8'))
+
+                        # Format response for dashboard
+                        issues = []
+                        for issue in response_data.get('issues', []):
+                            fields = issue.get('fields', {})
+                            issues.append({
+                                'key': issue['key'],
+                                'summary': fields.get('summary', 'No Summary'),
+                                'type': fields.get('issuetype', {}).get('name', 'Task'),
+                                'status': fields.get('status', {}).get('name', 'To Do'),
+                                'priority': fields.get('priority', {}).get('name', 'Medium'),
+                                'fields': {
+                                    'issuetype': fields.get('issuetype', {}),
+                                    'status': fields.get('status', {}),
+                                }
+                            })
+
+                        data = {
+                            'expand': 'names,schema',
+                            'startAt': 0,
+                            'maxResults': len(issues),
+                            'total': response_data.get('total', len(issues)),
+                            'issues': issues
+                        }
+
+                        # Also cache to file for fallback
+                        jira_file = Path('data/jira.json')
+                        jira_file.parent.mkdir(parents=True, exist_ok=True)
+                        with open(jira_file, 'w') as f:
+                            json.dump(data, f, indent=2)
+
+                        logger.info(f"✓ Successfully fetched {len(issues)} LIVE Jira issues from {jira_project}")
+                        return self._send_json_response(data)
+
+                except (urllib.error.HTTPError, urllib.error.URLError, Exception) as e:
+                    logger.warning(f"Failed to fetch live Jira data: {e}")
+                    # Fall back to cached file
+                    pass
+
+            # Fallback: Load from cached file
+            jira_file = Path('data/jira.json')
+            if jira_file.exists():
+                with open(jira_file, 'r') as f:
+                    data = json.load(f)
+                logger.info(f"Loaded {len(data.get('issues', []))} cached Jira issues from file")
+                return self._send_json_response(data)
+            else:
+                logger.warning("No Jira data available (no credentials and no cached file)")
+                return self._send_json_response({"issues": [], "total": 0})
+
+        except Exception as e:
+            logger.error(f"Error loading Jira issues: {e}")
+            return self._send_json_response({"error": str(e)}, 500)
+
+    def _handle_get_jira_issues_live(self):
+        """POST /api/jira-issues-live - Fetch live Jira issues with provided credentials"""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+            request_data = json.loads(body) if body else {}
+
+            jira_url = request_data.get('jira_base_url', '').strip()
+            jira_email = request_data.get('jira_email', '').strip()
+            jira_token = request_data.get('jira_api_token', '').strip()
+            jira_project = request_data.get('jira_project_key', 'REB3').strip()
+
+            if not (jira_url and jira_email and jira_token):
+                return self._send_json_response({"error": "Missing Jira credentials"}, 400)
+
+            logger.info(f"Fetching live Jira issues for {jira_project}...")
+
+            import base64
+            import urllib.request
+            import urllib.error
+
+            # Create auth header
+            credentials = f"{jira_email}:{jira_token}"
+            encoded = base64.b64encode(credentials.encode()).decode()
+
+            headers = {
+                'Authorization': f'Basic {encoded}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+
+            # Query Jira for project issues using /rest/api/3/search/jql endpoint (required by Jira)
+            jql = f'project = "{jira_project}" ORDER BY updated DESC'
+            url = f"{jira_url}/rest/api/3/search/jql"
+
+            payload = {
+                'jql': jql,
+                'maxResults': 50,
+                'fields': ['key', 'summary', 'status', 'issuetype', 'priority', 'fixVersions', 'components']
+            }
+
+            logger.info(f"🔗 Jira URL: {jira_url}")
+            logger.info(f"🔍 JQL Query: {jql}")
+            logger.info(f"📍 API Endpoint: {url}")
+
+            req = urllib.request.Request(url, headers=headers, data=json.dumps(payload).encode('utf-8'), method='POST')
+            logger.info(f"📤 Sending POST request to Jira...")
+
+            try:
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    logger.info(f"✓ Jira response: {response.status}")
+                    response_data = json.loads(response.read().decode('utf-8'))
+
+                # Format response for dashboard
+                issues = []
+                for issue in response_data.get('issues', []):
+                    fields = issue.get('fields', {})
+                    issues.append({
+                        'key': issue['key'],
+                        'summary': fields.get('summary', 'No Summary'),
+                        'type': fields.get('issuetype', {}).get('name', 'Task'),
+                        'status': fields.get('status', {}).get('name', 'To Do'),
+                        'priority': fields.get('priority', {}).get('name', 'Medium'),
+                        'fields': {
+                            'issuetype': fields.get('issuetype', {}),
+                            'status': fields.get('status', {}),
+                        }
+                    })
+
+                data = {
+                    'expand': 'names,schema',
+                    'startAt': 0,
+                    'maxResults': len(issues),
+                    'total': response_data.get('total', len(issues)),
+                    'issues': issues
+                }
+
+                logger.info(f"✓ Successfully fetched {len(issues)} LIVE Jira issues from {jira_project}")
+                return self._send_json_response(data)
+
+            except urllib.error.HTTPError as e:
+                error_body = ''
+                try:
+                    error_body = e.read().decode('utf-8')[:200]
+                except:
+                    pass
+                logger.error(f"❌ Jira HTTP Error {e.code}: {error_body}")
+                return self._send_json_response({"error": f"Jira API Error {e.code}: {error_body}"}, 500)
+            except (urllib.error.URLError, Exception) as e:
+                logger.error(f"❌ Failed to fetch from Jira: {e}")
+                return self._send_json_response({"error": f"Failed to fetch from Jira: {str(e)}"}, 500)
+
+        except Exception as e:
+            logger.error(f"Error in _handle_get_jira_issues_live: {e}")
+            return self._send_json_response({"error": str(e)}, 500)
+
+    def _handle_get_test_cases(self):
+        """GET /api/test-cases - Return generated test cases"""
+        try:
+            tc_file = Path('data/test-cases.json')
+            if tc_file.exists():
+                with open(tc_file, 'r') as f:
+                    data = json.load(f)
+                return self._send_json_response(data)
+            else:
+                return self._send_json_response({"testCases": [], "totalIssues": 0})
+        except Exception as e:
+            logger.error(f"Error loading test cases: {e}")
+            return self._send_json_response({"error": str(e)}, 500)
+
+    def _handle_get_test_case_for_issue(self, issue_key):
+        """GET /api/test-cases/:issueKey - Return test cases for specific issue"""
+        try:
+            tc_file = Path('data/test-cases.json')
+            if tc_file.exists():
+                with open(tc_file, 'r') as f:
+                    data = json.load(f)
+                    for tc in data.get('testCases', []):
+                        if tc.get('issueKey') == issue_key:
+                            return self._send_json_response(tc)
+            return self._send_json_response({"error": "Not found"}, 404)
+        except Exception as e:
+            logger.error(f"Error loading test case for {issue_key}: {e}")
+            return self._send_json_response({"error": str(e)}, 500)
+
+    def _handle_generate_test_cases(self):
+        """POST /api/generate-test-cases - Trigger test case generation with user credentials"""
+        try:
+            # Read request body
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+
+            if body:
+                request_data = json.loads(body)
+            else:
+                request_data = {}
+
+            # Get parameters
+            issue_keys = request_data.get('issueKeys', [])
+            max_issues = request_data.get('maxIssues', 50)
+
+            logger.info(f"Generating test cases for {len(issue_keys)} issues...")
+
+            # Set up environment with user credentials
+            env = os.environ.copy()
+
+            # Jira credentials (required)
+            jira_url = request_data.get('jira_base_url', '').strip()
+            jira_email = request_data.get('jira_user_email', '').strip()
+            jira_token = request_data.get('jira_api_token', '').strip()
+            ai_provider = request_data.get('ai_provider', '').strip()
+
+            if not all([jira_url, jira_email, jira_token, ai_provider]):
+                logger.error("Missing required credentials")
+                return self._send_json_response({
+                    "status": "error",
+                    "message": "Missing required credentials"
+                }, 400)
+
+            # Set Jira environment variables
+            env['JIRA_BASE_URL'] = jira_url
+            env['JIRA_USER_EMAIL'] = jira_email
+            env['JIRA_API_TOKEN'] = jira_token
+
+            # Set AI provider credentials
+            if ai_provider == 'anthropic':
+                anthropic_key = request_data.get('anthropic_api_key', '').strip()
+                if not anthropic_key:
+                    return self._send_json_response({
+                        "status": "error",
+                        "message": "Missing Claude API key"
+                    }, 400)
+                env['ANTHROPIC_API_KEY'] = anthropic_key
+                # Remove OpenAI key if set
+                env.pop('OPENAI_API_KEY', None)
+                logger.info(f"Using Claude (Anthropic) provider")
+            elif ai_provider == 'openai':
+                openai_key = request_data.get('openai_api_key', '').strip()
+                if not openai_key:
+                    return self._send_json_response({
+                        "status": "error",
+                        "message": "Missing OpenAI API key"
+                    }, 400)
+                env['OPENAI_API_KEY'] = openai_key
+                # Set custom endpoint if provided
+                openai_base = request_data.get('openai_api_base', '').strip()
+                if openai_base:
+                    env['OPENAI_API_BASE'] = openai_base
+                    logger.info(f"Using OpenAI with custom endpoint: {openai_base}")
+                else:
+                    logger.info(f"Using OpenAI provider")
+            else:
+                return self._send_json_response({
+                    "status": "error",
+                    "message": "Invalid AI provider"
+                }, 400)
+
+            # Build command to run generator
+            cmd = [
+                sys.executable,
+                'scripts/generate-test-cases.py',
+                '--skip-config'  # Skip interactive config when called from server
+            ]
+
+            # Add issue keys if provided
+            if issue_keys:
+                cmd.append('--issues')
+                cmd.append(','.join(issue_keys))
+
+            logger.info(f"Python executable: {sys.executable}")
+            logger.info(f"Working directory: {os.getcwd()}")
+            logger.info(f"Running generator with command: {' '.join(cmd)}")
+            logger.info(f"Issue keys: {issue_keys}")
+            logger.info(f"AI Provider: {ai_provider}")
+
+            # Run generator with credentials
+            try:
+                logger.info(f"Running command: {' '.join(cmd)}")
+                logger.info(f"Environment: JIRA_BASE_URL={env.get('JIRA_BASE_URL')}, AI_PROVIDER={ai_provider}")
+
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, env=env)
+
+                if result.returncode == 0:
+                    # Load generated test cases
+                    tc_file = Path('data/test-cases.json')
+                    if tc_file.exists():
+                        with open(tc_file, 'r') as f:
+                            data = json.load(f)
+                        logger.info(f"✓ Successfully generated test cases for {data.get('totalIssues', 0)} issues")
+                        return self._send_json_response({
+                            "status": "success",
+                            "message": f"Generated test cases for {data.get('totalIssues', 0)} issues",
+                            "data": data
+                        })
+                    else:
+                        logger.warning("Generation complete but no results file found")
+                        return self._send_json_response({
+                            "status": "success",
+                            "message": "Generation complete but no results file found"
+                        })
+                else:
+                    error_msg = result.stderr or result.stdout or "Unknown error"
+                    logger.error(f"❌ Generator failed with return code {result.returncode}")
+                    logger.error(f"FULL STDOUT:\n{result.stdout}")
+                    logger.error(f"FULL STDERR:\n{result.stderr}")
+
+                    # Try to extract meaningful error from output
+                    error_lines = (result.stderr or result.stdout or "").split('\n')
+                    meaningful_error = next((line for line in error_lines if 'error' in line.lower() or 'failed' in line.lower()), error_msg)
+
+                    return self._send_json_response({
+                        "status": "error",
+                        "message": f"Test case generation failed: {meaningful_error[:200]}"
+                    }, 500)
+            except subprocess.TimeoutExpired:
+                logger.error("❌ Test case generation timed out (5 minutes)")
+                return self._send_json_response({
+                    "status": "error",
+                    "message": "Test case generation timed out (5 minutes)"
+                }, 500)
+            except Exception as e:
+                logger.error(f"❌ Error running generator: {str(e)}", exc_info=True)
+                return self._send_json_response({
+                    "status": "error",
+                    "message": f"Failed to run generator: {str(e)[:200]}"
+                }, 500)
+
+        except json.JSONDecodeError:
+            return self._send_json_response({"error": "Invalid JSON"}, 400)
+        except Exception as e:
+            logger.error(f"Error in generate handler: {e}")
+            return self._send_json_response({"error": str(e)}, 500)
+
+    def _send_json_response(self, data, status_code=200):
+        """Send JSON response"""
+        self.send_response(status_code)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+
+        response = json.dumps(data).encode('utf-8')
+        self.wfile.write(response)
+
+    def end_headers(self):
+        """Add custom headers for development"""
+        # Allow CORS for local development
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+
+        # Add content-type headers
+        if self.path.endswith('.js'):
+            self.send_header('Content-Type', 'application/javascript; charset=utf-8')
+        elif self.path.endswith('.json'):
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+        elif self.path.endswith('.html'):
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+        elif self.path.endswith('.css'):
+            self.send_header('Content-Type', 'text/css; charset=utf-8')
+
+        super().end_headers()
+
+    def log_message(self, format, *args):
+        """Suppress default logging (we use our own)"""
+        pass
+
+
+def run_server():
+    """Start the development server"""
+    # Change to project directory
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+    # Create server
+    handler = DashboardHTTPHandler
+    httpd = socketserver.TCPServer((HOST, PORT), handler)
+
+    # Print startup info
+    logger.info("=" * 70)
+    logger.info("Automation Dashboard - Local Development Server")
+    logger.info("=" * 70)
+    logger.info(f"✓ Server running on: http://{HOST}:{PORT}")
+    logger.info(f"✓ Dashboard available at: http://{HOST}:{PORT}/index.html")
+    logger.info(f"✓ Press CTRL+C to stop server")
+    logger.info("=" * 70)
+    logger.info("")
+    logger.info("Tips:")
+    logger.info("  • Open DevTools (F12) to see console output")
+    logger.info("  • Check 'Network' tab to see API calls")
+    logger.info("  • Refresh page (Ctrl+R) to reload dashboard")
+    logger.info("  • Hard refresh (Ctrl+Shift+R) to clear cache")
+    logger.info("")
+
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        logger.info("\n✓ Server stopped")
+        httpd.server_close()
+        exit(0)
+
+
+if __name__ == '__main__':
+    run_server()

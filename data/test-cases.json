@@ -1,0 +1,419 @@
+{
+  "timestamp": "2026-09-11T09:30:11.999741",
+  "model": "azure_ai/claude-sonnet-4-5",
+  "testConfiguration": {
+    "test_types": [
+      "positive",
+      "negative",
+      "edge-case"
+    ],
+    "priorities": [
+      "P1",
+      "P2",
+      "P3"
+    ],
+    "max_scenarios": 10,
+    "custom_requirements": null,
+    "temperature": 0.3
+  },
+  "totalIssues": 1,
+  "successfulGenerations": 1,
+  "failedGenerations": 0,
+  "testCases": [
+    {
+      "issueKey": "QA-1194",
+      "summary": "Add retry logic with exponential backoff for 5XX server errors in BaseApiClient for API Automation",
+      "scenarios": [
+        {
+          "id": "SC-001",
+          "title": "Successful API call on first attempt without retry",
+          "type": "positive",
+          "category": "functional",
+          "priority": "P1",
+          "preconditions": [
+            "Given BaseApiClient is initialized with retry logic enabled",
+            "And maximum retry attempts is configured to 3",
+            "And exponential backoff strategy is enabled",
+            "And API endpoint is available and responding normally"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When client makes API request to endpoint",
+              "expectedResult": "Request is sent to server successfully"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When server responds with 200 OK status",
+              "expectedResult": "Response is received with valid data"
+            },
+            {
+              "stepNumber": 3,
+              "action": "Then client returns response without retry attempts",
+              "expectedResult": "No retry logic is triggered, response returned immediately"
+            },
+            {
+              "stepNumber": 4,
+              "action": "Then logs show single successful request with no retry entries",
+              "expectedResult": "Log contains one request entry with 200 status, zero retry attempts"
+            }
+          ],
+          "expectedResult": "API call succeeds on first attempt without triggering retry mechanism, logs confirm single successful request",
+          "automationHint": "Mock API response with 200 status; verify retry counter remains 0; assert log contains single entry; Example: when(mockClient.execute(request)).thenReturn(response200); verify(mockClient, times(1)).execute(any());",
+          "tags": [
+            "@positive",
+            "@smoke",
+            "@retry-logic"
+          ],
+          "coverage": [
+            "Baseline functionality",
+            "No retry for successful calls"
+          ]
+        },
+        {
+          "id": "SC-002",
+          "title": "Retry logic triggers on 500 Internal Server Error and succeeds on second attempt",
+          "type": "positive",
+          "category": "functional",
+          "priority": "P1",
+          "preconditions": [
+            "Given BaseApiClient is initialized with retry logic enabled",
+            "And maximum retry attempts is configured to 3",
+            "And exponential backoff is enabled with initial delay of 1 second",
+            "And logging is configured to capture retry attempts"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When client makes API request to endpoint",
+              "expectedResult": "First request is sent to server"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When server responds with 500 Internal Server Error",
+              "expectedResult": "Client detects 5XX error and initiates retry logic"
+            },
+            {
+              "stepNumber": 3,
+              "action": "When client waits for exponential backoff delay and retries",
+              "expectedResult": "Second request is sent after calculated delay"
+            },
+            {
+              "stepNumber": 4,
+              "action": "When server responds with 200 OK on second attempt",
+              "expectedResult": "Client receives successful response and stops retrying"
+            },
+            {
+              "stepNumber": 5,
+              "action": "Then logs show initial 500 error and successful retry with attempt number",
+              "expectedResult": "Log contains: Attempt 1 failed with 500, Attempt 2 succeeded with 200"
+            }
+          ],
+          "expectedResult": "API call fails initially with 500 error, retry logic triggers with exponential backoff, second attempt succeeds, detailed logs capture both attempts",
+          "automationHint": "Mock sequence: first call returns 500, second returns 200; verify execute() called twice; assert backoff delay occurred; Example: when(mockClient.execute(request)).thenReturn(response500, response200); verify exponential delay calculation;",
+          "tags": [
+            "@positive",
+            "@retry-logic",
+            "@critical"
+          ],
+          "coverage": [
+            "Retry on 5XX errors",
+            "Exponential backoff",
+            "Logging retry attempts"
+          ]
+        },
+        {
+          "id": "SC-003",
+          "title": "Retry logic exhausts maximum attempts on persistent 503 Service Unavailable",
+          "type": "negative",
+          "category": "functional",
+          "priority": "P1",
+          "preconditions": [
+            "Given BaseApiClient is initialized with retry logic enabled",
+            "And maximum retry attempts is configured to 3",
+            "And exponential backoff is enabled",
+            "And server is persistently unavailable"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When client makes API request to endpoint",
+              "expectedResult": "First request is sent to server"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When server responds with 503 Service Unavailable on all attempts",
+              "expectedResult": "Client retries 3 times with exponential backoff delays"
+            },
+            {
+              "stepNumber": 3,
+              "action": "When maximum retry limit is reached",
+              "expectedResult": "Client stops retrying and throws appropriate exception"
+            },
+            {
+              "stepNumber": 4,
+              "action": "Then logs show all 4 attempts (initial + 3 retries) with 503 status",
+              "expectedResult": "Log contains: Attempt 1-4 all failed with 503, max retries exceeded"
+            },
+            {
+              "stepNumber": 5,
+              "action": "Then exception message indicates retry exhaustion with final status code",
+              "expectedResult": "Exception message: 'Max retries (3) exceeded for 503 Service Unavailable'"
+            }
+          ],
+          "expectedResult": "API call fails persistently, retry logic attempts maximum 3 retries with exponential backoff, final exception thrown with clear message, all attempts logged",
+          "automationHint": "Mock all responses with 503; verify execute() called 4 times total (1 initial + 3 retries); assert exception type and message; Example: when(mockClient.execute(request)).thenReturn(response503); verify(mockClient, times(4)).execute(any()); assertThrows(MaxRetriesExceededException.class);",
+          "tags": [
+            "@negative",
+            "@retry-logic",
+            "@critical"
+          ],
+          "coverage": [
+            "Max retry limit",
+            "Persistent 5XX errors",
+            "Exception handling",
+            "Logging"
+          ]
+        },
+        {
+          "id": "SC-004",
+          "title": "Retry logic does not trigger for 4XX client errors",
+          "type": "negative",
+          "category": "validation",
+          "priority": "P1",
+          "preconditions": [
+            "Given BaseApiClient is initialized with retry logic enabled",
+            "And retry logic is configured only for 5XX errors",
+            "And maximum retry attempts is configured to 3"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When client makes API request with invalid authentication",
+              "expectedResult": "Request is sent to server"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When server responds with 401 Unauthorized",
+              "expectedResult": "Client receives 401 status code"
+            },
+            {
+              "stepNumber": 3,
+              "action": "Then client does not trigger retry logic",
+              "expectedResult": "No retry attempts are made"
+            },
+            {
+              "stepNumber": 4,
+              "action": "Then exception is thrown immediately with 401 status",
+              "expectedResult": "Client throws exception without delay"
+            },
+            {
+              "stepNumber": 5,
+              "action": "Then logs show single failed request with no retry entries",
+              "expectedResult": "Log contains: Attempt 1 failed with 401, no retry attempts"
+            }
+          ],
+          "expectedResult": "4XX client errors do not trigger retry mechanism, immediate failure with appropriate exception, logs confirm no retry attempts",
+          "automationHint": "Mock response with 401 status; verify execute() called only once; assert no delay occurred; Example: when(mockClient.execute(request)).thenReturn(response401); verify(mockClient, times(1)).execute(any()); verify no Thread.sleep() calls;",
+          "tags": [
+            "@negative",
+            "@validation",
+            "@retry-logic"
+          ],
+          "coverage": [
+            "Retry scope limited to 5XX",
+            "No retry for 4XX errors"
+          ]
+        },
+        {
+          "id": "SC-005",
+          "title": "Exponential backoff delays increase correctly between retry attempts",
+          "type": "positive",
+          "category": "functional",
+          "priority": "P2",
+          "preconditions": [
+            "Given BaseApiClient is initialized with exponential backoff enabled",
+            "And initial backoff delay is 1 second",
+            "And backoff multiplier is 2",
+            "And maximum retry attempts is configured to 3"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When client makes API request and receives 502 Bad Gateway",
+              "expectedResult": "First retry is scheduled after 1 second delay"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When first retry fails with 502 Bad Gateway",
+              "expectedResult": "Second retry is scheduled after 2 second delay (1 * 2^1)"
+            },
+            {
+              "stepNumber": 3,
+              "action": "When second retry fails with 502 Bad Gateway",
+              "expectedResult": "Third retry is scheduled after 4 second delay (1 * 2^2)"
+            },
+            {
+              "stepNumber": 4,
+              "action": "Then logs show increasing delay times between attempts",
+              "expectedResult": "Log shows: Retry 1 after 1s, Retry 2 after 2s, Retry 3 after 4s"
+            }
+          ],
+          "expectedResult": "Exponential backoff delays increase correctly (1s, 2s, 4s) between retry attempts, preventing server overload during recovery",
+          "automationHint": "Capture timestamps between retry attempts; calculate actual delays; assert delays match exponential pattern; Example: long[] delays = captureDelays(); assertEquals(1000, delays[0], 100); assertEquals(2000, delays[1], 100); assertEquals(4000, delays[2], 100);",
+          "tags": [
+            "@positive",
+            "@retry-logic",
+            "@exponential-backoff"
+          ],
+          "coverage": [
+            "Exponential backoff strategy",
+            "Delay calculation"
+          ]
+        },
+        {
+          "id": "SC-006",
+          "title": "Retry logic handles all 5XX status codes (500, 502, 503, 504)",
+          "type": "positive",
+          "category": "functional",
+          "priority": "P2",
+          "preconditions": [
+            "Given BaseApiClient is initialized with retry logic for all 5XX errors",
+            "And maximum retry attempts is configured to 3",
+            "And exponential backoff is enabled"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When client encounters 500 Internal Server Error",
+              "expectedResult": "Retry logic is triggered"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When client encounters 502 Bad Gateway",
+              "expectedResult": "Retry logic is triggered"
+            },
+            {
+              "stepNumber": 3,
+              "action": "When client encounters 503 Service Unavailable",
+              "expectedResult": "Retry logic is triggered"
+            },
+            {
+              "stepNumber": 4,
+              "action": "When client encounters 504 Gateway Timeout",
+              "expectedResult": "Retry logic is triggered"
+            },
+            {
+              "stepNumber": 5,
+              "action": "Then logs confirm retry attempts for each 5XX status code",
+              "expectedResult": "All 5XX errors trigger retry mechanism consistently"
+            }
+          ],
+          "expectedResult": "Retry logic correctly identifies and handles all 5XX status codes (500, 502, 503, 504) with consistent retry behavior",
+          "automationHint": "Test each 5XX status code separately; verify retry triggered for each; Example: testRetryFor500(); testRetryFor502(); testRetryFor503(); testRetryFor504(); assert retry count > 0 for all;",
+          "tags": [
+            "@positive",
+            "@retry-logic",
+            "@5xx-errors"
+          ],
+          "coverage": [
+            "All 5XX error codes",
+            "Consistent retry behavior"
+          ]
+        },
+        {
+          "id": "SC-007",
+          "title": "Retry logic with zero maximum retries configured",
+          "type": "edge-case",
+          "category": "validation",
+          "priority": "P2",
+          "preconditions": [
+            "Given BaseApiClient is initialized",
+            "And maximum retry attempts is configured to 0",
+            "And retry logic is enabled"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When client makes API request to endpoint",
+              "expectedResult": "Request is sent to server"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When server responds with 500 Internal Server Error",
+              "expectedResult": "Client receives 500 status code"
+            },
+            {
+              "stepNumber": 3,
+              "action": "Then client does not attempt any retries",
+              "expectedResult": "Exception is thrown immediately without retry"
+            },
+            {
+              "stepNumber": 4,
+              "action": "Then logs show single failed request with zero retry attempts",
+              "expectedResult": "Log contains: Attempt 1 failed with 500, max retries set to 0"
+            }
+          ],
+          "expectedResult": "When max retries is 0, no retry attempts are made even for 5XX errors, immediate failure occurs",
+          "automationHint": "Configure maxRetries=0; mock 500 response; verify execute() called once; assert no delays; Example: client.setMaxRetries(0); verify(mockClient, times(1)).execute(any());",
+          "tags": [
+            "@edge-case",
+            "@boundary",
+            "@retry-logic"
+          ],
+          "coverage": [
+            "Boundary condition",
+            "Zero retries configuration"
+          ]
+        },
+        {
+          "id": "SC-008",
+          "title": "Concurrent API calls each maintain independent retry state",
+          "type": "edge-case",
+          "category": "functional",
+          "priority": "P3",
+          "preconditions": [
+            "Given BaseApiClient is initialized with retry logic enabled",
+            "And maximum retry attempts is configured to 3",
+            "And multiple concurrent API calls are in progress"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "When client makes 5 concurrent API requests",
+              "expectedResult": "All 5 requests are sent simultaneously"
+            },
+            {
+              "stepNumber": 2,
+              "action": "When 3 requests fail with 503 and 2 succeed with 200",
+              "expectedResult": "Failed requests trigger independent retry logic"
+            },
+            {
+              "stepNumber": 3,
+              "action": "When retry attempts succeed at different times",
+              "expectedResult": "Each request maintains its own retry counter and state"
+            },
+            {
+              "stepNumber": 4,
+              "action": "Then logs show separate retry sequences for each failed request",
+              "expectedResult": "Logs clearly distinguish between concurrent request retry attempts"
+            }
+          ],
+          "expectedResult": "Concurrent API calls maintain independent retry state without interference, each request tracks its own retry count and backoff timing",
+          "automationHint": "Use ExecutorService for concurrent requests; verify thread-safety; assert each request has independent retry counter; Example: ExecutorService executor = Executors.newFixedThreadPool(5); verify retry state isolation;",
+          "tags": [
+            "@edge-case",
+            "@concurrency",
+            "@retry-logic"
+          ],
+          "coverage": [
+            "Thread safety",
+            "Independent retry state",
+            "Concurrent requests"
+          ]
+        }
+      ],
+      "generatedAt": "2026-09-11T09:31:10.958891"
+    }
+  ]
+}
