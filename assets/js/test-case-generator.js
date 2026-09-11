@@ -125,7 +125,14 @@ class TestCaseGenerator {
       <div class="modal__overlay"></div>
       <div class="modal__content">
         <div class="modal__header">
-          <h2 class="modal__title">⚡ Generate Test Cases (BDD Scenarios)</h2>
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px;">
+            <h2 class="modal__title">⚡ Generate Test Cases (BDD Scenarios)</h2>
+            <div id="project-display-section" style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+              <span style="color: #666; font-weight: 500;">Project:</span>
+              <span id="current-project-display" style="background: #f0f0f0; padding: 4px 12px; border-radius: 4px; font-weight: 600;">Loading...</span>
+              <button id="change-project-btn" class="btn btn--ghost" type="button" title="Change Jira project" style="padding: 4px 12px; font-size: 12px;">Change</button>
+            </div>
+          </div>
           <button class="modal__close" type="button" aria-label="Close">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -276,11 +283,13 @@ class TestCaseGenerator {
     const closeBtn = modal.querySelector('.modal__close');
     const cancelBtn = modal.querySelector('#modal-cancel-btn');
     const actionBtn = modal.querySelector('#modal-action-btn');
+    const changeProjectBtn = modal.querySelector('#change-project-btn');
 
     overlay.addEventListener('click', () => this.closeModal());
     closeBtn.addEventListener('click', () => this.closeModal());
     cancelBtn.addEventListener('click', () => this.closeModal());
     actionBtn.addEventListener('click', () => this.handleActionClick());
+    changeProjectBtn?.addEventListener('click', () => this.handleChangeProject());
 
     // Issue search
     const searchInput = modal.querySelector('#issue-search');
@@ -327,6 +336,7 @@ class TestCaseGenerator {
       // Valid session - open generator directly
       modal.classList.add('is-open');
       console.log('✓ Added is-open class to modal');
+      this.updateProjectDisplay();
       await this.loadJiraIssues();
       this.showStep('select');
     } else {
@@ -346,7 +356,8 @@ class TestCaseGenerator {
       modal.classList.add('is-open');
     }
 
-    // Load Jira issues with freshly verified credentials
+    // Update project display and load Jira issues with freshly verified credentials
+    this.updateProjectDisplay();
     this.loadJiraIssues().then(() => {
       console.log('✓ Jira issues loaded, showing step 1');
       this.showStep('select');
@@ -374,9 +385,73 @@ class TestCaseGenerator {
     console.log('✓ Modal closed and reset to step 1');
   }
 
+  handleChangeProject() {
+    console.log('🔄 handleChangeProject() called');
+    // Close the generator modal
+    this.closeModal();
+
+    // Reset the project selection in session
+    const session = window.credentialsManager?.getSession();
+    if (session) {
+      delete session.selected_project_key;
+      delete session.selected_project_name;
+      sessionStorage.setItem('jira_ai_session', JSON.stringify(session));
+      console.log('✓ Cleared selected project from session');
+    }
+
+    // Reset the project selector
+    if (window.projectSelector) {
+      window.projectSelector.reset();
+      console.log('✓ Reset project selector');
+      // Open the project selector modal
+      const credentials = window.credentialsManager?.getSession();
+      if (credentials) {
+        window.projectSelector.openModal(credentials);
+        console.log('✓ Opened project selector modal');
+      }
+    }
+  }
+
+  updateProjectDisplay() {
+    const session = window.credentialsManager?.getSession();
+    const projectName = session?.selected_project_name || session?.selected_project_key || 'Unknown';
+    const projectDisplay = document.getElementById('current-project-display');
+    if (projectDisplay) {
+      projectDisplay.textContent = projectName;
+      console.log(`✓ Updated project display to: ${projectName}`);
+    }
+  }
+
   async loadJiraIssues() {
     try {
       console.log('🔄 loadJiraIssues() starting...');
+
+      // Reset filter data from previous project
+      this.sprints.clear();
+      this.versions.clear();
+      this.types.clear();
+      this.statuses.clear();
+      this.jiraIssues = [];
+      this.generatedIssueKeys = [];
+      console.log('✓ Cleared old filter data');
+
+      // Clear filter dropdowns
+      const filterSprint = document.getElementById('filter-sprint');
+      const filterVersion = document.getElementById('filter-version');
+      const filterType = document.getElementById('filter-type');
+      const filterStatus = document.getElementById('filter-status');
+      if (filterSprint) filterSprint.innerHTML = '<option value="">All Sprints</option>';
+      if (filterVersion) filterVersion.innerHTML = '<option value="">All Versions</option>';
+      if (filterType) filterType.innerHTML = '<option value="">All Types</option>';
+      if (filterStatus) filterStatus.innerHTML = '<option value="">All Statuses</option>';
+      console.log('✓ Cleared filter dropdowns');
+
+      // Clear search input and select all checkbox
+      const searchInput = document.getElementById('issue-search');
+      const selectAllCheckbox = document.getElementById('select-all-checkbox');
+      if (searchInput) searchInput.value = '';
+      if (selectAllCheckbox) selectAllCheckbox.checked = false;
+      console.log('✓ Cleared search and selection');
 
       // Check if we have stored credentials
       const credentials = window.credentialsManager?.getSession();
@@ -394,12 +469,16 @@ class TestCaseGenerator {
         console.log('   URL: ' + credentials.jira_base_url);
         console.log('   Email: ' + credentials.jira_user_email);
 
+        // Get selected project from session
+        const selectedProject = credentials.selected_project_key || 'REB3';
+        console.log(`📁 Using project: ${selectedProject}`);
+
         // Use new endpoint that accepts credentials
         const fetchPayload = {
           jira_base_url: credentials.jira_base_url,
           jira_email: credentials.jira_user_email,  // Note: API expects 'jira_email', session has 'jira_user_email'
           jira_api_token: credentials.jira_api_token,
-          jira_project_key: 'REB3'
+          jira_project_key: selectedProject
         };
 
         const response = await fetch('/api/jira-issues-live', {
@@ -415,7 +494,11 @@ class TestCaseGenerator {
         if (response.ok) {
           console.log(`✅ SUCCESS! Fetched ${data.issues?.length || 0} LIVE Jira issues`);
           if (data.issues?.length > 0) {
-            console.log('First issue: ' + data.issues[0].key + ' - ' + data.issues[0].summary);
+            console.log('First issue:', data.issues[0]);
+            console.log('  Key: ' + data.issues[0].key);
+            console.log('  Summary: ' + data.issues[0].summary);
+            console.log('  Fields structure:', Object.keys(data.issues[0].fields || {}));
+            console.log('  Full fields:', data.issues[0].fields);
           }
           this.jiraIssues = data.issues || [];
         } else {
@@ -449,29 +532,51 @@ class TestCaseGenerator {
       this.jiraIssues = availableIssues;
 
       // Collect unique values for filters
-      this.jiraIssues.forEach(issue => {
+      console.log('📊 Collecting filter values from', this.jiraIssues.length, 'issues');
+
+      this.jiraIssues.forEach((issue, idx) => {
         // Collect type
         const type = issue.fields?.issuetype?.name;
-        if (type) this.types.add(type);
+        if (type) {
+          this.types.add(type);
+          if (idx === 0) console.log(`  ✓ Type found: ${type}`);
+        }
 
         // Collect status
         const status = issue.fields?.status?.name;
-        if (status) this.statuses.add(status);
+        if (status) {
+          this.statuses.add(status);
+          if (idx === 0) console.log(`  ✓ Status found: ${status}`);
+        }
 
         // Collect sprint
         const sprint = issue.fields?.sprint;
         if (sprint && sprint.name) {
           this.sprints.add(sprint.name);
+          if (idx === 0) console.log(`  ✓ Sprint found: ${sprint.name}`);
+        } else if (idx === 0 && sprint) {
+          console.log(`  ⚠️ Sprint exists but no name:`, sprint);
         }
 
         // Collect version (fixVersions)
         const versions = issue.fields?.fixVersions;
-        if (Array.isArray(versions)) {
+        if (Array.isArray(versions) && versions.length > 0) {
           versions.forEach(v => {
-            if (v && v.name) this.versions.add(v.name);
+            if (v && v.name) {
+              this.versions.add(v.name);
+              if (idx === 0) console.log(`  ✓ Version found: ${v.name}`);
+            }
           });
+        } else if (idx === 0) {
+          console.log(`  ⚠️ No versions:`, versions);
         }
       });
+
+      console.log('✅ Filter collections complete:');
+      console.log(`  Sprints: ${this.sprints.size}`, Array.from(this.sprints));
+      console.log(`  Versions: ${this.versions.size}`, Array.from(this.versions));
+      console.log(`  Types: ${this.types.size}`, Array.from(this.types));
+      console.log(`  Statuses: ${this.statuses.size}`, Array.from(this.statuses));
 
       this.populateFilterDropdowns();
       this.renderIssuesList();
@@ -492,49 +597,69 @@ class TestCaseGenerator {
   }
 
   populateFilterDropdowns() {
+    console.log('🔧 populateFilterDropdowns() starting...');
+
     // Populate Sprint filter
     const sprintSelect = document.getElementById('filter-sprint');
     if (sprintSelect) {
-      Array.from(this.sprints).sort().forEach(sprint => {
+      const sprintArray = Array.from(this.sprints).sort();
+      console.log(`  Adding ${sprintArray.length} sprints to filter`);
+      sprintArray.forEach(sprint => {
         const option = document.createElement('option');
         option.value = sprint;
         option.textContent = sprint;
         sprintSelect.appendChild(option);
       });
+    } else {
+      console.warn('  ⚠️ Sprint select not found!');
     }
 
     // Populate Version filter
     const versionSelect = document.getElementById('filter-version');
     if (versionSelect) {
-      Array.from(this.versions).sort().forEach(version => {
+      const versionArray = Array.from(this.versions).sort();
+      console.log(`  Adding ${versionArray.length} versions to filter`);
+      versionArray.forEach(version => {
         const option = document.createElement('option');
         option.value = version;
         option.textContent = version;
         versionSelect.appendChild(option);
       });
+    } else {
+      console.warn('  ⚠️ Version select not found!');
     }
 
     // Populate Type filter
     const typeSelect = document.getElementById('filter-type');
     if (typeSelect) {
-      Array.from(this.types).sort().forEach(type => {
+      const typeArray = Array.from(this.types).sort();
+      console.log(`  Adding ${typeArray.length} types to filter`);
+      typeArray.forEach(type => {
         const option = document.createElement('option');
         option.value = type;
         option.textContent = type;
         typeSelect.appendChild(option);
       });
+    } else {
+      console.warn('  ⚠️ Type select not found!');
     }
 
     // Populate Status filter
     const statusSelect = document.getElementById('filter-status');
     if (statusSelect) {
-      Array.from(this.statuses).sort().forEach(status => {
+      const statusArray = Array.from(this.statuses).sort();
+      console.log(`  Adding ${statusArray.length} statuses to filter`);
+      statusArray.forEach(status => {
         const option = document.createElement('option');
         option.value = status;
         option.textContent = status;
         statusSelect.appendChild(option);
       });
+    } else {
+      console.warn('  ⚠️ Status select not found!');
     }
+
+    console.log('✓ populateFilterDropdowns() complete');
   }
 
   renderIssuesList() {
