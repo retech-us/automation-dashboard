@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-16T14:05:22.679302+00:00",
+  "lastUpdated": "2026-09-16T14:25:57.574900+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -21,8 +21,9 @@
     "Lowest": 0
   },
   "byComponent": {
-    "BE REBM": 148,
     "General": 236,
+    "BE REBM": 148,
+    "DE": 27,
     "IOS": 227,
     "HAWKEYE": 20,
     "BE CORE": 22,
@@ -30,7 +31,6 @@
     "PARENT-WORK-ITEM": 30,
     "ANDR": 236,
     "FE Hawkeye": 22,
-    "DE": 27,
     "SOLUTIONS": 1,
     "QA": 5,
     "MOBILE": 5,
@@ -40,14 +40,14 @@
     "Customer": 1
   },
   "byStatus": {
-    "Invalid": 72,
-    "Code Review": 21,
     "In Progress": 49,
     "To  Do": 160,
+    "UAT": 125,
+    "Invalid": 72,
+    "Code Review": 21,
     "Done": 406,
     "Dev Complete": 16,
     "QA": 51,
-    "UAT": 125,
     "Waiting for clarification": 57,
     "Staging": 4,
     "PRODUCTION READY": 39
@@ -237,6 +237,87 @@
   },
   "issues": [
     {
+      "key": "REB3-20678",
+      "summary": "[BE] replacing minio with compatible local mock storage",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "Unversioned",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "In Progress",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "General",
+      "assignee": "Raghav Galhotra",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/3d9d38d1b14302157c3417a9bbf53cf6?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FRG-4.png",
+      "tester": "Raghav Galhotra",
+      "reporter": "Raghav Galhotra",
+      "created": "2026-09-16T04:54:10.751-0700",
+      "updated": "2026-09-16T07:22:57.714-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20678"
+    },
+    {
+      "key": "REB3-20652",
+      "summary": "PRGM - post-processing provide incorrect product bbox.",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Story",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Artem Kanarev",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
+      "tester": "Juan Li",
+      "reporter": "Juan Li",
+      "created": "2026-09-11T04:16:27.714-0700",
+      "updated": "2026-09-16T07:19:27.249-0700",
+      "ageDays": 5,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20652"
+    },
+    {
+      "key": "REB3-19899",
+      "summary": "[MJHD] Configurable Store Visit Images and Summary reports",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Improvement",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "DE",
+      "assignee": "Sriyuth Sagi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/55bf75d962493c6c2cc3a6d4583be454?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-1.png",
+      "tester": "Aakash Oswal",
+      "reporter": "Aakash Oswal",
+      "created": "2026-06-22T11:01:54.725-0700",
+      "updated": "2026-09-16T07:16:32.846-0700",
+      "ageDays": 85,
+      "staleDays": 0,
+      "labels": [
+        "Customer",
+        "MJHD"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-19899"
+    },
+    {
       "key": "REB3-20653",
       "summary": "[MJHD] Store 1391 after photo task not showing today",
       "project": "Rebotics 3",
@@ -339,34 +420,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20679"
-    },
-    {
-      "key": "REB3-20652",
-      "summary": "PRGM - post-processing provide incorrect product bbox.",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Story",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Artem Kanarev",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
-      "tester": "Juan Li",
-      "reporter": "Juan Li",
-      "created": "2026-09-11T04:16:27.714-0700",
-      "updated": "2026-09-16T05:28:51.031-0700",
-      "ageDays": 5,
-      "staleDays": 0,
-      "labels": [
-        "AD-HOC",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20652"
     },
     {
       "key": "REB3-20680",
@@ -542,31 +595,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20632"
-    },
-    {
-      "key": "REB3-20678",
-      "summary": "[BE] replacing minio with compatible local mock storage",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "Unversioned",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "General",
-      "assignee": "Raghav Galhotra",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/3d9d38d1b14302157c3417a9bbf53cf6?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FRG-4.png",
-      "tester": "Raghav Galhotra",
-      "reporter": "Raghav Galhotra",
-      "created": "2026-09-16T04:54:10.751-0700",
-      "updated": "2026-09-16T04:54:29.736-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20678"
     },
     {
       "key": "REB3-20631",
@@ -1746,7 +1774,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-06-30T07:14:27.708-0700",
       "updated": "2026-09-15T22:42:40.623-0700",
-      "ageDays": 77,
+      "ageDays": 78,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19951"
@@ -1897,7 +1925,7 @@
       "created": "2026-09-08T23:17:07.353-0700",
       "updated": "2026-09-15T07:06:48.484-0700",
       "ageDays": 7,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20591"
     },
@@ -4291,8 +4319,8 @@
       "reporter": "Akanksha Jangir",
       "created": "2026-09-14T07:21:30.105-0700",
       "updated": "2026-09-14T07:21:30.838-0700",
-      "ageDays": 1,
-      "staleDays": 1,
+      "ageDays": 2,
+      "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20659"
     },
@@ -4317,7 +4345,7 @@
       "created": "2026-09-01T21:06:49.817-0700",
       "updated": "2026-09-14T07:21:22.578-0700",
       "ageDays": 14,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -7479,7 +7507,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-06-30T07:09:57.932-0700",
       "updated": "2026-09-08T00:15:01.699-0700",
-      "ageDays": 77,
+      "ageDays": 78,
       "staleDays": 8,
       "labels": [
         "BE",
@@ -9644,7 +9672,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-07-01T07:19:56.030-0700",
       "updated": "2026-09-07T23:51:55.167-0700",
-      "ageDays": 76,
+      "ageDays": 77,
       "staleDays": 8,
       "labels": [
         "IOS"
@@ -10762,7 +10790,7 @@
       "reporter": "Kyveli Tsioli",
       "created": "2026-08-28T07:08:19.365-0700",
       "updated": "2026-09-04T02:11:53.451-0700",
-      "ageDays": 18,
+      "ageDays": 19,
       "staleDays": 12,
       "labels": [
         "AD-HOC",
@@ -11172,34 +11200,6 @@
       "staleDays": 13,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19637"
-    },
-    {
-      "key": "REB3-19899",
-      "summary": "[MJHD] Configurable Store Visit Images and Summary reports",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Improvement",
-      "epic": "None",
-      "status": "UAT",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "DE",
-      "assignee": "Sriyuth Sagi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/55bf75d962493c6c2cc3a6d4583be454?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-1.png",
-      "tester": "Aakash Oswal",
-      "reporter": "Aakash Oswal",
-      "created": "2026-06-22T11:01:54.725-0700",
-      "updated": "2026-09-03T02:47:28.289-0700",
-      "ageDays": 85,
-      "staleDays": 13,
-      "labels": [
-        "Customer",
-        "MJHD"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19899"
     },
     {
       "key": "REB3-20557",
@@ -18546,7 +18546,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-05-15T07:14:04.759-0700",
       "updated": "2026-08-21T04:42:03.492-0700",
-      "ageDays": 123,
+      "ageDays": 124,
       "staleDays": 26,
       "labels": [
         "Customer"
@@ -19681,7 +19681,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-08-10T07:16:00.596-0700",
       "updated": "2026-08-21T04:29:12.803-0700",
-      "ageDays": 36,
+      "ageDays": 37,
       "staleDays": 26,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20318"
@@ -21756,7 +21756,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2025-12-18T06:05:55.762-0800",
       "updated": "2026-08-21T04:28:45.966-0700",
-      "ageDays": 271,
+      "ageDays": 272,
       "staleDays": 26,
       "labels": [
         "Customer"
@@ -23586,7 +23586,7 @@
       "reporter": "vikas yadav",
       "created": "2026-08-01T07:25:23.404-0700",
       "updated": "2026-08-19T00:41:23.268-0700",
-      "ageDays": 45,
+      "ageDays": 46,
       "staleDays": 28,
       "labels": [
         "iOS"
@@ -23836,7 +23836,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-06-12T07:18:09.763-0700",
       "updated": "2026-08-18T23:14:28.489-0700",
-      "ageDays": 95,
+      "ageDays": 96,
       "staleDays": 28,
       "labels": [
         "AD-HOC",
@@ -24472,7 +24472,7 @@
       "created": "2025-07-02T03:51:36.073-0700",
       "updated": "2026-08-13T07:09:03.977-0700",
       "ageDays": 441,
-      "staleDays": 33,
+      "staleDays": 34,
       "labels": [
         "Spillover",
         "Unplanned"
@@ -25662,7 +25662,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:22:48.720-0700",
       "updated": "2026-08-05T05:40:59.047-0700",
-      "ageDays": 96,
+      "ageDays": 97,
       "staleDays": 42,
       "labels": [
         "ALBT",
