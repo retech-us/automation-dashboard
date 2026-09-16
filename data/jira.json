@@ -1,14 +1,14 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-16T13:05:38.081161+00:00",
+  "lastUpdated": "2026-09-16T13:25:04.597060+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 218,
+    "openDefects": 217,
     "blockers": 139,
-    "inProgress": 253,
+    "inProgress": 254,
     "inQa": 51,
     "resolvedThisWeek": 88,
     "resolvedTotal": 478
@@ -21,10 +21,10 @@
     "Lowest": 0
   },
   "byComponent": {
-    "BE REBM": 148,
     "General": 236,
-    "HAWKEYE": 20,
     "IOS": 227,
+    "BE REBM": 148,
+    "HAWKEYE": 20,
     "BE CORE": 22,
     "BE ADMIN": 2,
     "PARENT-WORK-ITEM": 30,
@@ -40,13 +40,13 @@
     "Customer": 1
   },
   "byStatus": {
-    "To  Do": 161,
+    "Code Review": 21,
+    "In Progress": 49,
+    "To  Do": 160,
     "Invalid": 72,
-    "In Progress": 50,
     "Done": 406,
     "Dev Complete": 16,
     "QA": 51,
-    "Code Review": 19,
     "UAT": 125,
     "Waiting for clarification": 57,
     "Staging": 4,
@@ -237,6 +237,85 @@
   },
   "issues": [
     {
+      "key": "REB3-20670",
+      "summary": "[BE] Add UPC conversion REST API endpoint for mobile applications to convert 6-13 character barcodes to standardized 12-digit UPC-A format",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.30 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "General",
+      "assignee": "Arihant Srivastava",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AS-3.png",
+      "tester": "Raghav Galhotra",
+      "reporter": "Raghav Galhotra",
+      "created": "2026-09-15T05:46:43.294-0700",
+      "updated": "2026-09-16T06:14:36.662-0700",
+      "ageDays": 1,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20670"
+    },
+    {
+      "key": "REB3-20668",
+      "summary": "[iOS] Retry Button Not Displayed on Post Photo for Online Task with Low Internet",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-09-15T00:47:09.376-0700",
+      "updated": "2026-09-16T06:13:41.380-0700",
+      "ageDays": 1,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM",
+        "offline-survey"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20668"
+    },
+    {
+      "key": "REB3-20679",
+      "summary": "[BE-CORE] Pixel segmentation algorithm + config-driven fallback switch",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "Unversioned",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20662 - Improve basket fullness estimation and return masks per basket",
+      "status": "In Progress",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Ashok Pilli",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
+      "tester": "Ashok Pilli",
+      "reporter": "Ashok Pilli",
+      "created": "2026-09-16T05:07:59.076-0700",
+      "updated": "2026-09-16T06:10:42.852-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20679"
+    },
+    {
       "key": "REB3-20652",
       "summary": "PRGM - post-processing provide incorrect product bbox.",
       "project": "Rebotics 3",
@@ -338,31 +417,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20653"
-    },
-    {
-      "key": "REB3-20679",
-      "summary": "[BE-CORE] Pixel segmentation algorithm + config-driven fallback switch",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "Unversioned",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20662 - Improve basket fullness estimation and return masks per basket",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Ashok Pilli",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
-      "tester": "Ashok Pilli",
-      "reporter": "Ashok Pilli",
-      "created": "2026-09-16T05:07:59.076-0700",
-      "updated": "2026-09-16T05:18:52.699-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20679"
     },
     {
       "key": "REB3-20361",
@@ -1386,31 +1440,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20674"
     },
     {
-      "key": "REB3-20670",
-      "summary": "[BE] Add UPC conversion REST API endpoint for mobile applications to convert 6-13 character barcodes to standardized 12-digit UPC-A format",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.30 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "General",
-      "assignee": "Arihant Srivastava",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AS-3.png",
-      "tester": "Raghav Galhotra",
-      "reporter": "Raghav Galhotra",
-      "created": "2026-09-15T05:46:43.294-0700",
-      "updated": "2026-09-16T02:54:20.713-0700",
-      "ageDays": 1,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20670"
-    },
-    {
       "key": "REB3-20658",
       "summary": "[IR][ANDR] Missing low compliance validation and pending actions popup before Survey step",
       "project": "Rebotics 3",
@@ -1893,7 +1922,7 @@
       "created": "2026-09-13T02:18:12.202-0700",
       "updated": "2026-09-15T06:20:07.607-0700",
       "ageDays": 3,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20657"
     },
@@ -3640,35 +3669,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20669"
     },
     {
-      "key": "REB3-20668",
-      "summary": "[iOS] Retry Button Not Displayed on Post Photo for Online Task with Low Internet",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-09-15T00:47:09.376-0700",
-      "updated": "2026-09-15T04:55:28.993-0700",
-      "ageDays": 1,
-      "staleDays": 1,
-      "labels": [
-        "IOS",
-        "PRGM",
-        "offline-survey"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20668"
-    },
-    {
       "key": "REB3-20617",
       "summary": "[Android] Error Occurs When Reopening a Task After It Is Completed and Synced on 2G Network",
       "project": "Rebotics 3",
@@ -4953,7 +4953,7 @@
       "created": "2026-09-08T22:10:31.997-0700",
       "updated": "2026-09-10T06:21:22.614-0700",
       "ageDays": 7,
-      "staleDays": 5,
+      "staleDays": 6,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20590"
     },
@@ -7001,7 +7001,7 @@
       "reporter": "vikas yadav",
       "created": "2026-09-01T06:15:50.577-0700",
       "updated": "2026-09-08T01:24:38.406-0700",
-      "ageDays": 14,
+      "ageDays": 15,
       "staleDays": 8,
       "labels": [
         "iOS"
@@ -10449,7 +10449,7 @@
       "created": "2026-08-07T02:16:59.305-0700",
       "updated": "2026-09-07T06:17:19.936-0700",
       "ageDays": 40,
-      "staleDays": 8,
+      "staleDays": 9,
       "labels": [
         "Backend",
         "REBM",
@@ -11113,7 +11113,7 @@
       "created": "2026-09-03T01:06:51.670-0700",
       "updated": "2026-09-03T06:19:26.862-0700",
       "ageDays": 13,
-      "staleDays": 12,
+      "staleDays": 13,
       "labels": [
         "IOS",
         "PRGM"
@@ -12243,7 +12243,7 @@
       "created": "2026-09-01T05:22:19.868-0700",
       "updated": "2026-09-01T06:23:56.773-0700",
       "ageDays": 15,
-      "staleDays": 14,
+      "staleDays": 15,
       "labels": [
         "ANDR",
         "PRGM"
@@ -12950,7 +12950,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-10T06:21:43.634-0700",
       "updated": "2026-09-01T00:10:39.343-0700",
-      "ageDays": 36,
+      "ageDays": 37,
       "staleDays": 15,
       "labels": [
         "ALBT",
@@ -12978,7 +12978,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-10T06:17:22.230-0700",
       "updated": "2026-09-01T00:10:20.313-0700",
-      "ageDays": 36,
+      "ageDays": 37,
       "staleDays": 15,
       "labels": [
         "ALBT",
@@ -13202,7 +13202,7 @@
       "created": "2026-07-24T02:58:43.458-0700",
       "updated": "2026-08-31T06:15:36.514-0700",
       "ageDays": 54,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -13231,7 +13231,7 @@
       "created": "2026-07-16T11:22:44.828-0700",
       "updated": "2026-08-31T06:13:01.379-0700",
       "ageDays": 61,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "SHIELD"
       ],
@@ -14083,7 +14083,7 @@
       "reporter": "Victor Uchaev",
       "created": "2026-01-26T05:12:48.336-0800",
       "updated": "2026-08-28T15:23:39.915-0700",
-      "ageDays": 232,
+      "ageDays": 233,
       "staleDays": 18,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18810"
@@ -14269,7 +14269,7 @@
       "created": "2026-07-14T06:01:44.082-0700",
       "updated": "2026-08-27T06:11:49.308-0700",
       "ageDays": 64,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "BE",
         "REBM"
@@ -14297,7 +14297,7 @@
       "created": "2025-07-03T11:46:28.411-0700",
       "updated": "2026-08-27T06:10:10.400-0700",
       "ageDays": 439,
-      "staleDays": 19,
+      "staleDays": 20,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -15443,7 +15443,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-19T06:07:17.512-0700",
       "updated": "2026-08-24T03:08:50.258-0700",
-      "ageDays": 27,
+      "ageDays": 28,
       "staleDays": 23,
       "labels": [
         "ALBT",
@@ -16479,7 +16479,7 @@
       "created": "2026-05-18T10:19:43.709-0700",
       "updated": "2026-08-21T06:19:57.933-0700",
       "ageDays": 120,
-      "staleDays": 25,
+      "staleDays": 26,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19659"
     },
@@ -18152,7 +18152,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-04-14T06:24:59.885-0700",
       "updated": "2026-08-21T04:42:05.163-0700",
-      "ageDays": 154,
+      "ageDays": 155,
       "staleDays": 26,
       "labels": [
         "Customer"
@@ -20039,7 +20039,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-04-07T06:19:28.729-0700",
       "updated": "2026-08-21T04:29:08.527-0700",
-      "ageDays": 161,
+      "ageDays": 162,
       "staleDays": 26,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19406"
@@ -20316,7 +20316,7 @@
       "reporter": "Irbaz Khan",
       "created": "2026-05-29T06:09:02.396-0700",
       "updated": "2026-08-21T04:28:59.389-0700",
-      "ageDays": 109,
+      "ageDays": 110,
       "staleDays": 26,
       "labels": [
         "SHIELD"
@@ -21083,7 +21083,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-05-11T06:16:22.225-0700",
       "updated": "2026-08-21T04:28:52.813-0700",
-      "ageDays": 127,
+      "ageDays": 128,
       "staleDays": 26,
       "labels": [
         "Customer"
@@ -21475,7 +21475,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-02-13T05:24:09.725-0800",
       "updated": "2026-08-21T04:28:49.606-0700",
-      "ageDays": 214,
+      "ageDays": 215,
       "staleDays": 26,
       "labels": [
         "Customer"
@@ -21700,7 +21700,7 @@
       "reporter": "Sriyuth Sagi",
       "created": "2026-04-23T06:19:06.943-0700",
       "updated": "2026-08-21T04:28:46.422-0700",
-      "ageDays": 145,
+      "ageDays": 146,
       "staleDays": 26,
       "labels": [
         "ALL",
@@ -26108,7 +26108,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-06-17T06:21:16.997-0700",
       "updated": "2026-08-05T05:40:50.475-0700",
-      "ageDays": 90,
+      "ageDays": 91,
       "staleDays": 42,
       "labels": [
         "ALBT",
@@ -26929,7 +26929,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-07-17T06:24:53.447-0700",
       "updated": "2026-08-05T05:40:28.617-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 42,
       "labels": [
         "ALBT",
@@ -27041,7 +27041,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-07-30T06:07:38.610-0700",
       "updated": "2026-08-05T05:40:21.549-0700",
-      "ageDays": 47,
+      "ageDays": 48,
       "staleDays": 42,
       "labels": [
         "Customer"
