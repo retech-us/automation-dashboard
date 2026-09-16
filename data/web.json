@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-09-15T07:21:56Z",
-  "durationMs": 13735889,
+  "finishedAt": "2026-09-16T07:25:47Z",
+  "durationMs": 13989602,
   "summary": {
     "total": 112,
     "passed": 62,
     "failed": 5,
-    "broken": 35,
-    "skipped": 10
+    "broken": 36,
+    "skipped": 9
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/34925272085",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/35052059397",
   "topFailures": [
     {
       "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
@@ -37,8 +37,8 @@
       "name": "Submit PLUNF action by subuser, approved by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:59",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:59': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI PLUNF Tab",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:59'",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -52,9 +52,9 @@
     {
       "name": "Submit correction action by subuser, approved by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:129",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:129'",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:129': After correction, product UPC should match candidate UPC expected [034000399918",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -62,7 +62,7 @@
       "fullName": "src/test/resources/features/ApprovalAi.feature:157",
       "status": "failed",
       "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:157': After correction, product UPC should match candidate UPC expected [034000214907] but found [034000214587]",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:157': After correction, product UPC should match candidate UPC expected [070462008227] but found [070462431230]",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -70,7 +70,7 @@
       "fullName": "src/test/resources/features/ApprovalAi.feature:143",
       "status": "failed",
       "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [036000499780",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [070462035964",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -93,16 +93,16 @@
       "name": "Submit exception action by subuser, rejected by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:45",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:45'",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:45': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI Exception Tab",
       "feature": "Verify Approval AI tab Products approvals"
     }
   ],
   "failureCategories": {
     "login": 4,
-    "locator": 7,
+    "locator": 6,
     "timeout": 5,
-    "data": 5,
+    "data": 7,
     "assertion": 5,
     "unknown": 14
   },
@@ -111,14 +111,14 @@
   "counts": {
     "total": 112,
     "passed": 62,
-    "review": 40,
-    "skipped": 10
+    "review": 41,
+    "skipped": 9
   },
   "historyTrend": [
     {
       "passPct": 55.4,
       "total": 112,
-      "failed": 40
+      "failed": 41
     },
     {
       "passPct": 35.1,
@@ -151,6 +151,6 @@
       "status": "failure"
     }
   ],
-  "runId": "34925272085",
-  "runNumber": 1047
+  "runId": "35052059397",
+  "runNumber": 1048
 }
