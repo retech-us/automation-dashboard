@@ -1,29 +1,29 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-17T14:38:51.564223+00:00",
+  "lastUpdated": "2026-09-17T14:47:30.504213+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 215,
-    "blockers": 139,
+    "openDefects": 216,
+    "blockers": 138,
     "inProgress": 263,
     "inQa": 51,
     "resolvedThisWeek": 82,
-    "resolvedTotal": 471
+    "resolvedTotal": 470
   },
   "byPriority": {
-    "Highest": 139,
+    "Highest": 138,
     "High": 253,
-    "Medium": 554,
+    "Medium": 555,
     "Low": 54,
     "Lowest": 0
   },
   "byComponent": {
-    "IOS": 228,
+    "General": 238,
+    "IOS": 227,
     "ANDR": 238,
-    "General": 237,
     "FE Hawkeye": 22,
     "BE REBM": 146,
     "HAWKEYE": 21,
@@ -40,15 +40,15 @@
     "Customer": 1
   },
   "byStatus": {
+    "To  Do": 159,
     "In Progress": 42,
-    "To  Do": 158,
+    "QA": 51,
     "Code Review": 35,
     "Waiting for clarification": 57,
-    "QA": 51,
     "Staging": 5,
     "UAT": 126,
     "Dev Complete": 16,
-    "Invalid": 70,
+    "Invalid": 69,
     "Done": 401,
     "PRODUCTION READY": 39
   },
@@ -236,6 +236,84 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-20687",
+      "summary": "[Sentry][REBM] TypeError: Logger._log() got an unexpected keyword argument 'user_id' on action creation",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "Unversioned",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Sarthak Jagdaley",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/ce94cc3527ade138a273bf54d7643255?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSJ-6.png",
+      "tester": "Abhinav Singh",
+      "reporter": "Abhinav Singh",
+      "created": "2026-09-17T07:38:45.120-0700",
+      "updated": "2026-09-17T07:45:29.298-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20687"
+    },
+    {
+      "key": "REB3-20672",
+      "summary": "IntegrityError: null value in column \"provided_values\" of relation \"realograms_outdatedscan\" violates not-null constraint",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.5",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "In Progress",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "General",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Ulan Sarymsakov",
+      "reporter": "Ulan Sarymsakov",
+      "created": "2026-09-15T22:25:21.435-0700",
+      "updated": "2026-09-17T07:44:32.558-0700",
+      "ageDays": 1,
+      "staleDays": 0,
+      "labels": [
+        "Backend",
+        "REBM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20672"
+    },
+    {
+      "key": "REB3-19951",
+      "summary": "[BE REBM] Add logging for outdated scan creation",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.5",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-19950 - [REBM][BE] Sentry optimization \u2014 Phase 2",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Saharsh Solanki",
+      "reporter": "Saharsh Solanki",
+      "created": "2026-06-30T07:14:27.708-0700",
+      "updated": "2026-09-17T07:38:45.188-0700",
+      "ageDays": 79,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-19951"
+    },
     {
       "key": "REB3-20676",
       "summary": "[IOS] Enable Barcode Validation to compare UPC-E and UPC-A formats when confirming 'On Shelf \u2013 UPC Confirmed' status",
@@ -808,31 +886,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20641"
-    },
-    {
-      "key": "REB3-19951",
-      "summary": "[BE REBM] Add logging for outdated scan creation",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.5",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-19950 - [REBM][BE] Sentry optimization \u2014 Phase 2",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Saharsh Solanki",
-      "reporter": "Saharsh Solanki",
-      "created": "2026-06-30T07:14:27.708-0700",
-      "updated": "2026-09-17T04:05:26.528-0700",
-      "ageDays": 79,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-19951"
     },
     {
       "key": "REB3-20684",
@@ -2390,34 +2443,6 @@
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20673"
-    },
-    {
-      "key": "REB3-20672",
-      "summary": "IntegrityError: null value in column \"provided_values\" of relation \"realograms_outdatedscan\" violates not-null constraint",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.5",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "General",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Ulan Sarymsakov",
-      "reporter": "Ulan Sarymsakov",
-      "created": "2026-09-15T22:25:21.435-0700",
-      "updated": "2026-09-16T04:43:17.898-0700",
-      "ageDays": 1,
-      "staleDays": 1,
-      "labels": [
-        "Backend",
-        "REBM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20672"
     },
     {
       "key": "REB3-20536",
@@ -20799,7 +20824,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-02-04T06:40:27.651-0800",
       "updated": "2026-08-21T04:28:57.644-0700",
-      "ageDays": 224,
+      "ageDays": 225,
       "staleDays": 27,
       "labels": [
         "AD-HOC",
@@ -21654,7 +21679,7 @@
       "reporter": "Zhuogang Peng",
       "created": "2026-03-30T07:46:36.628-0700",
       "updated": "2026-08-21T04:28:50.688-0700",
-      "ageDays": 170,
+      "ageDays": 171,
       "staleDays": 27,
       "labels": [
         "Customer",
@@ -22491,7 +22516,7 @@
       "reporter": "Akanksha Jangir",
       "created": "2026-06-01T07:46:39.648-0700",
       "updated": "2026-08-21T04:28:41.358-0700",
-      "ageDays": 107,
+      "ageDays": 108,
       "staleDays": 27,
       "labels": [
         "AD-HOC",
@@ -22662,7 +22687,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-06-08T07:47:29.467-0700",
       "updated": "2026-08-21T04:28:38.471-0700",
-      "ageDays": 100,
+      "ageDays": 101,
       "staleDays": 27,
       "labels": [
         "Customer"
@@ -22744,7 +22769,7 @@
       "reporter": "Vignesh Sankaranarayanan",
       "created": "2025-07-09T07:43:16.905-0700",
       "updated": "2026-08-21T04:28:38.226-0700",
-      "ageDays": 434,
+      "ageDays": 435,
       "staleDays": 27,
       "labels": [
         "ALBT",
@@ -25363,7 +25388,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-07-17T07:39:25.806-0700",
       "updated": "2026-08-10T02:51:43.788-0700",
-      "ageDays": 61,
+      "ageDays": 62,
       "staleDays": 38,
       "labels": [
         "AD-HOC",
@@ -25502,7 +25527,7 @@
       "reporter": "Farid Khalikov",
       "created": "2026-07-27T07:42:57.074-0700",
       "updated": "2026-08-07T04:01:08.668-0700",
-      "ageDays": 51,
+      "ageDays": 52,
       "staleDays": 41,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20157"
@@ -25845,7 +25870,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-06-10T07:47:26.520-0700",
       "updated": "2026-08-05T05:40:59.649-0700",
-      "ageDays": 98,
+      "ageDays": 99,
       "staleDays": 43,
       "labels": [
         "ALBT",
@@ -27447,34 +27472,6 @@
         "Customer"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20051"
-    },
-    {
-      "key": "REB3-20045",
-      "summary": "[iOS] \"All actions complete\" message and Post Photo retake option displayed even when no Post Photo actions are generated",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.17 IR Backlog",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "Invalid",
-      "statusCategory": "done",
-      "priority": "Highest",
-      "component": "IOS",
-      "assignee": "Nitish Kumar",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-07-14T22:29:25.066-0700",
-      "updated": "2026-08-04T00:53:16.746-0700",
-      "ageDays": 64,
-      "staleDays": 44,
-      "labels": [
-        "ALBT",
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20045"
     }
   ]
 }
