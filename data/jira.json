@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-17T14:47:30.504213+00:00",
+  "lastUpdated": "2026-09-17T15:05:01.503956+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -40,9 +40,9 @@
     "Customer": 1
   },
   "byStatus": {
+    "QA": 51,
     "To  Do": 159,
     "In Progress": 42,
-    "QA": 51,
     "Code Review": 35,
     "Waiting for clarification": 57,
     "Staging": 5,
@@ -237,6 +237,31 @@
   },
   "issues": [
     {
+      "key": "REB3-19951",
+      "summary": "[BE REBM] Add logging for outdated scan creation",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.5",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-19950 - [REBM][BE] Sentry optimization \u2014 Phase 2",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Saharsh Solanki",
+      "reporter": "Saharsh Solanki",
+      "created": "2026-06-30T07:14:27.708-0700",
+      "updated": "2026-09-17T07:55:10.763-0700",
+      "ageDays": 79,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-19951"
+    },
+    {
       "key": "REB3-20687",
       "summary": "[Sentry][REBM] TypeError: Logger._log() got an unexpected keyword argument 'user_id' on action creation",
       "project": "Rebotics 3",
@@ -250,12 +275,12 @@
       "statusCategory": "new",
       "priority": "Medium",
       "component": "General",
-      "assignee": "Sarthak Jagdaley",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/ce94cc3527ade138a273bf54d7643255?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSJ-6.png",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
       "tester": "Abhinav Singh",
       "reporter": "Abhinav Singh",
       "created": "2026-09-17T07:38:45.120-0700",
-      "updated": "2026-09-17T07:45:29.298-0700",
+      "updated": "2026-09-17T07:47:46.553-0700",
       "ageDays": 0,
       "staleDays": 0,
       "labels": [],
@@ -288,31 +313,6 @@
         "REBM"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20672"
-    },
-    {
-      "key": "REB3-19951",
-      "summary": "[BE REBM] Add logging for outdated scan creation",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.5",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-19950 - [REBM][BE] Sentry optimization \u2014 Phase 2",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Saharsh Solanki",
-      "reporter": "Saharsh Solanki",
-      "created": "2026-06-30T07:14:27.708-0700",
-      "updated": "2026-09-17T07:38:45.188-0700",
-      "ageDays": 79,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-19951"
     },
     {
       "key": "REB3-20676",
@@ -4959,7 +4959,7 @@
       "created": "2026-08-25T00:55:31.166-0700",
       "updated": "2026-09-14T08:04:17.312-0700",
       "ageDays": 23,
-      "staleDays": 2,
+      "staleDays": 3,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20457"
     },
@@ -6332,7 +6332,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-19T08:02:02.817-0700",
       "updated": "2026-09-09T02:23:57.335-0700",
-      "ageDays": 28,
+      "ageDays": 29,
       "staleDays": 8,
       "labels": [
         "IOS",
@@ -11377,7 +11377,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-01T07:50:49.995-0700",
       "updated": "2026-09-03T23:27:09.718-0700",
-      "ageDays": 15,
+      "ageDays": 16,
       "staleDays": 13,
       "labels": [
         "ANDR",
@@ -12257,7 +12257,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-03-19T07:53:23.792-0700",
       "updated": "2026-09-01T08:44:52.633-0700",
-      "ageDays": 181,
+      "ageDays": 182,
       "staleDays": 15,
       "labels": [
         "ANDR"
@@ -14691,7 +14691,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-05-08T07:53:46.872-0700",
       "updated": "2026-08-27T03:27:01.296-0700",
-      "ageDays": 131,
+      "ageDays": 132,
       "staleDays": 21,
       "labels": [
         "ANDR"
@@ -15255,7 +15255,7 @@
       "created": "2026-08-12T13:10:50.389-0700",
       "updated": "2026-08-25T07:52:44.376-0700",
       "ageDays": 35,
-      "staleDays": 22,
+      "staleDays": 23,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -17612,7 +17612,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-05-13T07:55:56.501-0700",
       "updated": "2026-08-21T04:42:08.734-0700",
-      "ageDays": 126,
+      "ageDays": 127,
       "staleDays": 27,
       "labels": [
         "ios"
@@ -21818,7 +21818,7 @@
       "reporter": "Vipin Nair",
       "created": "2026-03-26T07:58:00.931-0700",
       "updated": "2026-08-21T04:28:49.245-0700",
-      "ageDays": 174,
+      "ageDays": 175,
       "staleDays": 27,
       "labels": [
         "AD-HOC",
