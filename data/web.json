@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-09-17T07:35:19Z",
-  "durationMs": 14517338,
+  "finishedAt": "2026-09-18T07:13:48Z",
+  "durationMs": 13288910,
   "summary": {
     "total": 112,
     "passed": 63,
-    "failed": 3,
-    "broken": 38,
-    "skipped": 8
+    "failed": 4,
+    "broken": 37,
+    "skipped": 7
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/35178418598",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/35303402651",
   "topFailures": [
     {
       "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
@@ -29,8 +29,8 @@
       "name": "Input UPC action by subuser, submit train transaction rejected by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:115",
       "status": "broken",
-      "category": "login",
-      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAi.feature:115': invalid element state: Element is not currently interactable and may not be manipulated",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:115': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI Train Tab",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -45,16 +45,16 @@
       "name": "Submit PLUNF action by subuser, rejected by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:73",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:73': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI PLUNF Tab",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:73'",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
       "name": "Submit correction action by subuser, approved by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:129",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:129'",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:129': After correction, product UPC should match candidate UPC expected [070734536076] but found [797316089927]",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -68,9 +68,9 @@
     {
       "name": "Submit correction action by subuser, train by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:143",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/features/ApprovalAi.feature:143': Failed to click correction checkbox after multiple attempts",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [040000555452] but found [040000586135]",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -85,8 +85,8 @@
       "name": "Submit exception action by subuser, approved by superuser and verify price tag history tab",
       "fullName": "src/test/resources/features/PriceTags.feature:34",
       "status": "broken",
-      "category": "data",
-      "reason": "Test data validation failed in 'src/test/resources/features/PriceTags.feature:34': Price Tags approval tab not found after Approval AI navigation",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/PriceTags.feature:34': Element 'PriceTagPageObject:Price Tag Finish Button' not found: AI heal was rejected by validation (Tag mismatch. expected=button actual=sl-scan-price-tags) and declared locators did not match.",
       "feature": "Verify price tag corrections and approvals"
     },
     {
@@ -100,11 +100,11 @@
   ],
   "failureCategories": {
     "login": 3,
-    "locator": 6,
+    "locator": 9,
     "timeout": 8,
-    "data": 6,
-    "assertion": 3,
-    "unknown": 15
+    "data": 3,
+    "assertion": 4,
+    "unknown": 14
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
@@ -112,7 +112,7 @@
     "total": 112,
     "passed": 63,
     "review": 41,
-    "skipped": 8
+    "skipped": 7
   },
   "historyTrend": [
     {
@@ -151,6 +151,6 @@
       "status": "failure"
     }
   ],
-  "runId": "35178418598",
-  "runNumber": 1049
+  "runId": "35303402651",
+  "runNumber": 1050
 }
