@@ -5,8 +5,8 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-09-17T05:39:00Z",
-  "durationMs": 21429163,
+  "finishedAt": "2026-09-18T06:11:06Z",
+  "durationMs": 23364738,
   "summary": {
     "total": 25,
     "passed": 11,
@@ -15,7 +15,7 @@
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/android/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/35162906527",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/35287482599",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -42,12 +42,12 @@
       "feature": "Navigation through steps of the task"
     },
     {
-      "name": "Navigate through task with survey",
-      "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
+      "name": "Tracked Capture Screen Camera icon",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
       "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Could not start or resume task. Status: UNKNOWN",
-      "feature": "Navigation through steps of the task"
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen Camera icon",
@@ -58,11 +58,11 @@
       "feature": "Tracked Capture Screen"
     },
     {
-      "name": "Tracked Capture Screen Camera icon",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
+      "name": "Tracked Capture Screen View POG from planogram level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -74,35 +74,35 @@
       "feature": "Tracked Capture Screen"
     },
     {
+      "name": "Tracked Capture Screen View POG from section level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen section rejection",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
+      "feature": "Tracked Capture Screen"
+    },
+    {
       "name": "Tracked Capture Screen section rejection",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
       "status": "broken",
       "category": "unknown",
       "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34'",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': Could not find 'Ascending' element using any locator strategy. Please verify the sorting dialog is open and the element is visible.",
-      "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
-    "login": 1,
     "locator": 4,
-    "timeout": 7,
-    "unknown": 19
+    "timeout": 12,
+    "assertion": 1,
+    "unknown": 12
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
@@ -132,7 +132,7 @@
       "status": "failure"
     }
   ],
-  "runId": "35162906527",
-  "runNumber": 300,
+  "runId": "35287482599",
+  "runNumber": 301,
   "environment": "CI"
 }
