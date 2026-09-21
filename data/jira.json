@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-21T14:27:21.812731+00:00",
+  "lastUpdated": "2026-09-21T14:39:57.767023+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -21,9 +21,9 @@
     "Lowest": 0
   },
   "byComponent": {
+    "BE REBM": 148,
     "ANDR": 238,
     "IOS": 222,
-    "BE REBM": 148,
     "General": 236,
     "FE Hawkeye": 22,
     "HAWKEYE": 21,
@@ -42,8 +42,8 @@
     "Customer": 1
   },
   "byStatus": {
-    "Done": 388,
     "To  Do": 153,
+    "Done": 388,
     "In Progress": 42,
     "Dev Complete": 21,
     "Invalid": 74,
@@ -241,6 +241,31 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-20688",
+      "summary": " [BE] Task restart returns HTTP 200 with Completed status instead of InProgress",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI PRGM Sept HF",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "High",
+      "component": "BE REBM",
+      "assignee": "Arihant Srivastava",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AS-3.png",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-09-18T00:23:17.962-0700",
+      "updated": "2026-09-21T07:33:31.463-0700",
+      "ageDays": 3,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20688"
+    },
     {
       "key": "REB3-20697",
       "summary": "[ANDR][SONA] Mobile Error \"class android.database.sqlite.SQLiteException\"",
@@ -948,31 +973,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20588"
     },
     {
-      "key": "REB3-20688",
-      "summary": " [BE] Task restart returns HTTP 200 with Completed status instead of InProgress",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI PRGM Sept HF",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "High",
-      "component": "BE REBM",
-      "assignee": "Raghav Galhotra",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/3d9d38d1b14302157c3417a9bbf53cf6?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FRG-4.png",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-09-18T00:23:17.962-0700",
-      "updated": "2026-09-21T01:21:50.735-0700",
-      "ageDays": 3,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20688"
-    },
-    {
       "key": "REB3-20654",
       "summary": "[BE] Add final post-photo evidence flow and task completion reasons",
       "project": "Rebotics 3",
@@ -1070,7 +1070,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-09-17T07:38:45.120-0700",
       "updated": "2026-09-20T23:54:37.260-0700",
-      "ageDays": 3,
+      "ageDays": 4,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20687"
@@ -7976,7 +7976,7 @@
       "created": "2026-06-08T04:54:57.698-0700",
       "updated": "2026-09-08T07:35:24.229-0700",
       "ageDays": 105,
-      "staleDays": 12,
+      "staleDays": 13,
       "labels": [
         "PILOT",
         "WTRS"
@@ -12888,7 +12888,7 @@
       "created": "2026-08-10T23:53:49.525-0700",
       "updated": "2026-09-02T07:33:12.374-0700",
       "ageDays": 41,
-      "staleDays": 18,
+      "staleDays": 19,
       "labels": [
         "IOS",
         "PRGM"
@@ -12916,7 +12916,7 @@
       "created": "2026-08-11T00:11:15.219-0700",
       "updated": "2026-09-02T07:32:18.237-0700",
       "ageDays": 41,
-      "staleDays": 18,
+      "staleDays": 19,
       "labels": [
         "IOS",
         "PRGM"
@@ -12944,7 +12944,7 @@
       "created": "2026-08-13T00:54:29.801-0700",
       "updated": "2026-09-02T07:31:13.555-0700",
       "ageDays": 39,
-      "staleDays": 18,
+      "staleDays": 19,
       "labels": [
         "IOS",
         "PRGM"
@@ -26029,7 +26029,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-07-17T07:39:25.806-0700",
       "updated": "2026-08-10T02:51:43.788-0700",
-      "ageDays": 65,
+      "ageDays": 66,
       "staleDays": 42,
       "labels": [
         "AD-HOC",
@@ -26567,7 +26567,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:28.389-0700",
       "updated": "2026-08-05T05:40:58.563-0700",
-      "ageDays": 101,
+      "ageDays": 102,
       "staleDays": 47,
       "labels": [
         "ALBT",
@@ -26595,7 +26595,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:29.562-0700",
       "updated": "2026-08-05T05:40:57.975-0700",
-      "ageDays": 101,
+      "ageDays": 102,
       "staleDays": 47,
       "labels": [
         "ALBT",
@@ -26623,7 +26623,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:30.413-0700",
       "updated": "2026-08-05T05:40:57.393-0700",
-      "ageDays": 101,
+      "ageDays": 102,
       "staleDays": 47,
       "labels": [
         "ALBT",
@@ -26651,7 +26651,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:31.401-0700",
       "updated": "2026-08-05T05:40:56.916-0700",
-      "ageDays": 101,
+      "ageDays": 102,
       "staleDays": 47,
       "labels": [
         "ALBT",
@@ -26679,7 +26679,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:32.260-0700",
       "updated": "2026-08-05T05:40:56.363-0700",
-      "ageDays": 101,
+      "ageDays": 102,
       "staleDays": 47,
       "labels": [
         "ALBT",
@@ -26707,7 +26707,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-06-11T07:29:33.098-0700",
       "updated": "2026-08-05T05:40:55.886-0700",
-      "ageDays": 101,
+      "ageDays": 102,
       "staleDays": 47,
       "labels": [
         "ALBT",
