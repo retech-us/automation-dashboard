@@ -1,29 +1,29 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-22T16:26:51.486672+00:00",
+  "lastUpdated": "2026-09-22T16:38:58.087110+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 206,
+    "openDefects": 205,
     "blockers": 134,
-    "inProgress": 283,
+    "inProgress": 284,
     "inQa": 62,
-    "resolvedThisWeek": 53,
+    "resolvedThisWeek": 54,
     "resolvedTotal": 449
   },
   "byPriority": {
     "Highest": 134,
-    "High": 251,
-    "Medium": 561,
+    "High": 252,
+    "Medium": 560,
     "Low": 54,
     "Lowest": 0
   },
   "byComponent": {
+    "IOS": 217,
     "ANDR": 233,
-    "IOS": 218,
-    "BE REBM": 148,
+    "BE REBM": 149,
     "General": 242,
     "FE Hawkeye": 23,
     "HAWKEYE": 22,
@@ -42,15 +42,15 @@
     "Customer": 1
   },
   "byStatus": {
-    "To  Do": 149,
+    "In Progress": 38,
+    "Code Review": 46,
+    "Waiting for clarification": 57,
+    "Done": 375,
+    "To  Do": 148,
     "UAT": 132,
-    "Code Review": 45,
     "QA": 62,
     "Dev Complete": 22,
-    "In Progress": 38,
-    "Done": 375,
     "PRODUCTION READY": 41,
-    "Waiting for clarification": 57,
     "Invalid": 74,
     "Staging": 5
   },
@@ -243,6 +243,119 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-20301",
+      "summary": "[VAPT] [iOS]Missing SSL Pinning",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "In Progress",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "IOS",
+      "assignee": "Brijesh Bhatt",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/454849e7691ac8d49ea041e672536507?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBB-4.png",
+      "tester": "vikas yadav",
+      "reporter": "vikas yadav",
+      "created": "2026-08-10T04:33:54.226-0700",
+      "updated": "2026-09-22T09:38:00.095-0700",
+      "ageDays": 43,
+      "staleDays": 0,
+      "labels": [
+        "SHIELD",
+        "iOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20301"
+    },
+    {
+      "key": "REB3-20346",
+      "summary": "[VAPT] [ANDR] Missing SSL Pinning",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "REB3-18944 - Store Intelligence - Maintenance & Optimization",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "ANDR",
+      "assignee": "Brijesh Bhatt",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/454849e7691ac8d49ea041e672536507?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBB-4.png",
+      "tester": "Brijesh Bhatt",
+      "reporter": "Brijesh Bhatt",
+      "created": "2026-08-11T05:42:50.015-0700",
+      "updated": "2026-09-22T09:35:57.864-0700",
+      "ageDays": 42,
+      "staleDays": 0,
+      "labels": [
+        "ANDR",
+        "SHIELD"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20346"
+    },
+    {
+      "key": "REB3-19827",
+      "summary": "[SONA] OOS showing items that are recognized on realogram",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Waiting for clarification",
+      "statusCategory": "new",
+      "priority": "Highest",
+      "component": "BE REBM",
+      "assignee": "Artem Kanarev",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
+      "tester": "Vishal Kohli",
+      "reporter": "Vishal Kohli",
+      "created": "2026-06-12T05:08:47.539-0700",
+      "updated": "2026-09-22T09:32:05.182-0700",
+      "ageDays": 102,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PILOT",
+        "SONA"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-19827"
+    },
+    {
+      "key": "REB3-18743",
+      "summary": "[ASDA] [BE] Improvement of user response carry over logic",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.02",
+      "isReleased": true,
+      "releaseStatus": "Released",
+      "type": "Improvement",
+      "epic": "None",
+      "status": "Done",
+      "statusCategory": "done",
+      "priority": "High",
+      "component": "BE REBM",
+      "assignee": "Artem Kanarev",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
+      "tester": "Jesper QI",
+      "reporter": "Jesper QI",
+      "created": "2026-01-14T08:06:11.581-0800",
+      "updated": "2026-09-22T09:32:05.123-0700",
+      "ageDays": 251,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PILOT"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-18743"
+    },
     {
       "key": "REB3-20611",
       "summary": "[Android] UI Mismatch for Failed Task Retry Section Compared to Figma",
@@ -1562,34 +1675,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20303"
     },
     {
-      "key": "REB3-20301",
-      "summary": "[VAPT] [iOS]Missing SSL Pinning",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "High",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "vikas yadav",
-      "reporter": "vikas yadav",
-      "created": "2026-08-10T04:33:54.226-0700",
-      "updated": "2026-09-22T01:12:40.387-0700",
-      "ageDays": 43,
-      "staleDays": 0,
-      "labels": [
-        "SHIELD",
-        "iOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20301"
-    },
-    {
       "key": "REB3-20077",
       "summary": "[VAPT][BE] Reduce Idle Session Timeout to Improve Session Security",
       "project": "Rebotics 3",
@@ -2076,34 +2161,6 @@
         "SHIELD"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20360"
-    },
-    {
-      "key": "REB3-20346",
-      "summary": "[VAPT] [ANDR] Missing SSL Pinning",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "REB3-18944 - Store Intelligence - Maintenance & Optimization",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "ANDR",
-      "assignee": "Brijesh Bhatt",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/454849e7691ac8d49ea041e672536507?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBB-4.png",
-      "tester": "Brijesh Bhatt",
-      "reporter": "Brijesh Bhatt",
-      "created": "2026-08-11T05:42:50.015-0700",
-      "updated": "2026-09-22T01:04:07.928-0700",
-      "ageDays": 42,
-      "staleDays": 0,
-      "labels": [
-        "ANDR",
-        "SHIELD"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20346"
     },
     {
       "key": "REB3-20359",
@@ -4616,35 +4673,6 @@
       "staleDays": 5,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20589"
-    },
-    {
-      "key": "REB3-19827",
-      "summary": "[SONA] OOS showing items that are recognized on realogram",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Waiting for clarification",
-      "statusCategory": "new",
-      "priority": "Highest",
-      "component": "BE REBM",
-      "assignee": "Artem Kanarev",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
-      "tester": "Vishal Kohli",
-      "reporter": "Vishal Kohli",
-      "created": "2026-06-12T05:08:47.539-0700",
-      "updated": "2026-09-17T05:26:20.840-0700",
-      "ageDays": 102,
-      "staleDays": 5,
-      "labels": [
-        "AD-HOC",
-        "PILOT",
-        "SONA"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19827"
     },
     {
       "key": "REB3-20651",
@@ -8083,7 +8111,7 @@
       "reporter": "Brianne Tanke",
       "created": "2026-06-26T09:36:49.326-0700",
       "updated": "2026-09-09T21:54:05.683-0700",
-      "ageDays": 87,
+      "ageDays": 88,
       "staleDays": 12,
       "labels": [
         "Customer",
@@ -11019,7 +11047,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-05T09:37:53.112-0700",
       "updated": "2026-09-07T23:52:18.536-0700",
-      "ageDays": 47,
+      "ageDays": 48,
       "staleDays": 14,
       "labels": [
         "IOS",
@@ -11075,7 +11103,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-05T09:34:01.206-0700",
       "updated": "2026-09-07T23:52:17.301-0700",
-      "ageDays": 47,
+      "ageDays": 48,
       "staleDays": 14,
       "labels": [
         "IOS",
@@ -13045,7 +13073,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-09-02T09:29:07.639-0700",
       "updated": "2026-09-04T04:13:18.598-0700",
-      "ageDays": 19,
+      "ageDays": 20,
       "staleDays": 18,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20542"
@@ -21486,7 +21514,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-17T09:28:23.128-0700",
       "updated": "2026-08-21T04:29:09.673-0700",
-      "ageDays": 96,
+      "ageDays": 97,
       "staleDays": 32,
       "labels": [
         "HAWKEYE",
@@ -22864,7 +22892,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-03T09:33:29.250-0700",
       "updated": "2026-08-21T04:28:50.898-0700",
-      "ageDays": 110,
+      "ageDays": 111,
       "staleDays": 32,
       "labels": [
         "ALBT",
@@ -23176,7 +23204,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-03T09:28:24.133-0700",
       "updated": "2026-08-21T04:28:49.152-0700",
-      "ageDays": 110,
+      "ageDays": 111,
       "staleDays": 32,
       "labels": [
         "ALBT",
@@ -25820,7 +25848,7 @@
       "created": "2026-08-14T08:58:01.448-0700",
       "updated": "2026-08-14T09:31:14.418-0700",
       "ageDays": 39,
-      "staleDays": 38,
+      "staleDays": 39,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20399"
     },
@@ -27411,35 +27439,6 @@
         "IOS"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-19871"
-    },
-    {
-      "key": "REB3-19874",
-      "summary": "[iOS] Handle Bay-Level Post-Photo Recapture State from Capture API",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.5 for ALBT_KRCS_HARR",
-      "isReleased": true,
-      "releaseStatus": "Released",
-      "type": "Task",
-      "epic": "None",
-      "status": "Done",
-      "statusCategory": "done",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "vikas yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
-      "tester": "anton.mitrofanov",
-      "reporter": "anton.mitrofanov",
-      "created": "2026-06-18T10:45:44.164-0700",
-      "updated": "2026-08-05T05:40:49.357-0700",
-      "ageDays": 95,
-      "staleDays": 48,
-      "labels": [
-        "ALBT",
-        "Customer",
-        "IOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19874"
     }
   ]
 }
