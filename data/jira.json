@@ -1,15 +1,15 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-22T14:49:44.148838+00:00",
+  "lastUpdated": "2026-09-22T15:04:57.923936+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 204,
+    "openDefects": 205,
     "blockers": 134,
-    "inProgress": 282,
-    "inQa": 65,
+    "inProgress": 283,
+    "inQa": 63,
     "resolvedThisWeek": 53,
     "resolvedTotal": 449
   },
@@ -22,9 +22,9 @@
   },
   "byComponent": {
     "ANDR": 233,
+    "IOS": 218,
     "BE REBM": 148,
     "General": 242,
-    "IOS": 218,
     "FE Hawkeye": 23,
     "HAWKEYE": 22,
     "BE CORE": 22,
@@ -42,12 +42,12 @@
     "Customer": 1
   },
   "byStatus": {
-    "UAT": 131,
-    "QA": 65,
-    "Code Review": 44,
-    "In Progress": 39,
+    "UAT": 132,
+    "To  Do": 148,
+    "Code Review": 45,
+    "QA": 63,
     "Dev Complete": 22,
-    "To  Do": 147,
+    "In Progress": 38,
     "Done": 375,
     "PRODUCTION READY": 41,
     "Waiting for clarification": 57,
@@ -244,6 +244,120 @@
   },
   "issues": [
     {
+      "key": "REB3-20596",
+      "summary": "[Android]Retry Button Displayed on Post Photo Page When Manual Retry is Disabled",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "ANDR",
+      "assignee": "Gaurav Tripathi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-09-09T02:38:42.155-0700",
+      "updated": "2026-09-22T08:02:54.913-0700",
+      "ageDays": 13,
+      "staleDays": 0,
+      "labels": [
+        "ANDR",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20596"
+    },
+    {
+      "key": "REB3-20684",
+      "summary": "[Android] Retry Button Displayed on Post Photo for Offline Task",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI PRGM Sept HF",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "High",
+      "component": "ANDR",
+      "assignee": "Gaurav Tripathi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-09-17T03:50:33.033-0700",
+      "updated": "2026-09-22T08:01:42.108-0700",
+      "ageDays": 5,
+      "staleDays": 0,
+      "labels": [
+        "Android",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20684"
+    },
+    {
+      "key": "REB3-20669",
+      "summary": "[iOS] Offline Task Automatically Syncs Without Clicking Manual Retry Button",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "High",
+      "component": "IOS",
+      "assignee": "anton.mitrofanov",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-09-15T01:44:45.627-0700",
+      "updated": "2026-09-22T07:58:27.836-0700",
+      "ageDays": 7,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM",
+        "offline-survey"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20669"
+    },
+    {
+      "key": "REB3-20717",
+      "summary": "[iOS] Unable to Start or Reopen Another Offline Task on iOS When Previous Task is in Syncing/On Hold/Scheduled State",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "IOS",
+      "assignee": "anton.mitrofanov",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-09-22T06:51:09.556-0700",
+      "updated": "2026-09-22T07:57:45.089-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM",
+        "offline-survey"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20717"
+    },
+    {
       "key": "REB3-20258",
       "summary": "[PRGM][Android] Offline survey does not sync when another online survey is already in progress",
       "project": "Rebotics 3",
@@ -323,35 +437,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20696"
-    },
-    {
-      "key": "REB3-20717",
-      "summary": "[iOS] Unable to Start or Reopen Another Offline Task on iOS When Previous Task is in Syncing/On Hold/Scheduled State",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "IOS",
-      "assignee": "anton.mitrofanov",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-09-22T06:51:09.556-0700",
-      "updated": "2026-09-22T07:09:20.211-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "IOS",
-        "PRGM",
-        "offline-survey"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20717"
     },
     {
       "key": "REB3-20702",
@@ -526,35 +611,6 @@
         "WEIS"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20579"
-    },
-    {
-      "key": "REB3-20669",
-      "summary": "[iOS] Offline Task Automatically Syncs Without Clicking Manual Retry Button",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "High",
-      "component": "IOS",
-      "assignee": "anton.mitrofanov",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-09-15T01:44:45.627-0700",
-      "updated": "2026-09-22T06:20:15.751-0700",
-      "ageDays": 7,
-      "staleDays": 0,
-      "labels": [
-        "IOS",
-        "PRGM",
-        "offline-survey"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20669"
     },
     {
       "key": "REB3-20412",
@@ -1423,34 +1479,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20284"
     },
     {
-      "key": "REB3-20596",
-      "summary": "[Android]Retry Button Displayed on Post Photo Page When Manual Retry is Disabled",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "ANDR",
-      "assignee": "Gaurav Tripathi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-09-09T02:38:42.155-0700",
-      "updated": "2026-09-22T01:30:32.506-0700",
-      "ageDays": 13,
-      "staleDays": 0,
-      "labels": [
-        "ANDR",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20596"
-    },
-    {
       "key": "REB3-20611",
       "summary": "[Android] UI Mismatch for Failed Task Retry Section Compared to Figma",
       "project": "Rebotics 3",
@@ -1504,34 +1532,6 @@
         "Android"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20620"
-    },
-    {
-      "key": "REB3-20684",
-      "summary": "[Android] Retry Button Displayed on Post Photo for Offline Task",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI PRGM Sept HF",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "ANDR",
-      "assignee": "Gaurav Tripathi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-09-17T03:50:33.033-0700",
-      "updated": "2026-09-22T01:30:30.490-0700",
-      "ageDays": 5,
-      "staleDays": 0,
-      "labels": [
-        "Android",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20684"
     },
     {
       "key": "REB3-20303",
@@ -7438,7 +7438,7 @@
       "created": "2026-08-25T00:55:31.166-0700",
       "updated": "2026-09-14T08:04:17.312-0700",
       "ageDays": 28,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20457"
     },
@@ -8380,7 +8380,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-19T08:02:02.817-0700",
       "updated": "2026-09-09T02:23:57.335-0700",
-      "ageDays": 33,
+      "ageDays": 34,
       "staleDays": 13,
       "labels": [
         "IOS",
@@ -13316,7 +13316,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-01T07:50:49.995-0700",
       "updated": "2026-09-03T23:27:09.718-0700",
-      "ageDays": 20,
+      "ageDays": 21,
       "staleDays": 18,
       "labels": [
         "ANDR",
@@ -14064,7 +14064,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-03-19T07:53:23.792-0700",
       "updated": "2026-09-01T08:44:52.633-0700",
-      "ageDays": 186,
+      "ageDays": 187,
       "staleDays": 20,
       "labels": [
         "ANDR"
@@ -16206,7 +16206,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-05-08T07:53:46.872-0700",
       "updated": "2026-08-27T03:27:01.296-0700",
-      "ageDays": 136,
+      "ageDays": 137,
       "staleDays": 26,
       "labels": [
         "ANDR"
@@ -16745,7 +16745,7 @@
       "created": "2026-08-12T13:10:50.389-0700",
       "updated": "2026-08-25T07:52:44.376-0700",
       "ageDays": 40,
-      "staleDays": 27,
+      "staleDays": 28,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -18940,7 +18940,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-05-13T07:55:56.501-0700",
       "updated": "2026-08-21T04:42:08.734-0700",
-      "ageDays": 131,
+      "ageDays": 132,
       "staleDays": 32,
       "labels": [
         "ios"
@@ -23117,7 +23117,7 @@
       "reporter": "Vipin Nair",
       "created": "2026-03-26T07:58:00.931-0700",
       "updated": "2026-08-21T04:28:49.245-0700",
-      "ageDays": 179,
+      "ageDays": 180,
       "staleDays": 32,
       "labels": [
         "AD-HOC",
