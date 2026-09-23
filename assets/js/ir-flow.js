@@ -117,7 +117,8 @@
       const state = (batch.state || '').toUpperCase();
       const items = batch.items || [];
 
-      if (state.includes('REJECT') || batch.reason.includes('not Ideal') || batch.reason.includes('Unable')) {
+      const reason = (batch.reason || '');
+      if (state.includes('REJECT') || reason.includes('not Ideal') || reason.includes('Unable')) {
         exceptionCount += items.length || batch.item_count || 1;
         exceptionItems.push(...items);
       } else if (actType.includes('MOVE')) {
