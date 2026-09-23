@@ -2397,11 +2397,24 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             pogs = task_obj.get("planograms") or []
             pog_name = pogs[0].get("name") if pogs and isinstance(pogs[0], dict) else task_obj.get("title")
 
+            # Status
+            raw_st = task_obj.get("status")
+            status_name = "completed"
+            if isinstance(raw_st, dict):
+                status_name = raw_st.get("name") or raw_st.get("id") or "completed"
+            elif raw_st:
+                status_name = str(raw_st)
+            status_slug = status_name.strip().lower().replace(" ", "_").replace("-", "_")
+
             # Compliance
             pog_comp = task_obj.get("pog_compliance") or []
-            final_comp = 98.0
+            final_comp = None
             if pog_comp and isinstance(pog_comp[0], dict) and "compliance" in pog_comp[0]:
                 final_comp = round(float(pog_comp[0]["compliance"]) * 100.0, 1)
+            elif status_slug in ("completed", "done", "finished"):
+                final_comp = 98.0
+            else:
+                final_comp = None
 
             # Duration
             duration_val = 28.0
@@ -2427,9 +2440,10 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "planogram_name": pog_name,
                 "performer": p_name,
                 "task_date": task_obj.get("task_date") or (task_obj.get("created_at") or "")[:10] or "2026-09-20",
-                "status": (task_obj.get("status") or {}).get("name") if isinstance(task_obj.get("status"), dict) else str(task_obj.get("status") or "completed"),
+                "status": status_slug,
+                "status_reason": task_obj.get("status_reason") or ("Stopped before completion" if status_slug in ("incomplete", "failed", "cancelled") else ""),
                 "final_compliance": final_comp,
-                "initial_compliance": 35.0 if final_comp >= 90 else 25.0,
+                "initial_compliance": 35.0 if (final_comp is not None and final_comp >= 90) else 25.0,
                 "wall_duration_min": duration_val,
             }
 

@@ -1460,8 +1460,28 @@ def synthesize_task_flow_from_raw_actions(
                     badge_type="warning" if "REJECT" in state else "success",
                 ))
 
+        status_slug = str(meta.get("status") or "completed").lower()
+        is_incomplete = status_slug in ("incomplete", "failed", "cancelled")
+        is_in_progress = status_slug in ("in_progress", "started", "not_started", "new")
+
         initial_comp = float(meta.get("initial_compliance") or 35.0)
-        final_comp = float(meta.get("final_compliance") or 98.0)
+        final_comp_raw = meta.get("final_compliance")
+        if final_comp_raw is not None:
+            final_comp = float(final_comp_raw)
+        elif is_incomplete or is_in_progress:
+            final_comp = None
+        else:
+            final_comp = 98.0
+
+        if is_incomplete:
+            gate_status = "INCOMPLETE"
+        elif is_in_progress:
+            gate_status = "PENDING"
+        elif final_comp is not None and final_comp >= 95.0:
+            gate_status = "PASSED"
+        else:
+            gate_status = "REVIEW"
+
         bay_summaries[bay] = {
             "bay_name": bay,
             "pre_photo_scan_id": scan_id,
@@ -1470,10 +1490,10 @@ def synthesize_task_flow_from_raw_actions(
             "pre_compliance_pct": initial_comp,
             "initial_pre_compliance_pct": initial_comp,
             "post_compliance_pct": final_comp,
-            "compliance_lift_pct": round(final_comp - initial_comp, 1),
+            "compliance_lift_pct": round(final_comp - initial_comp, 1) if final_comp is not None else 0.0,
             "action_batches_count": len([b for b in action_batches.values() if b.bay == bay]),
             "action_items_count": len(bay_items),
-            "gate_status": "PASSED" if final_comp >= 95 else "REVIEW",
+            "gate_status": gate_status,
         }
 
     # Post-photo for last bay
@@ -1485,14 +1505,14 @@ def synthesize_task_flow_from_raw_actions(
         phase="post",
         event_type="photo",
         bay=sorted_bays[-1],
-        detail=f"post photo scan {scan_id + 500} · image quality 92",
+        detail=f"post photo scan {scan_id + 500} · image quality 92" if not is_incomplete else "post photo scan pending / skipped",
         actor=performer,
         n=scan_id + 500,
-        val=92,
+        val=92 if not is_incomplete else None,
         source_table="dds.f_scan",
         source_column="scan_capture_time",
         source_row_id=str(scan_id + 500),
-        badge_type="info",
+        badge_type="info" if not is_incomplete else "warning",
     ))
 
     # Survey End
@@ -1503,30 +1523,47 @@ def synthesize_task_flow_from_raw_actions(
         phase="task",
         event_type="survey_end",
         bay=None,
-        detail="survey submitted",
+        detail="survey submitted" if not is_incomplete else "survey terminated early",
         actor=performer,
         n=9012,
         source_table="public.surveys_surveyresponse",
         source_column="end_time",
         source_row_id="9012",
-        badge_type="info",
+        badge_type="info" if not is_incomplete else "warning",
     ))
 
     # Closed
     wall_min = meta.get("wall_duration_min") or round((current_time - base_time).total_seconds() / 60.0, 1)
+    if is_incomplete:
+        close_detail = f"marked incomplete (Wall Time: {wall_min} min · Reset not verified ❌)"
+        close_badge = "warning"
+        close_event_type = "closed"
+    elif is_in_progress:
+        close_detail = f"in progress (Active Session · Elapsed: {wall_min} min ⏳)"
+        close_badge = "info"
+        close_event_type = "in_progress"
+    elif final_comp is not None and final_comp >= 95.0:
+        close_detail = f"completed (Wall Time: {wall_min} min, Quality Gate {int(final_comp)}% Passed ✅)"
+        close_badge = "success"
+        close_event_type = "closed"
+    else:
+        close_detail = f"completed (Wall Time: {wall_min} min, Quality Gate Attention Needed ⚠️)"
+        close_badge = "warning"
+        close_event_type = "closed"
+
     events.append(FlowEvent(
         event_id=f"ev-{task_id}-close",
         ts=current_time.strftime("%Y-%m-%d %H:%M:%S"),
         phase="task",
-        event_type="closed",
+        event_type=close_event_type,
         bay=None,
-        detail=f"completed (Wall Time: {wall_min} min, Quality Gate {'98% Passed ✅' if final_comp >= 95 else 'Attention Needed ⚠️'})",
+        detail=close_detail,
         actor=performer,
         val=wall_min,
         source_table="public.tasks_task",
         source_column="task_date + end_time",
         source_row_id=str(task_id),
-        badge_type="success" if final_comp >= 95 else "warning",
+        badge_type=close_badge,
     ))
 
     return {
@@ -1549,8 +1586,8 @@ def synthesize_task_flow_from_raw_actions(
             "end_time": current_time.strftime("%H:%M:%S"),
             "wall_duration_min": wall_min,
             "status": meta.get("status") or "completed",
-            "status_reason": "",
-            "quality_gate": "PASSED" if final_comp >= 95 else "REVIEW",
+            "status_reason": meta.get("status_reason") or ("Stopped before completion" if is_incomplete else ""),
+            "quality_gate": gate_status,
             "bays": sorted_bays,
             "total_events": len(events),
             "total_batches": len(action_batches),

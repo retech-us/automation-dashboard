@@ -264,31 +264,53 @@
 
     // Extract Before vs After compliance
     let initialScore = 29;
-    let finalScore = 93;
+    let finalScore = null;
     const firstBay = Object.values(baySummaries)[0];
     if (firstBay) {
       initialScore = Math.round(firstBay.initial_pre_compliance_pct || firstBay.pre_compliance_pct || 29);
-      finalScore = Math.round(firstBay.post_compliance_pct || 93);
+      if (firstBay.post_compliance_pct !== null && firstBay.post_compliance_pct !== undefined) {
+        finalScore = Math.round(firstBay.post_compliance_pct);
+      }
     }
-    const liftPct = finalScore - initialScore;
-    const isPassed = finalScore >= 95;
+    
+    const rawStatus = (meta.status || '').toLowerCase();
+    const isIncomplete = rawStatus === 'incomplete' || rawStatus === 'failed' || rawStatus === 'cancelled';
+    const isInProgress = rawStatus === 'in_progress' || rawStatus === 'started' || rawStatus === 'not_started' || rawStatus === 'active';
+    const isCompleted = !isIncomplete && !isInProgress;
+    const isPassed = isCompleted && (finalScore !== null && finalScore >= 95);
 
     // 2. Render Big Executive Verdict Banner
     const verdictCard = byId('ir-exec-verdict-card');
     if (verdictCard) {
-      verdictCard.className = `ir-exec-verdict ${isPassed ? 'ir-exec-verdict--pass' : 'ir-exec-verdict--review'}`;
-      
-      byId('ir-exec-verdict-icon').textContent = isPassed ? '✅' : '⚠️';
-      byId('ir-exec-verdict-title').textContent = isPassed 
-        ? `Reset Completed Successfully — ${finalScore}% Compliance` 
-        : `Needs Store Attention — ${finalScore}% Compliance (Target: 95%)`;
-      
-      const assocName = meta.performer_name || 'Store Associate';
+      const assocName = meta.performer_name || meta.performer || 'Store Associate';
       const storeLabel = `${meta.store_name} (${meta.store_code || meta.store_id})`;
-      
-      byId('ir-exec-verdict-desc').textContent = isPassed
-        ? `${assocName} completed the reset for ${meta.task_title}. All ${meta.total_action_items || (movedCount + restockedCount)} requested items were adjusted and restocked. Final verification scored ${finalScore}%, passing the 95% quality standard.`
-        : `${assocName} performed ${movedCount + restockedCount} adjustments on ${meta.task_title}. Shelf accuracy improved significantly from ${initialScore}% to ${finalScore}%, but finished 2% below the 95% release standard. Review flagged items below.`;
+      const totalTouched = meta.total_action_items || (movedCount + restockedCount + removedCount + exceptionCount);
+
+      if (isIncomplete) {
+        verdictCard.className = 'ir-exec-verdict ir-exec-verdict--fail';
+        byId('ir-exec-verdict-icon').textContent = '❌';
+        byId('ir-exec-verdict-title').textContent = finalScore !== null
+          ? `Reset Incomplete — ${finalScore}% Compliance (Stopped Early)`
+          : `Reset Incomplete — Task Stopped Early`;
+        byId('ir-exec-verdict-desc').textContent = `${assocName} stopped before completing the full reset for ${meta.task_title}. ${totalTouched} action item(s) were touched, but final shelf verification was not completed or failed quality standards (95% standard required).`;
+      } else if (isInProgress) {
+        verdictCard.className = 'ir-exec-verdict ir-exec-verdict--review';
+        byId('ir-exec-verdict-icon').textContent = '⏳';
+        byId('ir-exec-verdict-title').textContent = `Reset In Progress — Active Store Session`;
+        byId('ir-exec-verdict-desc').textContent = `${assocName} is actively working on ${meta.task_title}. Initial baseline shelf compliance was ${initialScore}%. Final post-reset compliance will be evaluated once final photos are submitted.`;
+      } else if (isPassed) {
+        verdictCard.className = 'ir-exec-verdict ir-exec-verdict--pass';
+        byId('ir-exec-verdict-icon').textContent = '✅';
+        byId('ir-exec-verdict-title').textContent = `Reset Completed Successfully — ${finalScore}% Compliance`;
+        byId('ir-exec-verdict-desc').textContent = `${assocName} completed the reset for ${meta.task_title}. All ${totalTouched} requested items were adjusted and restocked. Final verification scored ${finalScore}%, passing the 95% quality standard.`;
+      } else {
+        verdictCard.className = 'ir-exec-verdict ir-exec-verdict--review';
+        byId('ir-exec-verdict-icon').textContent = '⚠️';
+        byId('ir-exec-verdict-title').textContent = finalScore !== null
+          ? `Needs Store Attention — ${finalScore}% Compliance (Target: 95%)`
+          : `Needs Store Attention — Verification Pending`;
+        byId('ir-exec-verdict-desc').textContent = `${assocName} performed adjustments on ${meta.task_title}. Shelf accuracy finished below the 95% release standard. Review flagged items below.`;
+      }
 
       byId('ir-exec-meta-store').textContent = storeLabel;
       byId('ir-exec-meta-planogram').textContent = meta.task_title || 'Modular Reset';
@@ -298,10 +320,23 @@
     }
 
     // 3. Render 4 Key Stat Cards
-    setText('ir-stat-lift-val', `${initialScore}% ➔ ${finalScore}%`);
-    setText('ir-stat-lift-badge', liftPct > 0 ? `+${liftPct}% improvement` : 'Maintained');
-    const progBar = byId('ir-stat-lift-bar');
-    if (progBar) progBar.style.width = `${Math.min(finalScore, 100)}%`;
+    if (isIncomplete) {
+      setText('ir-stat-lift-val', finalScore !== null ? `${initialScore}% ➔ ${finalScore}%` : 'Incomplete');
+      setText('ir-stat-lift-badge', 'Stopped Early');
+      const progBar = byId('ir-stat-lift-bar');
+      if (progBar) progBar.style.width = finalScore !== null ? `${Math.min(finalScore, 100)}%` : '0%';
+    } else if (isInProgress) {
+      setText('ir-stat-lift-val', `${initialScore}% ➔ Pending`);
+      setText('ir-stat-lift-badge', 'In Progress');
+      const progBar = byId('ir-stat-lift-bar');
+      if (progBar) progBar.style.width = `${Math.min(initialScore, 100)}%`;
+    } else {
+      const liftPct = finalScore !== null ? finalScore - initialScore : 0;
+      setText('ir-stat-lift-val', `${initialScore}% ➔ ${finalScore}%`);
+      setText('ir-stat-lift-badge', liftPct > 0 ? `+${liftPct}% improvement` : 'Maintained');
+      const progBar = byId('ir-stat-lift-bar');
+      if (progBar) progBar.style.width = `${Math.min(finalScore || 0, 100)}%`;
+    }
 
     setText('ir-stat-work-val', `${meta.total_action_items || (movedCount + restockedCount + removedCount + exceptionCount)} items`);
     setText('ir-stat-work-sub', `${movedCount} moved • ${restockedCount} restocked • ${removedCount} removed`);
@@ -414,13 +449,17 @@
       return;
     }
 
+    const rawStatus = (meta.status || '').toLowerCase();
+    const isIncomplete = rawStatus === 'incomplete' || rawStatus === 'failed' || rawStatus === 'cancelled';
+    const isInProgress = rawStatus === 'in_progress' || rawStatus === 'started' || rawStatus === 'not_started' || rawStatus === 'active';
+
     // Transform technical events into human narrative cards
     const storySteps = [
       {
         time: meta.start_time || '11:54 AM',
         icon: '▶️',
         title: 'Reset Started',
-        desc: `Associate ${meta.performer_name || 'Associate'} began the reset task for ${meta.task_title}.`,
+        desc: `Associate ${meta.performer_name || meta.performer || 'Associate'} began the reset task for ${meta.task_title}.`,
         tag: 'Shift Start',
         color: '#3B82F6',
       },
@@ -436,43 +475,66 @@
         time: '11:55 AM',
         icon: '⚡',
         title: 'Automated AI Check Complete',
-        desc: 'Computer Vision evaluated the shelf in 23 seconds and identified 29% initial planogram accuracy.',
-        tag: 'Initial Scan: 29%',
+        desc: 'Computer Vision evaluated the shelf and identified initial baseline planogram accuracy.',
+        tag: 'Initial Scan',
         color: '#8B5CF6',
       },
       {
-        time: '11:56 AM – 03:41 PM',
+        time: 'Work Phase',
         icon: '🛒',
         title: 'Physical Product Adjustments',
         desc: 'Associate moved misplaced packages into place, restocked out-of-stock items, and cleared unwanted products.',
-        tag: `${meta.total_action_items || 113} Items Handled`,
+        tag: `${meta.total_action_items || 1} Items Handled`,
         color: '#10B981',
       },
-      {
-        time: '03:55 PM',
-        icon: '📸',
-        title: 'After Photos Captured',
-        desc: 'Associate photographed the completed shelf to verify all items match the required planogram.',
-        tag: 'Post-Reset Photo',
-        color: '#0284C7',
-      },
-      {
-        time: '03:56 PM',
-        icon: '📊',
-        title: 'Final Shelf Accuracy Scored',
-        desc: 'Automated verification scored the reset at 93% compliance (a massive +64% lift over the initial 29%).',
-        tag: 'Final Score: 93%',
-        color: '#F59E0B',
-      },
-      {
-        time: meta.end_time || '05:46 PM',
-        icon: '🏁',
-        title: 'Task Closed',
-        desc: `Task finished. Status: ${meta.status_reason || meta.status || 'Completed'}.`,
-        tag: 'Shift Complete',
-        color: '#64748B',
-      },
     ];
+
+    if (isIncomplete) {
+      storySteps.push({
+        time: meta.end_time || 'Interrupted',
+        icon: '❌',
+        title: 'Reset Interrupted / Stopped Early',
+        desc: `Associate stopped before completing the full reset. Final verification photos were not submitted or shelf quality gate was not met. Status: ${meta.status_reason || 'Incomplete'}.`,
+        tag: 'Incomplete',
+        color: '#EF4444',
+      });
+    } else if (isInProgress) {
+      storySteps.push({
+        time: 'Current',
+        icon: '⏳',
+        title: 'Session In Progress',
+        desc: `Associate is actively performing adjustments. Waiting for final after-photos to be captured and verified.`,
+        tag: 'Active',
+        color: '#F59E0B',
+      });
+    } else {
+      storySteps.push(
+        {
+          time: 'Post Reset',
+          icon: '📸',
+          title: 'After Photos Captured',
+          desc: 'Associate photographed the completed shelf to verify all items match the required planogram.',
+          tag: 'Post-Reset Photo',
+          color: '#0284C7',
+        },
+        {
+          time: 'Scored',
+          icon: '📊',
+          title: 'Final Shelf Accuracy Scored',
+          desc: meta.final_compliance ? `Automated verification scored the reset at ${meta.final_compliance}% compliance.` : 'Automated verification scored the reset compliance post-reset.',
+          tag: meta.final_compliance ? `Final Score: ${meta.final_compliance}%` : 'Scored',
+          color: meta.final_compliance && meta.final_compliance >= 95 ? '#10B981' : '#F59E0B',
+        },
+        {
+          time: meta.end_time || 'Complete',
+          icon: '🏁',
+          title: 'Task Closed',
+          desc: `Task finished. Status: ${meta.status_reason || meta.status || 'Completed'}.`,
+          tag: 'Shift Complete',
+          color: '#64748B',
+        }
+      );
+    }
 
     container.innerHTML = storySteps.map((step, idx) => `
       <div class="ir-story-step">
