@@ -3156,7 +3156,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
         self._send_json({"error": "Endpoint not found"}, status=404)
 
-    def _fetch_raw_retailer_actions(self, base_url: str, task_id: int) -> List[Dict[str, Any]]:
+    def _fetch_raw_retailer_actions_with_status(self, base_url: str, task_id: int) -> Tuple[List[Dict[str, Any]], Optional[str]]:
         token = INSTANCE_TOKENS.get(base_url) or TOKEN
         headers = {"Authorization": f"Token {token}", "Accept": "application/json"} if token else {"Accept": "application/json"}
         endpoints = [
@@ -3164,6 +3164,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             f"{base_url}/api/v1/tasks/{task_id}/action-list/?limit=1000",
             f"{base_url}/api/v1/tasks/{task_id}/actions/?limit=1000",
         ]
+        last_error = None
         for url in endpoints:
             try:
                 req = urllib.request.Request(url, headers=headers)
@@ -3171,10 +3172,18 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     payload = json.loads(resp.read().decode("utf-8"))
                 items = payload.get("results") if isinstance(payload, dict) else payload
                 if isinstance(items, list) and len(items) > 0:
-                    return items
+                    return items, None
+            except urllib.error.HTTPError as he:
+                last_error = f"HTTP {he.code}: {he.reason}"
+                if he.code == 401:
+                    last_error = "HTTP 401: Unauthorized (Instance authentication token invalid or missing)"
             except Exception as e:
-                pass
-        return []
+                last_error = str(e)
+        return [], last_error
+
+    def _fetch_raw_retailer_actions(self, base_url: str, task_id: int) -> List[Dict[str, Any]]:
+        actions, _ = self._fetch_raw_retailer_actions_with_status(base_url, task_id)
+        return actions
 
     def _handle_shelf_reset_sequence(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         slots = []
@@ -3184,12 +3193,44 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         base_url = normalize_backend_url(instance)
         instance_slug = base_url.replace("https://", "").split(".")[0]
 
+        INSTANCE_DEFAULT_TASKS = {
+            "harr": 8648127,
+            "krcs": 42288818,
+            "albt": 60535562,
+            "stgsams": 8648127,
+        }
+        INSTANCE_TASK_CATALOG = {
+            "harr": [
+                {"id": "8648127", "label": "Task #8648127 (Beauty)"},
+                {"id": "42484849", "label": "Task #42484849 (Multi-Bay)"},
+            ],
+            "krcs": [
+                {"id": "42288818", "label": "Task #42288818 (Kroger Reset)"},
+                {"id": "42235990", "label": "Task #42235990"},
+            ],
+            "albt": [
+                {"id": "60535562", "label": "Task #60535562 (Demo_IR_SoupDry)"},
+                {"id": "60535563", "label": "Task #60535563 (IR_Demo_GRAVY)"},
+                {"id": "60613936", "label": "Task #60613936 (SoupDry Active)"},
+            ],
+            "stgsams": [
+                {"id": "8648127", "label": "Task #8648127 (Reference)"},
+            ],
+        }
+
+        # Resolve instance key for catalog
+        catalog_key = "albt" if "albt" in instance_slug else ("krcs" if "krcs" in instance_slug or "krog" in instance_slug else instance_slug)
+        available_task_items = INSTANCE_TASK_CATALOG.get(catalog_key, INSTANCE_TASK_CATALOG["harr"])
+
         if "slots" in payload and isinstance(payload["slots"], list):
             slots = [Slot.from_dict(s) for s in payload["slots"]]
             source_desc = payload.get("name", "Custom Slots")
         elif "task_id" in payload or "actions" in payload:
             raw_actions = payload.get("actions")
             task_id = payload.get("task_id")
+            if task_id == "current" or not task_id:
+                task_id = INSTANCE_DEFAULT_TASKS.get(catalog_key, 8648127)
+
             if not raw_actions and task_id:
                 raw_file = WORKSPACE_DIR / f"raw_backend_actions_task_{task_id}.json"
                 if raw_file.exists():
@@ -3199,51 +3240,67 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                         raw_actions = []
                 # If not cached locally and task_id is numeric, fetch live from specified instance!
                 if not raw_actions and str(task_id).isdigit():
-                    try:
-                        fetched = self._fetch_raw_retailer_actions(base_url, int(task_id))
-                        if fetched:
-                            raw_actions = fetched
-                            raw_file.write_text(json.dumps(raw_actions, indent=2), encoding="utf-8")
-                            (WORKSPACE_DIR / "current_raw_backend_actions.json").write_text(json.dumps(raw_actions, indent=2), encoding="utf-8")
-                    except Exception as err:
-                        print(f"[shelf_reset] Error fetching live actions for task #{task_id} from {base_url}: {err}")
-            if not raw_actions:
-                curr_file = WORKSPACE_DIR / "current_raw_backend_actions.json"
-                if curr_file.exists():
-                    try:
-                        raw_actions = json.loads(curr_file.read_text(encoding="utf-8"))
-                    except Exception:
-                        raw_actions = []
-                if not raw_actions:
-                    raw_actions = EXECUTION_STATE.get("raw_results", [])
-            
-            slots = extract_slots_from_retailer_actions(raw_actions or [])
-            source_desc = f"Task #{task_id} ({instance_slug.upper()})" if task_id and task_id != "current" else f"Current Task ({instance_slug.upper()})"
-        else:
-            # Default to real retailer API actions from current_raw_backend_actions.json
-            curr_file = WORKSPACE_DIR / "current_raw_backend_actions.json"
-            raw_actions = []
-            if curr_file.exists():
-                try:
-                    raw_actions = json.loads(curr_file.read_text(encoding="utf-8"))
-                except Exception:
-                    raw_actions = []
-            if not raw_actions:
-                raw_actions = EXECUTION_STATE.get("raw_results", [])
+                    fetched, fetch_err = self._fetch_raw_retailer_actions_with_status(base_url, int(task_id))
+                    if fetched:
+                        raw_actions = fetched
+                        raw_file.write_text(json.dumps(raw_actions, indent=2), encoding="utf-8")
+                    elif fetch_err and ("401" in fetch_err or "Unauthorized" in fetch_err):
+                        return {
+                            "status": "error",
+                            "error_code": "AUTH_REQUIRED",
+                            "message": f"Authentication failed for {base_url} ({fetch_err}). To view Albertsons tasks, please use 'albt' or provide valid login credentials.",
+                            "instance": instance_slug,
+                            "available_instances": [
+                                {"slug": "harr", "name": "Harris Teeter", "url": "https://harr.rebotics.net"},
+                                {"slug": "krcs", "name": "Kroger", "url": "https://krcs.rebotics.net"},
+                                {"slug": "albt", "name": "Albertsons", "url": "https://albt.rebotics.net"},
+                                {"slug": "stgsams", "name": "Sam's Club (Staging)", "url": "https://stgsams.rebotics.net"},
+                            ],
+                            "available_tasks": available_task_items,
+                        }
 
             if raw_actions:
                 slots = extract_slots_from_retailer_actions(raw_actions)
-                source_desc = f"Current Task ({instance_slug.upper()})"
+                source_desc = f"Task #{task_id} ({instance_slug.upper()})"
             else:
                 slots = [Slot.from_dict(d) for d in REFERENCE_FIXTURE_DATA]
                 source_desc = "Section 7 Reference Fixture"
+        else:
+            # Default to real retailer API actions for the selected instance
+            target_task_id = INSTANCE_DEFAULT_TASKS.get(catalog_key, 8648127)
+            raw_file = WORKSPACE_DIR / f"raw_backend_actions_task_{target_task_id}.json"
+            raw_actions = []
+            if raw_file.exists():
+                try:
+                    raw_actions = json.loads(raw_file.read_text(encoding="utf-8"))
+                except Exception:
+                    raw_actions = []
+            if not raw_actions:
+                fetched, fetch_err = self._fetch_raw_retailer_actions_with_status(base_url, target_task_id)
+                if fetched:
+                    raw_actions = fetched
+                    raw_file.write_text(json.dumps(raw_actions, indent=2), encoding="utf-8")
+                elif fetch_err and ("401" in fetch_err or "Unauthorized" in fetch_err):
+                    return {
+                        "status": "error",
+                        "error_code": "AUTH_REQUIRED",
+                        "message": f"Authentication failed for {base_url} ({fetch_err}). To view Albertsons tasks, please use 'albt' or provide valid login credentials.",
+                        "instance": instance_slug,
+                        "available_instances": [
+                            {"slug": "harr", "name": "Harris Teeter", "url": "https://harr.rebotics.net"},
+                            {"slug": "krcs", "name": "Kroger", "url": "https://krcs.rebotics.net"},
+                            {"slug": "albt", "name": "Albertsons", "url": "https://albt.rebotics.net"},
+                            {"slug": "stgsams", "name": "Sam's Club (Staging)", "url": "https://stgsams.rebotics.net"},
+                        ],
+                        "available_tasks": available_task_items,
+                    }
 
-        # List all available task files for the UI selector
-        available_task_ids = []
-        for p in sorted(WORKSPACE_DIR.glob("raw_backend_actions_task_*.json")):
-            m = re.search(r"raw_backend_actions_task_(\d+)\.json", p.name)
-            if m:
-                available_task_ids.append(m.group(1))
+            if raw_actions:
+                slots = extract_slots_from_retailer_actions(raw_actions)
+                source_desc = f"Task #{target_task_id} ({instance_slug.upper()})"
+            else:
+                slots = [Slot.from_dict(d) for d in REFERENCE_FIXTURE_DATA]
+                source_desc = "Section 7 Reference Fixture"
 
         sweep_vertical = payload.get("sweep_vertical", "top_to_bottom")
         sweep_horizontal = payload.get("sweep_horizontal", "snake")
@@ -3272,7 +3329,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 {"slug": "albt", "name": "Albertsons", "url": "https://albt.rebotics.net"},
                 {"slug": "stgsams", "name": "Sam's Club (Staging)", "url": "https://stgsams.rebotics.net"},
             ],
-            "available_tasks": available_task_ids,
+            "available_tasks": available_task_items,
             "slots": [s.to_dict() for s in slots],
             "steps": [s.to_dict() for s in steps],
             "stats": {
