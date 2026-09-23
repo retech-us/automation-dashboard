@@ -123,10 +123,12 @@
       });
     }
 
-    // Read task_id or instance from URL query parameters, or default to latest
+    // Read task_id or instance from URL query parameters, or default to input field / reference task
     const urlParams = new URLSearchParams(window.location.search);
-    const initialTaskId = urlParams.get('task_id') || 'latest';
     const initialInstance = urlParams.get('instance') || 'harr';
+    const inputEl = byId('ir-simple-task-input');
+    const inputVal = inputEl ? inputEl.value.trim() : null;
+    const initialTaskId = urlParams.get('task_id') || inputVal || DEFAULT_INSTANCE_TASKS[initialInstance] || '8648127';
     
     const picker = byId('ir-instance-picker');
     if (picker && initialInstance) {
@@ -286,6 +288,11 @@
       const storeLabel = `${meta.store_name} (${meta.store_code || meta.store_id})`;
       const totalTouched = meta.total_action_items || (movedCount + restockedCount + removedCount + exceptionCount);
 
+      const kickerEl = byId('ir-exec-verdict-kicker');
+      if (kickerEl) {
+        kickerEl.textContent = meta.task_id ? `EXECUTIVE VERDICT · TASK #${meta.task_id}` : 'EXECUTIVE VERDICT';
+      }
+
       if (isIncomplete) {
         verdictCard.className = 'ir-exec-verdict ir-exec-verdict--fail';
         byId('ir-exec-verdict-icon').textContent = '❌';
@@ -313,7 +320,7 @@
       }
 
       byId('ir-exec-meta-store').textContent = storeLabel;
-      byId('ir-exec-meta-planogram').textContent = meta.task_title || 'Modular Reset';
+      byId('ir-exec-meta-planogram').textContent = meta.task_title ? `${meta.task_title} (Task #${meta.task_id})` : 'Modular Reset';
       byId('ir-exec-meta-associate').textContent = assocName;
       byId('ir-exec-meta-date').textContent = meta.task_date || 'Recent';
       byId('ir-exec-meta-time').textContent = `${meta.wall_duration_min || 28} mins shift`;
