@@ -183,11 +183,17 @@
           <!-- Quick Store & Task Picker -->
           <div class="ir-header-quick-picker" style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
             <span style="font-size:11px; font-weight:700; color:var(--text-muted);">Quick Select:</span>
-            <button type="button" class="filter-chip active" onclick="window.IrTaskFlow.loadTask(8648127, 'harr')">
-              🎯 Harris Teeter #8648127
+            <button type="button" class="filter-chip active" data-instance-chip="harr" onclick="window.IrTaskFlow.quickSelect('harr')">
+              🎯 Harris Teeter
             </button>
-            <button type="button" class="filter-chip" onclick="window.IrTaskFlow.loadTask(42288818, 'krcs')">
-              🎯 Kroger #42288818
+            <button type="button" class="filter-chip" data-instance-chip="krcs" onclick="window.IrTaskFlow.quickSelect('krcs')">
+              🎯 Kroger
+            </button>
+            <button type="button" class="filter-chip" data-instance-chip="albt" onclick="window.IrTaskFlow.quickSelect('albt')">
+              🎯 Albertsons
+            </button>
+            <button type="button" class="filter-chip" data-instance-chip="stgsams" onclick="window.IrTaskFlow.quickSelect('stgsams')">
+              🎯 Sam's Club
             </button>
             <div style="display:flex; align-items:center; gap:4px;">
               <select id="ir-instance-picker" class="ir-flow-input" style="width:130px; font-size:11px; padding:4px 6px; font-weight:600;" onchange="window.IrTaskFlow.onInstanceChange(this.value)" title="Choose Cloud Backend Instance">
@@ -450,9 +456,10 @@
               <select id="ir-history-instance" class="filter-select" style="font-size:12px; padding:4px 8px;">
                 <option value="harr" selected>Harris Teeter (harr)</option>
                 <option value="krcs">Kroger (krcs)</option>
+                <option value="albt">Albertsons (albt)</option>
+                <option value="stgsams">Sam's Club (stgsams)</option>
                 <option value="schn">Schnucks (schn)</option>
                 <option value="wake">Wakefern (wake)</option>
-                <option value="albe">Albertsons (albe)</option>
                 <option value="custom">Other Slug…</option>
               </select>
               <div id="ir-history-instance-custom-field" hidden style="margin-top:4px;">
@@ -630,7 +637,7 @@
             </a>
           </div>
         </div>
-        <iframe id="iframe-ir-studio" src="test_runner.html?v=20260923b" title="Intelligent Reset Studio" style="width:100%; height:calc(100vh - 170px); border:none; display:block; background:var(--surface);"></iframe>
+        <iframe id="iframe-ir-studio" src="test_runner.html?v=20260923c" title="Intelligent Reset Studio" style="width:100%; height:calc(100vh - 170px); border:none; display:block; background:var(--surface);"></iframe>
       </section>
     </div>
 
@@ -698,8 +705,8 @@
   <script src="assets/js/live-tracker.js?v=20260817p"></script>
   <script src="assets/js/jira-tracker.js?v=20260817p"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20260909a"></script>
-  <script src="assets/js/ir-history.js?v=20260909e"></script>
-  <script src="assets/js/ir-flow.js?v=20260923b"></script>
-  <script src="assets/js/app.v16.js?v=20260923b"></script>
+  <script src="assets/js/ir-history.js?v=20260923c"></script>
+  <script src="assets/js/ir-flow.js?v=20260923c"></script>
+  <script src="assets/js/app.v16.js?v=20260923c"></script>
 </body>
 </html>
