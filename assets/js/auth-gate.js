@@ -352,8 +352,15 @@
           this.isUnlocked = true;
           this.revealDashboard();
           if (typeof window.loadDashboard === 'function') window.loadDashboard();
+          const targetTab = typeof window.resolveInitialTab === 'function' ? window.resolveInitialTab() : 'overview';
+          if (typeof window.setActiveTab === 'function') {
+            window.setActiveTab(targetTab, { persist: false, updateUrl: false });
+          }
           if (window.JiraTracker && typeof window.JiraTracker.init === 'function') window.JiraTracker.init();
           if (window.LiveTracker && typeof window.LiveTracker.checkAll === 'function') window.LiveTracker.checkAll();
+          if (window.IrTaskFlow && typeof window.IrTaskFlow.init === 'function' && targetTab === 'ir') {
+            window.IrTaskFlow.init();
+          }
         } else {
           const attemptInfo = this.recordFailedAttempt();
           submitBtn.disabled = false;

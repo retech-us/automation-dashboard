@@ -2754,8 +2754,23 @@ function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
   if (tab === 'ir' && window.IrHistory) {
     window.IrHistory.init();
   }
+  if (tab === 'ir' && window.IrTaskFlow && typeof window.IrTaskFlow.init === 'function') {
+    window.IrTaskFlow.init();
+  }
   if (tab === 'rules') {
     loadAndRenderShelfResetRules();
+  }
+  if (tab === 'shelf-mobile') {
+    const frame = document.getElementById('iframe-shelf-mobile');
+    if (frame && !frame.getAttribute('src')) {
+      frame.src = 'shelf_reset_mobile.html?v=20260923b';
+    }
+  }
+  if (tab === 'ir-studio') {
+    const frame = document.getElementById('iframe-ir-studio');
+    if (frame && !frame.getAttribute('src')) {
+      frame.src = 'test_runner.html?v=20260923b';
+    }
   }
   document.body.classList.toggle('shelf-mobile-active', tab === 'shelf-mobile');
 
@@ -3592,10 +3607,14 @@ function wireControls() {
   wireTokenModal();
 }
 
+window.setActiveTab = setActiveTab;
+window.resolveInitialTab = resolveInitialTab;
+
 initTheme();
 ACTIVE_TAB = resolveInitialTab();
 TREND_RANGE = resolveInitialTrendRange();
 wireControls();
+setActiveTab(ACTIVE_TAB, { persist: false, updateUrl: false });
 if (!window.AuthGate || window.AuthGate.isAuthenticated()) {
   loadDashboard();
 }
