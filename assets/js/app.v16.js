@@ -2787,14 +2787,32 @@ async function loadAndRenderShelfResetRules(force = false) {
   container.innerHTML = '<p style="color:var(--text-dim); padding:20px; text-align:center;">Loading sequencing rules from engine...</p>';
   try {
     const res = await fetch("/api/runner/shelf_reset/rules");
-    const data = await res.json();
-    if (data && data.rules_markdown) {
-      SHELF_RULES_CACHE = data.rules_markdown;
-      container.innerHTML = parseRulesMarkdownHtml(SHELF_RULES_CACHE);
-    } else {
-      container.innerHTML = '<p style="color:#fda4af;">Failed to load rules markdown.</p>';
+    const contentType = res.headers.get("content-type") || "";
+    if (res.ok && contentType.includes("json")) {
+      const data = await res.json();
+      if (data && data.rules_markdown) {
+        SHELF_RULES_CACHE = data.rules_markdown;
+        container.innerHTML = parseRulesMarkdownHtml(SHELF_RULES_CACHE);
+        return;
+      }
     }
+    // Fallback: fetch markdown file directly from static server
+    const fallbackRes = await fetch("/SHELF_RESET_SEQUENCING_RULES.md");
+    if (fallbackRes.ok) {
+      SHELF_RULES_CACHE = await fallbackRes.text();
+      container.innerHTML = parseRulesMarkdownHtml(SHELF_RULES_CACHE);
+      return;
+    }
+    container.innerHTML = '<p style="color:#fda4af;">Failed to load rules markdown.</p>';
   } catch (err) {
+    try {
+      const fallbackRes = await fetch("/SHELF_RESET_SEQUENCING_RULES.md");
+      if (fallbackRes.ok) {
+        SHELF_RULES_CACHE = await fallbackRes.text();
+        container.innerHTML = parseRulesMarkdownHtml(SHELF_RULES_CACHE);
+        return;
+      }
+    } catch (_) {}
     container.innerHTML = `<p style="color:#fda4af;">Error loading rules: ${err.message}</p>`;
   }
 }
