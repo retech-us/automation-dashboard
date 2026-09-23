@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-23T12:43:02.422321+00:00",
+  "lastUpdated": "2026-09-23T12:54:45.805639+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -21,9 +21,9 @@
     "Lowest": 0
   },
   "byComponent": {
-    "ANDR": 233,
-    "General": 237,
     "BE REBM": 157,
+    "General": 237,
+    "ANDR": 233,
     "HAWKEYE": 22,
     "IOS": 213,
     "DE": 28,
@@ -42,12 +42,12 @@
     "Customer": 1
   },
   "byStatus": {
-    "In Progress": 34,
+    "QA": 62,
+    "Code Review": 39,
+    "In Progress": 33,
     "To  Do": 148,
     "Waiting for clarification": 57,
-    "QA": 62,
     "Dev Complete": 37,
-    "Code Review": 38,
     "UAT": 136,
     "Staging": 5,
     "Done": 373,
@@ -244,6 +244,59 @@
   },
   "issues": [
     {
+      "key": "REB3-19968",
+      "summary": "[BE REBM]Sentry noise from malformed remote-action payloads",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.5",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-19950 - [REBM][BE] Sentry optimization \u2014 Phase 2",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Saharsh Solanki",
+      "reporter": "Saharsh Solanki",
+      "created": "2026-07-02T03:44:43.276-0700",
+      "updated": "2026-09-23T05:53:47.431-0700",
+      "ageDays": 83,
+      "staleDays": 0,
+      "labels": [
+        "Backend",
+        "SHIELD"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-19968"
+    },
+    {
+      "key": "REB3-20634",
+      "summary": "[iOS] Handle messaging for Post Photo Actions and Final Photo",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.34 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20628 - [iOS] [IR] Single User \u2013 Generate All Actions Before Execution and Validate Compliance After Post Photo",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "vikas yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
+      "tester": "Nitish Kumar",
+      "reporter": "Nitish Kumar",
+      "created": "2026-09-11T00:44:53.026-0700",
+      "updated": "2026-09-23T05:46:05.801-0700",
+      "ageDays": 12,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20634"
+    },
+    {
       "key": "REB3-20611",
       "summary": "[Android] UI Mismatch for Failed Task Retry Section Compared to Figma",
       "project": "Rebotics 3",
@@ -326,34 +379,6 @@
         "SONA"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-19827"
-    },
-    {
-      "key": "REB3-19968",
-      "summary": "[BE REBM]Sentry noise from malformed remote-action payloads",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.5",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-19950 - [REBM][BE] Sentry optimization \u2014 Phase 2",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Saharsh Solanki",
-      "reporter": "Saharsh Solanki",
-      "created": "2026-07-02T03:44:43.276-0700",
-      "updated": "2026-09-23T05:02:49.050-0700",
-      "ageDays": 83,
-      "staleDays": 0,
-      "labels": [
-        "Backend",
-        "SHIELD"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19968"
     },
     {
       "key": "REB3-20284",
@@ -914,31 +939,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20719"
     },
     {
-      "key": "REB3-20634",
-      "summary": "[iOS] Handle messaging for Post Photo Actions and Final Photo",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.34 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20628 - [iOS] [IR] Single User \u2013 Generate All Actions Before Execution and Validate Compliance After Post Photo",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "vikas yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
-      "tester": "Nitish Kumar",
-      "reporter": "Nitish Kumar",
-      "created": "2026-09-11T00:44:53.026-0700",
-      "updated": "2026-09-23T01:52:44.644-0700",
-      "ageDays": 12,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20634"
-    },
-    {
       "key": "REB3-20702",
       "summary": "[iOS] Single Offline Survey Sync Status Inconsistent Between iOS and Android",
       "project": "Rebotics 3",
@@ -1103,7 +1103,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-08-20T05:53:32.724-0700",
       "updated": "2026-09-23T00:23:59.673-0700",
-      "ageDays": 33,
+      "ageDays": 34,
       "staleDays": 0,
       "labels": [
         "IOS",
@@ -3663,7 +3663,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-08-25T05:51:27.492-0700",
       "updated": "2026-09-20T23:15:35.995-0700",
-      "ageDays": 28,
+      "ageDays": 29,
       "staleDays": 2,
       "labels": [
         "ALBT",
@@ -3749,7 +3749,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-09-15T05:46:43.294-0700",
       "updated": "2026-09-20T23:14:46.210-0700",
-      "ageDays": 7,
+      "ageDays": 8,
       "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20670"
@@ -8225,7 +8225,7 @@
       "created": "2026-07-28T00:10:10.118-0700",
       "updated": "2026-09-10T05:50:57.595-0700",
       "ageDays": 57,
-      "staleDays": 12,
+      "staleDays": 13,
       "labels": [
         "ALBT",
         "Customer"
@@ -8253,7 +8253,7 @@
       "created": "2026-04-08T23:31:06.385-0700",
       "updated": "2026-09-10T05:50:49.922-0700",
       "ageDays": 167,
-      "staleDays": 12,
+      "staleDays": 13,
       "labels": [
         "Customer"
       ],
@@ -9548,7 +9548,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-09-02T05:53:30.641-0700",
       "updated": "2026-09-08T01:25:49.893-0700",
-      "ageDays": 20,
+      "ageDays": 21,
       "staleDays": 15,
       "labels": [
         "IOS"
@@ -9681,7 +9681,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-09-01T05:51:24.546-0700",
       "updated": "2026-09-08T01:24:41.602-0700",
-      "ageDays": 21,
+      "ageDays": 22,
       "staleDays": 15,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20518"
@@ -11715,7 +11715,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-03T05:50:36.834-0700",
       "updated": "2026-09-07T23:52:10.659-0700",
-      "ageDays": 50,
+      "ageDays": 51,
       "staleDays": 15,
       "labels": [
         "IOS",
@@ -11743,7 +11743,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-03T05:46:18.144-0700",
       "updated": "2026-09-07T23:52:10.057-0700",
-      "ageDays": 50,
+      "ageDays": 51,
       "staleDays": 15,
       "labels": [
         "IOS",
@@ -15350,7 +15350,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-10T05:49:54.617-0700",
       "updated": "2026-09-01T00:10:08.270-0700",
-      "ageDays": 43,
+      "ageDays": 44,
       "staleDays": 22,
       "labels": [
         "ALBT",
@@ -17048,7 +17048,7 @@
       "created": "2026-05-28T15:03:36.730-0700",
       "updated": "2026-08-25T05:52:39.854-0700",
       "ageDays": 117,
-      "staleDays": 28,
+      "staleDays": 29,
       "labels": [
         "ALBT",
         "Customer",
@@ -17156,7 +17156,7 @@
       "reporter": "Stefano Merli",
       "created": "2026-05-07T05:53:33.068-0700",
       "updated": "2026-08-24T03:23:56.443-0700",
-      "ageDays": 138,
+      "ageDays": 139,
       "staleDays": 30,
       "labels": [
         "AD-HOC",
@@ -18343,7 +18343,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-05-22T05:53:49.874-0700",
       "updated": "2026-08-24T02:43:41.259-0700",
-      "ageDays": 123,
+      "ageDays": 124,
       "staleDays": 30,
       "labels": [
         "AD-HOC",
@@ -23560,7 +23560,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-05-07T05:48:29.734-0700",
       "updated": "2026-08-21T04:28:45.931-0700",
-      "ageDays": 138,
+      "ageDays": 139,
       "staleDays": 33,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19581"
@@ -24120,7 +24120,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-03-09T05:50:51.521-0700",
       "updated": "2026-08-21T04:28:41.179-0700",
-      "ageDays": 197,
+      "ageDays": 198,
       "staleDays": 33,
       "labels": [
         "AD-HOC"
@@ -25647,7 +25647,7 @@
       "created": "2026-08-10T04:11:09.461-0700",
       "updated": "2026-08-18T05:45:30.707-0700",
       "ageDays": 44,
-      "staleDays": 35,
+      "staleDays": 36,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20300"
     },
