@@ -1533,6 +1533,7 @@
         <option value="harr" selected>🎯 Harris Teeter (harr)</option>
         <option value="krcs">🎯 Kroger (krcs)</option>
         <option value="albt">🎯 Albertsons (albt)</option>
+        <option value="albtqa">🌐 Albertsons QA (albtqa)</option>
         <option value="stgsams">🎯 Sam's Club (stgsams)</option>
         <option value="custom">🌐 Custom Instance...</option>
       </select>
@@ -1959,18 +1960,37 @@
       return { bay: bay || "1", shelf: shelf || "1", position: pos || "1" };
     }
 
-    function populateTaskOptions(taskIds, selectedVal) {
+    function populateTaskOptions(taskItems, selectedVal) {
       const sel = document.getElementById("dataset-selector");
-      const existingVals = new Set(Array.from(sel.options).map(o => o.value));
-      for (const tid of taskIds) {
-        if (!existingVals.has(tid)) {
+      if (!sel) return;
+      sel.innerHTML = "";
+
+      const currentOpt = document.createElement("option");
+      currentOpt.value = "current";
+      currentOpt.textContent = "Current Task (Auto)";
+      sel.appendChild(currentOpt);
+
+      if (Array.isArray(taskItems)) {
+        taskItems.forEach(t => {
+          const tid = typeof t === "object" ? t.id : t;
+          const label = typeof t === "object" ? t.label : `Task #${tid}`;
           const opt = document.createElement("option");
           opt.value = tid;
-          opt.textContent = `Task #${tid}`;
+          opt.textContent = label;
           sel.appendChild(opt);
-        }
+        });
       }
-      sel.value = selectedVal;
+
+      const refOpt = document.createElement("option");
+      refOpt.value = "reference";
+      refOpt.textContent = "Section 7 Reference Fixture (10 Steps)";
+      sel.appendChild(refOpt);
+
+      if (selectedVal && Array.from(sel.options).some(o => o.value === selectedVal)) {
+        sel.value = selectedVal;
+      } else {
+        sel.value = "current";
+      }
     }
 
     // Load dataset from backend API or fallback
@@ -2001,6 +2021,16 @@
         }
         if (res && res.ok) {
           const data = await res.json();
+          if (data.status === "error") {
+            const errBanner = document.getElementById("brand-subtitle");
+            if (errBanner) {
+              errBanner.innerHTML = `<span style="color:#f43f5e; font-weight:700;">⚠️ ${data.message}</span>`;
+            }
+            if (data.available_tasks && data.available_tasks.length) {
+              populateTaskOptions(data.available_tasks, datasetName);
+            }
+            return;
+          }
           state.slots = data.slots;
           state.steps = data.steps;
           state.source = data.source || datasetName;
@@ -2993,7 +3023,10 @@
           }
         }
         state.instance = val;
-        loadDataset(state.dataset, state.instance);
+        state.dataset = "current";
+        const dsSel = document.getElementById("dataset-selector");
+        if (dsSel) dsSel.value = "current";
+        loadDataset("current", state.instance);
       });
     }
 
