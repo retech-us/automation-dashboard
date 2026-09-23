@@ -1,25 +1,263 @@
 """
 Intelligent Reset Simplified E2E Audit & Bi-Directional Trace Report Generator.
-Renders an interactive, crystal-clear HTML report visualizing:
+Renders a historical-task audit report visualizing:
 1. Total Backend Generated Actions (Raw DB) vs Total Mobile Displayed Actions.
 2. Duplicate / Same UPC Multi-Location Distribution (keeps duplicates grouped aside with all locations).
-3. App Refresh, Logout, Screen Switch, and App Kill Mid-Task Resilience (Zero Dropped Actions Guarantee).
-4. Itemized Breakdown of Pending Left Actions visible on Mobile after interruption + Immediate Next Active Card.
-5. Streamlined Step-by-Step Action List with interactive payload inspection.
-6. Full-Duplex Bi-Directional HTTP Traffic Log (Mobile ➔ Backend calls & Backend ➔ Mobile responses) across Active & Idle periods.
+3. Streamlined Step-by-Step Action List using task action-list data.
+4. Pre-photo and post-photo Digital Shelf comparisons.
+
+Lifecycle simulation, payload inspection, and HTTP traffic belong only to a
+true E2E run where the runner captured those events; they are intentionally
+excluded from this historical task-ID report.
 """
 
 import json
 import html
+import re
+import urllib.parse
 from pathlib import Path
 from typing import Dict, Any, Optional
 from core.e2e_audit_engine import TaskAuditSummary, StepTelemetryRecord
 from core.ir_export_script import ensure_ir_export_inline
 
 
+def _build_verdict_html(audit: TaskAuditSummary) -> str:
+    """Render a one-line plain-language answer: did the user do the right actions?"""
+    counts = audit.digital_compare_counts or {}
+    matched = counts.get("matched", 0)
+    mismatched = counts.get("mismatched", 0)
+    missing = counts.get("generated_only", 0)
+    extra = counts.get("digital_only", 0)
+    checked = matched + mismatched + missing
+
+    if audit.digital_alignment_pct is None:
+        headline = "⚠️ CANNOT CONFIRM — Digital Shelf report could not be read"
+        detail = "The comparison needs the Digital Shelf report. Retry once it is reachable."
+        colors = ("#FEF3C7", "#92400E", "#F59E0B")
+    elif mismatched:
+        headline = f"❌ {mismatched} action(s) were done differently than instructed"
+        detail = (
+            f"{matched} of {checked} generated actions were performed correctly. "
+            f"{mismatched} were performed as a different action. "
+            f"{missing} could not be found in the Digital Shelf report."
+        )
+        colors = ("#FEF2F2", "#B91C1C", "#EF4444")
+    elif missing:
+        headline = f"⚠️ {matched} of {checked} generated actions confirmed correct"
+        detail = (
+            f"No action was done incorrectly, but {missing} generated action(s) have no matching "
+            f"row in the Digital Shelf report, so they cannot be confirmed."
+        )
+        colors = ("#FFFBEB", "#92400E", "#F59E0B")
+    else:
+        headline = f"✅ All {matched} generated actions were performed correctly"
+        detail = "Every generated action has a matching user action in the Digital Shelf report."
+        colors = ("#F0FDF4", "#15803D", "#22C55E")
+
+    if extra:
+        detail += (
+            f" The Digital Shelf also lists {extra} item(s) with no matching generated action."
+        )
+
+    background, text_color, border = colors
+    return (
+        f'<div style="background:{background}; color:{text_color}; border-left:5px solid {border}; '
+        'padding:14px 16px; border-radius:8px; margin-bottom:14px;">'
+        f'<div style="font-size:15px; font-weight:800;">{html.escape(headline)}</div>'
+        f'<div style="font-size:12px; margin-top:5px; line-height:1.5;">{html.escape(detail)}</div>'
+        "</div>"
+    )
+
+
+def _build_run_gates_html(audit: TaskAuditSummary) -> str:
+    """Show a compact, evidence-linked quality checklist for non-technical readers."""
+    work_passed = (
+        audit.total_pending_actions == 0
+        and audit.total_rejected_actions == 0
+        and audit.total_dropped_actions == 0
+    )
+    score_known = audit.digital_alignment_pct is not None
+    checks = [
+        (
+            "Work completed",
+            "PASS" if work_passed else "NEEDS ATTENTION",
+            (
+                "Every requested action was completed."
+                if work_passed
+                else (
+                    f"{audit.total_pending_actions} pending, {audit.total_rejected_actions} rejected, "
+                    f"{audit.total_dropped_actions} dropped."
+                )
+            ),
+            "step-trace",
+        ),
+        (
+            "Pre-photo actions verified",
+            "PASS" if score_known else "NOT CHECKED",
+            (
+                f"{audit.digital_alignment_pct:.1f}% matched what Digital Shelf recorded."
+                if score_known
+                else (audit.digital_fetch_error or "Digital Shelf data was not available.")
+            ),
+            "action-compare",
+        ),
+        (
+            "Post photo available",
+            "PASS" if audit.post_digital_loaded else "NEEDS ATTENTION",
+            (
+                f"{audit.post_generated_action_count} post-photo action(s) were checked."
+                if audit.post_digital_loaded
+                else (audit.post_digital_error or "No verified post-photo comparison is available.")
+            ),
+            "post-photo-compare",
+        ),
+        (
+            "Overall quality gate (95%)",
+            (
+                "PASS"
+                if score_known and audit.combined_compliance_pct >= 95
+                else "NEEDS ATTENTION" if score_known else "NOT CHECKED"
+            ),
+            (
+                f"Overall score is {audit.combined_compliance_pct:.1f}%."
+                if score_known
+                else "The score is not calculated until Digital Shelf data is available."
+            ),
+            "overview",
+        ),
+    ]
+    cards = []
+    for label, status, detail, tab in checks:
+        color = "#15803D" if status == "PASS" else "#B91C1C" if status == "NEEDS ATTENTION" else "#92400E"
+        background = "#F0FDF4" if status == "PASS" else "#FEF2F2" if status == "NEEDS ATTENTION" else "#FFFBEB"
+        cards.append(
+            f'<button type="button" onclick="switchReportTab(\'{tab}\', document.getElementById(\'tab-{tab}\'))" '
+            f'style="text-align:left; background:{background}; border:1px solid {color}; border-radius:8px; padding:11px; cursor:pointer;">'
+            f'<div style="font-size:10px; font-weight:800; color:{color};">{html.escape(status)}</div>'
+            f'<div style="font-size:12px; font-weight:800; color:#0F172A; margin-top:3px;">{html.escape(label)}</div>'
+            f'<div style="font-size:10.5px; color:#475569; margin-top:4px; line-height:1.4;">{html.escape(detail)}</div>'
+            "</button>"
+        )
+    return (
+        '<div class="main-card" style="margin-bottom:14px;">'
+        '<div class="card-header"><div><div class="card-title">Run Quality Checks</div>'
+        '<div style="font-size:11px; color:#64748B; margin-top:4px;">'
+        "Select a check to open its supporting evidence.</div></div></div>"
+        f'<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; padding:14px;">{"".join(cards)}</div>'
+        "</div>"
+    )
+
+
+def _build_reconciliation_html(audit: TaskAuditSummary) -> str:
+    """Explain how the backend row count becomes the on-screen action count."""
+    merged = audit.total_raw_db_detections - audit.unique_backend_actions
+    counts = audit.digital_compare_counts or {}
+    lines = [
+        (
+            f"{audit.total_raw_db_detections} rows returned by the backend action list",
+            "One row per detected product facing.",
+        ),
+        (
+            f"− {merged} duplicate rows merged",
+            f"Several rows share the same action id, so the app shows {audit.unique_backend_actions} unique actions "
+            "(the mobile app de-duplicates by action id).",
+        ),
+        (
+            f"+ {audit.two_phase_split_steps} extra steps for cross-bay moves",
+            "Moving a product to a different bay is shown as two steps: pick it into the cart, then place it on the target shelf.",
+        ),
+        (
+            f"= {audit.total_generated_mobile_cards} actions shown to the user",
+            f"{audit.total_performed_actions} completed, {audit.total_rejected_actions} rejected by the user, "
+            f"{audit.total_pending_actions} still pending.",
+        ),
+        (
+            f"{counts.get('matched', 0)} confirmed by the Digital Shelf report",
+            f"{counts.get('mismatched', 0)} done differently, {counts.get('generated_only', 0)} not found in the Digital Shelf, "
+            f"{counts.get('no_action_needed', 0)} shelf products needed no action at all.",
+        ),
+        (
+            f"Work Finished = {audit.total_performed_actions} ÷ {audit.total_generated_mobile_cards} "
+            f"= {audit.compliance_score_pct:.1f}%",
+            (
+                f"The {audit.total_rejected_actions} action(s) the user rejected are not counted as done, which is why "
+                f"this is below 100% even with nothing left pending."
+                if audit.total_rejected_actions
+                else "Every action the app asked for was completed."
+            ),
+        ),
+    ]
+    items = "".join(
+        f'<div style="display:flex; gap:12px; padding:7px 0; border-bottom:1px solid #E2E8F0;">'
+        f'<div style="min-width:290px; font-weight:700; color:#0F172A; font-size:12px;">{html.escape(headline)}</div>'
+        f'<div style="font-size:11.5px; color:#475569; line-height:1.45;">{html.escape(detail)}</div>'
+        "</div>"
+        for headline, detail in lines
+    )
+    return (
+        '<div class="main-card" style="margin-top:14px;">'
+        '<div class="card-header"><div class="card-title">🧮 How These Numbers Add Up</div></div>'
+        f'<div style="padding:4px 16px 14px;">{items}</div>'
+        "</div>"
+    )
+
+
+def _format_duration(seconds: Optional[int]) -> str:
+    if seconds is None:
+        return "Not available"
+    hours, remainder = divmod(seconds, 3600)
+    minutes, secs = divmod(remainder, 60)
+    parts = []
+    if hours:
+        parts.append(f"{hours}h")
+    if minutes:
+        parts.append(f"{minutes}m")
+    if secs or not parts:
+        parts.append(f"{secs}s")
+    return " ".join(parts)
+
+
+def _build_timeline_html(audit: TaskAuditSummary) -> str:
+    timeline = audit.task_timeline or {}
+    pre_scan = timeline.get("pre_scan") or {}
+    post_scan = timeline.get("post_scan") or {}
+    values = [
+        ("Task created", timeline.get("task_created_at") or "Not returned by API"),
+        ("Task started", timeline.get("task_started_at") or "Not returned by API"),
+        ("Pre photo uploaded", pre_scan.get("uploaded_at") or "Not returned by API"),
+        ("Post photo uploaded", post_scan.get("uploaded_at") or "No post photo found"),
+        ("Task completed", timeline.get("task_completed_at") or "Not returned by API"),
+        (
+            "Start → completion",
+            _format_duration(timeline.get("task_duration_seconds")),
+        ),
+        (
+            "Pre photo → post photo",
+            _format_duration(timeline.get("photo_duration_seconds")),
+        ),
+    ]
+    cards = "".join(
+        '<div class="kpi-card">'
+        f'<div class="kpi-label">{html.escape(label)}</div>'
+        f'<div style="font-size:13px; font-weight:700; color:#0F172A; margin-top:7px;">'
+        f"{html.escape(str(value))}</div></div>"
+        for label, value in values
+    )
+    return (
+        '<div class="main-card" style="margin-top:14px;">'
+        '<div class="card-header"><div><div class="card-title">🕒 Task &amp; Photo Timeline</div>'
+        '<div style="font-size:11px; color:#64748B; margin-top:4px;">'
+        "Times are displayed only when returned by the task or scan API. "
+        "Per-action times are intentionally not estimated.</div></div></div>"
+        f'<div class="kpi-grid" style="padding:14px;">{cards}</div></div>'
+    )
+
+
 def generate_e2e_audit_html_report(
     audit: TaskAuditSummary,
-    output_path: Path
+    output_path: Path,
+    category_id: Optional[int] = None,
+    report_date: Optional[str] = None,
 ) -> Path:
     """
     Renders the simplified interactive E2E Audit & Trace HTML Report.
@@ -53,6 +291,15 @@ def generate_e2e_audit_html_report(
             bays_tags = ", ".join(f"Bay {b}" for b in c.unique_bays)
             shelves_tags = ", ".join(f"Sh {s}" for s in c.unique_shelves)
 
+            pog_rog_badge = ''
+            if c.pog_facings or c.rog_facings:
+                extra_label = f' <span style="background: #FEE2E2; color: #B91C1C; padding: 1px 5px; border-radius: 4px; font-size: 9px; font-weight: 800; margin-left: 3px;">⚡ {c.extra_facings} extra</span>' if c.extra_facings > 0 else ''
+                pog_rog_badge = (
+                    f'<div style="font-size: 10px; color: #475569; margin-top: 4px;">'
+                    f'POG: <b>{c.pog_facings}</b> &bull; ROG: <b>{c.rog_facings}</b>{extra_label}'
+                    f'</div>'
+                )
+
             row = f"""
             <tr>
                 <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #0F172A;">
@@ -66,6 +313,7 @@ def generate_e2e_audit_html_report(
                         🏷️ {c.total_facings} Facings
                     </span>
                     <div style="font-size: 10px; color: #64748B; margin-top: 3px;">{bays_tags} &bull; {shelves_tags}</div>
+                    {pog_rog_badge}
                 </td>
                 <td>
                     <div style="display: flex; flex-wrap: wrap;">
@@ -249,29 +497,89 @@ def generate_e2e_audit_html_report(
     lifecycle_table_body = "\n".join(lifecycle_rows_html)
     lifecycle_data_blocks = "\n".join(lifecycle_data_divs)
 
+    dashboard_params = {"store": audit.store_id, "planogram": audit.pog_id}
+    if category_id is not None:
+        dashboard_params["category"] = category_id
+    if report_date:
+        dashboard_params["date"] = report_date
+
+    def digital_shelf_url(
+        scan_id: Optional[int] = None,
+        upc: str = "",
+        position: str = "",
+    ) -> str:
+        """Deep link to the Digital Shelf: the scan page when known, else the dashboard."""
+        params = dict(dashboard_params)
+        if upc and position:
+            params["selectedProductKey"] = f"{upc}-{position}"
+        path = f"reporting/scans/{scan_id}" if scan_id else "reporting/dashboard"
+        return (
+            f"https://{audit.instance_slug}.rebotics.net/{path}?"
+            f"{urllib.parse.urlencode(params, safe=':')}"
+        )
+
+    primary_scan_id = next(
+        (record.scan_id for record in audit.step_records if record.scan_id), None
+    )
+    dashboard_url = digital_shelf_url(primary_scan_id)
+
     # 3. Build Streamlined Step Trace Rows
     rows_html = []
     for r in audit.step_records:
         badge_class = f"badge-{r.theme}"
         banner_text_color = "#C00000" if r.theme == "red" else "#2E7D32" if r.theme == "green" else "#C65911"
-        status_badge = '<span class="status-pill status-completed">✅ COMPLETED</span>' if r.status == "COMPLETED" else '<span class="status-pill status-pending">⏳ PENDING</span>'
+        status_badges = {
+            "COMPLETED": '<span class="status-pill status-completed">✅ COMPLETED</span>',
+            "REJECTED": '<span class="status-pill status-rejected">🚫 REJECTED BY USER</span>',
+        }
+        status_badge = status_badges.get(
+            r.status,
+            '<span class="status-pill status-pending">⏳ PENDING</span>',
+        )
         
-        req_json = json.dumps(r.request_details or {
-            "method": "PATCH",
-            "url": f"/api/v1/tasks/{audit.task_id}/action-list/retailer/{r.action_id}/",
-            "payload": {"state": "STATE_ACCEPTED", "completed_at": r.completed_at or "2026-08-26T10:00:00Z"}
-        }, indent=2)
-
-        res_json = json.dumps(r.response_details or {
-            "status": 200,
-            "latency_ms": r.latency_ms or 42,
-            "body": {"id": r.action_id, "state": "STATE_ACCEPTED"}
-        }, indent=2)
-
         facing_badge = f'<span class="facing-tag">🏷️ Facing {r.facing_index}/{r.facing_total}</span>' if r.facing_total > 1 else ''
+        extra_facing_badge = (
+            '<span style="background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: 800; margin-left: 3px;">⚡ EXTRA</span>'
+            if r.is_extra_facing else ''
+        )
+        pog_rog_info = ''
+        if r.pog_facings or r.rog_facings:
+            pog_rog_info = (
+                f'<div style="font-size: 9.5px; color: #64748B; margin-top: 2px;">'
+                f'POG: <b>{r.pog_facings}</b> &bull; ROG: <b>{r.rog_facings}</b>'
+                f'</div>'
+            )
+
+        digital_row_link = (
+            '<a style="font-size:10px;" target="_blank" rel="noopener noreferrer" href="'
+            + html.escape(digital_shelf_url(r.scan_id, r.upc, r.digital_position))
+            + '">Open in Digital Shelf ↗</a>'
+            if r.scan_id
+            else ""
+        )
+
+        is_unidentified = not r.upc
+        product_label = html.escape(
+            "Unidentified Product" if is_unidentified else r.product_title
+        )
+        upc_label = "none" if is_unidentified else html.escape(r.upc)
+        unidentified_note = (
+            '<div style="font-size:10px; color:#B45309; margin-top:3px; line-height:1.35;">'
+            "The shelf camera could not read a barcode here, so the backend sent this action "
+            "without a product. The Digital Shelf lists it as “PLU not found” at the same position."
+            "</div>"
+            if is_unidentified
+            else ""
+        )
+
+        ambiguous_hint = (
+            '<div style="font-size:9.5px; color:#B45309; margin-top:2px; font-weight:600;" title="Multiple duplicate facings at this shelf position; 1-to-1 match cannot be uniquely mapped">⚠️ Multi-Facing Ambiguity</div>'
+            if r.digital_match_status == "AMBIGUOUS"
+            else ""
+        )
 
         row = f"""
-        <tr class="action-row {'row-completed' if r.status == 'COMPLETED' else 'row-pending'}" data-upc="{r.upc}" data-title="{r.product_title.lower()}" data-type="{r.action_type}">
+        <tr class="action-row {'row-completed' if r.status == 'COMPLETED' else 'row-pending'}" data-upc="{r.upc}" data-title="{r.product_title.lower()}" data-type="{r.action_type}" data-digital-action="{html.escape(r.digital_action_type)}">
             <td style="text-align: center; font-weight: 700; color: #1E293B;">#{r.step_index}</td>
             <td>
                 <span class="badge {badge_class}" style="font-size: 11px; font-weight: 800; color: {banner_text_color};">
@@ -279,10 +587,12 @@ def generate_e2e_audit_html_report(
                 </span>
             </td>
             <td>
-                <div style="font-weight: 700; color: #0F172A; font-size: 12px;">{r.product_title}</div>
+                <div style="font-weight: 700; color: #0F172A; font-size: 12px;">{product_label}</div>
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #475569; margin-top: 2px;">
-                    UPC: <b>{r.upc}</b> {facing_badge}
+                    UPC: <b>{upc_label}</b> {facing_badge} {extra_facing_badge}
                 </div>
+                {pog_rog_info}
+                {unidentified_note}
             </td>
             <td style="font-size: 11.5px; color: #334155; line-height: 1.35;">
                 {r.why_performed}
@@ -290,24 +600,152 @@ def generate_e2e_audit_html_report(
             <td style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #1F4E79; font-weight: 600;">
                 {r.movement_line}
             </td>
+            <td>
+                <b>{html.escape(r.digital_action_type or "—")}</b>
+                <div style="font-size:10px; color:#64748B;">{html.escape(r.digital_match_status)}</div>
+                {ambiguous_hint}
+                {digital_row_link}
+            </td>
+            <td>{html.escape(r.digital_action_taken or "—")}</td>
             <td style="text-align: center;">
                 {status_badge}
-            </td>
-            <td style="text-align: center;">
-                <button class="btn-inspect" onclick="inspectStep({r.step_index})">🔍 Inspect Payload</button>
-                <div id="payload-data-{r.step_index}" style="display: none;" 
-                     data-request='{req_json}' 
-                     data-response='{res_json}'
-                     data-step='{r.step_index}'
-                     data-title='{r.product_title}'
-                     data-banner='{r.banner_text}'
-                     data-why='{r.why_performed}'></div>
             </td>
         </tr>
         """
         rows_html.append(row)
 
     table_body = "\n".join(rows_html)
+
+    compare_rows = []
+    for comparison in audit.digital_compare:
+        status = comparison.get("status", "GENERATED_ONLY")
+        compare_row_link = (
+            '<div><a style="font-size:10px;" target="_blank" rel="noopener noreferrer" href="'
+            + html.escape(digital_shelf_url(
+                comparison.get("scan_id"),
+                str(comparison.get("upc") or ""),
+                str(comparison.get("digital_position") or ""),
+            ))
+            + '">View ↗</a></div>'
+            if comparison.get("scan_id")
+            else ""
+        )
+        ambiguous_compare_hint = ''
+        if status == "AMBIGUOUS":
+            cmp_pog = comparison.get('pog_facings', 0)
+            cmp_rog = comparison.get('rog_facings', 0)
+            ambiguous_compare_hint = (
+                '<div style="font-size:9.5px; color:#B45309; margin-top:2px; font-weight:600;">'
+                f'⚠️ Multi-Facing Ambiguity — POG: {cmp_pog}, ROG: {cmp_rog}. '
+                'User must match POG facing count in realogram; '
+                f'rest ({max(0, cmp_rog - cmp_pog)} excess) are extra facings.'
+                '</div>'
+            )
+        compare_extra_badge = ''
+        if comparison.get('is_extra_facing'):
+            compare_extra_badge = '<span style="background:#FEE2E2; color:#B91C1C; font-size:9px; padding:1px 5px; border-radius:4px; font-weight:800; margin-left:4px;">⚡ EXTRA</span>'
+        compare_pog_rog_info = ''
+        cmp_pog_val = comparison.get('pog_facings', 0)
+        cmp_rog_val = comparison.get('rog_facings', 0)
+        if cmp_pog_val or cmp_rog_val:
+            compare_pog_rog_info = f'<div style="font-size:9.5px; color:#64748B; margin-top:2px;">POG: <b>{cmp_pog_val}</b> &bull; ROG: <b>{cmp_rog_val}</b></div>'
+        compare_rows.append(f"""
+        <tr data-compare-status="{html.escape(status)}">
+            <td>
+                <span class="compare-pill compare-{status.lower()}">{html.escape(status)}</span>
+                {ambiguous_compare_hint}
+            </td>
+            <td>
+                {html.escape(str(comparison.get("scan_id") or "—"))}
+                {compare_row_link}
+            </td>
+            <td>
+                <b>{html.escape(str(comparison.get("product_name") or "—"))}</b>{compare_extra_badge}<br>
+                <code>{html.escape(str(comparison.get("upc") or "—"))}</code>
+                {compare_pog_rog_info}
+            </td>
+            <td>{html.escape(str(comparison.get("generated_action_type") or "—"))}</td>
+            <td>{html.escape(str(comparison.get("digital_action_type") or "—"))}</td>
+            <td>{html.escape(str(comparison.get("digital_action_taken") or "—"))}</td>
+        </tr>
+        """)
+    compare_table_body = "\n".join(compare_rows) or """
+        <tr><td colspan="6" style="text-align:center; color:#64748B;">No digital comparison rows available.</td></tr>
+    """
+    post_compare_rows = []
+    for comparison in audit.post_digital_compare:
+        status = comparison.get("status", "GENERATED_ONLY")
+        post_link = (
+            '<div><a style="font-size:10px;" target="_blank" rel="noopener noreferrer" href="'
+            + html.escape(
+                digital_shelf_url(
+                    comparison.get("scan_id"),
+                    str(comparison.get("upc") or ""),
+                    str(comparison.get("digital_position") or ""),
+                )
+            )
+            + '">View post scan ↗</a></div>'
+            if comparison.get("scan_id")
+            else ""
+        )
+        post_compare_rows.append(
+            f"""
+            <tr data-compare-status="{html.escape(status)}">
+                <td><span class="compare-pill compare-{status.lower()}">{html.escape(status)}</span></td>
+                <td>{html.escape(str(comparison.get("scan_id") or "—"))}{post_link}</td>
+                <td><b>{html.escape(str(comparison.get("product_name") or "—"))}</b><br>
+                    <code>{html.escape(str(comparison.get("upc") or "—"))}</code></td>
+                <td>{html.escape(str(comparison.get("generated_action_type") or "—"))}</td>
+                <td>{html.escape(str(comparison.get("digital_action_type") or "—"))}</td>
+                <td>{html.escape(str(comparison.get("digital_action_taken") or "—"))}</td>
+            </tr>
+            """
+        )
+    post_scan_id = ((audit.task_timeline or {}).get("post_scan") or {}).get("scan_id")
+    pre_scan_label = f" &bull; Scan #{primary_scan_id}" if primary_scan_id else ""
+    post_scan_label = f" &bull; Scan #{post_scan_id}" if post_scan_id else ""
+    post_empty_message = audit.post_digital_error or (
+        "No scan on this task is marked as a post photo, so there is nothing to compare here yet. "
+        "The Pre Photo Compare tab is unaffected."
+    )
+    post_compare_table_body = "\n".join(post_compare_rows) or (
+        '<tr><td colspan="6" style="text-align:center; color:#64748B;">'
+        f"{html.escape(post_empty_message)}"
+        "</td></tr>"
+    )
+    growth_text = (
+        "Cannot confirm from the scan API because it did not return pre/post action counts."
+        if audit.action_list_growth_after_post is None
+        else (
+            f"The post photo produced {audit.action_list_growth_after_post} additional action(s)."
+            if audit.action_list_growth_after_post > 0
+            else "The post photo did not increase the generated action count."
+        )
+    )
+    post_stage_text = (
+        f"Returned {audit.post_generated_action_count} action(s) generated for the post photo."
+        if audit.post_stage_supported
+        else (
+            audit.post_digital_error
+            or "Not available on this backend. Pre-photo actions are not reused for post-photo comparison."
+        )
+    )
+    verdict_html = _build_verdict_html(audit)
+    run_gates_html = _build_run_gates_html(audit)
+    reconciliation_html = _build_reconciliation_html(audit)
+    timeline_html = _build_timeline_html(audit)
+    digital_notice_html = ""
+    if audit.digital_fetch_error:
+        notice_label = (
+            "Digital data warning"
+            if audit.digital_loaded
+            else "Digital data unavailable"
+        )
+        digital_notice_html = (
+            '<div style="background:#FEF3C7; color:#92400E; padding:10px; '
+            'border-radius:8px; margin-bottom:12px;">'
+            f"{notice_label}: {html.escape(audit.digital_fetch_error)}</div>"
+        )
 
     # 4. Build Bi-Directional Full-Duplex Network Traffic Rows
     traffic_rows_html = []
@@ -477,6 +915,47 @@ def generate_e2e_audit_html_report(
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
             margin-bottom: 20px;
         }}
+        .report-tabs {{
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            margin: 0 0 18px;
+            padding: 5px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+        }}
+        .report-tab {{
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: #64748B;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 9px 13px;
+            white-space: nowrap;
+        }}
+        .report-tab.active {{ background: var(--navy-primary); color: #FFFFFF; }}
+        .tab-panel {{ display: none; }}
+        .tab-panel.active {{ display: block; }}
+        .compare-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }}
+        .compare-pill {{
+            border-radius: 999px;
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+        }}
+        .compare-match {{ background: #DCFCE7; color: #166534; }}
+        .compare-mismatch, .compare-generated_only, .compare-digital_only {{ background: #FEE2E2; color: #991B1B; }}
+        .compare-ambiguous {{ background: #FEF3C7; color: #92400E; }}
+        .compare-unavailable, .compare-no_action_needed {{ background: #E2E8F0; color: #475569; }}
         .card-header {{
             display: flex;
             justify-content: space-between;
@@ -530,6 +1009,7 @@ def generate_e2e_audit_html_report(
         }}
         .status-completed {{ background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }}
         .status-pending {{ background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; }}
+        .status-rejected {{ background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }}
         .facing-tag {{ background: #EEF2FF; color: #4338CA; border: 1px solid #C7D2FE; font-size: 9px; padding: 1px 4px; border-radius: 4px; font-weight: 700; margin-left: 4px; }}
         
         .btn-inspect {{
@@ -644,12 +1124,19 @@ def generate_e2e_audit_html_report(
             <span class="tenant-pill" style="background: rgba(255, 255, 255, 0.2);">
                 🏷️ {audit.unique_upc_count} Unique UPCs
             </span>
-            <span class="tenant-pill" style="background: rgba(59, 130, 246, 0.25);">
-                🌐 {len(traffic_list)} HTTP Calls Logged
-            </span>
         </div>
     </div>
 
+    <nav class="report-tabs" aria-label="Audit report sections">
+        <button id="tab-overview" class="report-tab active" onclick="switchReportTab('overview', this)">Overview</button>
+        <button id="tab-slot" class="report-tab" onclick="switchReportTab('slot', this)">Slot</button>
+        <button id="tab-step-trace" class="report-tab" onclick="switchReportTab('step-trace', this)">Step Trace</button>
+        <button id="tab-action-compare" class="report-tab" onclick="switchReportTab('action-compare', this)">Pre Photo Compare</button>
+        <button id="tab-post-photo-compare" class="report-tab" onclick="switchReportTab('post-photo-compare', this)">Post Photo Compare</button>
+    </nav>
+
+    <section id="panel-overview" class="tab-panel active">
+    {run_gates_html}
     <!-- KPI Grid (Answers: Total Backend vs Total Mobile & Full Task Completion) -->
     <div class="kpi-grid">
         <div class="kpi-card" style="border-left: 4px solid var(--navy-primary);">
@@ -664,13 +1151,13 @@ def generate_e2e_audit_html_report(
         </div>
         <div class="kpi-card" style="border-left: 4px solid #10B981;">
             <div class="kpi-label">Actions Completed (Accepted)</div>
-            <div class="kpi-value" style="color: #10B981;">{audit.total_generated_mobile_cards}</div>
-            <div class="kpi-sub">All {audit.total_generated_mobile_cards} STATE_ACCEPTED through lifecycle flow</div>
+            <div class="kpi-value" style="color: #10B981;">{audit.total_performed_actions}</div>
+            <div class="kpi-sub">{audit.total_performed_actions} actions have STATE_ACCEPTED</div>
         </div>
         <div class="kpi-card" style="border-left: 4px solid #F59E0B;">
             <div class="kpi-label">Pending Left to Perform</div>
-            <div class="kpi-value" style="color: #10B981;">0</div>
-            <div class="kpi-sub">✅ All actions performed successfully</div>
+            <div class="kpi-value" style="color: {'#10B981' if audit.total_pending_actions == 0 else '#B45309'};">{audit.total_pending_actions}</div>
+            <div class="kpi-sub">{'All actions are finished' if audit.total_pending_actions == 0 else str(audit.total_pending_actions) + ' action(s) still need work'}</div>
         </div>
         <div class="kpi-card" style="border-left: 4px solid #10B981;">
             <div class="kpi-label">Dropped on Reload / Resume</div>
@@ -679,11 +1166,31 @@ def generate_e2e_audit_html_report(
         </div>
         <div class="kpi-card" style="border-left: 4px solid {'#10B981' if audit.total_dropped_actions == 0 else '#EF4444'}; background: {'#F0FDF4' if audit.total_dropped_actions == 0 else '#FEF2F2'};">
             <div class="kpi-label">Task Result</div>
-            <div class="kpi-value" style="color: {'#10B981' if audit.total_dropped_actions == 0 else '#EF4444'}; font-size: 22px;">{'✅ PASS' if audit.total_dropped_actions == 0 else '❌ FAIL'}</div>
-            <div class="kpi-sub">{'User completed all ' + str(audit.total_generated_mobile_cards) + ' actions' if audit.total_dropped_actions == 0 else 'Actions were dropped'}</div>
+            <div class="kpi-value" style="color: {'#10B981' if audit.total_pending_actions == 0 and audit.total_rejected_actions == 0 and audit.total_dropped_actions == 0 and audit.digital_alignment_pct is not None and audit.combined_compliance_pct >= 95 and audit.post_digital_loaded else '#B45309'}; font-size: 22px;">{'PASS' if audit.total_pending_actions == 0 and audit.total_rejected_actions == 0 and audit.total_dropped_actions == 0 and audit.digital_alignment_pct is not None and audit.combined_compliance_pct >= 95 and audit.post_digital_loaded else 'NEEDS ATTENTION'}</div>
+            <div class="kpi-sub">See Run Quality Checks above for what passed and what needs follow-up.</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Work Finished</div>
+            <div class="kpi-value">{audit.compliance_score_pct:.1f}%</div>
+            <div class="kpi-sub">{audit.total_performed_actions} of {audit.total_generated_mobile_cards} actions done{f' &bull; {audit.total_rejected_actions} rejected by the user (not counted as done)' if audit.total_rejected_actions else ''} &bull; {audit.total_pending_actions} still pending</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Work Done Correctly</div>
+            <div class="kpi-value">{f'{audit.digital_alignment_pct:.1f}%' if audit.digital_alignment_pct is not None else 'N/A'}</div>
+            <div class="kpi-sub">{audit.digital_compare_counts.get('matched', 0)} actions where the Digital Shelf confirms the user did exactly what was asked</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Overall Score</div>
+            <div class="kpi-value">{audit.combined_compliance_pct:.1f}%</div>
+            <div class="kpi-sub">The weaker of the two scores above — finishing the work and doing it correctly both count</div>
         </div>
     </div>
+    {verdict_html}
+    {reconciliation_html}
+    {timeline_html}
+    </section>
 
+    <section id="panel-slot" class="tab-panel">
     <!-- SECTION 1: DUPLICATE / SAME UPC MULTI-LOCATION MAPPING -->
     <div class="main-card">
         <div class="card-header">
@@ -737,7 +1244,9 @@ def generate_e2e_audit_html_report(
             </table>
         </div>
     </div>
+    </section>
 
+    <section id="panel-lifecycle" class="tab-panel">
     <!-- SECTION 2: APP REFRESH, LOGOUT, SCREEN SWITCH & KILL RESILIENCE -->
     <div class="main-card">
         <div class="card-header">
@@ -772,7 +1281,9 @@ def generate_e2e_audit_html_report(
             </table>
         </div>
     </div>
+    </section>
 
+    <section id="panel-step-trace" class="tab-panel">
     <!-- SECTION 3: STEP-BY-STEP BI-DIRECTIONAL TRACE TABLE -->
     <div class="main-card">
         <div class="card-header">
@@ -780,9 +1291,11 @@ def generate_e2e_audit_html_report(
                 📋 3. Streamlined Step-by-Step Bi-Directional Trace ({len(audit.step_records)} Mobile Steps)
             </div>
             <div>
+                <a href="{html.escape(dashboard_url)}" target="_blank" rel="noopener noreferrer" style="font-size:11px; margin-right:8px;">Open Digital Report ↗</a>
                 <input type="text" id="actionSearch" class="search-box" placeholder="🔍 Search UPC, Product, Bay, or Action..." onkeyup="filterActions()">
             </div>
         </div>
+        {digital_notice_html}
         <div class="table-wrap">
             <table id="actionsTable">
                 <thead>
@@ -792,8 +1305,9 @@ def generate_e2e_audit_html_report(
                         <th style="width: 22%;">Product &amp; UPC</th>
                         <th style="width: 26%;">Why User Performs This Action</th>
                         <th style="width: 15%;">Movement Coordinates</th>
+                        <th>Digital Action Type</th>
+                        <th>User Action Taken</th>
                         <th style="width: 8%; text-align: center;">Status</th>
-                        <th style="width: 10%; text-align: center;">Inspector</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -802,7 +1316,79 @@ def generate_e2e_audit_html_report(
             </table>
         </div>
     </div>
+    </section>
 
+    <section id="panel-action-compare" class="tab-panel">
+        <div class="main-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">🔎 Pre Photo — Generated vs User-Performed Action Compare{pre_scan_label}</div>
+                    <div style="font-size:11px; color:#64748B; margin-top:4px;">
+                        This is the main comparison and always uses the pre-photo scan the actions were generated from.
+                        Each generated action is matched to the Digital Shelf row for the same product, then the instructed action is compared with what the user actually did.
+                    </div>
+                </div>
+                <a href="{html.escape(dashboard_url)}" target="_blank" rel="noopener noreferrer">Open Digital Report ↗</a>
+            </div>
+            {verdict_html}
+            {digital_notice_html}
+            <div class="compare-grid">
+                <div class="kpi-card"><div class="kpi-label">Done As Instructed</div><div class="kpi-value">{audit.digital_compare_counts.get('matched', 0)}</div><div class="kpi-sub">User action matches the generated action</div></div>
+                <div class="kpi-card"><div class="kpi-label">Done Differently</div><div class="kpi-value">{audit.digital_compare_counts.get('mismatched', 0)}</div><div class="kpi-sub">User did something else than instructed</div></div>
+                <div class="kpi-card"><div class="kpi-label">Not Confirmable</div><div class="kpi-value">{audit.digital_compare_counts.get('generated_only', 0)}</div><div class="kpi-sub">No Digital Shelf row for this generated action</div></div>
+                <div class="kpi-card"><div class="kpi-label">Extra User Action</div><div class="kpi-value">{audit.digital_compare_counts.get('digital_only', 0)}</div><div class="kpi-sub">User acted on a product with no generated action</div></div>
+                <div class="kpi-card"><div class="kpi-label">Ambiguous Facings</div><div class="kpi-value">{audit.digital_compare_counts.get('ambiguous', 0)}</div><div class="kpi-sub">Multiple facings at same shelf slot &bull; unmapped</div></div>
+                <div class="kpi-card"><div class="kpi-label">No Action Needed</div><div class="kpi-value">{audit.digital_compare_counts.get('no_action_needed', 0)}</div><div class="kpi-sub">Shelf products already correct — not scored</div></div>
+                <div class="kpi-card"><div class="kpi-label">Unavailable</div><div class="kpi-value">{audit.digital_compare_counts.get('unavailable', 0)}</div><div class="kpi-sub">Digital Shelf could not be read for this scan</div></div>
+            </div>
+            <div class="table-wrap">
+                <table id="actionCompareTable">
+                    <thead><tr>
+                        <th>Result</th><th>Scan ID</th><th>Product &amp; UPC</th>
+                        <th>Generated Action</th><th>Digital Action Type</th><th>User Action Taken</th>
+                    </tr></thead>
+                    <tbody>{compare_table_body}</tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="panel-post-photo-compare" class="tab-panel">
+        <div class="main-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">📸 Post Photo — Generated-Action Compare{post_scan_label}</div>
+                    <div style="font-size:11px; color:#64748B; margin-top:4px;">
+                        Additional tab. Uses only a scan explicitly marked as post photo and never guesses from scan order.
+                        Nothing here changes the Pre Photo Compare tab.
+                    </div>
+                </div>
+            </div>
+            <div style="background:#EFF6FF; color:#1E40AF; padding:10px 14px; border-radius:8px; margin-bottom:12px;">
+                <b>Post-photo action list (<code>?stage=post_photo</code>):</b>
+                {html.escape(post_stage_text)}
+                <br><b>Did the action list grow after the post photo?</b>
+                {html.escape(growth_text)}
+            </div>
+            <div class="compare-grid">
+                <div class="kpi-card"><div class="kpi-label">Post Matches</div><div class="kpi-value">{audit.post_digital_compare_counts.get('matched', 0)}</div></div>
+                <div class="kpi-card"><div class="kpi-label">Post Mismatches</div><div class="kpi-value">{audit.post_digital_compare_counts.get('mismatched', 0)}</div></div>
+                <div class="kpi-card"><div class="kpi-label">Not Confirmable</div><div class="kpi-value">{audit.post_digital_compare_counts.get('generated_only', 0)}</div></div>
+                <div class="kpi-card"><div class="kpi-label">Post Alignment</div><div class="kpi-value">{f'{audit.post_digital_alignment_pct:.1f}%' if audit.post_digital_alignment_pct is not None else 'N/A'}</div></div>
+            </div>
+            <div class="table-wrap">
+                <table id="postPhotoCompareTable">
+                    <thead><tr>
+                        <th>Result</th><th>Post Scan ID</th><th>Product &amp; UPC</th>
+                        <th>Generated Action</th><th>Post Photo Action Type</th><th>Post Photo Action Taken</th>
+                    </tr></thead>
+                    <tbody>{post_compare_table_body}</tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="panel-http" class="tab-panel">
     <!-- SECTION 4: CONTINUOUS FULL-DUPLEX NETWORK TELEMETRY & HTTP TRAFFIC LOG -->
     <div class="main-card">
         <div class="card-header">
@@ -844,6 +1430,7 @@ def generate_e2e_audit_html_report(
             </table>
         </div>
     </div>
+    </section>
 </div>
 
 <!-- Lifecycle Pending Actions & Next Card Modal -->
@@ -929,10 +1516,15 @@ def generate_e2e_audit_html_report(
     </div>
 </div>
 
-{lifecycle_data_blocks}
-{traffic_data_blocks}
-
 <script>
+    function switchReportTab(name, button) {{
+        document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+        document.querySelectorAll('.report-tab').forEach(tab => tab.classList.remove('active'));
+        const panel = document.getElementById('panel-' + name);
+        if (panel) panel.classList.add('active');
+        if (button) button.classList.add('active');
+    }}
+
     function viewLifecyclePending(eventName) {{
         const el = document.getElementById('lifecycle-data-' + eventName);
         if (!el) return;
@@ -1174,6 +1766,34 @@ def generate_e2e_audit_html_report(
 </body>
 </html>
 """
+    # Historical task audits are reconstructed from GET responses. Remove E2E-only
+    # sections whose request/response and lifecycle details cannot be proven.
+    html_content = re.sub(
+        r'\s*<section id="panel-(?:lifecycle|http)"[^>]*>.*?</section>',
+        "",
+        html_content,
+        flags=re.DOTALL,
+    )
+    html_content = re.sub(
+        r'\s*<!-- Lifecycle Pending Actions & Next Card Modal -->.*?'
+        r'(?=<!-- Step Inspector Modal -->)',
+        "",
+        html_content,
+        flags=re.DOTALL,
+    )
+    html_content = re.sub(
+        r'\s*<!-- Step Inspector Modal -->.*?'
+        r'(?=<!-- Traffic Call Inspector Modal -->)',
+        "",
+        html_content,
+        flags=re.DOTALL,
+    )
+    html_content = re.sub(
+        r'\s*<!-- Traffic Call Inspector Modal -->.*?(?=<script>)',
+        "",
+        html_content,
+        flags=re.DOTALL,
+    )
     html_content = ensure_ir_export_inline(html_content)
     output_path.write_text(html_content, encoding="utf-8")
     print(f"📄 [E2E Audit Report Generated]: {output_path.name}")

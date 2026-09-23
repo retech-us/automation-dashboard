@@ -12,7 +12,7 @@ const REPO_DISPLAY = {
   api: { icon: '🔌', label: 'API', color: '#f59e0b' },
 };
 
-const DASHBOARD_TABS = ['overview', 'attention', 'trends', 'ai', 'suites', 'jira', 'live'];
+const DASHBOARD_TABS = ['overview', 'attention', 'trends', 'ai', 'suites', 'jira', 'ir', 'live', 'rules', 'ir-studio', 'shelf-mobile'];
 let CURRENT_RESULTS = [];
 let ACTIVE_TAB = 'overview';
 let TREND_RANGE = 'weekly';
@@ -2748,6 +2748,16 @@ function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
     window.LiveTracker.renderLiveBanner();
     window.LiveTracker.checkAll();
   }
+  if (tab === 'ir' && window.IrLiveDashboard) {
+    window.IrLiveDashboard.init();
+  }
+  if (tab === 'ir' && window.IrHistory) {
+    window.IrHistory.init();
+  }
+  if (tab === 'rules') {
+    loadAndRenderShelfResetRules();
+  }
+  document.body.classList.toggle('shelf-mobile-active', tab === 'shelf-mobile');
 
   if (persist) {
     try { localStorage.setItem('dashboard.activeTab', tab); } catch { /* ignore */ }
@@ -2764,6 +2774,91 @@ function wireTabs() {
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => setActiveTab(btn.getAttribute('data-tab')));
   });
+}
+
+let SHELF_RULES_CACHE = "";
+async function loadAndRenderShelfResetRules(force = false) {
+  const container = document.getElementById("shelf-rules-dashboard-container");
+  if (!container) return;
+  if (!force && SHELF_RULES_CACHE) {
+    container.innerHTML = parseRulesMarkdownHtml(SHELF_RULES_CACHE);
+    return;
+  }
+  container.innerHTML = '<p style="color:var(--text-dim); padding:20px; text-align:center;">Loading sequencing rules from engine...</p>';
+  try {
+    const res = await fetch("/api/runner/shelf_reset/rules");
+    const data = await res.json();
+    if (data && data.rules_markdown) {
+      SHELF_RULES_CACHE = data.rules_markdown;
+      container.innerHTML = parseRulesMarkdownHtml(SHELF_RULES_CACHE);
+    } else {
+      container.innerHTML = '<p style="color:#fda4af;">Failed to load rules markdown.</p>';
+    }
+  } catch (err) {
+    container.innerHTML = `<p style="color:#fda4af;">Error loading rules: ${err.message}</p>`;
+  }
+}
+
+function parseRulesMarkdownHtml(md) {
+  if (!md) return '<p>No rules available.</p>';
+  const lines = md.split('\n');
+  const html = ['<div class="rules-doc-content">'];
+  let inTable = false;
+  let inList = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    if (line.startsWith('|')) {
+      if (!inTable) {
+        inTable = true;
+        html.push('<div class="rules-table-box"><table class="rules-table">');
+      }
+      if (line.includes('---')) continue;
+      const cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
+      const tag = (html.filter(h => h.includes('<tr')).length === 0) ? 'th' : 'td';
+      html.push('<tr>' + cells.map(c => `<${tag}>${formatRulesInline(c)}</${tag}>`).join('') + '</tr>');
+      continue;
+    } else if (inTable) {
+      inTable = false;
+      html.push('</table></div>');
+    }
+
+    if (line.startsWith('- ') || line.startsWith('* ')) {
+      if (!inList) {
+        inList = true;
+        html.push('<ul class="rules-list">');
+      }
+      html.push(`<li>${formatRulesInline(line.substring(2))}</li>`);
+      continue;
+    } else if (inList) {
+      inList = false;
+      html.push('</ul>');
+    }
+
+    if (line.startsWith('# ')) {
+      html.push(`<h1>${formatRulesInline(line.substring(2))}</h1>`);
+    } else if (line.startsWith('## ')) {
+      html.push(`<h2>${formatRulesInline(line.substring(3))}</h2>`);
+    } else if (line.startsWith('### ')) {
+      html.push(`<h3>${formatRulesInline(line.substring(4))}</h3>`);
+    } else if (line.startsWith('> ')) {
+      html.push(`<div class="rules-callout">${formatRulesInline(line.substring(2))}</div>`);
+    } else if (line.length > 0) {
+      html.push(`<p>${formatRulesInline(line)}</p>`);
+    }
+  }
+  if (inTable) html.push('</table></div>');
+  if (inList) html.push('</ul>');
+  html.push('</div>');
+  return html.join('\n');
+}
+
+function formatRulesInline(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code class="rules-code">$1</code>')
+    .replace(/\$([^\$]+)\$/g, '<span class="rules-math">$1</span>');
 }
 
 function renderSmartUISection(summaries) {
