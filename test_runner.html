@@ -1009,6 +1009,63 @@
             color: #475569;
             border: 1px solid #E2E8F0;
         }
+
+        .ir-live-scorecard {
+            display: grid;
+            grid-template-columns: minmax(230px, 1.6fr) repeat(4, minmax(110px, 1fr));
+            gap: 8px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            border-radius: var(--radius-md);
+        }
+
+        .ir-live-summary,
+        .ir-live-metric {
+            min-width: 0;
+            padding: 8px 10px;
+            background: #F8FAFC;
+            border-left: 3px solid #94A3B8;
+            border-radius: var(--radius-sm);
+        }
+
+        .ir-live-summary { border-left-color: #2563EB; }
+        .ir-live-metric[data-state="pass"] { border-left-color: #16A34A; }
+        .ir-live-metric[data-state="fail"],
+        .ir-live-metric[data-state="unavailable"] { border-left-color: #DC2626; }
+
+        .ir-live-label {
+            color: #64748B;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .ir-live-value {
+            margin-top: 3px;
+            color: #0F172A;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .ir-live-help {
+            margin-top: 3px;
+            color: #475569;
+            font-size: 10px;
+            line-height: 1.35;
+        }
+
+        @media (max-width: 1000px) {
+            .ir-live-scorecard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .ir-live-summary { grid-column: 1 / -1; }
+        }
+
+        @media (max-width: 560px) {
+            .ir-live-scorecard { grid-template-columns: 1fr; }
+            .ir-live-summary { grid-column: auto; }
+        }
     </style>
 </head>
 <body>
@@ -1023,13 +1080,19 @@
         </div>
         <div class="header-badges">
             <a id="link-e2e-audit-report" href="javascript:void(0)" onclick="openE2EAuditReport()" class="header-pill" style="display: none; text-decoration: none; cursor: pointer; background: rgba(56, 189, 248, 0.25); border-color: rgba(56, 189, 248, 0.5); color: #BAE6FD;">
-                📡 E2E Audit Report (<span id="header-e2e-task">No Active Test</span>) ↗
+                📡 E2E Audit Report (<span id="header-e2e-task">No Active Test</span>)
             </a>
             <a id="link-validation-report" href="javascript:void(0)" onclick="openActiveTaskReport()" class="header-pill" style="display: none; text-decoration: none; cursor: pointer; background: rgba(59, 130, 246, 0.25); border-color: rgba(96, 165, 250, 0.5); color: #BFDBFE;">
-                📄 Multi-Bay Report (<span id="header-report-task">No Active Test</span>) ↗
+                📄 Multi-Bay Report (<span id="header-report-task">No Active Test</span>)
             </a>
             <a id="link-raw-json" href="/api/runner/raw_actions_json" target="_blank" class="header-pill" style="text-decoration: none; color: #F1F5F9; cursor: pointer;">
                 📦 Raw Action JSON ↗
+            </a>
+            <a id="link-task-flow-replay" href="javascript:void(0)" onclick="openTaskFlowReplay()" class="header-pill" style="text-decoration: none; cursor: pointer; background: rgba(168, 85, 247, 0.25); border-color: rgba(192, 132, 252, 0.5); color: #E9D5FF;">
+                ⏱️ Flow Replay
+            </a>
+            <a id="link-shelf-reset" href="/shelf_reset_mobile.html" class="header-pill" style="text-decoration: none; color: #F1F5F9; cursor: pointer; background: rgba(16, 185, 129, 0.25); border-color: rgba(52, 211, 153, 0.5);">
+                📱 Shelf Reset Mobile UI
             </a>
             <div class="header-pill">⚡ Instance: <b id="header-env">No Instance Selected</b></div>
             <div class="header-pill">🤖 Android: <b id="disp-andr-branch">Not Selected</b></div>
@@ -1059,6 +1122,33 @@
             <span id="disp-task-status" style="display: none;">IDLE</span>
         </div>
     </div>
+
+    <section id="ir-live-scorecard" class="ir-live-scorecard" aria-label="Live Intelligent Reset quality" aria-live="polite">
+        <div class="ir-live-summary">
+            <div class="ir-live-label">What this means</div>
+            <div id="ir-live-summary" class="ir-live-help">Load a Task ID to see quality checks explained in plain language.</div>
+        </div>
+        <div class="ir-live-metric" id="ir-live-gate-card">
+            <div class="ir-live-label">Quality check</div>
+            <div id="ir-live-gate" class="ir-live-value">Not checked</div>
+            <div class="ir-live-help">Overall score must reach 95%.</div>
+        </div>
+        <div class="ir-live-metric">
+            <div class="ir-live-label">Work finished</div>
+            <div id="ir-live-finished" class="ir-live-value">Not checked</div>
+            <div class="ir-live-help">How much requested work is complete.</div>
+        </div>
+        <div class="ir-live-metric">
+            <div class="ir-live-label">Done correctly</div>
+            <div id="ir-live-alignment" class="ir-live-value">Not checked</div>
+            <div class="ir-live-help">Actions confirmed by Digital Shelf.</div>
+        </div>
+        <div class="ir-live-metric" id="ir-live-post-card">
+            <div class="ir-live-label">Post photo</div>
+            <div id="ir-live-post" class="ir-live-value">Not checked</div>
+            <div id="ir-live-post-help" class="ir-live-help">Post photo has not been checked yet.</div>
+        </div>
+    </section>
 
     <!-- Main Workspace Layout -->
     <div class="workspace-layout">
@@ -1142,7 +1232,10 @@
             <div id="tab-content-fresh" class="panel" style="display: none; border: 1px solid #A7F3D0; box-shadow: var(--shadow-sm); background: #FFFFFF;">
                 <div class="panel-title" style="color: #047857; margin-bottom: 10px;">
                     <span style="display: flex; align-items: center; gap: 6px;">🚀 Provision Fresh E2E Task</span>
-                    <span class="badge badge-green">Full POG Lifecycle</span>
+                    <span class="badge badge-green">Pre-photo pipeline</span>
+                </div>
+                <div role="note" style="background:#FFFBEB; border:1px solid #FDE68A; color:#92400E; border-radius:var(--radius-sm); padding:7px 9px; margin-bottom:9px; font-size:10px; line-height:1.4;">
+                    <b>Scope:</b> Fresh E2E creates the task, uploads pre-reset photos, waits for CV, and loads generated actions. It does not upload or verify the post photo. Use a finished Task ID audit to verify Post Photo Compare.
                 </div>
 
                 <!-- Backend Instance Selector for Fresh E2E Pipeline -->
@@ -3095,7 +3188,7 @@
             return;
         }
         const reportUrl = `/api/runner/report?task_id=${tid}&t=${Date.now()}`;
-        window.open(reportUrl, '_blank');
+        openReportInRunner(reportUrl, `Multi-Bay Report — Task #${tid}`);
     }
 
     function openE2EAuditReport() {
@@ -3105,7 +3198,44 @@
             return;
         }
         const reportUrl = `/api/runner/e2e_audit_report?task_id=${tid}&t=${Date.now()}`;
-        window.open(reportUrl, '_blank');
+        openReportInRunner(reportUrl, `E2E Audit Report — Task #${tid}`);
+    }
+
+    function openTaskFlowReplay() {
+        const tid = runnerState.taskId || (document.getElementById('cfg-task-id-direct') || {}).value || 8648127;
+        if (window.parent && typeof window.parent.setActiveTab === 'function') {
+            window.parent.setActiveTab('ir');
+            if (window.parent.IrTaskFlow) {
+                window.parent.IrTaskFlow.loadTaskFlow(tid);
+                const p = window.parent.document.getElementById('ir-flow-panel');
+                if (p) p.scrollIntoView({ behavior: 'smooth' });
+            }
+        } else {
+            window.open(`/?tab=ir&task_id=${tid}`, '_blank');
+        }
+    }
+
+    function openReportInRunner(reportUrl, title) {
+        const viewer = document.getElementById('report-viewer');
+        const frame = document.getElementById('report-viewer-frame');
+        const externalLink = document.getElementById('report-viewer-external');
+        document.getElementById('report-viewer-title').textContent = title;
+        if (externalLink) {
+            externalLink.href = reportUrl;
+        }
+        frame.src = reportUrl;
+        viewer.style.display = 'flex';
+        viewer.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('report-viewer-close').focus();
+    }
+
+    function closeReportViewer() {
+        const viewer = document.getElementById('report-viewer');
+        document.getElementById('report-viewer-frame').src = 'about:blank';
+        viewer.style.display = 'none';
+        viewer.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
     }
 
     function onCompatibilityModeChange(mode) {
@@ -3146,7 +3276,7 @@
             clean = 'https://' + clean.substring(7);
         }
         if (clean === 'epsilon') return 'https://epsilon.rebotics.net';
-        if (clean === 'krcs' || clean === 'krsc') return 'https://krcs.rebotics.net';
+        if (clean === 'krcs' || clean === 'krsc' || clean === 'krog' || clean === 'kroger') return 'https://krcs.rebotics.net';
         if (clean === 'stgsams' || clean === 'sams') return 'https://stgsams.rebotics.net';
         if (clean === 'harr' || clean === 'harris') return 'https://harr.rebotics.net';
         if (!clean.startsWith('https://')) {
@@ -3579,7 +3709,10 @@
                 updateReportBadgesForActiveTask(taskId);
                 const openReport = confirm(`✅ Task #${taskId} Audit Complete!\n\n• Raw DB Detections: ${data.total_raw_db_detections}\n• Generated Mobile Cards: ${data.total_generated_mobile_cards}\n• Performed Actions: ${data.total_performed_actions}\n• Dropped Actions: ${data.total_dropped_actions}\n• Compliance Score: ${data.compliance_score_pct}%\n\nOpen the interactive E2E Audit & Trace Report now?`);
                 if (openReport) {
-                    window.open(data.report_url || `/api/runner/e2e_audit_report?task_id=${taskId}&t=${Date.now()}`, '_blank');
+                    openReportInRunner(
+                        data.report_url || `/api/runner/e2e_audit_report?task_id=${taskId}&t=${Date.now()}`,
+                        `E2E Audit Report — Task #${taskId}`
+                    );
                 }
             } else {
                 alert('Failed to audit task: ' + (data.message || data.error));
@@ -3734,6 +3867,51 @@
     window.addEventListener('keydown', () => { lastUserInteractionTime = Date.now(); });
     window.addEventListener('click', () => { lastUserInteractionTime = Date.now(); });
 
+    function formatIrPercent(value) {
+        return typeof value === 'number' ? `${value.toFixed(1)}%` : 'Not checked';
+    }
+
+    function renderIrLiveSnapshot(snapshot) {
+        if (!snapshot) return;
+        const metrics = snapshot.metrics || {};
+        const gate = snapshot.quality_gate || {};
+        const post = snapshot.post_photo || {};
+        setElementText('ir-live-summary', snapshot.plain_language_summary || 'No task quality summary is available.');
+        setElementText(
+            'ir-live-gate',
+            gate.state === 'pass' ? 'PASS' : gate.state === 'fail' ? 'NEEDS ATTENTION' : 'Not checked'
+        );
+        setElementText('ir-live-finished', formatIrPercent(metrics.work_finished_pct));
+        setElementText('ir-live-alignment', formatIrPercent(metrics.digital_alignment_pct));
+        setElementText(
+            'ir-live-post',
+            post.state === 'verified'
+                ? formatIrPercent(metrics.post_alignment_pct)
+                : post.state === 'unavailable' ? 'Unavailable' : 'Not checked'
+        );
+        setElementText('ir-live-post-help', post.explanation || 'Post photo has not been checked yet.');
+        const gateCard = document.getElementById('ir-live-gate-card');
+        const postCard = document.getElementById('ir-live-post-card');
+        if (gateCard) gateCard.dataset.state = gate.state || 'unknown';
+        if (postCard) postCard.dataset.state = post.state || 'not_checked';
+    }
+
+    async function refreshIrLiveSnapshot() {
+        try {
+            const response = await fetch('/api/runner/ir_live_snapshot', { cache: 'no-store' });
+            if (!response.ok) return;
+            const data = await response.json();
+            renderIrLiveSnapshot(data.snapshot);
+        } catch (error) {
+            // The runner may be restarting. Keep the last truthful values visible.
+        }
+    }
+
+    function startIrLiveSnapshotMonitor() {
+        refreshIrLiveSnapshot();
+        setInterval(refreshIrLiveSnapshot, 5000);
+    }
+
     function startContinuousHeartbeatMonitor() {
         setInterval(async () => {
             const isIdle = (Date.now() - lastUserInteractionTime > 4000);
@@ -3877,8 +4055,32 @@
         renderBayUploadGrid();
         fetchGitBranches();
         startContinuousHeartbeatMonitor();
+        startIrLiveSnapshotMonitor();
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            const viewer = document.getElementById('report-viewer');
+            if (viewer && viewer.style.display !== 'none') closeReportViewer();
+        }
     });
 </script>
+
+<!-- In-page generated report viewer -->
+<div id="report-viewer" aria-hidden="true" style="display: none; position: fixed; inset: 0; z-index: 10000; flex-direction: column; background: #F8FAFC;">
+    <div style="height: 54px; flex: 0 0 54px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #0F172A; color: #F8FAFC; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);">
+        <div id="report-viewer-title" style="font-size: 14px; font-weight: 800;">Generated Report</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <a id="report-viewer-external" href="#" target="_blank" rel="noopener noreferrer" style="border: 1px solid #38BDF8; border-radius: 7px; padding: 7px 12px; background: rgba(56, 189, 248, 0.15); color: #38BDF8; font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                ↗ Open in New Tab
+            </a>
+            <button id="report-viewer-close" type="button" onclick="closeReportViewer()" aria-label="Close report and return to Test Runner" style="border: 1px solid #94A3B8; border-radius: 7px; padding: 7px 12px; background: #FFFFFF; color: #0F172A; font-weight: 700; cursor: pointer;">
+                ← Back to Test Runner
+            </button>
+        </div>
+    </div>
+    <iframe id="report-viewer-frame" title="Generated task report" src="about:blank" style="width: 100%; flex: 1; border: 0; background: #FFFFFF;"></iframe>
+</div>
 
 <!-- Live Network Traffic Inspector Modal -->
 <div id="traffic-inspector-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center;">

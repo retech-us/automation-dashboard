@@ -10,19 +10,20 @@ Provides deep audit capabilities for Intelligent Reset tasks:
 """
 
 import json
-import time
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field, asdict
 
 from core.action_list_domain_mapper import (
     transform_action_list_to_domain,
     ActionTypeByName,
-    ActionListDomainModel
+    ActionListDomainModel,
+    resolve_full_upc,
 )
 from core.action_list_ui_mapper import (
     map_domain_to_ui_model,
     ActionListItemUiModel
 )
+from core.action_compare import compare_actions
 
 
 @dataclass
@@ -39,15 +40,25 @@ class StepTelemetryRecord:
     target_coordinates: str
     movement_line: str
     why_performed: str
-    status: str  # 'COMPLETED', 'PENDING', 'DROPPED', 'IN_PROGRESS'
+    status: str  # 'COMPLETED', 'PENDING', 'REJECTED', 'DROPPED', 'IN_PROGRESS'
     facing_index: int = 1
     facing_total: int = 1
     is_duplicate_upc: bool = False
+    is_extra_facing: bool = False
+    pog_facings: int = 0
+    rog_facings: int = 0
     completed_at: Optional[str] = None
     request_details: Optional[Dict[str, Any]] = None
     response_details: Optional[Dict[str, Any]] = None
     latency_ms: Optional[int] = None
     cart_balance_after: Optional[Dict[str, int]] = None
+    scan_id: Optional[int] = None
+    digital_action_type: str = ""
+    digital_action_taken: str = "-"
+    digital_match_status: str = "NOT_LOADED"
+    comparison_position: str = ""
+    comparison_bay: str = ""
+    digital_position: str = ""
 
 
 @dataclass
@@ -58,6 +69,9 @@ class UpcLocationCluster:
     locations: List[Dict[str, Any]]
     unique_bays: List[str]
     unique_shelves: List[int]
+    pog_facings: int = 0
+    rog_facings: int = 0
+    extra_facings: int = 0
 
 
 @dataclass
@@ -103,6 +117,24 @@ class TaskAuditSummary:
     step_records: List[StepTelemetryRecord]
     network_traffic_log: List[Dict[str, Any]] = field(default_factory=list)
     shelf_slot_exchange_matrix: List[Dict[str, Any]] = field(default_factory=list)
+    digital_compare: List[Dict[str, Any]] = field(default_factory=list)
+    digital_compare_counts: Dict[str, int] = field(default_factory=dict)
+    digital_alignment_pct: Optional[float] = None
+    combined_compliance_pct: float = 0.0
+    digital_loaded: bool = False
+    digital_fetch_error: Optional[str] = None
+    unique_backend_actions: int = 0
+    two_phase_split_steps: int = 0
+    total_rejected_actions: int = 0
+    task_timeline: Dict[str, Any] = field(default_factory=dict)
+    post_digital_compare: List[Dict[str, Any]] = field(default_factory=list)
+    post_digital_compare_counts: Dict[str, int] = field(default_factory=dict)
+    post_digital_alignment_pct: Optional[float] = None
+    post_digital_loaded: bool = False
+    post_digital_error: Optional[str] = None
+    post_generated_action_count: int = 0
+    post_stage_supported: bool = False
+    action_list_growth_after_post: Optional[int] = None
 
 
 def derive_why_user_performs_action(
@@ -115,7 +147,11 @@ def derive_why_user_performs_action(
     tgt_bay: str,
     tgt_sh: Optional[int],
     tgt_pos: Optional[str],
-    reason: Optional[str] = None
+    reason: Optional[str] = None,
+    pog_facings: int = 0,
+    rog_facings: int = 0,
+    is_extra_facing: bool = False,
+    facing_index: int = 1,
 ) -> str:
     """
     Generates unambiguous, human-readable operational reasoning for why the associate performs this action.
@@ -123,11 +159,24 @@ def derive_why_user_performs_action(
     u_type = action_type.upper()
     src_coords = f"Bay {src_bay}, Shelf {src_sh or '?'}, Pos {src_pos or '?'}"
     tgt_coords = f"Bay {tgt_bay}, Shelf {tgt_sh or '?'}, Pos {tgt_pos or '?'}"
+    sku_label = upc or "barcode not recognised by the shelf camera"
 
     if "IDENTIFY" in u_type:
         return f"🔍 Unidentified facing at {src_coords} (obscured/missing barcode). Associate scans physical barcode to match planogram target."
     elif "REMOVE" in u_type:
-        return f"🗑️ Foreign/Delisted SKU ({upc}) detected at {src_coords} is NOT in target planogram. Associate removes it and places in backroom cart."
+        extra_count = max(0, rog_facings - pog_facings) if rog_facings else 1
+        if pog_facings == 0:
+            return (
+                f"🗑️ Foreign/Delisted SKU ({sku_label}) detected at {src_coords}: "
+                f"Planogram specifies 0 facings, Realogram has {rog_facings or 1} facing(s). "
+                f"Associate removes excess facing to backroom cart as an extra facing."
+            )
+        else:
+            return (
+                f"🗑️ Extra Facing ({sku_label}) detected at {src_coords}: "
+                f"Planogram requires {pog_facings} facing(s), Realogram has {rog_facings} facing(s) "
+                f"({extra_count} extra). Associate removes excess facing to backroom cart."
+            )
     elif "SET_ASIDE" in u_type or "SETASIDE" in u_type:
         if str(src_bay) != str(tgt_bay):
             return f"🛒 Cross-Bay Movement: Product at {src_coords} belongs in Bay {tgt_bay}. Associate picks it from shelf and stages on rolling cart for Bay {tgt_bay}."
@@ -136,9 +185,11 @@ def derive_why_user_performs_action(
     elif "FIX_IN_BAY" in u_type or "FIXINBAY" in u_type:
         return f"↔️ Intra-Bay Alignment: Product at {src_coords} belongs at {tgt_coords}. Associate slides product horizontally across shelf without cart staging."
     elif "ADD_TO_SHELF" in u_type or "ADDITEMS" in u_type or "ADD" in u_type:
-        return f"📥 Target Placement: Associate retrieves staged product ({upc}) from rolling cart and places it into destination {tgt_coords}."
+        facing_ctx = f" (Facing {facing_index} of {pog_facings} in Planogram)" if pog_facings > 0 else ""
+        return f"📥 Target Placement: Associate retrieves staged product ({sku_label}) from rolling cart and places it into destination {tgt_coords}{facing_ctx}."
     elif "RESTOCK" in u_type:
-        return f"📦 Inventory Replenishment: Facing capacity deficit detected for {tgt_coords}. Associate retrieves fresh stock from backroom and places on shelf."
+        facing_ctx = f" (Planogram facing {facing_index} of {pog_facings})" if pog_facings > 0 else ""
+        return f"📦 Inventory Replenishment: Facing capacity deficit detected for {tgt_coords}. Associate retrieves fresh stock from backroom and places on shelf{facing_ctx}."
     elif "EXCEPTION" in u_type:
         return f"⚠️ Exception Flagged: Item at {src_coords} marked as exception ({reason or 'damaged/unscannable'}). Staged for store manager review."
     else:
@@ -280,6 +331,92 @@ def audit_app_lifecycle_resilience(
     return audits
 
 
+def normalize_step_action_type(dm: Any, ui_model: Any) -> Tuple[str, str]:
+    """Map a domain action onto the report's action type and colour theme."""
+    if dm.action_type == "Identify" or ui_model.step_subtype == "identify":
+        return "IDENTIFY", "orange"
+    if dm.action_type == "Remove" or ui_model.step_subtype == "remove":
+        return "REMOVE", "red"
+    if dm.action_type == "SetAside" or ui_model.step_subtype == "pick":
+        return "SET_ASIDE", "orange"
+    if dm.action_type == "FixInBay" or ui_model.step_subtype == "shift":
+        return "FIX_IN_BAY", "orange"
+    if (
+        dm.action_type_enum == ActionTypeByName.PLACE_ON_SHELF_RESTOCK.value
+        or "restock" in str(dm.action_type_enum).lower()
+    ):
+        return "RESTOCK", "green"
+    if dm.action_type == "Exception" or ui_model.step_subtype == "exception":
+        return "EXCEPTION", "neutral"
+    return "ADD_TO_SHELF", "green"
+
+
+def build_generated_comparison_actions(
+    raw_items: List[Dict[str, Any]],
+    fallback_scan_id: Optional[int] = None,
+) -> List[Dict[str, Any]]:
+    """Shape a raw action-list payload for comparison against a Digital Report."""
+    pog_facings_map: Dict[str, int] = {}
+    rog_facings_map: Dict[str, int] = {}
+    for item in raw_items:
+        raw_u = item.get("upc")
+        disp_u = item.get("displayed_upc")
+        prod_u = (item.get("product") or {}).get("product_code")
+        u = resolve_full_upc(raw_u or prod_u, disp_u)
+        if not u:
+            continue
+        if item.get("current_position"):
+            rog_facings_map[u] = rog_facings_map.get(u, 0) + 1
+        if item.get("expected_position"):
+            pog_facings_map[u] = pog_facings_map.get(u, 0) + 1
+
+    actions: List[Dict[str, Any]] = []
+    upc_seen: Dict[str, int] = {}
+    for idx, dm in enumerate(
+        transform_action_list_to_domain(raw_items, include_completed=True),
+        start=1,
+    ):
+        ui_model = map_domain_to_ui_model(dm, idx)
+        action_type, _ = normalize_step_action_type(dm, ui_model)
+        shelf, slot = (
+            (ui_model.source_shelf, ui_model.source_position)
+            if action_type in ("IDENTIFY", "REMOVE", "SET_ASIDE")
+            else (ui_model.target_shelf, ui_model.target_position)
+        )
+        u = dm.displayed_upc or dm.upc or ""
+        pog_f = pog_facings_map.get(u, 0)
+        rog_f = rog_facings_map.get(u, 0)
+        facing_idx = upc_seen.get(u, 0) + 1
+        upc_seen[u] = facing_idx
+
+        is_extra = (
+            (action_type == "REMOVE")
+            or (pog_f == 0 and rog_f > 0)
+            or (pog_f > 0 and facing_idx > pog_f)
+        )
+
+        actions.append({
+            "scan_id": (
+                (dm.current_position.scan_id if dm.current_position else None)
+                or (dm.expected_position.scan_id if dm.expected_position else None)
+                or fallback_scan_id
+            ),
+            "upc": u,
+            "product_title": dm.product_title,
+            "action_type": action_type,
+            "position": (
+                f"{shelf}:{slot}" if shelf is not None and slot is not None else ""
+            ),
+            "bay": str(ui_model.source_bay or ui_model.target_bay or ""),
+            "section": str(ui_model.source_bay or ui_model.target_bay or ""),
+            "source_action_id": dm.id or idx,
+            "is_extra_facing": is_extra,
+            "pog_facings": pog_f,
+            "rog_facings": rog_f,
+        })
+    return actions
+
+
 def audit_task_execution(
     task_id: int,
     store_id: int,
@@ -288,7 +425,19 @@ def audit_task_execution(
     instance_slug: str = "epsilon",
     pog_name: str = "Planogram Reset",
     executed_step_indexes: Optional[List[int]] = None,
-    network_traffic_log: Optional[List[Dict[str, Any]]] = None
+    network_traffic_log: Optional[List[Dict[str, Any]]] = None,
+    digital_actions: Optional[List[Any]] = None,
+    digital_loaded: bool = False,
+    digital_error: Optional[str] = None,
+    digital_unavailable_scan_ids: Optional[List[int]] = None,
+    task_timeline: Optional[Dict[str, Any]] = None,
+    post_digital_actions: Optional[List[Any]] = None,
+    post_digital_loaded: bool = False,
+    post_digital_error: Optional[str] = None,
+    post_scan_id: Optional[int] = None,
+    post_raw_items: Optional[List[Dict[str, Any]]] = None,
+    post_stage_loaded: bool = False,
+    action_list_growth_after_post: Optional[int] = None,
 ) -> TaskAuditSummary:
     """
     Performs a full audit of an Intelligent Reset task occurrence:
@@ -298,6 +447,26 @@ def audit_task_execution(
     4. Simulates and verifies mid-task app lifecycle resilience (App Refresh, Logout, Screen Switch, Kill/Resume).
     """
     domain_models = transform_action_list_to_domain(raw_items, include_completed=True)
+    completed_at_by_id = {
+        str(item.get("id")): item.get("completed_at")
+        for item in raw_items
+        if item.get("id") is not None and item.get("completed_at")
+    }
+
+    # Calculate POG and ROG facing counts per SKU/UPC from raw task detections
+    pog_facings_map: Dict[str, int] = {}
+    rog_facings_map: Dict[str, int] = {}
+    for item in raw_items:
+        raw_u = item.get("upc")
+        disp_u = item.get("displayed_upc")
+        prod_u = (item.get("product") or {}).get("product_code")
+        u = resolve_full_upc(raw_u or prod_u, disp_u)
+        if not u:
+            continue
+        if item.get("current_position"):
+            rog_facings_map[u] = rog_facings_map.get(u, 0) + 1
+        if item.get("expected_position"):
+            pog_facings_map[u] = pog_facings_map.get(u, 0) + 1
     
     # 1. Build Comprehensive Shelf Slot Exchange & Replacement Map
     slot_cleared: Dict[Tuple[str, int, str], Dict[str, Any]] = {}
@@ -419,13 +588,19 @@ def audit_task_execution(
     duplicate_upc_clusters: List[UpcLocationCluster] = []
     for u, u_info in sorted(upc_locations_map.items(), key=lambda x: len(x[1]["occurrences"]), reverse=True):
         if len(u_info["occurrences"]) > 1:
+            pog_f = pog_facings_map.get(u, 0)
+            rog_f = rog_facings_map.get(u, len(u_info["occurrences"]))
+            extra_f = max(0, rog_f - pog_f) if pog_f > 0 else rog_f
             duplicate_upc_clusters.append(UpcLocationCluster(
                 upc=u,
                 product_title=u_info["product_title"],
                 total_facings=len(u_info["occurrences"]),
                 locations=u_info["occurrences"],
                 unique_bays=sorted(list(u_info["bays"]), key=lambda x: int(x) if x.isdigit() else 999),
-                unique_shelves=sorted(list(u_info["shelves"]))
+                unique_shelves=sorted(list(u_info["shelves"])),
+                pog_facings=pog_f,
+                rog_facings=rog_f,
+                extra_facings=extra_f,
             ))
 
     upc_seen: Dict[str, int] = {}
@@ -448,40 +623,32 @@ def audit_task_execution(
         facing_idx = upc_seen.get(u, 0) + 1
         upc_seen[u] = facing_idx
 
-        # Map Normalized Type
-        if dm.action_type == "Identify" or ui_model.step_subtype == "identify":
-            norm_type = "IDENTIFY"
-            theme = "orange"
-        elif dm.action_type == "Remove" or ui_model.step_subtype == "remove":
-            norm_type = "REMOVE"
-            theme = "red"
-        elif dm.action_type == "SetAside" or ui_model.step_subtype == "pick":
-            norm_type = "SET_ASIDE"
-            theme = "orange"
-        elif dm.action_type == "FixInBay" or ui_model.step_subtype == "shift":
-            norm_type = "FIX_IN_BAY"
-            theme = "orange"
-        elif dm.action_type_enum == ActionTypeByName.PLACE_ON_SHELF_RESTOCK.value or "restock" in str(dm.action_type_enum).lower():
-            norm_type = "RESTOCK"
-            theme = "green"
-        elif dm.action_type == "Exception" or ui_model.step_subtype == "exception":
-            norm_type = "EXCEPTION"
-            theme = "neutral"
-        else:
-            norm_type = "ADD_TO_SHELF"
-            theme = "green"
+        norm_type, theme = normalize_step_action_type(dm, ui_model)
 
         action_counts[norm_type] = action_counts.get(norm_type, 0) + 1
 
+        pog_f = pog_facings_map.get(u, 0)
+        rog_f = rog_facings_map.get(u, 0)
+        is_extra = (
+            (norm_type == "REMOVE")
+            or (pog_f == 0 and rog_f > 0)
+            or (pog_f > 0 and facing_idx > pog_f)
+        )
+
         # Determine status
         # Determine Performed vs Pending: executed_step_indexes explicitly specifies which steps are done
+        action_state = str(getattr(dm, "state", "") or "")
         if executed_step_indexes is not None:
             is_performed = idx in executed_step_indexes
         else:
-            # Default mid-task simulation: 5 steps performed, 37 pending left
-            is_performed = idx in [1, 2, 3, 4, 5] if len(domain_models) > 5 else (idx == 1)
+            is_performed = action_state == "STATE_ACCEPTED"
 
-        status = "COMPLETED" if is_performed else "PENDING"
+        if is_performed:
+            status = "COMPLETED"
+        elif action_state == "STATE_REJECTED":
+            status = "REJECTED"
+        else:
+            status = "PENDING"
 
         # Update cart balance
         if is_performed:
@@ -512,7 +679,24 @@ def audit_task_execution(
             tgt_bay=tgt_b,
             tgt_sh=tgt_sh,
             tgt_pos=tgt_pos,
-            reason=dm.reason
+            reason=dm.reason,
+            pog_facings=pog_f,
+            rog_facings=rog_f,
+            is_extra_facing=is_extra,
+            facing_index=facing_idx,
+        )
+        comparison_shelf, comparison_slot = (
+            (src_sh, src_pos)
+            if norm_type in ("IDENTIFY", "REMOVE", "SET_ASIDE")
+            else (tgt_sh, tgt_pos)
+        )
+        comparison_position = (
+            f"{comparison_shelf}:{comparison_slot}"
+            if comparison_shelf is not None and comparison_slot is not None
+            else ""
+        )
+        comparison_bay = str(
+            src_b if norm_type in ("IDENTIFY", "REMOVE", "SET_ASIDE") else tgt_b
         )
 
         record = StepTelemetryRecord(
@@ -532,15 +716,28 @@ def audit_task_execution(
             facing_index=facing_idx,
             facing_total=tot_facing,
             is_duplicate_upc=(tot_facing > 1),
-            completed_at=time.strftime("%Y-%m-%d %H:%M:%S") if is_performed else None,
-            cart_balance_after=dict(cart_ledger)
+            is_extra_facing=is_extra,
+            pog_facings=pog_f,
+            rog_facings=rog_f,
+            completed_at=(
+                str(completed_at_by_id.get(str(dm.id)))
+                if is_performed and completed_at_by_id.get(str(dm.id))
+                else None
+            ),
+            cart_balance_after=dict(cart_ledger),
+            scan_id=(
+                (dm.current_position.scan_id if dm.current_position else None)
+                or (dm.expected_position.scan_id if dm.expected_position else None)
+            ),
+            comparison_position=comparison_position,
+            comparison_bay=comparison_bay,
         )
         step_records.append(record)
 
     # Calculate Discrepancies
     discrepancies = []
     performed_count = sum(1 for r in step_records if r.status == "COMPLETED")
-    pending_count = len(step_records) - performed_count
+    pending_count = sum(1 for r in step_records if r.status == "PENDING")
 
     # Check 1: Cart Orphan Check (Picks made without placement)
     set_asides_done = sum(1 for r in step_records if r.action_type == "SET_ASIDE" and r.status == "COMPLETED")
@@ -556,13 +753,70 @@ def audit_task_execution(
 
     # Check 2: Total Compliance Calculation
     compliance_pct = 100.0 if len(step_records) == 0 else round((performed_count / len(step_records)) * 100.0, 1)
-
-    # Run Mid-Task Lifecycle Resilience Audit
-    lifecycle_audits = audit_app_lifecycle_resilience(
-        task_id=task_id,
-        step_records=step_records,
-        performed_count=performed_count if performed_count > 0 else (5 if len(step_records) >= 5 else 1)
+    compare_result = compare_actions(
+        generated_actions=[
+            {
+                "scan_id": record.scan_id,
+                "upc": record.upc,
+                "product_title": record.product_title,
+                "action_type": record.action_type,
+                "position": record.comparison_position,
+                "bay": record.comparison_bay,
+                "section": record.comparison_bay,
+                "source_action_id": record.action_id,
+                "is_extra_facing": record.is_extra_facing,
+                "pog_facings": record.pog_facings,
+                "rog_facings": record.rog_facings,
+            }
+            for record in step_records
+        ],
+        digital_actions=digital_actions or [],
+        execution_compliance_pct=compliance_pct,
+        digital_loaded=digital_loaded,
+        digital_error=digital_error,
+        unavailable_scan_ids=digital_unavailable_scan_ids,
     )
+    # Post-photo comparison is strictly isolated: only actions returned by
+    # ?stage=post_photo are compared with the post scan's R07 rows.
+    post_generated_actions = (
+        build_generated_comparison_actions(post_raw_items or [], post_scan_id)
+        if post_stage_loaded
+        else []
+    )
+    post_compare_result = compare_actions(
+        generated_actions=post_generated_actions,
+        digital_actions=post_digital_actions or [],
+        execution_compliance_pct=compliance_pct,
+        digital_loaded=post_digital_loaded and post_stage_loaded,
+        digital_error=(
+            post_digital_error
+            if post_stage_loaded
+            else (
+                post_digital_error
+                or "Post-photo action list unavailable; pre-photo actions were not reused"
+            )
+        ),
+    )
+    for record, comparison in zip(step_records, compare_result.rows):
+        record.digital_action_type = comparison.digital_action_type
+        record.digital_action_taken = comparison.digital_action_taken
+        record.digital_position = comparison.digital_position or record.comparison_position
+        status_labels = {
+            "GENERATED_ONLY": "NOT IN DIGITAL",
+            "UNAVAILABLE": "DIGITAL UNAVAILABLE",
+        }
+        record.digital_match_status = status_labels.get(
+            comparison.status,
+            comparison.status,
+        )
+        if comparison.status in ("GENERATED_ONLY", "UNAVAILABLE"):
+            record.digital_action_type = ""
+            record.digital_action_taken = "—"
+
+    # Historical task-ID audits have no captured interruption sequence.
+    # Lifecycle verification is available only to a true E2E run that invokes
+    # audit_app_lifecycle_resilience with observed events.
+    lifecycle_audits: List[LifecycleEventAudit] = []
 
     # Construct default network traffic trace covering action executions, lifecycle events, and idle sync
     if network_traffic_log is None or len(network_traffic_log) == 0:
@@ -930,5 +1184,29 @@ def audit_task_execution(
         discrepancies=discrepancies,
         step_records=step_records,
         network_traffic_log=traffic_records,
-        shelf_slot_exchange_matrix=removed_product_replacements
+        shelf_slot_exchange_matrix=removed_product_replacements,
+        digital_compare=[asdict(row) for row in compare_result.rows],
+        digital_compare_counts=compare_result.counts,
+        digital_alignment_pct=compare_result.digital_alignment_pct,
+        combined_compliance_pct=compare_result.combined_compliance_pct,
+        digital_loaded=compare_result.loaded,
+        digital_fetch_error=compare_result.error,
+        unique_backend_actions=len({
+            item.get("id") for item in raw_items if item.get("id") is not None
+        }),
+        two_phase_split_steps=sum(
+            1 for record in step_records if record.action_type == "SET_ASIDE"
+        ),
+        total_rejected_actions=sum(
+            1 for record in step_records if record.status == "REJECTED"
+        ),
+        task_timeline=task_timeline or {},
+        post_digital_compare=[asdict(row) for row in post_compare_result.rows],
+        post_digital_compare_counts=post_compare_result.counts,
+        post_digital_alignment_pct=post_compare_result.digital_alignment_pct,
+        post_digital_loaded=post_compare_result.loaded,
+        post_digital_error=post_compare_result.error,
+        post_generated_action_count=len(post_generated_actions),
+        post_stage_supported=post_stage_loaded,
+        action_list_growth_after_post=action_list_growth_after_post,
     )

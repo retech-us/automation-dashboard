@@ -199,7 +199,7 @@ def map_raw_action_to_domain(item: Dict[str, Any]) -> ActionListDomainModel:
         facing_height=item.get("vertical_facings") or 0,
         coordinates=curr_raw.get("coordinates"),
         realogram_item_id=curr_raw.get("realogram_item_id"),
-        state=curr_raw.get("state", item.get("state", "STATE_IDLE")),
+        state=curr_raw.get("state") or item.get("state") or "STATE_IDLE",
     ) if item.get("current_position") else None
 
     exp_pos = PositionDomainModel(
@@ -211,7 +211,7 @@ def map_raw_action_to_domain(item: Dict[str, Any]) -> ActionListDomainModel:
         facing_width=exp_raw.get("horizontal_facings") or (item.get("horizontal_facings") or 0),
         facing_height=exp_raw.get("vertical_facings") or (item.get("vertical_facings") or 0),
         planogram_item_id=exp_raw.get("planogram_item_id"),
-        state=exp_raw.get("state", item.get("state", "STATE_IDLE")),
+        state=exp_raw.get("state") or item.get("state") or "STATE_IDLE",
     ) if item.get("expected_position") else None
 
     raw_action = (exp_raw.get("action") or curr_raw.get("action") or item.get("action") or "").lower()
@@ -354,8 +354,13 @@ def transform_action_list_to_domain(raw_results: List[Dict[str, Any]], include_c
         )
 
         if is_two_phase_move:
-            # 1) Pick step (SetAside) in source bay
-            pick_state = item.current_position.state if item.current_position else item.state
+            # Prefer per-position state; if the backend only set the root state
+            # (common for completed cross-bay moves), inherit that for both halves.
+            pick_state = (
+                (item.current_position.state if item.current_position else None)
+                or item.state
+                or "STATE_IDLE"
+            )
             pick_clone = ActionListDomainModel(
                 id=item.id,
                 source_id=item.source_id,
@@ -379,7 +384,11 @@ def transform_action_list_to_domain(raw_results: List[Dict[str, Any]], include_c
             set_asides.append(pick_clone)
 
             # 2) Place step (AddItems) in target bay
-            place_state = item.expected_position.state if item.expected_position else item.state
+            place_state = (
+                (item.expected_position.state if item.expected_position else None)
+                or item.state
+                or "STATE_IDLE"
+            )
             place_clone = ActionListDomainModel(
                 id=item.id,
                 source_id=item.source_id,

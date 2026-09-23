@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20260901a" />
+  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20260909a" />
   <script>
     (function() {
       try {
@@ -102,12 +102,17 @@
       <button type="button" class="tab-btn" role="tab" id="tab-ai" data-tab="ai" aria-controls="panel-ai" aria-selected="false">AI usage</button>
       <button type="button" class="tab-btn" role="tab" id="tab-suites" data-tab="suites" aria-controls="panel-suites" aria-selected="false">Suite details</button>
       <button type="button" class="tab-btn" role="tab" id="tab-jira" data-tab="jira" aria-controls="panel-jira" aria-selected="false">🎯 Jira Quality &amp; Delivery</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-ir" data-tab="ir" aria-controls="panel-ir" aria-selected="false">🛒 Intelligent Reset</button>
       <button type="button" class="tab-btn" role="tab" id="tab-live" data-tab="live" aria-controls="panel-live" aria-selected="false">
         <span class="live-pulse-dot" id="live-tab-dot" hidden></span> Live Run
       </button>
-      <a href="test_runner.html" target="_blank" class="tab-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: rgba(37, 99, 235, 0.1); color: #2563EB; font-weight: 700; border-radius: 6px; padding: 6px 12px;">
-        🏬 Intelligent Reset Runner ↗
-      </a>
+      <button type="button" class="tab-btn" role="tab" id="tab-rules" data-tab="rules" aria-controls="panel-rules" aria-selected="false">📋 Reset Rules</button>
+      <button type="button" class="tab-btn tab-btn--runner-tab" role="tab" id="tab-ir-studio" data-tab="ir-studio" aria-controls="panel-ir-studio" aria-selected="false" title="Open Intelligent Reset Studio">
+        🏬 IR Studio
+      </button>
+      <button type="button" class="tab-btn tab-btn--runner-tab" role="tab" id="tab-shelf-mobile" data-tab="shelf-mobile" aria-controls="panel-shelf-mobile" aria-selected="false" title="Open Shelf-Reset Sequencing Mobile Assistant" style="border-color: rgba(16, 185, 129, 0.4); color: #34d399;">
+        📱 Shelf Reset Mobile
+      </button>
     </div>
   </nav>
   </div>
@@ -123,8 +128,8 @@
     <div id="panel-attention" class="tab-panel" role="tabpanel" aria-labelledby="tab-attention" hidden>
       <section class="panel" id="failures-panel">
         <div class="panel__header">
-          <h2>What needs attention</h2>
-          <p>Plain-language reasons — tagged as environment, flaky, or likely defect</p>
+          <h2>Needs attention</h2>
+          <p>Triage feed of all tracked failures, regressions, flaky tests &amp; infra blockers</p>
         </div>
         <div id="failures-list" class="failures-list"></div>
         <p id="failures-empty" class="empty-state" hidden>No mapped failures in the current snapshot.</p>
@@ -159,6 +164,410 @@
       </section>
     </div>
 
+    <div id="panel-ir" class="tab-panel" role="tabpanel" aria-labelledby="tab-ir" hidden>
+      
+      <!-- Top Assistant Header & Task Switcher Bar -->
+      <header class="panel ir-simple-header">
+        <div class="ir-header-top-row">
+          <div class="ir-title-wrap">
+            <div class="ir-title-row">
+              <span class="ir-badge-tag">Retail Operations Assistant</span>
+              <span id="ir-header-status-pill" class="meta-pill">Active Task Loaded</span>
+            </div>
+            <h2 style="font-size:1.4rem; font-weight:800; margin:4px 0 2px 0;">🛒 Intelligent Reset Overview</h2>
+            <p style="color:var(--text-muted); font-size:12px; margin:0;">
+              Executive summary, shelf compliance lift, and associate action breakdown for store resets
+            </p>
+          </div>
+
+          <!-- Quick Store & Task Picker -->
+          <div class="ir-header-quick-picker">
+            <span style="font-size:11px; font-weight:700; color:var(--text-muted);">Quick Select:</span>
+            <button type="button" class="filter-chip active" onclick="window.IrTaskFlow.loadTask(8648127, 'harr')">
+              🎯 Harris Teeter #8648127 (Beauty)
+            </button>
+            <button type="button" class="filter-chip" onclick="window.IrTaskFlow.loadTask(42288818, 'krcs')">
+              🎯 Kroger #42288818 (Tissues)
+            </button>
+            <div style="display:flex; align-items:center; gap:4px;">
+              <input type="number" id="ir-simple-task-input" class="ir-flow-input" style="width:110px;" value="8648127" placeholder="Task ID" />
+              <button type="button" class="btn btn--primary btn--sm" onclick="window.IrTaskFlow.loadTask(document.getElementById('ir-simple-task-input').value)">
+                Load
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clean Sub-Navigation Tabs -->
+        <nav class="ir-subnav-bar" role="tablist" aria-label="Intelligent Reset Views">
+          <button type="button" class="ir-subnav-btn active" role="tab" data-subview="summary" aria-selected="true">
+            📊 1. Task Summary
+          </button>
+          <button type="button" class="ir-subnav-btn" role="tab" data-subview="story" aria-selected="false">
+            ⏱️ 2. Step-by-Step Story
+          </button>
+          <button type="button" class="ir-subnav-btn" role="tab" data-subview="history" aria-selected="false">
+            📋 3. Browse Past Resets
+          </button>
+        </nav>
+      </header>
+
+      <!-- SUBVIEW 1: Task Summary & Executive Verdict (Default Active) -->
+      <main id="ir-subview-summary" class="ir-subview-panel">
+        
+        <!-- Big Executive Verdict Banner -->
+        <div id="ir-exec-verdict-card" class="ir-exec-verdict ir-exec-verdict--review">
+          <div class="ir-exec-verdict-left">
+            <div id="ir-exec-verdict-icon" class="ir-exec-icon">⏳</div>
+            <div>
+              <div class="ir-exec-verdict-kicker">EXECUTIVE VERDICT</div>
+              <h3 id="ir-exec-verdict-title" class="ir-exec-title">Loading Reset Performance…</h3>
+              <p id="ir-exec-verdict-desc" class="ir-exec-desc">
+                Fetching live task execution, associate shift details, and real shelf movements from the retailer instance…
+              </p>
+            </div>
+          </div>
+
+          <!-- Metadata Tags -->
+          <div class="ir-exec-meta-grid">
+            <div class="ir-exec-meta-item">
+              <span class="ir-exec-meta-label">Store Location</span>
+              <span id="ir-exec-meta-store" class="ir-exec-meta-val">—</span>
+            </div>
+            <div class="ir-exec-meta-item">
+              <span class="ir-exec-meta-label">Planogram</span>
+              <span id="ir-exec-meta-planogram" class="ir-exec-meta-val">—</span>
+            </div>
+            <div class="ir-exec-meta-item">
+              <span class="ir-exec-meta-label">Associate</span>
+              <span id="ir-exec-meta-associate" class="ir-exec-meta-val">—</span>
+            </div>
+            <div class="ir-exec-meta-item">
+              <span class="ir-exec-meta-label">Reset Date & Duration</span>
+              <span id="ir-exec-meta-date" class="ir-exec-meta-val">—</span>
+              <span id="ir-exec-meta-time" class="ir-exec-meta-sub">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Key Non-Technical Metric Cards -->
+        <div class="ir-simple-kpi-grid">
+          
+          <!-- Card 1: Accuracy Improvement -->
+          <div class="ir-simple-kpi-card">
+            <div class="ir-simple-kpi-top">
+              <span class="ir-simple-kpi-label">📈 Shelf Accuracy Lift</span>
+              <span id="ir-stat-lift-badge" class="badge badge-gray">Fetching…</span>
+            </div>
+            <div id="ir-stat-lift-val" class="ir-simple-kpi-val" style="color:#10B981;">—</div>
+            <div class="ir-progress-track">
+              <div id="ir-stat-lift-bar" class="ir-progress-fill" style="width: 0%;"></div>
+            </div>
+            <div class="ir-simple-kpi-sub">Target: 95% compliance standard</div>
+          </div>
+
+          <!-- Card 2: Total Work Done -->
+          <div class="ir-simple-kpi-card">
+            <div class="ir-simple-kpi-top">
+              <span class="ir-simple-kpi-label">🛒 Total Work Done</span>
+              <span class="badge badge-blue">Physical Execution</span>
+            </div>
+            <div id="ir-stat-work-val" class="ir-simple-kpi-val">—</div>
+            <div id="ir-stat-work-sub" class="ir-simple-kpi-sub">Loading actions…</div>
+          </div>
+
+          <!-- Card 3: Associate Time Spent -->
+          <div class="ir-simple-kpi-card">
+            <div class="ir-simple-kpi-top">
+              <span class="ir-simple-kpi-label">⏱️ Associate Labor</span>
+              <span class="badge badge-purple">On Floor</span>
+            </div>
+            <div id="ir-stat-time-val" class="ir-simple-kpi-val">—</div>
+            <div id="ir-stat-time-sub" class="ir-simple-kpi-sub">Associate physical shift labor</div>
+          </div>
+
+          <!-- Card 4: Automated AI Scan Speed -->
+          <div class="ir-simple-kpi-card">
+            <div class="ir-simple-kpi-top">
+              <span class="ir-simple-kpi-label">⚡ AI Scan Speed</span>
+              <span class="badge badge-green">Automated</span>
+            </div>
+            <div id="ir-stat-ai-val" class="ir-simple-kpi-val">—</div>
+            <div id="ir-stat-ai-sub" class="ir-simple-kpi-sub">Fast automated photo check</div>
+          </div>
+
+        </div>
+
+        <!-- 4 Visual "What the Associate Did" Action Cards -->
+        <section class="panel" style="margin-top:16px; padding:18px 20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+            <div>
+              <h3 style="margin:0 0 4px 0; font-size:14px; font-weight:800;">📦 What the Associate Did On the Shelf</h3>
+              <p style="color:var(--text-muted); font-size:11.5px; margin:0;">
+                Click any category to see specific products, UPCs, and shelf movements
+              </p>
+            </div>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="setActiveTab('shelf-mobile')">
+              📱 Open Handheld Mobile Assistant ↗
+            </button>
+          </div>
+
+          <div class="ir-work-breakdown-grid">
+            
+            <!-- Work Card 1: Moved -->
+            <div class="ir-work-card ir-work-card--moved">
+              <div class="ir-work-card-top">
+                <span class="ir-work-icon">🔄</span>
+                <span class="ir-work-badge" style="background:#EFF6FF; color:#1D4ED8;">Position Fixed</span>
+              </div>
+              <div class="ir-work-card-number" id="ir-card-moved-count">—</div>
+              <div class="ir-work-card-title">Moved into Correct Place</div>
+              <p class="ir-work-card-desc">Misplaced products shifted to their exact assigned shelf position.</p>
+              <button type="button" id="btn-view-moved" class="btn btn--ghost btn--sm btn-block">
+                View Products ➔
+              </button>
+            </div>
+
+            <!-- Work Card 2: Restocked -->
+            <div class="ir-work-card ir-work-card--restocked">
+              <div class="ir-work-card-top">
+                <span class="ir-work-icon">📥</span>
+                <span class="ir-work-badge" style="background:#F0FDF4; color:#15803D;">Backroom Restock</span>
+              </div>
+              <div class="ir-work-card-number" id="ir-card-restocked-count">—</div>
+              <div class="ir-work-card-title">Restocked on Shelf</div>
+              <p class="ir-work-card-desc">Out-of-stock items retrieved from stockroom and placed onto shelf.</p>
+              <button type="button" id="btn-view-restocked" class="btn btn--ghost btn--sm btn-block">
+                View Products ➔
+              </button>
+            </div>
+
+            <!-- Work Card 3: Removed -->
+            <div class="ir-work-card ir-work-card--removed">
+              <div class="ir-work-card-top">
+                <span class="ir-work-icon">🗑️</span>
+                <span class="ir-work-badge" style="background:#FEF2F2; color:#B91C1C;">Removed</span>
+              </div>
+              <div class="ir-work-card-number" id="ir-card-removed-count">—</div>
+              <div class="ir-work-card-title">Removed from Shelf</div>
+              <p class="ir-work-card-desc">Discontinued, expired, or off-planogram products cleared from bay.</p>
+              <button type="button" id="btn-view-removed" class="btn btn--ghost btn--sm btn-block">
+                View Products ➔
+              </button>
+            </div>
+
+            <!-- Work Card 4: Flagged / Exceptions -->
+            <div class="ir-work-card ir-work-card--flagged">
+              <div class="ir-work-card-top">
+                <span class="ir-work-icon">⚠️</span>
+                <span class="ir-work-badge" style="background:#FFFBEB; color:#B45309;">Exceptions</span>
+              </div>
+              <div class="ir-work-card-number" id="ir-card-flagged-count">—</div>
+              <div class="ir-work-card-title">Flagged / Skipped</div>
+              <p class="ir-work-card-desc">Damaged barcodes, blocked shelf space, or missing shelf tags.</p>
+              <button type="button" id="btn-view-flagged" class="btn btn--ghost btn--sm btn-block">
+                View Products ➔
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+
+      <!-- SUBVIEW 2: Step-by-Step Story (Human Shift Timeline) -->
+      <section id="ir-subview-story" class="ir-subview-panel" hidden>
+        <div class="panel" style="padding:20px 24px;">
+          <div style="margin-bottom:16px;">
+            <h3 style="font-size:15px; font-weight:800; margin:0 0 4px 0;">⏱️ How the Reset Unfolded (Step-by-Step)</h3>
+            <p style="color:var(--text-muted); font-size:12px; margin:0;">
+              Plain-English chronological story of the associate's actions from start to finish
+            </p>
+          </div>
+
+          <!-- Human Narrative Timeline Container -->
+          <div id="ir-story-timeline" class="ir-story-timeline-wrap">
+            <!-- Populated dynamically by ir-flow.js -->
+          </div>
+
+          <!-- Fold for Technical Lineage (Engineers & QA Only) -->
+          <details class="ir-tech-lineage-fold" style="margin-top:24px;">
+            <summary style="font-size:11.5px; font-weight:700; color:var(--text-muted); cursor:pointer; padding:8px 12px; background:var(--bg); border:1px dashed var(--border); border-radius:var(--radius-sm);">
+              ⚙️ View Technical Database Provenance &amp; SQL Ledger (For Developers &amp; QA)
+            </summary>
+            <div style="padding:12px 0; overflow-x:auto;">
+              <table class="ir-history-table" style="width:100%;">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Phase</th>
+                    <th>Event Type</th>
+                    <th>Bay</th>
+                    <th>Detail</th>
+                    <th>Source Table &amp; Column</th>
+                    <th>Row ID</th>
+                  </tr>
+                </thead>
+                <tbody id="ir-tech-lineage-tbody">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- SUBVIEW 3: Browse Past Resets (Simple History Table) -->
+      <section id="ir-subview-history" class="ir-subview-panel" hidden>
+        <div class="panel" style="padding:20px 24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+            <div>
+              <h3 style="font-size:15px; font-weight:800; margin:0 0 4px 0;">📋 Recent Store Resets</h3>
+              <p style="color:var(--text-muted); font-size:12px; margin:0;">Browse past reset tasks across store locations and inspect their execution</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="ir-history-status" class="meta-pill" style="font-size:11px;">Ready</span>
+              <button type="submit" form="ir-history-form" id="ir-history-load" class="btn btn--primary btn--sm">
+                🔄 Load Resets
+              </button>
+            </div>
+          </div>
+
+          <!-- History Filter Form -->
+          <form id="ir-history-form" style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; margin-bottom:16px; display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <label for="ir-history-instance" style="font-size:11px; font-weight:600; color:var(--text-muted); margin:0;">Store Instance</label>
+                <span id="ir-instance-resolved-badge" style="font-size:10px; color:#0284c7; font-weight:600; font-family:monospace; background:rgba(2,132,199,0.1); padding:1px 6px; border-radius:3px;">https://harr.rebotics.net/</span>
+              </div>
+              <select id="ir-history-instance" class="filter-select" style="font-size:12px; padding:4px 8px;">
+                <option value="harr" selected>Harris Teeter (harr)</option>
+                <option value="krcs">Kroger (krcs)</option>
+                <option value="schn">Schnucks (schn)</option>
+                <option value="wake">Wakefern (wake)</option>
+                <option value="albe">Albertsons (albe)</option>
+                <option value="custom">Other Slug…</option>
+              </select>
+              <div id="ir-history-instance-custom-field" hidden style="margin-top:4px;">
+                <input type="text" id="ir-history-instance-custom" placeholder="e.g. harr, krcs, schn" style="font-size:12px; padding:4px 8px; width:140px;" />
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <label for="ir-history-range" style="font-size:11px; font-weight:600; color:var(--text-muted);">Date Range</label>
+              <select id="ir-history-range" class="filter-select" style="font-size:12px; padding:4px 8px;">
+                <option value="today">Today</option>
+                <option value="7d" selected>Last 7 days</option>
+                <option value="14d">Last 14 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="custom">Custom dates…</option>
+              </select>
+            </div>
+
+            <div id="ir-history-from-field" hidden style="display:flex; flex-direction:column; gap:4px;">
+              <label for="ir-history-from" style="font-size:11px; font-weight:600; color:var(--text-muted);">From Date</label>
+              <input type="date" id="ir-history-from" style="font-size:12px; padding:4px 8px;" />
+            </div>
+
+            <div id="ir-history-to-field" hidden style="display:flex; flex-direction:column; gap:4px;">
+              <label for="ir-history-to" style="font-size:11px; font-weight:600; color:var(--text-muted);">To Date</label>
+              <input type="date" id="ir-history-to" style="font-size:12px; padding:4px 8px;" />
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <label for="ir-history-type" style="font-size:11px; font-weight:600; color:var(--text-muted);">Task Type</label>
+              <select id="ir-history-type" class="filter-select" style="font-size:12px; padding:4px 8px;">
+                <option value="">All task types</option>
+              </select>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <label for="ir-history-status-filter" style="font-size:11px; font-weight:600; color:var(--text-muted);">Status</label>
+              <select id="ir-history-status-filter" class="filter-select" style="font-size:12px; padding:4px 8px;">
+                <option value="">All statuses</option>
+              </select>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:4px; flex-grow:1; min-width:140px;">
+              <label for="ir-history-title" style="font-size:11px; font-weight:600; color:var(--text-muted);">Filter by Title / Bay</label>
+              <input type="text" id="ir-history-title" placeholder="Search tasks..." style="font-size:12px; padding:4px 8px;" />
+            </div>
+
+            <!-- Prominent Cloud Sign-in Fields (Shown cleanly when live sync is needed) -->
+            <div id="ir-history-auth-banner" hidden style="width:100%; padding:10px 14px; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); border-radius:var(--radius-sm); margin-top:6px;">
+              <div style="font-size:12px; color:var(--text); margin-bottom:8px;">
+                🔐 <strong>Live Cloud Access:</strong> Enter credentials to fetch real-time tasks from <span id="ir-auth-target-url" style="color:#38bdf8; font-family:monospace; font-weight:700;">https://harr.rebotics.net/</span>. <em>(Local audited tasks are already available without signing in).</em>
+              </div>
+              <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
+                <div id="ir-history-username-field" style="display:flex; flex-direction:column; gap:2px;">
+                  <label for="ir-history-username" style="font-size:10px; font-weight:600; color:var(--text-muted);">Username</label>
+                  <input type="text" id="ir-history-username" placeholder="e.g. associate.name" autocomplete="username" style="font-size:12px; padding:4px 8px; width:160px;" />
+                </div>
+                <div id="ir-history-password-field" style="display:flex; flex-direction:column; gap:2px;">
+                  <label for="ir-history-password" style="font-size:10px; font-weight:600; color:var(--text-muted);">Password</label>
+                  <input type="password" id="ir-history-password" placeholder="••••••••" autocomplete="current-password" style="font-size:12px; padding:4px 8px; width:160px;" />
+                </div>
+                <button type="button" id="ir-history-auth-btn" class="btn btn--primary btn--sm" style="height:28px;">
+                  Sign In &amp; Sync
+                </button>
+              </div>
+              <div id="ir-history-auth-feedback" style="display:none; width:100%; font-size:12px; padding:6px 10px; border-radius:var(--radius-sm); margin-top:8px;"></div>
+            </div>
+          </form>
+
+          <p id="ir-history-summary" style="font-size:12px; color:var(--text-muted); margin-bottom:12px;"></p>
+
+          <div class="ir-table-wrap">
+            <div id="ir-history-results"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quality Findings & Scan Containers for Compatibility -->
+      <div id="ir-quality-findings" hidden></div>
+      <div id="ir-quality-scans" hidden></div>
+
+      <!-- Action Batch Item Slide-over Drawer -->
+      <div id="ir-flow-drawer-overlay" class="ir-flow-drawer-overlay" onclick="window.IrTaskFlow.openItemDrawer('', [])"></div>
+      <aside id="ir-flow-drawer" class="ir-flow-drawer" aria-label="Action Batch Items Detail">
+        <div class="ir-flow-drawer-header">
+          <div class="ir-flow-drawer-title-wrap">
+            <h3 id="ir-drawer-title">Product Details</h3>
+            <div id="ir-drawer-subtitle" style="font-size: 11.5px; color: var(--text-muted);">Verified item actions for this reset step</div>
+            <div id="ir-drawer-ledger" style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #38bdf8; margin-top: 4px;"></div>
+          </div>
+          <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('ir-flow-drawer').classList.remove('open'); document.getElementById('ir-flow-drawer-overlay').classList.remove('open'); document.body.style.overflow='';">
+            ✕ Close
+          </button>
+        </div>
+        <div class="ir-flow-drawer-body">
+          <table class="ir-history-table" style="width: 100%;">
+            <thead>
+              <tr>
+                <th style="width: 30px;">#</th>
+                <th>Product &amp; UPC</th>
+                <th>Action</th>
+                <th>From Position</th>
+                <th>To Position</th>
+                <th>Status</th>
+                <th>Ledger ID</th>
+              </tr>
+            </thead>
+            <tbody id="ir-drawer-items-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+        <div class="ir-flow-drawer-footer">
+          <span style="font-size: 11px; color: var(--text-muted);">Authoritative ledger record</span>
+          <button type="button" class="btn btn--primary btn--sm" onclick="setActiveTab('shelf-mobile'); document.getElementById('ir-flow-drawer').classList.remove('open'); document.getElementById('ir-flow-drawer-overlay').classList.remove('open'); document.body.style.overflow='';">
+            📱 View in Mobile Assistant
+          </button>
+        </div>
+      </aside>
+
+    </div>
+
     <div id="panel-live" class="tab-panel" role="tabpanel" aria-labelledby="tab-live" hidden>
       <section class="panel" id="live-panel-wrapper">
         <div class="panel__header">
@@ -171,6 +580,71 @@
           <p>Real-time test-by-test execution progress streamed from GitHub Actions</p>
         </div>
         <div id="live-runs-content" style="padding:24px;"></div>
+      </section>
+    </div>
+
+    <!-- Shelf-Reset Sequencing Rules Tab Panel -->
+    <div id="panel-rules" class="tab-panel" role="tabpanel" aria-labelledby="tab-rules" hidden>
+      <section class="panel" id="rules-panel-wrapper">
+        <div class="panel__header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h2>📋 Shelf-Reset Sequencing Engine: Mathematical Rules &amp; Architecture</h2>
+              <span class="meta-pill" style="border-color:rgba(56,189,248,0.3); color:#38bdf8;">Graph Sequencer v2.1</span>
+            </div>
+            <p>Formal Mathematical Model, 9 Invariants, Physical Touch Reduction &amp; Mobile UI Specifications</p>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" onclick="setActiveTab('shelf-mobile')" class="btn btn--primary" style="display:inline-flex; align-items:center; gap:6px;">
+              <span>📱</span> Open Shelf Reset Mobile Simulator
+            </button>
+          </div>
+        </div>
+        <div id="shelf-rules-dashboard-container" class="rules-doc-wrapper">
+          <p style="color:var(--muted); text-align:center; padding:24px;">Loading sequencing rules documentation from engine...</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Embedded IR Studio Tab Panel (In Same Tab) -->
+    <div id="panel-ir-studio" class="tab-panel" role="tabpanel" aria-labelledby="tab-ir-studio" hidden>
+      <section class="panel" style="padding:0; overflow:hidden; border-radius:16px;">
+        <div class="panel__header" style="padding:12px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border);">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <h2 style="font-size:16px; margin:0;">🏬 Intelligent Reset Studio</h2>
+            <span class="meta-pill" style="color:#38bdf8; border-color:rgba(56,189,248,0.3);">Embedded Suite</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" class="btn btn--ghost" onclick="var f = document.getElementById('iframe-ir-studio'); if(f) f.contentWindow.location.reload();" style="font-size:12px; padding:4px 10px;">
+              🔄 Reload
+            </button>
+            <a href="test_runner.html" target="_blank" rel="noopener noreferrer" class="btn btn--ghost" style="font-size:12px; padding:4px 10px; text-decoration:none;">
+              ↗ Pop Out
+            </a>
+          </div>
+        </div>
+        <iframe id="iframe-ir-studio" src="test_runner.html" title="Intelligent Reset Studio" style="width:100%; height:calc(100vh - 170px); border:none; display:block; background:var(--surface);"></iframe>
+      </section>
+    </div>
+
+    <!-- Embedded Shelf Reset Mobile Tab Panel (In Same Tab) -->
+    <div id="panel-shelf-mobile" class="tab-panel" role="tabpanel" aria-labelledby="tab-shelf-mobile" hidden>
+      <section class="panel" style="padding:0; overflow:hidden; border-radius:16px;">
+        <div class="panel__header" style="padding:12px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border);">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <h2 style="font-size:16px; margin:0;">📱 Shelf-Reset Sequencing Mobile Simulator</h2>
+            <span class="meta-pill" style="color:#34d399; border-color:rgba(16,185,129,0.3);">Handheld Assistant</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" class="btn btn--ghost" onclick="var f = document.getElementById('iframe-shelf-mobile'); if(f) f.contentWindow.location.reload();" style="font-size:12px; padding:4px 10px;">
+              🔄 Reload
+            </button>
+            <a href="shelf_reset_mobile.html" target="_blank" rel="noopener noreferrer" class="btn btn--ghost" style="font-size:12px; padding:4px 10px; text-decoration:none;">
+              ↗ Pop Out
+            </a>
+          </div>
+        </div>
+        <iframe id="iframe-shelf-mobile" src="shelf_reset_mobile.html" title="Shelf Reset Mobile Assistant" style="width:100%; height:calc(100vh - 170px); border:none; display:block; background:var(--surface);"></iframe>
       </section>
     </div>
   </main>
@@ -216,6 +690,9 @@
   <script src="assets/js/auth-gate.js?v=20260817p"></script>
   <script src="assets/js/live-tracker.js?v=20260817p"></script>
   <script src="assets/js/jira-tracker.js?v=20260817p"></script>
+  <script src="assets/js/ir-live-dashboard.js?v=20260909a"></script>
+  <script src="assets/js/ir-history.js?v=20260909e"></script>
+  <script src="assets/js/ir-flow.js?v=20260922a"></script>
   <script src="assets/js/app.v16.js?v=20260901a"></script>
 </body>
 </html>

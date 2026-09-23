@@ -282,27 +282,15 @@ class TestE2EIntegrationFlow(unittest.TestCase):
         self.assertIn("Duplicate / Same UPC Multi-Location Distribution", content)
         self.assertIn("Present in Which All Locations", content)
         
-        # Check Section 2: Lifecycle Resilience & Itemized Pending Actions
-        self.assertIn("App Refresh, Logout, Screen Switch &amp; App Kill Resilience", content)
-        self.assertIn("APP PULL TO REFRESH", content)
-        self.assertIn("USER LOGOUT AND RELOGIN", content)
-        self.assertIn("SCREEN NAVIGATION SWITCH", content)
-        self.assertIn("APP KILL AND BACKGROUND RESUME", content)
-        self.assertIn("PASSED (Zero Loss)", content)
-        self.assertIn("View", content)
-        self.assertIn("Immediate Next Active Card on Mobile Screen", content)
-        self.assertIn("Full Itemized List of Pending Mobile Actions", content)
-        
-        # Check Section 3: Trace Table
+        # Historical task-ID reports must not claim E2E events that were not captured.
+        self.assertNotIn("App Refresh, Logout, Screen Switch &amp; App Kill Resilience", content)
+        self.assertNotIn("Full Itemized List of Pending Mobile Actions", content)
+
+        # Check Trace Table
         self.assertIn("Streamlined Step-by-Step Bi-Directional Trace", content)
         self.assertIn("Why User Performs This Action", content)
-        self.assertIn("Inspect Payload", content)
-
-        # Check Section 4: Continuous Full-Duplex Network Traffic Log
-        self.assertIn("Full-Duplex Bi-Directional HTTP Traffic Log", content)
-        self.assertIn("Tracks all requests going from Mobile", content)
-        self.assertIn("Inspect Call &amp; Response", content)
-        self.assertIn("trafficModal", content)
+        self.assertNotIn("Inspect Payload", content)
+        self.assertNotIn("Full-Duplex Bi-Directional HTTP Traffic Log", content)
         
         tmp_path.unlink(missing_ok=True)
 
