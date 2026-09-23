@@ -34,10 +34,57 @@
       });
     }
 
+    function getSelectedInstance() {
+      const picker = byId('ir-instance-picker');
+      return picker ? (picker.value || 'harr') : 'harr';
+    }
+
+    function onInstanceChange(val) {
+      if (val === 'custom') {
+        const customUrl = prompt('Enter Custom Instance URL or Slug (e.g., https://stage.rebotics.net or pilot):');
+        if (customUrl && customUrl.trim()) {
+          const picker = byId('ir-instance-picker');
+          let opt = byId('ir-custom-instance-opt');
+          if (!opt) {
+            opt = document.createElement('option');
+            opt.id = 'ir-custom-instance-opt';
+            picker.appendChild(opt);
+          }
+          opt.value = customUrl.trim();
+          opt.textContent = `🌐 ${customUrl.trim()}`;
+          picker.value = customUrl.trim();
+          loadCurrentInputs();
+        } else {
+          if (byId('ir-instance-picker')) byId('ir-instance-picker').value = 'harr';
+        }
+      } else {
+        loadCurrentInputs();
+      }
+    }
+
+    function loadCurrentInputs() {
+      const input = byId('ir-simple-task-input');
+      const tid = input ? input.value.trim() : 'latest';
+      const inst = getSelectedInstance();
+      loadTask(tid, inst);
+    }
+
     // Read task_id or instance from URL query parameters, or default to latest
     const urlParams = new URLSearchParams(window.location.search);
     const initialTaskId = urlParams.get('task_id') || 'latest';
     const initialInstance = urlParams.get('instance') || 'harr';
+    
+    const picker = byId('ir-instance-picker');
+    if (picker && initialInstance) {
+      if (![...picker.options].some(o => o.value === initialInstance)) {
+        const opt = document.createElement('option');
+        opt.value = initialInstance;
+        opt.textContent = `🌐 ${initialInstance}`;
+        picker.appendChild(opt);
+      }
+      picker.value = initialInstance;
+    }
+
     loadTask(initialTaskId, initialInstance);
   }
 
@@ -66,14 +113,25 @@
   }
 
   async function loadTask(taskId, instance) {
+    const inst = instance || (byId('ir-instance-picker') ? byId('ir-instance-picker').value : 'harr') || 'harr';
     const targetId = taskId || (byId('ir-simple-task-input') ? byId('ir-simple-task-input').value.trim() : 'latest') || 'latest';
-    const inst = instance || 'harr';
 
     const input = byId('ir-simple-task-input');
     if (input && targetId !== 'latest') input.value = targetId;
 
+    const picker = byId('ir-instance-picker');
+    if (picker && inst && picker.value !== inst) {
+      if (![...picker.options].some(o => o.value === inst)) {
+        const opt = document.createElement('option');
+        opt.value = inst;
+        opt.textContent = `🌐 ${inst}`;
+        picker.appendChild(opt);
+      }
+      picker.value = inst;
+    }
+
     const statusBadge = byId('ir-header-status-pill');
-    if (statusBadge) statusBadge.textContent = targetId === 'latest' ? 'Fetching Latest Live Task…' : `Loading Task #${targetId}…`;
+    if (statusBadge) statusBadge.textContent = targetId === 'latest' ? `Fetching Latest (${inst.toUpperCase()})…` : `Loading Task #${targetId} (${inst.toUpperCase()})…`;
 
     try {
       const resp = await fetch(`/api/runner/task_flow?task_id=${encodeURIComponent(targetId)}&instance=${encodeURIComponent(inst)}`);
@@ -86,7 +144,8 @@
       renderSimplifiedView(data);
       if (statusBadge) {
         const liveTaskId = data.metadata ? data.metadata.task_id : targetId;
-        statusBadge.textContent = `Live: Task #${liveTaskId}`;
+        const retailLabel = data.metadata ? (data.metadata.retailer || inst.toUpperCase()) : inst.toUpperCase();
+        statusBadge.textContent = `Live: Task #${liveTaskId} (${retailLabel})`;
       }
     } catch (err) {
       console.error('Failed to load task flow:', err);
@@ -401,6 +460,8 @@
     init,
     loadTask,
     loadTaskFlow: loadTask,
+    onInstanceChange,
+    loadCurrentInputs,
     switchSubView,
     openItemDrawer,
   };

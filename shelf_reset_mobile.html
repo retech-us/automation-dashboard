@@ -1517,13 +1517,26 @@
     </div>
 
     <!-- Controls -->
-    <div class="header-controls">
-      <select id="dataset-selector" class="task-select">
-        <option value="current">Current Task (Retailer API - 589 Actions)</option>
-        <option value="8648127">Task #8648127 (Retailer API - 89 Actions)</option>
-        <option value="42484849">Task #42484849 (Multi-Bay Retailer API)</option>
+    <div class="header-controls" style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
+      <select id="instance-selector" class="task-select" style="max-width:140px; font-weight:600;" title="Choose Store Intelligence Cloud Instance">
+        <option value="harr" selected>🎯 Harris Teeter (harr)</option>
+        <option value="krcs">🎯 Kroger (krcs)</option>
+        <option value="albt">🎯 Albertsons (albt)</option>
+        <option value="stgsams">🎯 Sam's Club (stgsams)</option>
+        <option value="custom">🌐 Custom Instance...</option>
+      </select>
+      <select id="dataset-selector" class="task-select" style="max-width:160px;">
+        <option value="current">Current Task</option>
+        <option value="8648127">Task #8648127 (Beauty)</option>
+        <option value="42484849">Task #42484849 (Multi-Bay)</option>
         <option value="reference">Section 7 Reference Fixture (10 Steps)</option>
       </select>
+      <div id="custom-task-box" style="display:inline-flex; align-items:center; gap:3px;">
+        <input type="text" id="custom-task-input" placeholder="Task #" style="width:70px; padding:4px 6px; font-size:11px; font-weight:700; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px;" title="Enter any occurrence Task ID for this instance" />
+        <button type="button" id="btn-load-custom-task" class="btn btn-secondary" style="padding:4px 8px; font-size:11px; font-weight:700;" title="Load and sequence this task from selected instance">
+          ⚡ Load
+        </button>
+      </div>
       <button id="btn-top-reset" class="btn btn-secondary" style="padding:5px 10px; font-size:11.5px;">
         <span>🔄</span> Reset
       </button>
@@ -1894,6 +1907,7 @@
 
     let state = {
       dataset: "current",
+      instance: "harr",
       source: "Current Task Retailer API",
       stepIndex: 0,
       slots: [],
@@ -1941,7 +1955,7 @@
         if (!existingVals.has(tid)) {
           const opt = document.createElement("option");
           opt.value = tid;
-          opt.textContent = `Task #${tid} (Retailer API)`;
+          opt.textContent = `Task #${tid}`;
           sel.appendChild(opt);
         }
       }
@@ -1949,8 +1963,13 @@
     }
 
     // Load dataset from backend API or fallback
-    async function loadDataset(datasetName = "current") {
+    async function loadDataset(datasetName = "current", instance = null) {
       state.dataset = datasetName;
+      if (instance) {
+        state.instance = instance;
+      } else if (!state.instance) {
+        state.instance = (document.getElementById("instance-selector") || {}).value || "harr";
+      }
       state.stepIndex = 0;
       state.history = [];
       state.heldItem = null;
@@ -1963,7 +1982,10 @@
           res = await fetch("/api/runner/shelf_reset/sequence", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datasetName === "current" ? {} : { task_id: datasetName })
+            body: JSON.stringify({
+              task_id: datasetName === "current" ? undefined : datasetName,
+              instance: state.instance
+            })
           });
         }
         if (res && res.ok) {
@@ -1971,14 +1993,28 @@
           state.slots = data.slots;
           state.steps = data.steps;
           state.source = data.source || datasetName;
+          if (data.instance) state.instance = data.instance;
+
+          // Sync instance selector dropdown
+          const instSel = document.getElementById("instance-selector");
+          if (instSel && state.instance) {
+            if (![...instSel.options].some(o => o.value === state.instance)) {
+              const opt = document.createElement("option");
+              opt.value = state.instance;
+              opt.textContent = `🌐 ${state.instance}`;
+              instSel.appendChild(opt);
+            }
+            instSel.value = state.instance;
+          }
 
           if (data.available_tasks && data.available_tasks.length) {
             populateTaskOptions(data.available_tasks, datasetName);
           }
 
           const fixCount = state.steps.filter(s => s.type === "fix_in_bay").length;
+          const instBadge = (state.instance || "HARR").toUpperCase();
           document.getElementById("brand-subtitle").textContent = 
-            `Source: ${state.source} • ${state.slots.length} Slots • ${state.steps.length} Steps (${fixCount} Fix-in-Bay Shifts)`;
+            `[${instBadge}] ${state.source} • ${state.slots.length} Slots • ${state.steps.length} Steps (${fixCount} Fix-in-Bay Shifts)`;
 
           saveSession();
           render();
@@ -2871,6 +2907,7 @@
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
           dataset: state.dataset,
+          instance: state.instance,
           stepIndex: state.stepIndex,
           slots: state.slots,
           heldItem: state.heldItem,
@@ -2886,11 +2923,13 @@
           const parsed = JSON.parse(saved);
           if (parsed.slots && parsed.slots.length) {
             state.dataset = parsed.dataset || "current";
+            state.instance = parsed.instance || "harr";
             state.stepIndex = parsed.stepIndex || 0;
             state.slots = parsed.slots;
             state.heldItem = parsed.heldItem || null;
             state.history = parsed.history || [];
-            document.getElementById("dataset-selector").value = state.dataset;
+            if (document.getElementById("dataset-selector")) document.getElementById("dataset-selector").value = state.dataset;
+            if (document.getElementById("instance-selector")) document.getElementById("instance-selector").value = state.instance;
             return true;
           }
         }
@@ -2906,19 +2945,68 @@
       state.history = [];
       state.heldItem = null;
       saveSession();
-      loadDataset(state.dataset);
+      loadDataset(state.dataset, state.instance);
     });
     document.getElementById("btn-top-reset").addEventListener("click", () => {
       state.stepIndex = 0;
       state.history = [];
       state.heldItem = null;
       saveSession();
-      loadDataset(state.dataset);
+      loadDataset(state.dataset, state.instance);
     });
 
     document.getElementById("dataset-selector").addEventListener("change", (e) => {
-      loadDataset(e.target.value);
+      loadDataset(e.target.value, state.instance);
     });
+
+    const instSelect = document.getElementById("instance-selector");
+    if (instSelect) {
+      instSelect.addEventListener("change", (e) => {
+        let val = e.target.value;
+        if (val === "custom") {
+          const entered = prompt("Enter Custom Instance URL or Slug (e.g., https://stage.rebotics.net or pilot):");
+          if (entered && entered.trim()) {
+            val = entered.trim();
+            let opt = document.getElementById("opt-custom-instance");
+            if (!opt) {
+              opt = document.createElement("option");
+              opt.id = "opt-custom-instance";
+              instSelect.appendChild(opt);
+            }
+            opt.value = val;
+            opt.textContent = `🌐 ${val}`;
+            instSelect.value = val;
+          } else {
+            instSelect.value = state.instance || "harr";
+            return;
+          }
+        }
+        state.instance = val;
+        loadDataset(state.dataset, state.instance);
+      });
+    }
+
+    const btnCustomTask = document.getElementById("btn-load-custom-task");
+    if (btnCustomTask) {
+      btnCustomTask.addEventListener("click", () => {
+        const inp = document.getElementById("custom-task-input");
+        const val = inp ? inp.value.trim() : "";
+        if (val) {
+          loadDataset(val, state.instance);
+        }
+      });
+    }
+
+    const customTaskInput = document.getElementById("custom-task-input");
+    if (customTaskInput) {
+      customTaskInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const val = customTaskInput.value.trim();
+          if (val) loadDataset(val, state.instance);
+        }
+      });
+    }
 
     document.getElementById("planogram-search").addEventListener("input", (e) => {
       state.planogramQuery = e.target.value;
