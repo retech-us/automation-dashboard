@@ -2975,14 +2975,32 @@
       bodyEl.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Loading rules from engine...</p>';
       try {
         const res = await fetch('/api/runner/shelf_reset/rules');
-        const data = await res.json();
-        if (data && data.rules_markdown) {
-          rulesMarkdownCache = data.rules_markdown;
-          bodyEl.innerHTML = parseMarkdownToHtml(rulesMarkdownCache);
-        } else {
-          bodyEl.innerHTML = '<p style="color:#fda4af;">Failed to load rules markdown from engine.</p>';
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('json')) {
+          const data = await res.json();
+          if (data && data.rules_markdown) {
+            rulesMarkdownCache = data.rules_markdown;
+            bodyEl.innerHTML = parseMarkdownToHtml(rulesMarkdownCache);
+            return;
+          }
         }
+        // Fallback: fetch markdown file directly from static server
+        const fallbackRes = await fetch('/SHELF_RESET_SEQUENCING_RULES.md');
+        if (fallbackRes.ok) {
+          rulesMarkdownCache = await fallbackRes.text();
+          bodyEl.innerHTML = parseMarkdownToHtml(rulesMarkdownCache);
+          return;
+        }
+        bodyEl.innerHTML = '<p style="color:#fda4af;">Failed to load rules markdown from engine.</p>';
       } catch (err) {
+        try {
+          const fallbackRes = await fetch('/SHELF_RESET_SEQUENCING_RULES.md');
+          if (fallbackRes.ok) {
+            rulesMarkdownCache = await fallbackRes.text();
+            bodyEl.innerHTML = parseMarkdownToHtml(rulesMarkdownCache);
+            return;
+          }
+        } catch (_) {}
         bodyEl.innerHTML = `<p style="color:#fda4af;">Error fetching rules: ${err.message}</p>`;
       }
     };
