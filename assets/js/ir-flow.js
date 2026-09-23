@@ -14,6 +14,95 @@
     return document.getElementById(id);
   }
 
+  const DEFAULT_INSTANCE_TASKS = {
+    harr: 8648127,
+    krcs: 42288818,
+    albt: 8601238,
+    stgsams: 8648127,
+    schn: 8648127,
+    wake: 8648127,
+  };
+
+  function getSelectedInstance() {
+    const picker = byId('ir-instance-picker');
+    return picker ? (picker.value || 'harr') : 'harr';
+  }
+
+  function quickSelect(instance, taskId) {
+    const inst = instance || 'harr';
+    const tid = taskId || DEFAULT_INSTANCE_TASKS[inst] || 'latest';
+
+    // Highlight chip
+    document.querySelectorAll('[data-instance-chip]').forEach((chip) => {
+      chip.classList.toggle('active', chip.getAttribute('data-instance-chip') === inst);
+    });
+
+    // Sync instance picker
+    const picker = byId('ir-instance-picker');
+    if (picker) {
+      if (![...picker.options].some((o) => o.value === inst)) {
+        const opt = document.createElement('option');
+        opt.value = inst;
+        opt.textContent = `🎯 ${inst}`;
+        picker.appendChild(opt);
+      }
+      picker.value = inst;
+    }
+
+    // Sync history dropdown if exists
+    const histPicker = byId('ir-history-instance');
+    if (histPicker) {
+      if (![...histPicker.options].some((o) => o.value === inst)) {
+        const opt = document.createElement('option');
+        opt.value = inst;
+        opt.textContent = `🎯 ${inst}`;
+        histPicker.appendChild(opt);
+      }
+      histPicker.value = inst;
+      if (typeof window.IrHistory !== 'undefined' && typeof window.IrHistory.updateInstanceUrlPreview === 'function') {
+        window.IrHistory.updateInstanceUrlPreview();
+      }
+    }
+
+    // Sync task input
+    const input = byId('ir-simple-task-input');
+    if (input && tid !== 'latest') {
+      input.value = tid;
+    }
+
+    loadTask(tid, inst);
+  }
+
+  function onInstanceChange(val) {
+    if (val === 'custom') {
+      const customUrl = prompt('Enter Custom Instance URL or Slug (e.g., https://stage.rebotics.net or pilot):');
+      if (customUrl && customUrl.trim()) {
+        const picker = byId('ir-instance-picker');
+        let opt = byId('ir-custom-instance-opt');
+        if (!opt) {
+          opt = document.createElement('option');
+          opt.id = 'ir-custom-instance-opt';
+          if (picker) picker.appendChild(opt);
+        }
+        opt.value = customUrl.trim();
+        opt.textContent = `🌐 ${customUrl.trim()}`;
+        if (picker) picker.value = customUrl.trim();
+        loadCurrentInputs();
+      } else {
+        if (byId('ir-instance-picker')) byId('ir-instance-picker').value = 'harr';
+      }
+    } else {
+      quickSelect(val);
+    }
+  }
+
+  function loadCurrentInputs() {
+    const input = byId('ir-simple-task-input');
+    const tid = input ? input.value.trim() : 'latest';
+    const inst = getSelectedInstance();
+    loadTask(tid, inst);
+  }
+
   function init() {
     // Wire subview tab buttons
     const subTabBtns = document.querySelectorAll('.ir-subnav-btn');
@@ -34,41 +123,6 @@
       });
     }
 
-    function getSelectedInstance() {
-      const picker = byId('ir-instance-picker');
-      return picker ? (picker.value || 'harr') : 'harr';
-    }
-
-    function onInstanceChange(val) {
-      if (val === 'custom') {
-        const customUrl = prompt('Enter Custom Instance URL or Slug (e.g., https://stage.rebotics.net or pilot):');
-        if (customUrl && customUrl.trim()) {
-          const picker = byId('ir-instance-picker');
-          let opt = byId('ir-custom-instance-opt');
-          if (!opt) {
-            opt = document.createElement('option');
-            opt.id = 'ir-custom-instance-opt';
-            picker.appendChild(opt);
-          }
-          opt.value = customUrl.trim();
-          opt.textContent = `🌐 ${customUrl.trim()}`;
-          picker.value = customUrl.trim();
-          loadCurrentInputs();
-        } else {
-          if (byId('ir-instance-picker')) byId('ir-instance-picker').value = 'harr';
-        }
-      } else {
-        loadCurrentInputs();
-      }
-    }
-
-    function loadCurrentInputs() {
-      const input = byId('ir-simple-task-input');
-      const tid = input ? input.value.trim() : 'latest';
-      const inst = getSelectedInstance();
-      loadTask(tid, inst);
-    }
-
     // Read task_id or instance from URL query parameters, or default to latest
     const urlParams = new URLSearchParams(window.location.search);
     const initialTaskId = urlParams.get('task_id') || 'latest';
@@ -76,7 +130,7 @@
     
     const picker = byId('ir-instance-picker');
     if (picker && initialInstance) {
-      if (![...picker.options].some(o => o.value === initialInstance)) {
+      if (![...picker.options].some((o) => o.value === initialInstance)) {
         const opt = document.createElement('option');
         opt.value = initialInstance;
         opt.textContent = `🌐 ${initialInstance}`;
@@ -129,6 +183,11 @@
       }
       picker.value = inst;
     }
+
+    // Highlight corresponding instance chip
+    document.querySelectorAll('[data-instance-chip]').forEach((chip) => {
+      chip.classList.toggle('active', chip.getAttribute('data-instance-chip') === inst);
+    });
 
     const statusBadge = byId('ir-header-status-pill');
     if (statusBadge) statusBadge.textContent = targetId === 'latest' ? `Fetching Latest (${inst.toUpperCase()})…` : `Loading Task #${targetId} (${inst.toUpperCase()})…`;
@@ -460,6 +519,7 @@
     init,
     loadTask,
     loadTaskFlow: loadTask,
+    quickSelect,
     onInstanceChange,
     loadCurrentInputs,
     switchSubView,

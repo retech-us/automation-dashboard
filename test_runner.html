@@ -3279,6 +3279,9 @@
         if (clean === 'krcs' || clean === 'krsc' || clean === 'krog' || clean === 'kroger') return 'https://krcs.rebotics.net';
         if (clean === 'stgsams' || clean === 'sams') return 'https://stgsams.rebotics.net';
         if (clean === 'harr' || clean === 'harris') return 'https://harr.rebotics.net';
+        if (clean === 'albt' || clean === 'albe' || clean === 'albertsons') return 'https://albt.rebotics.net';
+        if (clean === 'schn' || clean === 'schnucks') return 'https://schn.rebotics.net';
+        if (clean === 'wake' || clean === 'wakefern') return 'https://wake.rebotics.net';
         if (!clean.startsWith('https://')) {
             return `https://${clean}.rebotics.net`;
         }
@@ -4056,6 +4059,43 @@
         fetchGitBranches();
         startContinuousHeartbeatMonitor();
         startIrLiveSnapshotMonitor();
+
+        // Deep linking support: parse URL query params (?task_id=...&instance=...&auto_load=1)
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramTaskId = urlParams.get('task_id');
+            const paramInst = urlParams.get('instance') || urlParams.get('base_url');
+            const autoLoad = urlParams.get('auto_load') === '1' || urlParams.get('auto_load') === 'true';
+
+            if (paramInst) {
+                const normUrl = normalizeBaseUrl(paramInst);
+                const baseInput = document.getElementById('cfg-base-url');
+                if (baseInput) {
+                    baseInput.value = normUrl;
+                    if (typeof onBaseUrlInput === 'function') onBaseUrlInput(normUrl);
+                }
+            }
+
+            if (paramTaskId) {
+                const taskInput = document.getElementById('cfg-task-id-direct');
+                if (taskInput) {
+                    taskInput.value = paramTaskId;
+                    if (typeof onTaskIdInput === 'function') onTaskIdInput(paramTaskId);
+                }
+                const dispTid = document.getElementById('disp-task-id');
+                if (dispTid) dispTid.textContent = '#' + paramTaskId;
+            }
+
+            if (autoLoad && paramTaskId) {
+                setTimeout(() => {
+                    if (typeof loadTaskById === 'function') {
+                        loadTaskById();
+                    }
+                }, 400);
+            }
+        } catch (e) {
+            console.warn('Error reading URL params:', e);
+        }
     });
 
     window.addEventListener('keydown', (event) => {

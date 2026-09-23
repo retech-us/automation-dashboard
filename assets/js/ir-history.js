@@ -87,6 +87,9 @@
       val = custom ? custom.value.trim() : '';
     }
     if (val === 'krog' || val === 'kroger' || val === 'krsc') val = 'krcs';
+    if (val === 'albe' || val === 'albertsons') val = 'albt';
+    if (val === 'sams') val = 'stgsams';
+    if (val === 'harris') val = 'harr';
     return val || 'harr';
   }
 
@@ -129,15 +132,44 @@
     const row = document.createElement('tr');
     const audited = task.audited === true;
 
-    // 1. Task ID
+    // 1. Task ID (Clicks to stay in Intelligent Reset tab, with deep link to IR Studio)
     const tdId = document.createElement('td');
+    tdId.style.whiteSpace = 'nowrap';
     const linkId = document.createElement('a');
     linkId.className = 'ir-task-link';
-    linkId.href = `test_runner.html?task_id=${encodeURIComponent(task.task_id)}`;
-    linkId.target = '_blank';
-    linkId.title = `Open Task #${task.task_id} in IR Studio`;
+    linkId.href = '#';
+    linkId.title = `Load Task #${task.task_id} Summary & Step-by-Step Story`;
     linkId.textContent = `#${task.task_id}`;
+    linkId.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.IrTaskFlow) {
+        window.IrTaskFlow.loadTask(task.task_id, selectedInstance());
+        window.IrTaskFlow.switchSubView('summary');
+        const headerEl = document.querySelector('.ir-simple-header');
+        if (headerEl) {
+          headerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
     tdId.appendChild(linkId);
+
+    const studioLink = document.createElement('a');
+    studioLink.className = 'ir-studio-deeplink';
+    const currentInst = selectedInstance() || 'harr';
+    studioLink.href = `test_runner.html?task_id=${encodeURIComponent(task.task_id)}&instance=${encodeURIComponent(currentInst)}&auto_load=1`;
+    studioLink.target = '_blank';
+    studioLink.rel = 'noopener noreferrer';
+    studioLink.title = `Open Task #${task.task_id} in IR Studio (Developer / Simulator Mode)`;
+    studioLink.style.marginLeft = '6px';
+    studioLink.style.fontSize = '10px';
+    studioLink.style.padding = '1px 5px';
+    studioLink.style.borderRadius = '4px';
+    studioLink.style.border = '1px solid #CBD5E1';
+    studioLink.style.color = '#64748B';
+    studioLink.style.textDecoration = 'none';
+    studioLink.style.display = 'inline-block';
+    studioLink.textContent = 'Studio ↗';
+    tdId.appendChild(studioLink);
     row.appendChild(tdId);
 
     // 2. Date
