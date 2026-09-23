@@ -181,17 +181,24 @@
           </div>
 
           <!-- Quick Store & Task Picker -->
-          <div class="ir-header-quick-picker">
+          <div class="ir-header-quick-picker" style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
             <span style="font-size:11px; font-weight:700; color:var(--text-muted);">Quick Select:</span>
             <button type="button" class="filter-chip active" onclick="window.IrTaskFlow.loadTask(8648127, 'harr')">
-              🎯 Harris Teeter #8648127 (Beauty)
+              🎯 Harris Teeter #8648127
             </button>
             <button type="button" class="filter-chip" onclick="window.IrTaskFlow.loadTask(42288818, 'krcs')">
-              🎯 Kroger #42288818 (Tissues)
+              🎯 Kroger #42288818
             </button>
             <div style="display:flex; align-items:center; gap:4px;">
-              <input type="number" id="ir-simple-task-input" class="ir-flow-input" style="width:110px;" value="8648127" placeholder="Task ID" />
-              <button type="button" class="btn btn--primary btn--sm" onclick="window.IrTaskFlow.loadTask(document.getElementById('ir-simple-task-input').value)">
+              <select id="ir-instance-picker" class="ir-flow-input" style="width:130px; font-size:11px; padding:4px 6px; font-weight:600;" onchange="window.IrTaskFlow.onInstanceChange(this.value)" title="Choose Cloud Backend Instance">
+                <option value="harr" selected>🎯 Harris Teeter (harr)</option>
+                <option value="krcs">🎯 Kroger (krcs)</option>
+                <option value="albt">🎯 Albertsons (albt)</option>
+                <option value="stgsams">🎯 Sam's Club (stgsams)</option>
+                <option value="custom">🌐 Custom Instance...</option>
+              </select>
+              <input type="number" id="ir-simple-task-input" class="ir-flow-input" style="width:105px;" value="8648127" placeholder="Task ID" title="Enter any occurrence Task ID" />
+              <button type="button" class="btn btn--primary btn--sm" onclick="window.IrTaskFlow.loadCurrentInputs()" title="Fetch live task flow for selected instance">
                 Load
               </button>
             </div>
