@@ -1747,6 +1747,16 @@
                     <input type="text" id="action-search" class="form-control" placeholder="🔍 Search product title, UPC, bay, movement..." oninput="renderActionTable()" style="height: 26px; font-size: 11px;">
                 </div>
 
+                <!-- Invariant Warning Alert Banner (Redundant moves) -->
+                <div id="redundant-moves-alert" style="display: none; margin-bottom: 6px; padding: 6px 10px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 6px; font-size: 11px; color: #991B1B; flex-shrink: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                        <div>
+                            ⚠️ <b>Invariant Rule 9 Violation:</b> <span id="redundant-moves-count" style="font-weight: 800;">0</span> redundant same-slot move(s) detected. Product is already in-place!
+                        </div>
+                        <button class="btn" type="button" style="background: #DC2626; color: white; border: none; padding: 2px 8px; font-size: 10px; border-radius: 4px; cursor: pointer; font-weight: 700;" onclick="filterBay('redundant')">Filter Redundant</button>
+                    </div>
+                </div>
+
                 <!-- Full Action Table -->
                 <div style="flex: 1; min-height: 140px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 6px; margin-bottom: 6px;">
                     <table class="action-list-table">
@@ -3318,9 +3328,45 @@
         }
     }
 
+    function isRedundantSameSlotMove(action) {
+        if (!action) return false;
+        const sBay = action.source_bay != null ? String(action.source_bay).trim() : '';
+        const tBay = action.target_bay != null ? String(action.target_bay).trim() : '';
+        const sSh = action.source_shelf != null ? String(action.source_shelf).trim() : '';
+        const tSh = action.target_shelf != null ? String(action.target_shelf).trim() : '';
+        const sPos = action.source_position != null ? String(action.source_position).trim() : '';
+        const tPos = action.target_position != null ? String(action.target_position).trim() : '';
+
+        if (!sBay || !tBay || !sSh || !tSh || !sPos || !tPos) return false;
+        if (sBay !== tBay || sSh !== tSh || sPos !== tPos) return false;
+
+        const aType = (action.type || '').toUpperCase();
+        const bType = (action.backend_action_type || '').toUpperCase();
+        const sSub = (action.step_subtype || '').toLowerCase();
+
+        return aType === 'SETASIDE' || aType === 'SET_ASIDE' ||
+               aType === 'ADDITEMS' || aType === 'ADD_TO_SHELF' ||
+               aType === 'FIXINBAY' || aType === 'FIX_IN_BAY' ||
+               sSub === 'pick' || sSub === 'place' ||
+               bType.includes('ACTION_MOVE') || bType.includes('FIX_POSITION');
+    }
+
     function updateActionCounts() {
         const countTotal = document.getElementById('count-total-actions');
         if (countTotal) countTotal.textContent = allActions.length;
+
+        // Invariant Rule 9: Redundant Same-Slot Moves Detection
+        const redundantActions = allActions.filter(isRedundantSameSlotMove);
+        const alertEl = document.getElementById('redundant-moves-alert');
+        const countEl = document.getElementById('redundant-moves-count');
+        if (alertEl && countEl) {
+            if (redundantActions.length > 0) {
+                alertEl.style.display = 'block';
+                countEl.textContent = redundantActions.length;
+            } else {
+                alertEl.style.display = 'none';
+            }
+        }
 
         // Render Bay Filter Chips
         const bayChips = document.getElementById('bay-filter-chips');
@@ -3334,6 +3380,10 @@
                 const count = allActions.filter(a => '' + a.bay === '' + b).length;
                 html += `<button class="filter-chip ${selectedBayFilter === b ? 'active' : ''}" onclick="filterBay('${b}')">Bay ${b} (${count})</button>`;
             });
+
+            if (redundantActions.length > 0) {
+                html += `<button class="filter-chip ${selectedBayFilter === 'redundant' ? 'active' : ''}" style="color: ${selectedBayFilter === 'redundant' ? '#FFFFFF' : '#DC2626'}; border-color: #F87171; background: ${selectedBayFilter === 'redundant' ? '#DC2626' : '#FEF2F2'}; font-weight: 700;" onclick="filterBay('redundant')">⚠️ Redundant (${redundantActions.length})</button>`;
+            }
             bayChips.innerHTML = html;
         }
 
@@ -3344,6 +3394,8 @@
         selectedBayFilter = bay;
         if (bay === 'all') {
             currentFilteredActions = [...allActions];
+        } else if (bay === 'redundant') {
+            currentFilteredActions = allActions.filter(isRedundantSameSlotMove);
         } else {
             currentFilteredActions = allActions.filter(a => '' + a.bay === '' + bay);
         }
@@ -3406,6 +3458,7 @@
                 </td>
                 <td style="font-family: monospace; font-size: 10px; color: #1E40AF; font-weight: 600;">
                     ${action.movement_line_on_mobile || action.movement_line || ''}
+                    ${isRedundantSameSlotMove(action) ? `<div style="margin-top: 3px;"><span class="badge" style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-size: 8.5px; padding: 1px 5px; font-weight: 800;">⚠️ REDUNDANT SAME-SLOT MOVE</span></div>` : ''}
                 </td>
                 <td style="text-align: center;">
                     ${statusText}
@@ -3505,9 +3558,15 @@
         banner.textContent = `${currentStep.mobile_card_icon || '📱'} ${bannerText}`;
 
         document.getElementById('mob-title').textContent = currentStep.title;
-        document.getElementById('mob-upc').innerHTML = `UPC: <b>${currentStep.upc}</b> <span style="background: #EFF6FF; color: #1E40AF; font-size: 9px; padding: 1px 6px; border-radius: 4px; margin-left: 4px; font-weight: 700; border: 1px solid #BFDBFE;">📷 Scan #${currentStep.scan_id || 'N/A'}</span> ${currentStep.facing_total > 1 ? `<span style="background: #EEF2FF; color: #4338CA; font-size: 8.5px; padding: 1px 5px; border-radius: 3px; margin-left: 4px; font-weight: 700; border: 1px solid #C7D2FE;">🏷️ Facing ${currentStep.facing_index}/${currentStep.facing_total}</span>` : ''}`;
-        document.getElementById('mob-movement').innerHTML = `📍 <b>Movement:</b> ${currentStep.movement_line_on_mobile || currentStep.movement_line}`;
-        document.getElementById('mob-meaning').innerHTML = `💡 <b>Operational Context:</b> ${currentStep.user_action_meaning || currentStep.meaning}`;
+        const isRedundantStep = isRedundantSameSlotMove(currentStep);
+
+        if (isRedundantStep) {
+            document.getElementById('mob-movement').innerHTML = `📍 <b>Movement:</b> ${currentStep.movement_line_on_mobile || currentStep.movement_line} <div style="margin-top:4px;"><span class="badge" style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; font-size:9.5px; padding:2px 7px; font-weight:800;">⚠️ REDUNDANT SAME-SLOT MOVE (ALREADY IN-PLACE)</span></div>`;
+            document.getElementById('mob-meaning').innerHTML = `⚠️ <b style="color:#DC2626;">Backend Invariant Anomaly:</b> This product is already sitting at Bay ${currentStep.source_bay}, Shelf ${currentStep.source_shelf}, Pos ${currentStep.source_position}. The backend instructed an unnecessary pick & place in the same spot!`;
+        } else {
+            document.getElementById('mob-movement').innerHTML = `📍 <b>Movement:</b> ${currentStep.movement_line_on_mobile || currentStep.movement_line}`;
+            document.getElementById('mob-meaning').innerHTML = `💡 <b>Operational Context:</b> ${currentStep.user_action_meaning || currentStep.meaning}`;
+        }
         document.getElementById('mob-backend-desc').innerHTML = `⚙️ <b>Backend Mapping:</b> <code>${currentStep.backend_action_type || currentStep.type}</code> &bull; <i>${currentStep.backend_desc || 'Planogram shelf alignment'}</i>`;
         document.getElementById('mobile-step-pill').textContent = `${currentIndex + 1} / ${allActions.length}`;
 
@@ -3602,6 +3661,10 @@
                 renderMobileScreen();
 
                 logNetwork('LOAD_COMPLETE', `Loaded ${allActions.length} live actions across ${data.bays_count || 1} bay(s) for Task #${data.task_id} (${data.latency_ms || 40}ms).`, 200, data.latency_ms || 40);
+                const redMoves = allActions.filter(isRedundantSameSlotMove);
+                if (redMoves.length > 0) {
+                    logNetwork('INVARIANT_ALERT', `⚠️ Invariant Rule 9: ${redMoves.length} redundant same-slot move(s) detected in Task #${data.task_id} (already in-place).`, 409, 20);
+                }
             } else {
                 alert('Failed to load task: ' + (data.message || data.error));
                 logNetwork('LOAD_ERROR', data.message || data.error, 400, 10);
@@ -3710,7 +3773,9 @@
             if (data.status === 'success') {
                 logNetwork('AUDIT_COMPLETE', `Audit complete: ${data.total_raw_db_detections} DB detections ➔ ${data.total_generated_mobile_cards} cards (${data.compliance_score_pct}% compliance, 0 drops).`, 200, 25);
                 updateReportBadgesForActiveTask(taskId);
-                const openReport = confirm(`✅ Task #${taskId} Audit Complete!\n\n• Raw DB Detections: ${data.total_raw_db_detections}\n• Generated Mobile Cards: ${data.total_generated_mobile_cards}\n• Performed Actions: ${data.total_performed_actions}\n• Dropped Actions: ${data.total_dropped_actions}\n• Compliance Score: ${data.compliance_score_pct}%\n\nOpen the interactive E2E Audit & Trace Report now?`);
+                const redMoves = (data.discrepancies || []).filter(d => d.includes('REDUNDANT_SAME_SLOT_MOVE'));
+                const redNote = redMoves.length > 0 ? `\n• ⚠️ Invariant Violations: ${redMoves.length} Redundant Same-Slot Move(s) flagged!` : '';
+                const openReport = confirm(`✅ Task #${taskId} Audit Complete!\n\n• Raw DB Detections: ${data.total_raw_db_detections}\n• Generated Mobile Cards: ${data.total_generated_mobile_cards}\n• Performed Actions: ${data.total_performed_actions}\n• Dropped Actions: ${data.total_dropped_actions}\n• Compliance Score: ${data.compliance_score_pct}%${redNote}\n\nOpen the interactive E2E Audit & Trace Report now?`);
                 if (openReport) {
                     openReportInRunner(
                         data.report_url || `/api/runner/e2e_audit_report?task_id=${taskId}&t=${Date.now()}`,

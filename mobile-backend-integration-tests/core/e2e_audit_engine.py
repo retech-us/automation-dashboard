@@ -751,6 +751,21 @@ def audit_task_execution(
             "count": orphan_count
         })
 
+    # Check 1.5: Redundant Same-Slot Moves (Source Slot == Target Slot)
+    redundant_moves = [
+        r for r in step_records
+        if r.source_coordinates and r.target_coordinates
+        and r.source_coordinates == r.target_coordinates
+        and r.action_type in ("SET_ASIDE", "ADD_TO_SHELF", "FIX_IN_BAY")
+    ]
+    if redundant_moves:
+        discrepancies.append({
+            "severity": "WARNING",
+            "type": "REDUNDANT_SAME_SLOT_MOVE",
+            "message": f"⚠️ {len(redundant_moves)} action(s) instructed redundant same-slot moves where product was already in its correct location.",
+            "count": len(redundant_moves),
+        })
+
     # Check 2: Total Compliance Calculation
     compliance_pct = 100.0 if len(step_records) == 0 else round((performed_count / len(step_records)) * 100.0, 1)
     compare_result = compare_actions(

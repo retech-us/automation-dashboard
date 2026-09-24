@@ -2686,8 +2686,86 @@ class TestMobileActionListLogic(unittest.TestCase):
         # Verify: Race condition handled cleanly, action stays resolved (0 duplicate cards)
         self.assertEqual(len(cards), 0, "Optimistic overlay must prevent stale GET response from reverting completed action")
 
+    def test_invariant_rule_9_redundant_same_slot_moves(self):
+        """Rule 9: In-Place Preservation - Verify that redundant same-slot moves (CUR == EXP) are flagged as invariant violations."""
+        from core.invariants_validator import validate_all_invariants
+        from core.action_list_ui_mapper import partition_ui_models_by_bay
+
+        # Case 1: Raw actions containing a redundant same-slot move (e.g. Task 43145128 Bay 4 Sh 3 Pos 1)
+        flawed_backend_actions = [
+            {
+                "id": 9991,
+                "source_id": 1,
+                "upc": "011110131164",
+                "displayed_upc": "011110131164",
+                "product_title": "ABO WLD BF VNSN LMB",
+                "product_id": 209157,
+                "action": "place_on_shelf_add_to_bay",
+                "state": "STATE_IDLE",
+                "reason": "Add Item",
+                "current_position": {
+                    "action": "set_aside",
+                    "section_info": {"id": 4, "name": "4"},
+                    "shelf": 3,
+                    "position": 1,
+                },
+                "expected_position": {
+                    "action": "place_on_shelf_add_to_bay",
+                    "section_info": {"id": 4, "name": "4"},
+                    "shelf": 3,
+                    "position": 1,
+                },
+            }
+        ]
+
+        domain_models = transform_action_list_to_domain(flawed_backend_actions, include_completed=True)
+        bay_summaries = partition_ui_models_by_bay(domain_models, available_bays=["4"])
+        results, _ = validate_all_invariants(flawed_backend_actions, domain_models, bay_summaries)
+
+        rule9_result = next((r for r in results if "In-Place Preservation" in r.name), None)
+        self.assertIsNotNone(rule9_result, "Rule 9 InvariantCheckResult must be present")
+        self.assertFalse(rule9_result.passed, "Redundant same-slot move (4:3:1 -> 4:3:1) must fail Invariant Rule 9")
+        self.assertIn("Redundant same-slot move", rule9_result.details)
+        self.assertEqual(rule9_result.metric_a, 1)
+
+        # Case 2: Clean legitimate cross-slot move (e.g. 1:5:1 -> 2:3:4)
+        clean_backend_actions = [
+            {
+                "id": 9992,
+                "source_id": 2,
+                "upc": "023100110264",
+                "displayed_upc": "023100110264",
+                "product_title": "Cesar Filet Mignon 100g",
+                "product_id": 901,
+                "action": "place_on_shelf_add_to_bay",
+                "state": "STATE_IDLE",
+                "reason": "Add Item",
+                "current_position": {
+                    "action": "set_aside",
+                    "section_info": {"id": 1, "name": "1"},
+                    "shelf": 5,
+                    "position": 1,
+                },
+                "expected_position": {
+                    "action": "place_on_shelf_add_to_bay",
+                    "section_info": {"id": 2, "name": "2"},
+                    "shelf": 3,
+                    "position": 4,
+                },
+            }
+        ]
+
+        clean_domains = transform_action_list_to_domain(clean_backend_actions, include_completed=True)
+        clean_bays = partition_ui_models_by_bay(clean_domains, available_bays=["1", "2"])
+        clean_results, _ = validate_all_invariants(clean_backend_actions, clean_domains, clean_bays)
+
+        clean_rule9 = next((r for r in clean_results if "In-Place Preservation" in r.name), None)
+        self.assertIsNotNone(clean_rule9)
+        self.assertTrue(clean_rule9.passed, "Legitimate cross-bay move must pass Invariant Rule 9")
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 

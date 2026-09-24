@@ -229,4 +229,48 @@ def validate_all_invariants(
         )
     )
 
+    # 9. In-Place Preservation (Zero Redundant Same-Slot Moves)
+    # Products already positioned at their exact target location (source == target) must never generate move instructions.
+    same_slot_violations = []
+    seen_same_slot_keys = set()
+    for d in domain_models:
+        if d.current_position and d.expected_position:
+            curr = d.current_position
+            exp = d.expected_position
+            curr_bay = str(curr.section_info.name if curr.section_info and curr.section_info.name is not None else "")
+            exp_bay = str(exp.section_info.name if exp.section_info and exp.section_info.name is not None else "")
+            curr_sh = curr.shelf
+            exp_sh = exp.shelf
+            curr_pos = str(curr.position) if curr.position is not None else ""
+            exp_pos = str(exp.position) if exp.position is not None else ""
+
+            if curr_bay and exp_bay and curr_bay == exp_bay and curr_sh == exp_sh and curr_pos == exp_pos:
+                if d.action_type in ("SetAside", "AddItems", "FixInBay") or d.action_type_enum in (
+                    ActionTypeByName.SET_ASIDE.value,
+                    ActionTypeByName.PLACE_ON_SHELF_ADD_TO_BAY.value,
+                    ActionTypeByName.FIX_POSITION_IN_BAY.value,
+                    ActionTypeByName.FIX_POSITION_MOVE_TO_BAY.value,
+                ):
+                    v_key = (d.upc, curr_bay, curr_sh, curr_pos)
+                    if v_key not in seen_same_slot_keys:
+                        seen_same_slot_keys.add(v_key)
+                        same_slot_violations.append(
+                            f"Redundant same-slot move for UPC {d.upc} ('{d.product_title}') at Bay {curr_bay} Sh {curr_sh} Pos {curr_pos}"
+                        )
+
+    inv9_passed = (len(same_slot_violations) == 0)
+    results.append(
+        InvariantCheckResult(
+            name="9. In-Place Preservation (Zero Redundant Same-Slot Moves)",
+            passed=inv9_passed,
+            details=(
+                "All items in their correct target positions are untouched; zero redundant same-slot moves"
+                if inv9_passed
+                else f"{len(same_slot_violations)} redundant same-slot move(s) detected: " + "; ".join(same_slot_violations[:3]) + ("..." if len(same_slot_violations) > 3 else "")
+            ),
+            metric_a=len(same_slot_violations),
+        )
+    )
+
     return results, pairing_records
+
