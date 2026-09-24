@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-24T08:06:55.078763+00:00",
+  "lastUpdated": "2026-09-24T08:33:44.997450+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -8,9 +8,9 @@
     "totalDefects": 1000,
     "openDefects": 204,
     "blockers": 134,
-    "inProgress": 287,
-    "inQa": 65,
-    "resolvedThisWeek": 52,
+    "inProgress": 288,
+    "inQa": 64,
+    "resolvedThisWeek": 50,
     "resolvedTotal": 444
   },
   "byPriority": {
@@ -21,15 +21,15 @@
     "Lowest": 0
   },
   "byComponent": {
+    "IOS": 209,
+    "BE REBM": 158,
+    "BE CORE": 22,
     "General": 240,
     "FE Hawkeye": 23,
     "ANDR": 233,
     "HAWKEYE": 22,
-    "BE REBM": 158,
     "PARENT-WORK-ITEM": 33,
-    "IOS": 209,
     "DE": 28,
-    "BE CORE": 22,
     "OPTIMAL CAPTURE": 1,
     "REPORTING": 1,
     "BE ADMIN": 2,
@@ -42,13 +42,13 @@
     "Customer": 1
   },
   "byStatus": {
-    "QA": 65,
+    "Dev Complete": 44,
+    "UAT": 138,
+    "QA": 64,
     "Waiting for clarification": 58,
-    "Code Review": 38,
-    "Dev Complete": 39,
+    "Code Review": 33,
     "In Progress": 32,
     "To  Do": 146,
-    "UAT": 137,
     "Done": 370,
     "Staging": 5,
     "Invalid": 74,
@@ -244,6 +244,162 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-20715",
+      "summary": "[iOS] New low compliance popup for Final Photo",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.34 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20628 - [iOS] [IR] Single User \u2013 Generate All Actions Before Execution and Validate Compliance After Post Photo",
+      "status": "Dev Complete",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Nitish Kumar",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
+      "tester": "Nitish Kumar",
+      "reporter": "Nitish Kumar",
+      "created": "2026-09-22T04:11:58.287-0700",
+      "updated": "2026-09-24T01:16:41.033-0700",
+      "ageDays": 1,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20715"
+    },
+    {
+      "key": "REB3-20667",
+      "summary": "[BE] Add final-stage retailer capture contract and telemetry",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.34 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Raghav Galhotra",
+      "reporter": "Raghav Galhotra",
+      "created": "2026-09-14T23:07:36.131-0700",
+      "updated": "2026-09-24T01:12:37.175-0700",
+      "ageDays": 9,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20667"
+    },
+    {
+      "key": "REB3-20662",
+      "summary": "Improve basket fullness estimation and return masks per basket",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Improvement",
+      "epic": "None",
+      "status": "Dev Complete",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE CORE",
+      "assignee": "Ashok Pilli",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
+      "tester": "Zhuogang Peng",
+      "reporter": "Zhuogang Peng",
+      "created": "2026-09-14T20:33:55.126-0700",
+      "updated": "2026-09-24T01:09:20.136-0700",
+      "ageDays": 9,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PILOT",
+        "SONA"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20662"
+    },
+    {
+      "key": "REB3-20679",
+      "summary": "[BE-CORE] Pixel segmentation algorithm + config-driven fallback switch",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20662 - Improve basket fullness estimation and return masks per basket",
+      "status": "Dev Complete",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Ashok Pilli",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
+      "tester": "Ashok Pilli",
+      "reporter": "Ashok Pilli",
+      "created": "2026-09-16T05:07:59.076-0700",
+      "updated": "2026-09-24T01:09:15.775-0700",
+      "ageDays": 7,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20679"
+    },
+    {
+      "key": "REB3-20681",
+      "summary": "[BE-CORE] Sample tooling, integration tests, and perf validation",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20662 - Improve basket fullness estimation and return masks per basket",
+      "status": "Dev Complete",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Ashok Pilli",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
+      "tester": "Ashok Pilli",
+      "reporter": "Ashok Pilli",
+      "created": "2026-09-16T05:15:28.416-0700",
+      "updated": "2026-09-24T01:09:07.691-0700",
+      "ageDays": 7,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20681"
+    },
+    {
+      "key": "REB3-20680",
+      "summary": "[BE-CORE] Mask storage & DB schema",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20662 - Improve basket fullness estimation and return masks per basket",
+      "status": "Dev Complete",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Ashok Pilli",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
+      "tester": "Ashok Pilli",
+      "reporter": "Ashok Pilli",
+      "created": "2026-09-16T05:14:40.996-0700",
+      "updated": "2026-09-24T01:08:59.705-0700",
+      "ageDays": 7,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20680"
+    },
     {
       "key": "REB3-20695",
       "summary": "[BE][PRGM]Add conditional post-photo skip based on survey answer",
@@ -586,31 +742,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20654"
     },
     {
-      "key": "REB3-20667",
-      "summary": "[BE] Add final-stage retailer capture contract and telemetry",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.34 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Raghav Galhotra",
-      "reporter": "Raghav Galhotra",
-      "created": "2026-09-14T23:07:36.131-0700",
-      "updated": "2026-09-23T10:29:32.025-0700",
-      "ageDays": 9,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20667"
-    },
-    {
       "key": "REB3-20412",
       "summary": "[IR][ALBT][SAS] Validate Advanced Product Filters for Intelligent Reset",
       "project": "Rebotics 3",
@@ -684,7 +815,7 @@
       "reporter": "Vishal Kohli",
       "created": "2025-01-02T00:26:57.812-0800",
       "updated": "2026-09-23T08:49:12.827-0700",
-      "ageDays": 629,
+      "ageDays": 630,
       "staleDays": 0,
       "labels": [
         "BE"
@@ -968,33 +1099,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20638"
     },
     {
-      "key": "REB3-20715",
-      "summary": "[iOS] New low compliance popup for Final Photo",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.34 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20628 - [iOS] [IR] Single User \u2013 Generate All Actions Before Execution and Validate Compliance After Post Photo",
-      "status": "Code Review",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Nitish Kumar",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
-      "tester": "Nitish Kumar",
-      "reporter": "Nitish Kumar",
-      "created": "2026-09-22T04:11:58.287-0700",
-      "updated": "2026-09-23T04:39:35.251-0700",
-      "ageDays": 1,
-      "staleDays": 0,
-      "labels": [
-        "IOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20715"
-    },
-    {
       "key": "REB3-20683",
       "summary": "[QKTP] Hawkeye - Filter options Api for Hawkeye Dashboard",
       "project": "Rebotics 3",
@@ -1226,7 +1330,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-09-18T01:30:50.347-0700",
       "updated": "2026-09-23T02:04:51.191-0700",
-      "ageDays": 5,
+      "ageDays": 6,
       "staleDays": 0,
       "labels": [
         "ALBT",
@@ -1409,8 +1513,8 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-23T01:11:13.404-0700",
       "updated": "2026-09-23T01:31:40.174-0700",
-      "ageDays": 0,
-      "staleDays": 0,
+      "ageDays": 1,
+      "staleDays": 1,
       "labels": [
         "IOS",
         "PRGM",
@@ -1439,7 +1543,7 @@
       "created": "2026-09-09T04:09:29.171-0700",
       "updated": "2026-09-23T01:11:14.948-0700",
       "ageDays": 14,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "IOS",
         "PRGM",
@@ -1607,7 +1711,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-09-21T01:10:49.755-0700",
       "updated": "2026-09-22T23:52:15.487-0700",
-      "ageDays": 2,
+      "ageDays": 3,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20696"
@@ -1632,7 +1736,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-09-21T01:28:10.444-0700",
       "updated": "2026-09-22T23:06:15.450-0700",
-      "ageDays": 2,
+      "ageDays": 3,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20698"
@@ -2541,85 +2645,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-19636"
     },
     {
-      "key": "REB3-20662",
-      "summary": "Improve basket fullness estimation and return masks per basket",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Improvement",
-      "epic": "None",
-      "status": "Code Review",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "BE CORE",
-      "assignee": "Ashok Pilli",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
-      "tester": "Zhuogang Peng",
-      "reporter": "Zhuogang Peng",
-      "created": "2026-09-14T20:33:55.126-0700",
-      "updated": "2026-09-22T03:07:47.769-0700",
-      "ageDays": 9,
-      "staleDays": 1,
-      "labels": [
-        "AD-HOC",
-        "PILOT",
-        "SONA"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20662"
-    },
-    {
-      "key": "REB3-20680",
-      "summary": "[BE-CORE] Mask storage & DB schema",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20662 - Improve basket fullness estimation and return masks per basket",
-      "status": "Code Review",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Ashok Pilli",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
-      "tester": "Ashok Pilli",
-      "reporter": "Ashok Pilli",
-      "created": "2026-09-16T05:14:40.996-0700",
-      "updated": "2026-09-22T03:07:28.617-0700",
-      "ageDays": 7,
-      "staleDays": 1,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20680"
-    },
-    {
-      "key": "REB3-20681",
-      "summary": "[BE-CORE] Sample tooling, integration tests, and perf validation",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20662 - Improve basket fullness estimation and return masks per basket",
-      "status": "Code Review",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Ashok Pilli",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
-      "tester": "Ashok Pilli",
-      "reporter": "Ashok Pilli",
-      "created": "2026-09-16T05:15:28.416-0700",
-      "updated": "2026-09-22T03:07:24.748-0700",
-      "ageDays": 7,
-      "staleDays": 1,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20681"
-    },
-    {
       "key": "REB3-17742",
       "summary": "WTRS fruit&veg fullness detection BE & FE implementation.",
       "project": "Rebotics 3",
@@ -2719,7 +2744,7 @@
       "created": "2026-08-10T04:48:29.959-0700",
       "updated": "2026-09-22T01:12:54.130-0700",
       "ageDays": 44,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD",
         "iOS"
@@ -2747,7 +2772,7 @@
       "created": "2026-07-17T03:28:21.999-0700",
       "updated": "2026-09-22T01:11:56.141-0700",
       "ageDays": 68,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -2774,7 +2799,7 @@
       "created": "2026-07-17T03:28:07.562-0700",
       "updated": "2026-09-22T01:11:47.248-0700",
       "ageDays": 68,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -2801,7 +2826,7 @@
       "created": "2026-07-17T03:27:17.985-0700",
       "updated": "2026-09-22T01:11:34.475-0700",
       "ageDays": 68,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -2828,7 +2853,7 @@
       "created": "2026-07-17T03:15:32.475-0700",
       "updated": "2026-09-22T01:11:17.648-0700",
       "ageDays": 68,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -2855,7 +2880,7 @@
       "created": "2026-07-17T03:13:25.508-0700",
       "updated": "2026-09-22T01:11:06.607-0700",
       "ageDays": 68,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -2882,7 +2907,7 @@
       "created": "2026-07-17T02:15:52.910-0700",
       "updated": "2026-09-22T01:10:55.039-0700",
       "ageDays": 68,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -2909,7 +2934,7 @@
       "created": "2026-07-16T10:55:03.107-0700",
       "updated": "2026-09-22T01:09:42.939-0700",
       "ageDays": 69,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -2936,7 +2961,7 @@
       "created": "2026-07-13T00:26:11.247-0700",
       "updated": "2026-09-22T01:08:16.862-0700",
       "ageDays": 73,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -2963,7 +2988,7 @@
       "created": "2026-07-13T00:17:51.846-0700",
       "updated": "2026-09-22T01:08:07.405-0700",
       "ageDays": 73,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -2990,7 +3015,7 @@
       "created": "2026-07-13T00:15:34.141-0700",
       "updated": "2026-09-22T01:07:58.465-0700",
       "ageDays": 73,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -3017,7 +3042,7 @@
       "created": "2026-07-13T00:12:24.163-0700",
       "updated": "2026-09-22T01:07:48.601-0700",
       "ageDays": 73,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -3044,7 +3069,7 @@
       "created": "2026-07-13T00:01:35.781-0700",
       "updated": "2026-09-22T01:07:39.145-0700",
       "ageDays": 73,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -3071,7 +3096,7 @@
       "created": "2026-07-12T23:53:34.990-0700",
       "updated": "2026-09-22T01:07:29.606-0700",
       "ageDays": 73,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -3098,7 +3123,7 @@
       "created": "2026-07-12T23:16:02.358-0700",
       "updated": "2026-09-22T01:07:15.882-0700",
       "ageDays": 73,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "SHIELD"
       ],
@@ -3350,31 +3375,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-18247"
     },
     {
-      "key": "REB3-20679",
-      "summary": "[BE-CORE] Pixel segmentation algorithm + config-driven fallback switch",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20662 - Improve basket fullness estimation and return masks per basket",
-      "status": "Code Review",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Ashok Pilli",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/736cc99d08cf5fba98e45788eb1b82cc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAP-1.png",
-      "tester": "Ashok Pilli",
-      "reporter": "Ashok Pilli",
-      "created": "2026-09-16T05:07:59.076-0700",
-      "updated": "2026-09-21T23:05:09.321-0700",
-      "ageDays": 7,
-      "staleDays": 2,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20679"
-    },
-    {
       "key": "REB3-20083",
       "summary": "ALBT prepare inference code for yolo26 semantic segmentation",
       "project": "Rebotics 3",
@@ -3448,7 +3448,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-09-21T01:23:30.423-0700",
       "updated": "2026-09-21T07:11:33.074-0700",
-      "ageDays": 2,
+      "ageDays": 3,
       "staleDays": 2,
       "labels": [
         "AD-HOC",
@@ -3504,7 +3504,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-09-16T01:25:22.072-0700",
       "updated": "2026-09-21T05:28:31.578-0700",
-      "ageDays": 7,
+      "ageDays": 8,
       "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20675"
@@ -3722,7 +3722,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-09-21T01:28:11.562-0700",
       "updated": "2026-09-21T02:00:21.645-0700",
-      "ageDays": 2,
+      "ageDays": 3,
       "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20699"
@@ -3748,7 +3748,7 @@
       "created": "2026-09-08T04:13:17.258-0700",
       "updated": "2026-09-21T01:21:50.822-0700",
       "ageDays": 15,
-      "staleDays": 2,
+      "staleDays": 3,
       "labels": [
         "Android",
         "PRGM"
@@ -3932,7 +3932,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-09-16T01:17:18.591-0700",
       "updated": "2026-09-20T23:15:23.661-0700",
-      "ageDays": 7,
+      "ageDays": 8,
       "staleDays": 3,
       "labels": [
         "ALBT",
@@ -4090,7 +4090,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-09-18T01:08:33.664-0700",
       "updated": "2026-09-20T22:37:58.295-0700",
-      "ageDays": 5,
+      "ageDays": 6,
       "staleDays": 3,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20689"
@@ -5059,7 +5059,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-08-06T01:21:31.904-0700",
       "updated": "2026-09-17T08:35:50.284-0700",
-      "ageDays": 48,
+      "ageDays": 49,
       "staleDays": 6,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20267"
@@ -5624,7 +5624,7 @@
       "created": "2026-09-16T03:37:07.027-0700",
       "updated": "2026-09-17T01:20:29.116-0700",
       "ageDays": 7,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [
         "ALBT",
         "Customer"
@@ -5651,8 +5651,8 @@
       "reporter": "Nitish Kumar",
       "created": "2026-09-11T01:09:24.005-0700",
       "updated": "2026-09-17T01:20:28.498-0700",
-      "ageDays": 12,
-      "staleDays": 6,
+      "ageDays": 13,
+      "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20640"
     },
@@ -5677,7 +5677,7 @@
       "created": "2026-09-11T00:44:50.686-0700",
       "updated": "2026-09-17T01:20:23.702-0700",
       "ageDays": 13,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20631"
     },
@@ -5702,7 +5702,7 @@
       "created": "2026-09-11T00:44:49.795-0700",
       "updated": "2026-09-17T01:20:23.066-0700",
       "ageDays": 13,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20630"
     },
@@ -5727,7 +5727,7 @@
       "created": "2026-09-11T00:44:48.870-0700",
       "updated": "2026-09-17T01:20:22.152-0700",
       "ageDays": 13,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20629"
     },
@@ -5752,7 +5752,7 @@
       "created": "2026-09-14T23:01:46.813-0700",
       "updated": "2026-09-17T01:16:26.105-0700",
       "ageDays": 9,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20663"
     },
@@ -5777,7 +5777,7 @@
       "created": "2026-09-11T00:45:01.073-0700",
       "updated": "2026-09-17T01:15:57.210-0700",
       "ageDays": 13,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20639"
     },
@@ -5802,7 +5802,7 @@
       "created": "2026-09-11T00:28:28.575-0700",
       "updated": "2026-09-17T01:15:48.582-0700",
       "ageDays": 13,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20628"
     },
@@ -5827,7 +5827,7 @@
       "created": "2026-07-31T02:44:41.244-0700",
       "updated": "2026-09-17T01:09:27.754-0700",
       "ageDays": 54,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20207"
     },
@@ -5852,7 +5852,7 @@
       "created": "2026-09-04T02:04:28.953-0700",
       "updated": "2026-09-17T01:08:51.251-0700",
       "ageDays": 19,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20574"
     },
@@ -6010,7 +6010,7 @@
       "reporter": "Irbaz Khan",
       "created": "2026-09-16T01:11:43.867-0700",
       "updated": "2026-09-16T04:57:43.169-0700",
-      "ageDays": 7,
+      "ageDays": 8,
       "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20673"
@@ -7062,7 +7062,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-09-03T01:30:42.917-0700",
       "updated": "2026-09-15T04:56:55.767-0700",
-      "ageDays": 20,
+      "ageDays": 21,
       "staleDays": 8,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20552"
@@ -7563,7 +7563,7 @@
       "reporter": "Alexander Ryabchikov",
       "created": "2026-09-07T01:16:41.593-0700",
       "updated": "2026-09-15T04:55:46.059-0700",
-      "ageDays": 16,
+      "ageDays": 17,
       "staleDays": 8,
       "labels": [
         "Android"
@@ -7590,7 +7590,7 @@
       "reporter": "vikas yadav",
       "created": "2026-09-07T01:13:14.384-0700",
       "updated": "2026-09-15T04:55:45.328-0700",
-      "ageDays": 16,
+      "ageDays": 17,
       "staleDays": 8,
       "labels": [
         "iOS"
@@ -9517,7 +9517,7 @@
       "created": "2026-08-26T00:25:16.285-0700",
       "updated": "2026-09-08T01:26:13.482-0700",
       "ageDays": 29,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "ALBT",
         "ANDR",
@@ -9546,7 +9546,7 @@
       "created": "2026-09-02T04:04:21.367-0700",
       "updated": "2026-09-08T01:26:10.185-0700",
       "ageDays": 21,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "ALBT",
         "ANDR"
@@ -9574,7 +9574,7 @@
       "created": "2026-09-03T05:37:12.948-0700",
       "updated": "2026-09-08T01:25:53.157-0700",
       "ageDays": 20,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "ANDR"
       ],
@@ -9601,7 +9601,7 @@
       "created": "2026-09-03T05:32:41.539-0700",
       "updated": "2026-09-08T01:25:52.509-0700",
       "ageDays": 20,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "iOS"
       ],
@@ -9628,7 +9628,7 @@
       "created": "2026-09-03T02:40:58.153-0700",
       "updated": "2026-09-08T01:25:51.861-0700",
       "ageDays": 20,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "IOS"
       ],
@@ -9655,7 +9655,7 @@
       "created": "2026-09-03T02:30:44.359-0700",
       "updated": "2026-09-08T01:25:51.265-0700",
       "ageDays": 20,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "IOS"
       ],
@@ -9682,7 +9682,7 @@
       "created": "2026-09-03T02:03:24.570-0700",
       "updated": "2026-09-08T01:25:50.615-0700",
       "ageDays": 20,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "ANDR"
       ],
@@ -9709,7 +9709,7 @@
       "created": "2026-09-02T05:53:30.641-0700",
       "updated": "2026-09-08T01:25:49.893-0700",
       "ageDays": 21,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "IOS"
       ],
@@ -9736,7 +9736,7 @@
       "created": "2026-09-02T05:10:18.233-0700",
       "updated": "2026-09-08T01:25:49.165-0700",
       "ageDays": 21,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "IOS"
       ],
@@ -9763,7 +9763,7 @@
       "created": "2026-09-02T04:46:05.761-0700",
       "updated": "2026-09-08T01:25:48.533-0700",
       "ageDays": 21,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "IOS"
       ],
@@ -9790,7 +9790,7 @@
       "created": "2026-09-02T03:23:37.083-0700",
       "updated": "2026-09-08T01:25:47.065-0700",
       "ageDays": 21,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20531"
     },
@@ -9815,7 +9815,7 @@
       "created": "2026-09-01T03:01:58.240-0700",
       "updated": "2026-09-08T01:24:42.228-0700",
       "ageDays": 22,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "ANDR"
       ],
@@ -9842,7 +9842,7 @@
       "created": "2026-09-01T05:51:24.546-0700",
       "updated": "2026-09-08T01:24:41.602-0700",
       "ageDays": 22,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20518"
     },
@@ -9867,7 +9867,7 @@
       "created": "2026-08-26T23:48:12.400-0700",
       "updated": "2026-09-08T01:24:41.000-0700",
       "ageDays": 28,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20489"
     },
@@ -9892,7 +9892,7 @@
       "created": "2026-08-26T23:42:49.055-0700",
       "updated": "2026-09-08T01:24:40.437-0700",
       "ageDays": 28,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20486"
     },
@@ -9917,7 +9917,7 @@
       "created": "2026-08-26T05:59:20.655-0700",
       "updated": "2026-09-08T01:24:39.782-0700",
       "ageDays": 28,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20480"
     },
@@ -9942,7 +9942,7 @@
       "created": "2026-08-26T00:42:21.300-0700",
       "updated": "2026-09-08T01:24:39.068-0700",
       "ageDays": 29,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20475"
     },
@@ -9967,7 +9967,7 @@
       "created": "2026-09-01T06:15:50.577-0700",
       "updated": "2026-09-08T01:24:38.406-0700",
       "ageDays": 22,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "iOS"
       ],
@@ -9994,7 +9994,7 @@
       "created": "2026-08-30T22:17:18.659-0700",
       "updated": "2026-09-08T01:24:37.826-0700",
       "ageDays": 24,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20506"
     },
@@ -10019,7 +10019,7 @@
       "created": "2026-08-27T22:09:06.702-0700",
       "updated": "2026-09-08T01:24:37.232-0700",
       "ageDays": 27,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20503"
     },
@@ -10044,7 +10044,7 @@
       "created": "2026-08-27T01:48:55.265-0700",
       "updated": "2026-09-08T01:24:36.527-0700",
       "ageDays": 27,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20496"
     },
@@ -10069,7 +10069,7 @@
       "created": "2026-08-25T05:08:31.652-0700",
       "updated": "2026-09-08T01:24:35.912-0700",
       "ageDays": 29,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20467"
     },
@@ -10094,7 +10094,7 @@
       "created": "2026-08-25T05:08:30.935-0700",
       "updated": "2026-09-08T01:24:35.210-0700",
       "ageDays": 29,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "iOS"
       ],
@@ -10121,7 +10121,7 @@
       "created": "2026-08-25T05:08:30.146-0700",
       "updated": "2026-09-08T01:24:34.557-0700",
       "ageDays": 29,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20465"
     },
@@ -10146,7 +10146,7 @@
       "created": "2026-08-25T05:08:29.328-0700",
       "updated": "2026-09-08T01:24:33.820-0700",
       "ageDays": 29,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20464"
     },
@@ -10171,7 +10171,7 @@
       "created": "2026-08-25T05:05:30.472-0700",
       "updated": "2026-09-08T01:23:22.806-0700",
       "ageDays": 29,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "iOS"
       ],
@@ -10198,7 +10198,7 @@
       "created": "2026-09-02T03:32:27.746-0700",
       "updated": "2026-09-08T01:23:05.712-0700",
       "ageDays": 21,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "iOS"
       ],
@@ -10225,7 +10225,7 @@
       "created": "2026-09-02T05:25:39.810-0700",
       "updated": "2026-09-08T01:22:25.079-0700",
       "ageDays": 21,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "iOS"
       ],
@@ -10252,7 +10252,7 @@
       "created": "2026-09-02T04:11:44.224-0700",
       "updated": "2026-09-08T01:22:24.404-0700",
       "ageDays": 21,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "iOS"
       ],
@@ -10279,7 +10279,7 @@
       "created": "2026-08-24T14:05:19.895-0700",
       "updated": "2026-09-08T01:22:23.685-0700",
       "ageDays": 30,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20450"
     },
@@ -10304,7 +10304,7 @@
       "created": "2026-08-16T22:07:26.972-0700",
       "updated": "2026-09-08T01:22:22.771-0700",
       "ageDays": 38,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [
         "IOS"
       ],
@@ -10415,7 +10415,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-06-03T01:08:02.051-0700",
       "updated": "2026-09-08T00:15:05.443-0700",
-      "ageDays": 112,
+      "ageDays": 113,
       "staleDays": 16,
       "labels": [
         "Backend",
@@ -10670,7 +10670,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-27T01:23:46.309-0700",
       "updated": "2026-09-07T23:52:37.118-0700",
-      "ageDays": 27,
+      "ageDays": 28,
       "staleDays": 16,
       "labels": [
         "IOS",
@@ -10698,7 +10698,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-27T01:20:03.480-0700",
       "updated": "2026-09-07T23:52:36.513-0700",
-      "ageDays": 27,
+      "ageDays": 28,
       "staleDays": 16,
       "labels": [
         "IOS",
@@ -10812,7 +10812,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-18T01:22:04.807-0700",
       "updated": "2026-09-07T23:52:34.240-0700",
-      "ageDays": 36,
+      "ageDays": 37,
       "staleDays": 16,
       "labels": [
         "IOS",
@@ -11344,7 +11344,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-10T01:26:44.118-0700",
       "updated": "2026-09-07T23:52:22.807-0700",
-      "ageDays": 44,
+      "ageDays": 45,
       "staleDays": 16,
       "labels": [
         "IOS",
@@ -11372,7 +11372,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-10T01:20:24.508-0700",
       "updated": "2026-09-07T23:52:22.224-0700",
-      "ageDays": 44,
+      "ageDays": 45,
       "staleDays": 16,
       "labels": [
         "IOS",
@@ -11400,7 +11400,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-10T01:16:57.940-0700",
       "updated": "2026-09-07T23:52:21.630-0700",
-      "ageDays": 44,
+      "ageDays": 45,
       "staleDays": 16,
       "labels": [
         "IOS",
@@ -11764,7 +11764,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-04T01:26:42.753-0700",
       "updated": "2026-09-07T23:52:13.167-0700",
-      "ageDays": 50,
+      "ageDays": 51,
       "staleDays": 16,
       "labels": [
         "Android",
@@ -11792,7 +11792,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-04T01:18:43.403-0700",
       "updated": "2026-09-07T23:52:12.540-0700",
-      "ageDays": 50,
+      "ageDays": 51,
       "staleDays": 16,
       "labels": [
         "Android",
@@ -12719,7 +12719,7 @@
       "reporter": "Brianne Tanke",
       "created": "2026-03-15T01:30:09.520-0700",
       "updated": "2026-09-07T23:51:52.037-0700",
-      "ageDays": 192,
+      "ageDays": 193,
       "staleDays": 16,
       "labels": [
         "Customer",
@@ -14367,7 +14367,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-26T01:14:19.558-0700",
       "updated": "2026-09-01T21:29:35.863-0700",
-      "ageDays": 28,
+      "ageDays": 29,
       "staleDays": 22,
       "labels": [
         "IOS"
@@ -14858,7 +14858,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-08-26T01:16:51.416-0700",
       "updated": "2026-09-01T02:41:04.215-0700",
-      "ageDays": 28,
+      "ageDays": 29,
       "staleDays": 22,
       "labels": [
         "HAWKEYE"
@@ -14885,7 +14885,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-08-27T01:14:57.897-0700",
       "updated": "2026-09-01T01:54:34.070-0700",
-      "ageDays": 27,
+      "ageDays": 28,
       "staleDays": 22,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20492"
@@ -15060,7 +15060,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-08-11T01:22:51.960-0700",
       "updated": "2026-09-01T00:34:41.866-0700",
-      "ageDays": 43,
+      "ageDays": 44,
       "staleDays": 23,
       "labels": [
         "iOS"
@@ -15087,7 +15087,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-08-11T01:19:18.161-0700",
       "updated": "2026-09-01T00:34:28.811-0700",
-      "ageDays": 43,
+      "ageDays": 44,
       "staleDays": 23,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20336"
@@ -15112,7 +15112,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-11T01:14:55.976-0700",
       "updated": "2026-09-01T00:17:51.652-0700",
-      "ageDays": 43,
+      "ageDays": 44,
       "staleDays": 23,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20335"
@@ -15137,7 +15137,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-11T01:12:30.282-0700",
       "updated": "2026-09-01T00:17:41.228-0700",
-      "ageDays": 43,
+      "ageDays": 44,
       "staleDays": 23,
       "labels": [
         "ALBT",
@@ -15847,7 +15847,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-27T01:25:22.245-0700",
       "updated": "2026-08-30T22:32:50.476-0700",
-      "ageDays": 27,
+      "ageDays": 28,
       "staleDays": 24,
       "labels": [
         "ad-hoc",
@@ -15876,7 +15876,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-08-21T01:12:04.611-0700",
       "updated": "2026-08-30T22:32:40.455-0700",
-      "ageDays": 33,
+      "ageDays": 34,
       "staleDays": 24,
       "labels": [
         "AD-HOC",
@@ -16298,7 +16298,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-07-21T01:17:55.414-0700",
       "updated": "2026-08-30T21:57:16.854-0700",
-      "ageDays": 64,
+      "ageDays": 65,
       "staleDays": 24,
       "labels": [
         "Customer"
@@ -17073,7 +17073,7 @@
       "created": "2026-08-07T05:40:23.416-0700",
       "updated": "2026-08-26T01:27:53.429-0700",
       "ageDays": 47,
-      "staleDays": 28,
+      "staleDays": 29,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20287"
     },
@@ -17711,7 +17711,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-17T01:22:09.723-0700",
       "updated": "2026-08-24T03:07:12.148-0700",
-      "ageDays": 37,
+      "ageDays": 38,
       "staleDays": 30,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20407"
@@ -17930,7 +17930,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-07-02T01:24:30.852-0700",
       "updated": "2026-08-24T03:02:31.921-0700",
-      "ageDays": 83,
+      "ageDays": 84,
       "staleDays": 30,
       "labels": [
         "AD-HOC",
@@ -17961,7 +17961,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-07-02T01:09:51.742-0700",
       "updated": "2026-08-24T03:02:23.335-0700",
-      "ageDays": 83,
+      "ageDays": 84,
       "staleDays": 30,
       "labels": [
         "AD-HOC",
@@ -18331,7 +18331,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-07-10T01:16:12.395-0700",
       "updated": "2026-08-24T02:47:08.444-0700",
-      "ageDays": 75,
+      "ageDays": 76,
       "staleDays": 30,
       "labels": [
         "AD-HOC",
@@ -18359,7 +18359,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-07-10T01:11:32.186-0700",
       "updated": "2026-08-24T02:45:58.925-0700",
-      "ageDays": 75,
+      "ageDays": 76,
       "staleDays": 30,
       "labels": [
         "AD-HOC",
@@ -18415,7 +18415,7 @@
       "reporter": "Sourabh Yadav",
       "created": "2026-07-02T01:29:50.202-0700",
       "updated": "2026-08-24T02:44:59.071-0700",
-      "ageDays": 83,
+      "ageDays": 84,
       "staleDays": 30,
       "labels": [
         "AD-HOC",
@@ -19263,7 +19263,7 @@
       "reporter": "Alexander Ryabchikov",
       "created": "2026-05-29T01:21:06.665-0700",
       "updated": "2026-08-21T04:42:08.911-0700",
-      "ageDays": 117,
+      "ageDays": 118,
       "staleDays": 33,
       "labels": [
         "ALBT",
@@ -19457,7 +19457,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-04-07T01:22:03.467-0700",
       "updated": "2026-08-21T04:42:08.264-0700",
-      "ageDays": 169,
+      "ageDays": 170,
       "staleDays": 33,
       "labels": [
         "IOS"
@@ -21179,7 +21179,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-07-29T01:30:18.179-0700",
       "updated": "2026-08-21T04:29:16.711-0700",
-      "ageDays": 56,
+      "ageDays": 57,
       "staleDays": 33,
       "labels": [
         "Backend",
@@ -22722,7 +22722,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-05-28T01:24:01.611-0700",
       "updated": "2026-08-21T04:28:54.726-0700",
-      "ageDays": 118,
+      "ageDays": 119,
       "staleDays": 33,
       "labels": [
         "Customer"
@@ -22887,7 +22887,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2025-02-27T00:33:34.119-0800",
       "updated": "2026-08-21T04:28:53.760-0700",
-      "ageDays": 573,
+      "ageDays": 574,
       "staleDays": 33,
       "labels": [
         "Customer",
@@ -23271,7 +23271,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-15T01:29:35.577-0700",
       "updated": "2026-08-21T04:28:50.713-0700",
-      "ageDays": 100,
+      "ageDays": 101,
       "staleDays": 33,
       "labels": [
         "HAWKEYE",
@@ -23327,7 +23327,7 @@
       "reporter": "Irbaz Khan",
       "created": "2025-12-29T00:20:18.068-0800",
       "updated": "2026-08-21T04:28:49.745-0700",
-      "ageDays": 268,
+      "ageDays": 269,
       "staleDays": 33,
       "labels": [
         "Customer",
@@ -24870,7 +24870,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-06-10T01:23:03.772-0700",
       "updated": "2026-08-20T02:05:44.064-0700",
-      "ageDays": 105,
+      "ageDays": 106,
       "staleDays": 34,
       "labels": [
         "Customer",
@@ -25549,7 +25549,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-07-24T01:18:12.868-0700",
       "updated": "2026-08-19T00:40:53.752-0700",
-      "ageDays": 61,
+      "ageDays": 62,
       "staleDays": 36,
       "labels": [
         "ALBT",
@@ -25889,7 +25889,7 @@
       "created": "2026-06-09T21:22:09.876-0700",
       "updated": "2026-08-18T01:23:58.085-0700",
       "ageDays": 106,
-      "staleDays": 36,
+      "staleDays": 37,
       "labels": [
         "AD-HOC",
         "PILOT",
