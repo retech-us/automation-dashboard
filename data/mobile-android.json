@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-09-24T04:47:40Z",
-  "durationMs": 18357806,
+  "finishedAt": "2026-09-25T04:26:17Z",
+  "durationMs": 17075527,
   "summary": {
     "total": 25,
-    "passed": 12,
+    "passed": 8,
     "failed": 0,
-    "broken": 13,
+    "broken": 17,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/android/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/35934351566",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/36073461582",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -26,35 +26,27 @@
       "feature": "Navigation through steps of the task"
     },
     {
-      "name": "Navigate through all the steps of the task",
-      "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Could not start or resume task. Status: UNKNOWN",
-      "feature": "Navigation through steps of the task"
-    },
-    {
       "name": "Navigate through task with action step included",
       "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became clickable within 80 seconds",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': java.util.NoSuchElementException",
       "feature": "Navigation through steps of the task"
     },
     {
-      "name": "Navigate through task with survey",
-      "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
+      "name": "Price tag actions are not generated if the price tag not detected",
+      "fullName": "src/test/resources/featureFiles/08_PriceTagActions.feature:34",
       "status": "broken",
       "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Could not start or resume task. Status: UNKNOWN",
-      "feature": "Navigation through steps of the task"
+      "reason": "Test failed: 'src/test/resources/featureFiles/08_PriceTagActions.feature:34': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_9",
+      "feature": "to validate Price Tag actions"
     },
     {
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find search edit text field",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -77,46 +69,53 @@
       "name": "Tracked Capture Screen View POG from planogram level",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find search edit text field",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen View POG from section level",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
-      "name": "Tracked Capture Screen View POG from section level",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
+      "name": "Tracked Capture Screen section rejection",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
       "status": "broken",
       "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find search edit text field",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': Could not find 'Ascending' element using any locator strategy. Please verify the sorting dialog is open and the element is visible.",
       "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
-    "locator": 8,
-    "timeout": 8,
-    "assertion": 1,
-    "unknown": 14
+    "locator": 5,
+    "timeout": 11,
+    "unknown": 5
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 12,
-    "review": 13,
+    "passed": 8,
+    "review": 17,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 48.0,
+      "passPct": 32.0,
       "total": 25,
-      "failed": 13
+      "failed": 17
     }
   ],
   "platform": "Android",
@@ -132,7 +131,7 @@
       "status": "failure"
     }
   ],
-  "runId": "35934351566",
-  "runNumber": 307,
+  "runId": "36073461582",
+  "runNumber": 308,
   "environment": "CI"
 }
