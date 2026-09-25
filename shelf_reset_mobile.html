@@ -1537,11 +1537,43 @@
         <option value="stgsams">🎯 Sam's Club (stgsams)</option>
         <option value="custom">🌐 Custom Instance...</option>
       </select>
-      <select id="dataset-selector" class="task-select" style="max-width:160px;">
-        <option value="current">Current Task</option>
-        <option value="8648127">Task #8648127 (Beauty)</option>
-        <option value="42484849">Task #42484849 (Multi-Bay)</option>
+      <select id="dataset-selector" class="task-select" style="max-width:280px; font-weight:700;">
+        <option value="current">Current Task (Auto)</option>
+        <optgroup label="Harris Teeter (HARR)">
+          <option value="8648127" selected>Task #8648127 (Beauty / Diffusers • 1 Bay • 89 Actions)</option>
+          <option value="8668473">Task #8668473 (Cult Wmn Reset • 3 Bays • 244 Actions)</option>
+          <option value="8788767">Task #8788767 (Pedigree Pet Care • 4 Bays • 218 Actions)</option>
+          <option value="8648129">Task #8648129 (Cult Wmn Multi-Bay • 3 Bays • 189 Actions)</option>
+        </optgroup>
+        <optgroup label="Kroger (KRCS)">
+          <option value="42484849">Task #42484849 (Pacific Soup Multi-Bay • 4 Bays • 589 Actions)</option>
+          <option value="42126922">Task #42126922 (Stouffer Lasagna • 16 Bays • 393 Actions)</option>
+          <option value="42255971">Task #42255971 (Sheba Portions • 4 Bays • 266 Actions)</option>
+          <option value="42255972">Task #42255972 (Sheba Cuts • 4 Bays • 266 Actions)</option>
+          <option value="42212949">Task #42212949 (Reveal Pet Food • 4 Bays • 264 Actions)</option>
+          <option value="42212950">Task #42212950 (Fancy Feast Beef • 1 Bay • 84 Actions)</option>
+          <option value="42235994">Task #42235994 (Charmin Paper • 3 Bays • 78 Actions)</option>
+          <option value="41004085">Task #41004085 (Grocery Multi-Bay • 2 Bays • 79 Actions)</option>
+          <option value="41810312">Task #41810312 (Mezzetta Marinara • 2 Bays • 65 Actions)</option>
+          <option value="41743485">Task #41743485 (Ghirardelli • 1 Bay • 50 Actions)</option>
+          <option value="42212948">Task #42212948 (Confectionery • 1 Bay • 50 Actions)</option>
+          <option value="42255693">Task #42255693 (Havarti Cheese • 1 Bay • 27 Actions)</option>
+          <option value="42255694">Task #42255694 (Havarti Cheese • 1 Bay • 27 Actions)</option>
+          <option value="42288818">Task #42288818 (Kroger Reset)</option>
+          <option value="42235990">Task #42235990 (Kroger Grocery)</option>
+        </optgroup>
+        <optgroup label="Albertsons (ALBT)">
+          <option value="60535563">Task #60535563 (Libby Country Sausage Gravy • 3 Bays • 73 Actions)</option>
+          <option value="8601238">Task #8601238 (Ghirardelli Chocolate • 1 Bay • 50 Actions)</option>
+          <option value="60535562">Task #60535562 (Nissin Cup Noodles • 2 Bays • 11 Actions)</option>
+          <option value="60613936">Task #60613936 (SoupDry Planogram)</option>
+        </optgroup>
+        <optgroup label="Sam's Club (STGSAMS)">
+          <option value="27277459">Task #27277459 (Sheba Multi-Bay • 3 Bays • 397 Actions)</option>
+          <option value="27315261">Task #27315261 (Ghirardelli • 1 Bay • 50 Actions)</option>
+        </optgroup>
         <option value="reference">Section 7 Reference Fixture (10 Steps)</option>
+        <option value="custom">✏️ Enter Custom Task ID...</option>
       </select>
       <div id="custom-task-box" style="display:inline-flex; align-items:center; gap:3px;">
         <input type="text" id="custom-task-input" placeholder="Task #" style="width:70px; padding:4px 6px; font-size:11px; font-weight:700; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px;" title="Enter any occurrence Task ID for this instance" />
@@ -1931,9 +1963,41 @@
       planogramQuery: "",
     };
 
+    // Helper: Normalize any bay representation to clean numeric retail bays ("1", "2", "3"...)
+    function normalizeBay(bayVal) {
+      if (bayVal === undefined || bayVal === null || bayVal === "") return "1";
+      const str = String(bayVal).trim();
+      if (/^\d+$/.test(str)) return str;
+      const mNum = str.match(/bay[\s_]*(\d+)/i);
+      if (mNum) return mNum[1];
+      const upper = str.toUpperCase();
+      if (/^[A-Z]$/.test(upper)) {
+        return String(upper.charCodeAt(0) - 64);
+      }
+      const mLetter = upper.match(/BAY[\s_]*([A-Z])/i);
+      if (mLetter) {
+        return String(mLetter[1].charCodeAt(0) - 64);
+      }
+      return str;
+    }
+
+    // Helper: API Base Resolver
+    function getApiBase() {
+      if (window.location.protocol === "file:") {
+        return "http://127.0.0.1:8085";
+      }
+      return "";
+    }
+
     // Helper: Robust location extraction for ANY dynamic task payload
     function parseLocation(slotObj, slotId) {
-      if (slotObj && slotObj.fromLocation) return slotObj.fromLocation;
+      if (slotObj && slotObj.fromLocation) {
+        return {
+          bay: normalizeBay(slotObj.fromLocation.bay),
+          shelf: String(slotObj.fromLocation.shelf || "1"),
+          position: String(slotObj.fromLocation.position || "1")
+        };
+      }
       
       let bay = slotObj ? String(slotObj.bay || "") : "";
       let shelf = slotObj && slotObj.shelf !== undefined && slotObj.shelf !== null ? String(slotObj.shelf) : "";
@@ -1957,12 +2021,18 @@
           pos = pos || m2[2];
         }
       }
-      return { bay: bay || "1", shelf: shelf || "1", position: pos || "1" };
+      return { bay: normalizeBay(bay || "1"), shelf: shelf || "1", position: pos || "1" };
     }
 
     function populateTaskOptions(taskItems, selectedVal) {
       const sel = document.getElementById("dataset-selector");
       if (!sel) return;
+      if (!taskItems || !taskItems.length) {
+        if (selectedVal && Array.from(sel.options).some(o => o.value === selectedVal)) {
+          sel.value = selectedVal;
+        }
+        return;
+      }
       sel.innerHTML = "";
 
       const currentOpt = document.createElement("option");
@@ -2022,6 +2092,22 @@
       }
     }
 
+    async function fetchTaskCatalog(selectedVal) {
+      try {
+        const apiBase = getApiBase();
+        const inst = state.instance || (document.getElementById("instance-selector") || {}).value || "harr";
+        const res = await fetch(`${apiBase}/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`);
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data && data.tasks && data.tasks.length) {
+            populateTaskOptions(data.tasks, selectedVal || state.dataset);
+          }
+        }
+      } catch (e) {
+        console.warn("Could not fetch remote task catalog, using embedded task options", e);
+      }
+    }
+
     // Load dataset from backend API or fallback
     async function loadDataset(datasetName = "current", instance = null) {
       if (datasetName === "custom") {
@@ -2052,11 +2138,12 @@
       state.heldItem = null;
 
       try {
+        const apiBase = getApiBase();
         let res;
         if (datasetName === "reference") {
-          res = await fetch("/api/runner/shelf_reset/reference");
+          res = await fetch(`${apiBase}/api/runner/shelf_reset/reference`);
         } else {
-          res = await fetch("/api/runner/shelf_reset/sequence", {
+          res = await fetch(`${apiBase}/api/runner/shelf_reset/sequence`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -2077,8 +2164,16 @@
             }
             return;
           }
-          state.slots = data.slots;
-          state.steps = data.steps;
+          state.slots = (data.slots || []).map(s => {
+            s.bay = normalizeBay(s.bay);
+            return s;
+          });
+          state.steps = (data.steps || []).map(st => {
+            if (st.fromLocation) st.fromLocation.bay = normalizeBay(st.fromLocation.bay);
+            if (st.toLocation) st.toLocation.bay = normalizeBay(st.toLocation.bay);
+            if (st.bay) st.bay = normalizeBay(st.bay);
+            return st;
+          });
           state.source = data.source || datasetName;
           if (data.instance) state.instance = data.instance;
 
@@ -2116,20 +2211,20 @@
 
     function loadLocalFallback() {
       const fallbackSlots = [
-        {"id":"A1","bay":"A","current":"Corn Flakes","target":"Orange Juice","shelf":2,"position":"1"},
-        {"id":"A2","bay":"A","current":"Orange Juice","target":"Corn Flakes","shelf":2,"position":"2"},
-        {"id":"A3","bay":"A","current":"Tomato Soup","target":"Penne Pasta","shelf":2,"position":"3"},
-        {"id":"A4","bay":"A","current":"Penne Pasta","target":"Marinara Sauce","shelf":2,"position":"4"},
-        {"id":"A5","bay":"A","current":"Marinara Sauce","target":"Tomato Soup","shelf":2,"position":"5"},
-        {"id":"A6","bay":"A","current":"Potato Chips","target":"Whole Milk","shelf":1,"position":"1"},
-        {"id":"A7","bay":"A","current":null,"target":"Potato Chips","shelf":1,"position":"2"},
-        {"id":"A8","bay":"A","current":"Whole Milk","target":null,"shelf":1,"position":"3"},
-        {"id":"A9","bay":"A","current":"Granola Bars","target":"Granola Bars","shelf":1,"position":"4"},
-        {"id":"A10","bay":"A","current":"Expired Yogurt Drink","target":null,"shelf":1,"position":"5"},
-        {"id":"B1","bay":"B","current":"Trail Mix","target":"Keto Bar (new)","shelf":1,"position":"1"},
-        {"id":"B2","bay":"B","current":"Protein Bar","target":"Trail Mix","shelf":1,"position":"2"},
-        {"id":"B3","bay":"B","current":"Nut Clusters","target":"Protein Bar","shelf":1,"position":"3"},
-        {"id":"B4","bay":"B","current":null,"target":"Nut Clusters","shelf":1,"position":"4"}
+        {"id":"Bay1_S2_P1","bay":"1","current":"Corn Flakes","target":"Orange Juice","shelf":2,"position":"1"},
+        {"id":"Bay1_S2_P2","bay":"1","current":"Orange Juice","target":"Corn Flakes","shelf":2,"position":"2"},
+        {"id":"Bay1_S2_P3","bay":"1","current":"Tomato Soup","target":"Penne Pasta","shelf":2,"position":"3"},
+        {"id":"Bay1_S2_P4","bay":"1","current":"Penne Pasta","target":"Marinara Sauce","shelf":2,"position":"4"},
+        {"id":"Bay1_S2_P5","bay":"1","current":"Marinara Sauce","target":"Tomato Soup","shelf":2,"position":"5"},
+        {"id":"Bay1_S1_P1","bay":"1","current":"Potato Chips","target":"Whole Milk","shelf":1,"position":"1"},
+        {"id":"Bay1_S1_P2","bay":"1","current":null,"target":"Potato Chips","shelf":1,"position":"2"},
+        {"id":"Bay1_S1_P3","bay":"1","current":"Whole Milk","target":null,"shelf":1,"position":"3"},
+        {"id":"Bay1_S1_P4","bay":"1","current":"Granola Bars","target":"Granola Bars","shelf":1,"position":"4"},
+        {"id":"Bay1_S1_P5","bay":"1","current":"Expired Yogurt Drink","target":null,"shelf":1,"position":"5"},
+        {"id":"Bay2_S1_P1","bay":"2","current":"Trail Mix","target":"Keto Bar (new)","shelf":1,"position":"1"},
+        {"id":"Bay2_S1_P2","bay":"2","current":"Protein Bar","target":"Trail Mix","shelf":1,"position":"2"},
+        {"id":"Bay2_S1_P3","bay":"2","current":"Nut Clusters","target":"Protein Bar","shelf":1,"position":"3"},
+        {"id":"Bay2_S1_P4","bay":"2","current":null,"target":"Nut Clusters","shelf":1,"position":"4"}
       ];
       state.slots = fallbackSlots;
       state.steps = clientSideSequenceSlots(fallbackSlots);
@@ -2641,7 +2736,13 @@
     // Render Planogram Shelf Rack (Card 2)
     function renderShelfRack() {
       // 1. Build Bay Selector Tabs
-      const bays = Array.from(new Set(state.slots.map(s => String(s.bay || '1')))).sort();
+      const rawBays = Array.from(new Set(state.slots.map(s => normalizeBay(s.bay || '1'))));
+      const bays = rawBays.sort((a, b) => {
+        const na = parseInt(a, 10);
+        const nb = parseInt(b, 10);
+        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+        return a.localeCompare(b);
+      });
       const bayContainer = document.getElementById("bay-tabs-container");
       bayContainer.innerHTML = `
         <button class="bay-btn ${state.activeBayFilter === 'ALL' ? 'active' : ''}" data-bay="ALL">ALL BAYS (${bays.length})</button>
@@ -2675,7 +2776,8 @@
       // 3. Filter visible slots
       const q = state.planogramQuery.toLowerCase().trim();
       const visibleSlots = state.slots.filter(s => {
-        const matchesBay = state.activeBayFilter === "ALL" || String(s.bay || '1') === state.activeBayFilter;
+        const sBay = normalizeBay(s.bay || '1');
+        const matchesBay = state.activeBayFilter === "ALL" || sBay === state.activeBayFilter;
         if (!matchesBay) return false;
         if (!q) return true;
         return (s.id && s.id.toLowerCase().includes(q)) ||
@@ -3084,6 +3186,7 @@
         state.dataset = "current";
         const dsSel = document.getElementById("dataset-selector");
         if (dsSel) dsSel.value = "current";
+        fetchTaskCatalog("current");
         loadDataset("current", state.instance);
       });
     }
@@ -3285,8 +3388,10 @@
 
     // Initial boot
     if (!restoreSession()) {
+      fetchTaskCatalog("current");
       loadDataset("current");
     } else {
+      fetchTaskCatalog(state.dataset);
       loadDataset(state.dataset);
     }
   </script>
