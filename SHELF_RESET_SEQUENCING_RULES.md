@@ -59,25 +59,29 @@ The sequencer outputs 8 distinct, deterministic action types:
 
 ---
 
-## 4. The 9 Core Sequencing Invariants & Rules
+## 4. The 10 Core Sequencing Invariants & Rules
 
-### Rule 1: Collision-Free Invariant (Pre-Placement Vacancy Guarantee)
+### Rule 1: Collision-Free Invariant & Topological Vacancy Ordering Guarantee
 > **Invariant**: No product may be placed into slot $v$ while slot $v$ is occupied.
-> Formally, an action $\text{move}(u \to v)$ or $\text{place}(item \to v)$ is valid at step $t$ if and only if:
+> Formally, an action $\text{place}(u \to v)$ at step index $t_{place}$ is valid if and only if the step $t_{vacate}$ that removed or shifted the prior occupant of $v$ strictly precedes it:
+> $$S_{\text{vacate}}(v) \prec S_{\text{place}}(v) \iff t_{\text{vacate}}(v) < t_{\text{place}}(v)$$
+> and at the moment of execution:
 > $$\text{occupancy}_t(v) = \emptyset$$
 
 The engine guarantees this by:
-1. Walking open chains backward starting from a naturally empty or freshly vacated terminal slot.
-2. Breaking closed cycles with a single `HOLD` into hands to create a temporary buffer vacancy.
-3. Tracking full occupancy provenance in `clearance_info` proving when and how the destination was cleared.
+1. **Topological Vacancy Ordering**: If action $A_i$ places into slot $X$, and action $A_j$ vacates slot $X$, the sequencer's dependency sorter ensures $j < i$ so slot $X$ is empty prior to placement.
+2. **Backward Chain Traversal**: Walking displacement chains backward starting from a naturally empty or freshly vacated terminal slot ($v_k \to v_{k-1} \to \dots \to v_1$).
+3. **Single-Hold Buffer Induction**: Breaking closed cycles with a single `HOLD` into hands to create a temporary buffer vacancy.
+4. **Full Clearance Provenance**: Every placement step carries structured `clearance_info` proving exactly which step cleared slot $v$, the action type that cleared it, and the prior occupant removed.
 
 ---
 
-### Rule 2: In-Place Item Preservation (Zero Disturbance)
-> **Rule**: Any slot where $\text{current}(s) == \text{target}(s)$ must never be touched, moved, or displaced.
-> $$\forall s \in V: \text{current}(s) = \text{target}(s) \implies s \notin \text{Actions}$$
+### Rule 2: In-Place Item Preservation & Target Slot Immunity (Zero Disturbance)
+> **Rule**: Any slot where $\text{current}(s) == \text{target}(s)$ must never be touched, moved, displaced, or targeted.
+> $$\forall s \in V: \text{current}(s) = \text{target}(s) \implies s \notin \text{Actions} \land s \notin \text{TargetSlots}$$
 
-- The engine completely ignores correctly positioned stock, preventing redundant restocking and shelf clutter.
+- **Zero Touch**: The engine completely ignores correctly positioned stock, preventing redundant moves and shelf clutter.
+- **Target Immunity**: In-place slots are strictly excluded from the pool of open destination slots (`target_to_slots`). An incoming product is NEVER directed into an in-place slot, preventing catastrophic spatial collisions and planogram overwriting.
 
 ---
 
@@ -153,21 +157,47 @@ The engine guarantees this by:
 
 ---
 
-## 5. Clearance Provenance & Temporal Semantics
+### Rule 10: Automated Physical Invariants Validation (The 9 IR Studio Invariants)
+> **Verification Gate**: Every sequence output by the backend or simulated on mobile is subjected to 9 strict physical invariant rules enforced by `invariants_validator.py`:
 
-Each step output contains a `clearance_info` object verifying slot safety:
+| Invariant # | Name | Mathematical / Physical Constraint Enforced |
+| :---: | :--- | :--- |
+| **1** | **Action Count Fidelity** | Total backend planogram actions equal domain model actions across all bays. |
+| **2** | **Zero Duplicate Action Cards** | Every physical card key `(bay, shelf, pos, subtype)` is unique. |
+| **3** | **Fix-in-Bay Mutual Exclusivity** | Intra-bay shifts never emit redundant `SetAside` or `AddItems` cards. |
+| **4** | **100% Cross-Bay Pairing** | Every `SetAside` pick is bijectively paired with a companion `Place` card (0 ghost adds, 0 stranded picks). |
+| **5** | **Shelf Topology & Bounds** | Shelf numbers, position indices, and bay geometry respect physical boundaries. |
+| **6** | **Out-of-Stock Restock Sourcing** | Shelf voids without current occupants are sourced from backroom stock. |
+| **7** | **Identify Scan Resolution** | Camera scan resolution handles all product outcomes without unhandled states. |
+| **8** | **Final Rolling Cart Balance** | Transit cart holds exactly 0 items at shift conclusion (only salvage items staged for backroom return). |
+| **9** | **In-Place Preservation** | In-place products ($\text{current} = \text{target}$) generate **0 moves** and are immune from being targeted as open slots. |
 
-### A. Removal Actions (`PULL`, `SET_ASIDE`, `HOLD`)
-- **Semantics**: The associate is *vacating* a slot by taking an item off the shelf.
-- **Indicator**: `📤 Clears slot now` or `📦 Staged (Clears slot)`.
-- **Timing**: Does not depend on a prior slot being cleared; rather, this step creates the vacancy for future placements.
+---
 
-### B. Placement Actions (`FIX_IN_BAY`, `PLACE_FROM_CART`, `RESTOCK`)
-- **Naturally Vacant**: Slot was empty at the beginning of the reset $\to$ `🟢 Empty at start`.
-- **Pre-Cleared by Step $K$**:
-  - If $K < \text{currentStep}$: `Target Slot: Already Cleared in earlier Step K (ACTION_TYPE)`.
-  - If previewing ahead: `Target Slot: Pre-cleared in Step K (ACTION_TYPE)`.
-  - Verifies that by the time the associate performs this step, the destination slot is guaranteed 100% empty.
+## 5. Clearance Provenance & Location A to B Clearance Semantics
+
+When moving a product from **Location A to Location B**, the associate must never find Location B occupied. The engine tracks clearance with deterministic provenance:
+
+```
+[ Step K: Vacate Slot B ]  ──────> [ Step M: Move Product A → Slot B ]
+  (e.g., FIX_IN_BAY, PULL,               (Guaranteed: M > K)
+   or SET_ASIDE from Slot B)              (Target Slot B is 100% Vacant)
+```
+
+### Clearance States for Target Slot B:
+1. **Naturally Vacant at Start**:
+   - Location B had no product initially ($\text{initialOccupant} = \emptyset$).
+   - Mobile badge: `🟢 Target Slot: Naturally Vacant at Start`.
+   - Explanation: `Target position was naturally VACANT at the start of reset. No product needed to be removed before placement.`
+2. **Pre-Cleared in Earlier Step $K$**:
+   - Location B initially held an item, which was moved, pulled, or staged in Step $K$ ($K < M$).
+   - Mobile badge: `✅ Target Slot: Already Cleared in Step K (FIX_IN_BAY)`.
+   - Mobile Verification Card:
+     > **Verification Passed**: Target slot (`Bay 1 • Shelf 3 • Pos 5`) was already cleared in earlier **Step K** when `'Initial Item'` was moved to Shelf 3 Pos 8. The slot is guaranteed **100% VACANT** before placing `'New Item'`.
+3. **Collision Warning (Violation Caught by Validator)**:
+   - If a step attempts to place into an occupied slot where $\text{clearedBeforePlacement} = \text{False}$:
+   - Mobile badge: `⚠️ Target Slot: Currently Occupied (Collision Warning!)`.
+   - Status Pill: `⚠️ Occupied Collision`. Protects store associate from attempting impossible physical shelf placement.
 
 ---
 

@@ -1971,20 +1971,49 @@
       sel.appendChild(currentOpt);
 
       if (Array.isArray(taskItems)) {
+        const groups = {};
         taskItems.forEach(t => {
-          const tid = typeof t === "object" ? t.id : t;
-          const label = typeof t === "object" ? t.label : `Task #${tid}`;
-          const opt = document.createElement("option");
-          opt.value = tid;
-          opt.textContent = label;
-          sel.appendChild(opt);
+          const groupName = (typeof t === "object" && t.group) ? t.group : "Other Tasks";
+          if (!groups[groupName]) groups[groupName] = [];
+          groups[groupName].push(t);
         });
+
+        const groupNames = Object.keys(groups);
+        if (groupNames.length > 1) {
+          groupNames.forEach(grpName => {
+            const optGroup = document.createElement("optgroup");
+            optGroup.label = grpName;
+            groups[grpName].forEach(t => {
+              const tid = typeof t === "object" ? t.id : t;
+              const label = typeof t === "object" ? t.label : `Task #${tid}`;
+              const opt = document.createElement("option");
+              opt.value = tid;
+              opt.textContent = label;
+              optGroup.appendChild(opt);
+            });
+            sel.appendChild(optGroup);
+          });
+        } else {
+          taskItems.forEach(t => {
+            const tid = typeof t === "object" ? t.id : t;
+            const label = typeof t === "object" ? t.label : `Task #${tid}`;
+            const opt = document.createElement("option");
+            opt.value = tid;
+            opt.textContent = label;
+            sel.appendChild(opt);
+          });
+        }
       }
 
       const refOpt = document.createElement("option");
       refOpt.value = "reference";
       refOpt.textContent = "Section 7 Reference Fixture (10 Steps)";
       sel.appendChild(refOpt);
+
+      const customOpt = document.createElement("option");
+      customOpt.value = "custom";
+      customOpt.textContent = "✏️ Enter Custom Task ID...";
+      sel.appendChild(customOpt);
 
       if (selectedVal && Array.from(sel.options).some(o => o.value === selectedVal)) {
         sel.value = selectedVal;
@@ -1995,6 +2024,23 @@
 
     // Load dataset from backend API or fallback
     async function loadDataset(datasetName = "current", instance = null) {
+      if (datasetName === "custom") {
+        const entered = prompt("Enter Intelligent Reset Task ID (e.g. 42484849 or 8648127):", "");
+        if (!entered || !entered.trim()) {
+          const sel = document.getElementById("dataset-selector");
+          if (sel) sel.value = state.dataset || "current";
+          return;
+        }
+        datasetName = entered.trim();
+        const sel = document.getElementById("dataset-selector");
+        if (sel && !Array.from(sel.options).some(o => o.value === datasetName)) {
+          const customOpt = document.createElement("option");
+          customOpt.value = datasetName;
+          customOpt.textContent = `Task #${datasetName} (User Specified)`;
+          sel.insertBefore(customOpt, sel.firstChild.nextSibling);
+          sel.value = datasetName;
+        }
+      }
       state.dataset = datasetName;
       if (instance) {
         state.instance = instance;
