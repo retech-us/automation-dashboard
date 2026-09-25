@@ -455,10 +455,10 @@ def sequence_shelf_reset(
     slot_map: Dict[str, Slot] = {s.id: s for s in slots}
 
     # 3.1 Build graph
-    # Map target SKU -> slot id (skip null targets)
+    # Map target SKU -> slot id (skip null targets and already-satisfied slots)
     target_to_slots: Dict[str, List[str]] = {}
     for s in slots:
-        if s.target is not None:
+        if s.target is not None and s.current != s.target:
             target_to_slots.setdefault(s.target, []).append(s.id)
 
     # Edge: for each slot where current !== target and current is not null:
@@ -929,6 +929,20 @@ def sequence_shelf_reset(
     # Multi-Facing Bundling:
     if pull_first and bundle_facings:
         final_steps = _bundle_multi_facings(final_steps)
+
+    # Topological Vacancy Enforcement:
+    # Ensure that any step vacating slot X executes BEFORE any step placing into slot X.
+    for i in range(len(final_steps)):
+        if final_steps[i].type in (ActionType.FIX_IN_BAY, ActionType.MOVE, ActionType.SLIDE):
+            dest = final_steps[i].to_slot_id
+            if dest:
+                for j in range(i + 1, len(final_steps)):
+                    if final_steps[j].type != final_steps[i].type or (final_steps[j].bay and final_steps[i].bay and final_steps[j].bay != final_steps[i].bay):
+                        break
+                    if final_steps[j].slot_id == dest:
+                        v_step = final_steps.pop(j)
+                        final_steps.insert(i, v_step)
+                        break
 
     # Symbolic Clearance and Occupancy Tracker
     # Validates and records slot vacancy and removal provenance for every action

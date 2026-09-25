@@ -331,6 +331,45 @@ class TestShelfResetSequencer(unittest.TestCase):
         self.assertTrue(bay2_swap < bay2_pfc, "In Bay 2, fix in bay (swap) must precede place_from_cart")
         self.assertTrue(bay2_pfc < bay2_restock, "In Bay 2, place_from_cart must precede restock")
 
+    def test_topological_vacancy_ordering(self):
+        """Verify that whenever a product is moved to a target slot, that target slot
+        is guaranteed 100% empty before the move executes (no collision with preceding occupant).
+        """
+        slots = [
+            # In-place product (already correct - must not be targeted)
+            Slot(id="Bay1_S1_P1", bay="1", shelf=1, position=1, current="Soup In Place", target="Soup In Place"),
+            
+            # Displacement chain: S3 -> S2, and S2 -> S1 (where S1 is initially empty)
+            Slot(id="Bay1_S3_P1", bay="1", shelf=3, position=1, current="Soup 3", target="Soup Final"),
+            Slot(id="Bay1_S2_P1", bay="1", shelf=2, position=1, current="Soup 2", target="Soup 3"),
+            Slot(id="Bay1_S1_P2", bay="1", shelf=1, position=2, current=None, target="Soup 2"),
+        ]
+        steps = sequence_shelf_reset(slots, pull_first=True)
+
+        # The step vacating Bay1_S2_P1 (Soup 2 -> Bay1_S1_P2) MUST execute before
+        # the step placing into Bay1_S2_P1 (Soup 3 -> Bay1_S2_P1)
+        vacating_step_idx = next(i for i, s in enumerate(steps) if s.slot_id == "Bay1_S2_P1")
+        filling_step_idx = next(i for i, s in enumerate(steps) if s.to_slot_id == "Bay1_S2_P1")
+        
+        self.assertLess(
+            vacating_step_idx, filling_step_idx,
+            "Slot Bay1_S2_P1 must be vacated before Soup 3 is moved into it!"
+        )
+
+        # Simulate occupancy: every destination slot MUST be vacant when placed
+        curr_occupancy = {s.id: s.current for s in slots}
+        for idx, s in enumerate(steps, start=1):
+            if s.to_slot_id and s.type != ActionType.SET_ASIDE:
+                dest = s.to_slot_id
+                self.assertIsNone(
+                    curr_occupancy.get(dest),
+                    f"Step {idx} ({s.type.value}) places into {dest} which is still occupied by '{curr_occupancy.get(dest)}'!"
+                )
+            if s.slot_id:
+                curr_occupancy[s.slot_id] = None
+            if s.to_slot_id:
+                curr_occupancy[s.to_slot_id] = s.item
+
 
 if __name__ == "__main__":
     unittest.main()
