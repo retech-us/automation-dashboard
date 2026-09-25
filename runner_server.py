@@ -2175,6 +2175,107 @@ def fetch_mobile_app_versions() -> Dict[str, str]:
     return {"android": andr_ver, "ios": ios_ver}
 
 
+TASK_METADATA = {
+    "8648127": ("harr", "Harris Teeter", "Beauty / Diffusers"),
+    "8648129": ("harr", "Harris Teeter", "Cult Wmn Multi-Bay"),
+    "8668473": ("harr", "Harris Teeter", "Cult Wmn Reset"),
+    "8788767": ("harr", "Harris Teeter", "Pedigree Pet Care"),
+    "8601238": ("albt", "Albertsons", "Ghirardelli Chocolate"),
+    "60535562": ("albt", "Albertsons", "Nissin Cup Noodles"),
+    "60535563": ("albt", "Albertsons", "Libby Country Sausage Gravy"),
+    "60613936": ("albt", "Albertsons", "SoupDry Planogram"),
+    "42484849": ("krcs", "Kroger", "Pacific Soup Multi-Bay"),
+    "42126922": ("krcs", "Kroger", "Stouffer Lasagna"),
+    "42212949": ("krcs", "Kroger", "Reveal Pet Food"),
+    "42255971": ("krcs", "Kroger", "Sheba Portions"),
+    "42255972": ("krcs", "Kroger", "Sheba Cuts"),
+    "42212950": ("krcs", "Kroger", "Fancy Feast Beef"),
+    "42235994": ("krcs", "Kroger", "Charmin Paper"),
+    "41810312": ("krcs", "Kroger", "Mezzetta Marinara"),
+    "41004085": ("krcs", "Kroger", "Grocery Multi-Bay"),
+    "41743485": ("krcs", "Kroger", "Ghirardelli"),
+    "42212948": ("krcs", "Kroger", "Confectionery"),
+    "42255693": ("krcs", "Kroger", "Havarti Cheese"),
+    "42255694": ("krcs", "Kroger", "Havarti Cheese"),
+    "42288818": ("krcs", "Kroger", "Kroger Reset"),
+    "42235990": ("krcs", "Kroger", "Kroger Grocery"),
+    "27277459": ("stgsams", "Sam's Club", "Sheba Multi-Bay"),
+    "27315261": ("stgsams", "Sam's Club", "Ghirardelli"),
+}
+
+def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> List[Dict[str, Any]]:
+    catalog = []
+    seen_ids = set()
+
+    # 1. Scan all cached task JSON files in workspace
+    for p in sorted(WORKSPACE_DIR.glob("raw_backend_actions_task_*.json")):
+        tid = p.stem.replace("raw_backend_actions_task_", "")
+        if not tid.isdigit() or tid in seen_ids:
+            continue
+        meta = TASK_METADATA.get(tid)
+        inst_slug = meta[0] if meta else ("krcs" if tid.startswith("4") else ("albt" if tid.startswith("6") else "harr"))
+        inst_name = meta[1] if meta else inst_slug.upper()
+        desc = meta[2] if meta else ""
+        actions_cnt = 0
+        bays_cnt = 1
+        sample_title = ""
+        try:
+            raw_data = json.loads(p.read_text(encoding="utf-8"))
+            if isinstance(raw_data, list):
+                actions_cnt = len(raw_data)
+                bays = set()
+                for a in raw_data:
+                    if not sample_title:
+                        sample_title = a.get("product_title") or (a.get("expected_position") or {}).get("product_title") or ""
+                    cp = a.get("current_position") or {}
+                    si = cp.get("section_info") or {}
+                    if si.get("name"):
+                        bays.add(str(si["name"]))
+                bays_cnt = max(1, len(bays))
+        except Exception:
+            pass
+
+        seen_ids.add(tid)
+        title_display = desc or ((sample_title[:24] + "…") if len(sample_title) > 25 else sample_title) or "Reset Planogram"
+        label = f"Task #{tid} ({title_display} • {bays_cnt} Bay{'s' if bays_cnt != 1 else ''} • {actions_cnt} Actions)"
+        catalog.append({
+            "id": tid,
+            "label": label,
+            "instance": inst_slug,
+            "group": f"{inst_name} ({inst_slug.upper()})",
+            "actions_count": actions_cnt,
+            "bays_count": bays_cnt,
+        })
+
+    # 2. Add known tasks not yet cached locally
+    for tid, meta in TASK_METADATA.items():
+        if tid not in seen_ids:
+            seen_ids.add(tid)
+            inst_slug, inst_name, desc = meta
+            catalog.append({
+                "id": tid,
+                "label": f"Task #{tid} ({desc})",
+                "instance": inst_slug,
+                "group": f"{inst_name} ({inst_slug.upper()})",
+                "actions_count": 0,
+                "bays_count": 1,
+            })
+
+    # Sort: active instance first, then by actions count descending
+    clean_active = (active_instance_slug or "harr").lower()
+    if "albt" in clean_active:
+        active_key = "albt"
+    elif "krcs" in clean_active or "krog" in clean_active:
+        active_key = "krcs"
+    elif "sams" in clean_active:
+        active_key = "stgsams"
+    else:
+        active_key = "harr"
+
+    catalog.sort(key=lambda x: (0 if x["instance"] == active_key else 1, -x.get("actions_count", 0)))
+    return catalog
+
+
 class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WORKSPACE_DIR), **kwargs)
@@ -3211,107 +3312,6 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         actions, _ = self._fetch_raw_retailer_actions_with_status(base_url, task_id)
         return actions
 
-def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> List[Dict[str, Any]]:
-    TASK_METADATA = {
-        "8648127": ("harr", "Harris Teeter", "Beauty / Diffusers"),
-        "8648129": ("harr", "Harris Teeter", "Cult Wmn Multi-Bay"),
-        "8668473": ("harr", "Harris Teeter", "Cult Wmn Reset"),
-        "8788767": ("harr", "Harris Teeter", "Pedigree Pet Care"),
-        "8601238": ("albt", "Albertsons", "Ghirardelli Chocolate"),
-        "60535562": ("albt", "Albertsons", "Nissin Cup Noodles"),
-        "60535563": ("albt", "Albertsons", "Libby Country Sausage Gravy"),
-        "60613936": ("albt", "Albertsons", "SoupDry Planogram"),
-        "42484849": ("krcs", "Kroger", "Pacific Soup Multi-Bay"),
-        "42126922": ("krcs", "Kroger", "Stouffer Lasagna"),
-        "42212949": ("krcs", "Kroger", "Reveal Pet Food"),
-        "42255971": ("krcs", "Kroger", "Sheba Portions"),
-        "42255972": ("krcs", "Kroger", "Sheba Cuts"),
-        "42212950": ("krcs", "Kroger", "Fancy Feast Beef"),
-        "42235994": ("krcs", "Kroger", "Charmin Paper"),
-        "41810312": ("krcs", "Kroger", "Mezzetta Marinara"),
-        "41004085": ("krcs", "Kroger", "Grocery Multi-Bay"),
-        "41743485": ("krcs", "Kroger", "Ghirardelli"),
-        "42212948": ("krcs", "Kroger", "Confectionery"),
-        "42255693": ("krcs", "Kroger", "Havarti Cheese"),
-        "42255694": ("krcs", "Kroger", "Havarti Cheese"),
-        "42288818": ("krcs", "Kroger", "Kroger Reset"),
-        "42235990": ("krcs", "Kroger", "Kroger Grocery"),
-        "27277459": ("stgsams", "Sam's Club", "Sheba Multi-Bay"),
-        "27315261": ("stgsams", "Sam's Club", "Ghirardelli"),
-    }
-
-    catalog = []
-    seen_ids = set()
-
-    # 1. Scan all cached task JSON files in workspace
-    for p in sorted(WORKSPACE_DIR.glob("raw_backend_actions_task_*.json")):
-        tid = p.stem.replace("raw_backend_actions_task_", "")
-        if not tid.isdigit() or tid in seen_ids:
-            continue
-        meta = TASK_METADATA.get(tid)
-        inst_slug = meta[0] if meta else ("krcs" if tid.startswith("4") else ("albt" if tid.startswith("6") else "harr"))
-        inst_name = meta[1] if meta else inst_slug.upper()
-        desc = meta[2] if meta else ""
-        actions_cnt = 0
-        bays_cnt = 1
-        sample_title = ""
-        try:
-            raw_data = json.loads(p.read_text(encoding="utf-8"))
-            if isinstance(raw_data, list):
-                actions_cnt = len(raw_data)
-                bays = set()
-                for a in raw_data:
-                    if not sample_title:
-                        sample_title = a.get("product_title") or (a.get("expected_position") or {}).get("product_title") or ""
-                    cp = a.get("current_position") or {}
-                    si = cp.get("section_info") or {}
-                    if si.get("name"):
-                        bays.add(str(si["name"]))
-                bays_cnt = max(1, len(bays))
-        except Exception:
-            pass
-
-        seen_ids.add(tid)
-        title_display = desc or ((sample_title[:24] + "…") if len(sample_title) > 25 else sample_title) or "Reset Planogram"
-        label = f"Task #{tid} ({title_display} • {bays_cnt} Bay{'s' if bays_cnt != 1 else ''} • {actions_cnt} Actions)"
-        catalog.append({
-            "id": tid,
-            "label": label,
-            "instance": inst_slug,
-            "group": f"{inst_name} ({inst_slug.upper()})",
-            "actions_count": actions_cnt,
-            "bays_count": bays_cnt,
-        })
-
-    # 2. Add known tasks not yet cached locally
-    for tid, meta in TASK_METADATA.items():
-        if tid not in seen_ids:
-            seen_ids.add(tid)
-            inst_slug, inst_name, desc = meta
-            catalog.append({
-                "id": tid,
-                "label": f"Task #{tid} ({desc})",
-                "instance": inst_slug,
-                "group": f"{inst_name} ({inst_slug.upper()})",
-                "actions_count": 0,
-                "bays_count": 1,
-            })
-
-    # Sort: active instance first, then by actions count descending
-    clean_active = (active_instance_slug or "harr").lower()
-    if "albt" in clean_active:
-        active_key = "albt"
-    elif "krcs" in clean_active or "krog" in clean_active:
-        active_key = "krcs"
-    elif "sams" in clean_active:
-        active_key = "stgsams"
-    else:
-        active_key = "harr"
-
-    catalog.sort(key=lambda x: (0 if x["instance"] == active_key else 1, -x.get("actions_count", 0)))
-    return catalog
-
-
     def _handle_shelf_reset_sequence(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         slots = []
         source_desc = "custom_slots"
@@ -3339,6 +3339,10 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
             task_id = payload.get("task_id")
             if task_id == "current" or not task_id:
                 task_id = INSTANCE_DEFAULT_TASKS.get(catalog_key, 8648127)
+            elif str(task_id) in TASK_METADATA:
+                instance = TASK_METADATA[str(task_id)][0]
+                base_url = normalize_backend_url(instance)
+                instance_slug = instance
 
             if not raw_actions and task_id:
                 raw_file = WORKSPACE_DIR / f"raw_backend_actions_task_{task_id}.json"
@@ -3347,6 +3351,13 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
                         raw_actions = json.loads(raw_file.read_text(encoding="utf-8"))
                     except Exception:
                         raw_actions = []
+                if not raw_actions and str(task_id) == "42288818":
+                    try:
+                        from mobile_backend_integration_tests.core.ir_task_flow_builder import build_krcs_reference_task_42288818
+                        flow = build_krcs_reference_task_42288818()
+                        raw_actions = flow.get("actions", [])
+                    except Exception:
+                        pass
                 # If not cached locally and task_id is numeric, fetch live from specified instance!
                 if not raw_actions and str(task_id).isdigit():
                     fetched, fetch_err = self._fetch_raw_retailer_actions_with_status(base_url, int(task_id))
@@ -3370,10 +3381,14 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
 
             if raw_actions:
                 slots = extract_slots_from_retailer_actions(raw_actions)
-                source_desc = f"Task #{task_id} ({instance_slug.upper()})"
+                if slots:
+                    source_desc = f"Task #{task_id} ({instance_slug.upper()})"
+                else:
+                    slots = [Slot.from_dict(d) for d in REFERENCE_FIXTURE_DATA]
+                    source_desc = f"Task #{task_id} (Non-IR Task - Displaying Reference Sequence)"
             else:
                 slots = [Slot.from_dict(d) for d in REFERENCE_FIXTURE_DATA]
-                source_desc = "Section 7 Reference Fixture"
+                source_desc = f"Task #{task_id} (Section 7 Reference Fixture)"
         else:
             # Default to real retailer API actions for the selected instance
             target_task_id = INSTANCE_DEFAULT_TASKS.get(catalog_key, 8648127)
