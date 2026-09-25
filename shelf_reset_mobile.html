@@ -1537,8 +1537,7 @@
         <option value="stgsams">🎯 Sam's Club (stgsams)</option>
         <option value="custom">🌐 Custom Instance...</option>
       </select>
-      <select id="dataset-selector" class="task-select" style="max-width:280px; font-weight:700;">
-        <option value="current">Current Task (Auto)</option>
+      <select id="dataset-selector" class="task-select" style="max-width:320px; font-weight:700;">
         <optgroup label="Harris Teeter (HARR)">
           <option value="8648127" selected>Task #8648127 (Beauty / Diffusers • 1 Bay • 89 Actions)</option>
           <option value="8668473">Task #8668473 (Cult Wmn Reset • 3 Bays • 244 Actions)</option>
@@ -1559,21 +1558,16 @@
           <option value="42212948">Task #42212948 (Confectionery • 1 Bay • 50 Actions)</option>
           <option value="42255693">Task #42255693 (Havarti Cheese • 1 Bay • 27 Actions)</option>
           <option value="42255694">Task #42255694 (Havarti Cheese • 1 Bay • 27 Actions)</option>
-          <option value="42288818">Task #42288818 (Kroger Reset)</option>
-          <option value="42235990">Task #42235990 (Kroger Grocery)</option>
         </optgroup>
         <optgroup label="Albertsons (ALBT)">
           <option value="60535563">Task #60535563 (Libby Country Sausage Gravy • 3 Bays • 73 Actions)</option>
           <option value="8601238">Task #8601238 (Ghirardelli Chocolate • 1 Bay • 50 Actions)</option>
           <option value="60535562">Task #60535562 (Nissin Cup Noodles • 2 Bays • 11 Actions)</option>
-          <option value="60613936">Task #60613936 (SoupDry Planogram)</option>
         </optgroup>
         <optgroup label="Sam's Club (STGSAMS)">
           <option value="27277459">Task #27277459 (Sheba Multi-Bay • 3 Bays • 397 Actions)</option>
           <option value="27315261">Task #27315261 (Ghirardelli • 1 Bay • 50 Actions)</option>
         </optgroup>
-        <option value="reference">Section 7 Reference Fixture (10 Steps)</option>
-        <option value="custom">✏️ Enter Custom Task ID...</option>
       </select>
       <div id="custom-task-box" style="display:inline-flex; align-items:center; gap:3px;">
         <input type="text" id="custom-task-input" placeholder="Task #" style="width:70px; padding:4px 6px; font-size:11px; font-weight:700; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px;" title="Enter any occurrence Task ID for this instance" />
@@ -2028,67 +2022,41 @@
       const sel = document.getElementById("dataset-selector");
       if (!sel) return;
       if (!taskItems || !taskItems.length) {
-        if (selectedVal && Array.from(sel.options).some(o => o.value === selectedVal)) {
-          sel.value = selectedVal;
+        if (selectedVal && Array.from(sel.options).some(o => o.value === String(selectedVal))) {
+          sel.value = String(selectedVal);
         }
         return;
       }
       sel.innerHTML = "";
 
-      const currentOpt = document.createElement("option");
-      currentOpt.value = "current";
-      currentOpt.textContent = "Current Task (Auto)";
-      sel.appendChild(currentOpt);
+      const groups = {};
+      taskItems.forEach(t => {
+        const tid = String(typeof t === "object" ? t.id : t);
+        if (["reference", "current", "custom", "42288818", "42235990", "60613936"].includes(tid)) return;
+        const groupName = (typeof t === "object" && t.group) ? t.group : "Intelligent Reset Tasks";
+        if (!groups[groupName]) groups[groupName] = [];
+        groups[groupName].push(t);
+      });
 
-      if (Array.isArray(taskItems)) {
-        const groups = {};
-        taskItems.forEach(t => {
-          const groupName = (typeof t === "object" && t.group) ? t.group : "Other Tasks";
-          if (!groups[groupName]) groups[groupName] = [];
-          groups[groupName].push(t);
+      const groupNames = Object.keys(groups);
+      groupNames.forEach(grpName => {
+        const optGroup = document.createElement("optgroup");
+        optGroup.label = grpName;
+        groups[grpName].forEach(t => {
+          const tid = String(typeof t === "object" ? t.id : t);
+          const label = typeof t === "object" ? t.label : `Task #${tid}`;
+          const opt = document.createElement("option");
+          opt.value = tid;
+          opt.textContent = label;
+          optGroup.appendChild(opt);
         });
+        sel.appendChild(optGroup);
+      });
 
-        const groupNames = Object.keys(groups);
-        if (groupNames.length > 1) {
-          groupNames.forEach(grpName => {
-            const optGroup = document.createElement("optgroup");
-            optGroup.label = grpName;
-            groups[grpName].forEach(t => {
-              const tid = typeof t === "object" ? t.id : t;
-              const label = typeof t === "object" ? t.label : `Task #${tid}`;
-              const opt = document.createElement("option");
-              opt.value = tid;
-              opt.textContent = label;
-              optGroup.appendChild(opt);
-            });
-            sel.appendChild(optGroup);
-          });
-        } else {
-          taskItems.forEach(t => {
-            const tid = typeof t === "object" ? t.id : t;
-            const label = typeof t === "object" ? t.label : `Task #${tid}`;
-            const opt = document.createElement("option");
-            opt.value = tid;
-            opt.textContent = label;
-            sel.appendChild(opt);
-          });
-        }
-      }
-
-      const refOpt = document.createElement("option");
-      refOpt.value = "reference";
-      refOpt.textContent = "Section 7 Reference Fixture (10 Steps)";
-      sel.appendChild(refOpt);
-
-      const customOpt = document.createElement("option");
-      customOpt.value = "custom";
-      customOpt.textContent = "✏️ Enter Custom Task ID...";
-      sel.appendChild(customOpt);
-
-      if (selectedVal && Array.from(sel.options).some(o => o.value === selectedVal)) {
-        sel.value = selectedVal;
-      } else {
-        sel.value = "current";
+      if (selectedVal && Array.from(sel.options).some(o => o.value === String(selectedVal))) {
+        sel.value = String(selectedVal);
+      } else if (sel.options.length > 0) {
+        sel.value = sel.options[0].value;
       }
     }
 
@@ -2101,33 +2069,83 @@
           const data = await res.json();
           if (data && data.tasks && data.tasks.length) {
             populateTaskOptions(data.tasks, selectedVal || state.dataset);
+            return;
           }
         }
       } catch (e) {
-        console.warn("Could not fetch remote task catalog, using embedded task options", e);
+        console.warn("Could not fetch remote task catalog, checking local ir_tasks index", e);
       }
+
+      try {
+        const staticIndexRes = await fetch("data/ir_tasks/index.json");
+        if (staticIndexRes && staticIndexRes.ok) {
+          const idxData = await staticIndexRes.json();
+          if (idxData && idxData.tasks && idxData.tasks.length) {
+            populateTaskOptions(idxData.tasks, selectedVal || state.dataset);
+          }
+        }
+      } catch (staticErr) {}
     }
 
-    // Load dataset from backend API or fallback
-    async function loadDataset(datasetName = "current", instance = null) {
-      if (datasetName === "custom") {
-        const entered = prompt("Enter Intelligent Reset Task ID (e.g. 42484849 or 8648127):", "");
-        if (!entered || !entered.trim()) {
-          const sel = document.getElementById("dataset-selector");
-          if (sel) sel.value = state.dataset || "current";
-          return;
+    function applyLoadedData(data, datasetName) {
+      state.dataset = String(datasetName || data.task_id || "8648127");
+      state.stepIndex = 0;
+      state.history = [];
+      state.heldItem = null;
+      state.activeBayFilter = "ALL";
+      state.slots = (data.slots || []).map(s => {
+        s.bay = normalizeBay(s.bay);
+        return s;
+      });
+      state.steps = (data.steps || []).map(st => {
+        if (st.fromLocation) st.fromLocation.bay = normalizeBay(st.fromLocation.bay);
+        if (st.toLocation) st.toLocation.bay = normalizeBay(st.toLocation.bay);
+        if (st.bay) st.bay = normalizeBay(st.bay);
+        return st;
+      });
+      state.source = data.source || `Task #${state.dataset}`;
+      if (data.instance) state.instance = data.instance;
+
+      // Sync instance selector dropdown
+      const instSel = document.getElementById("instance-selector");
+      if (instSel && state.instance) {
+        if (![...instSel.options].some(o => o.value === state.instance)) {
+          const opt = document.createElement("option");
+          opt.value = state.instance;
+          opt.textContent = `🌐 ${state.instance}`;
+          instSel.appendChild(opt);
         }
-        datasetName = entered.trim();
-        const sel = document.getElementById("dataset-selector");
-        if (sel && !Array.from(sel.options).some(o => o.value === datasetName)) {
-          const customOpt = document.createElement("option");
-          customOpt.value = datasetName;
-          customOpt.textContent = `Task #${datasetName} (User Specified)`;
-          sel.insertBefore(customOpt, sel.firstChild.nextSibling);
-          sel.value = datasetName;
-        }
+        instSel.value = state.instance;
       }
-      state.dataset = datasetName;
+
+      // Sync dataset selector dropdown value
+      const dsSel = document.getElementById("dataset-selector");
+      if (dsSel && state.dataset) {
+        dsSel.value = state.dataset;
+      }
+
+      if (data.available_tasks && data.available_tasks.length) {
+        populateTaskOptions(data.available_tasks, state.dataset);
+      }
+
+      const fixCount = state.steps.filter(s => s.type === "fix_in_bay").length;
+      const instBadge = (state.instance || "HARR").toUpperCase();
+      const subTitle = document.getElementById("brand-subtitle");
+      if (subTitle) {
+        subTitle.textContent = 
+          `[${instBadge}] ${state.source} • ${state.slots.length} Slots • ${state.steps.length} Steps (${fixCount} Fix-in-Bay Shifts)`;
+      }
+
+      saveSession();
+      render();
+    }
+
+    // Load dataset from backend API or static IR fixture fallback
+    async function loadDataset(datasetName = "8648127", instance = null) {
+      if (!datasetName || datasetName === "current") {
+        datasetName = "8648127";
+      }
+      state.dataset = String(datasetName);
       if (instance) {
         state.instance = instance;
       } else if (!state.instance) {
@@ -2138,74 +2156,54 @@
       state.heldItem = null;
       state.activeBayFilter = "ALL";
 
+      // 1. Try Runner Server sequence API
       try {
         const apiBase = getApiBase();
-        let res;
-        if (datasetName === "reference") {
-          res = await fetch(`${apiBase}/api/runner/shelf_reset/reference`);
-        } else {
-          res = await fetch(`${apiBase}/api/runner/shelf_reset/sequence`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              task_id: datasetName === "current" ? undefined : datasetName,
-              instance: state.instance
-            })
-          });
-        }
+        const res = await fetch(`${apiBase}/api/runner/shelf_reset/sequence`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            task_id: state.dataset,
+            instance: state.instance
+          })
+        });
         if (res && res.ok) {
           const data = await res.json();
-          if (data.status === "error") {
-            const errBanner = document.getElementById("brand-subtitle");
-            if (errBanner) {
-              errBanner.innerHTML = `<span style="color:#f43f5e; font-weight:700;">⚠️ ${data.message}</span>`;
-            }
-            if (data.available_tasks && data.available_tasks.length) {
-              populateTaskOptions(data.available_tasks, datasetName);
-            }
+          if (data && data.status !== "error" && data.slots && data.slots.length) {
+            applyLoadedData(data, state.dataset);
             return;
           }
-          state.slots = (data.slots || []).map(s => {
-            s.bay = normalizeBay(s.bay);
-            return s;
-          });
-          state.steps = (data.steps || []).map(st => {
-            if (st.fromLocation) st.fromLocation.bay = normalizeBay(st.fromLocation.bay);
-            if (st.toLocation) st.toLocation.bay = normalizeBay(st.toLocation.bay);
-            if (st.bay) st.bay = normalizeBay(st.bay);
-            return st;
-          });
-          state.source = data.source || datasetName;
-          if (data.instance) state.instance = data.instance;
-
-          // Sync instance selector dropdown
-          const instSel = document.getElementById("instance-selector");
-          if (instSel && state.instance) {
-            if (![...instSel.options].some(o => o.value === state.instance)) {
-              const opt = document.createElement("option");
-              opt.value = state.instance;
-              opt.textContent = `🌐 ${state.instance}`;
-              instSel.appendChild(opt);
-            }
-            instSel.value = state.instance;
-          }
-
-          if (data.available_tasks && data.available_tasks.length) {
-            populateTaskOptions(data.available_tasks, datasetName);
-          }
-
-          const fixCount = state.steps.filter(s => s.type === "fix_in_bay").length;
-          const instBadge = (state.instance || "HARR").toUpperCase();
-          document.getElementById("brand-subtitle").textContent = 
-            `[${instBadge}] ${state.source} • ${state.slots.length} Slots • ${state.steps.length} Steps (${fixCount} Fix-in-Bay Shifts)`;
-
-          saveSession();
-          render();
-          return;
+          console.warn("Backend sequence endpoint returned error or empty slots, falling back to static fixture:", data);
         }
       } catch (err) {
-        console.warn("Backend API fetch failed, loading local engine fallback", err);
+        console.warn("Runner API fetch failed, trying static ir_tasks fixture:", err);
       }
+
+      // 2. Direct static fixture fetch for selected IR task (ensures 100% reliability on EC2 / static web servers)
+      try {
+        const staticRes = await fetch(`data/ir_tasks/${state.dataset}.json`);
+        if (staticRes && staticRes.ok) {
+          const staticData = await staticRes.json();
+          if (staticData && staticData.slots && staticData.slots.length) {
+            applyLoadedData(staticData, state.dataset);
+            return;
+          }
+        }
+      } catch (staticErr) {
+        console.warn(`Static fetch for data/ir_tasks/${state.dataset}.json failed:`, staticErr);
+      }
+
+      // 3. Fallback to primary IR task 8648127 fixture
+      try {
+        const fbRes = await fetch("data/ir_tasks/8648127.json");
+        if (fbRes && fbRes.ok) {
+          const fbData = await fbRes.json();
+          if (fbData && fbData.slots && fbData.slots.length) {
+            applyLoadedData(fbData, "8648127");
+            return;
+          }
+        }
+      } catch (e) {}
 
       loadLocalFallback();
     }
@@ -3123,11 +3121,13 @@
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed.slots && parsed.slots.length) {
-            state.dataset = parsed.dataset || "current";
+          const tid = String(parsed.dataset || "");
+          if (tid && /^\d+$/.test(tid) && parsed.slots && parsed.slots.length && parsed.steps && parsed.steps.length) {
+            state.dataset = tid;
             state.instance = parsed.instance || "harr";
             state.stepIndex = parsed.stepIndex || 0;
             state.slots = parsed.slots;
+            state.steps = parsed.steps;
             state.heldItem = parsed.heldItem || null;
             state.history = parsed.history || [];
             if (document.getElementById("dataset-selector")) document.getElementById("dataset-selector").value = state.dataset;
@@ -3183,12 +3183,20 @@
             return;
           }
         }
+        const INSTANCE_PRIMARY_TASK = {
+          "harr": "8648127",
+          "krcs": "42484849",
+          "albt": "60535563",
+          "albtqa": "60535563",
+          "stgsams": "27277459",
+        };
+        const nextTask = INSTANCE_PRIMARY_TASK[val] || "8648127";
         state.instance = val;
-        state.dataset = "current";
+        state.dataset = nextTask;
         const dsSel = document.getElementById("dataset-selector");
-        if (dsSel) dsSel.value = "current";
-        fetchTaskCatalog("current");
-        loadDataset("current", state.instance);
+        if (dsSel) dsSel.value = nextTask;
+        fetchTaskCatalog(nextTask);
+        loadDataset(nextTask, state.instance);
       });
     }
 
@@ -3389,11 +3397,11 @@
 
     // Initial boot
     if (!restoreSession()) {
-      fetchTaskCatalog("current");
-      loadDataset("current");
+      fetchTaskCatalog("8648127");
+      loadDataset("8648127");
     } else {
       fetchTaskCatalog(state.dataset);
-      loadDataset(state.dataset);
+      loadDataset(state.dataset, state.instance);
     }
   </script>
 </body>
