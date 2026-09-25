@@ -2183,7 +2183,6 @@ TASK_METADATA = {
     "8601238": ("albt", "Albertsons", "Ghirardelli Chocolate"),
     "60535562": ("albt", "Albertsons", "Nissin Cup Noodles"),
     "60535563": ("albt", "Albertsons", "Libby Country Sausage Gravy"),
-    "60613936": ("albt", "Albertsons", "SoupDry Planogram"),
     "42484849": ("krcs", "Kroger", "Pacific Soup Multi-Bay"),
     "42126922": ("krcs", "Kroger", "Stouffer Lasagna"),
     "42212949": ("krcs", "Kroger", "Reveal Pet Food"),
@@ -2197,17 +2196,36 @@ TASK_METADATA = {
     "42212948": ("krcs", "Kroger", "Confectionery"),
     "42255693": ("krcs", "Kroger", "Havarti Cheese"),
     "42255694": ("krcs", "Kroger", "Havarti Cheese"),
-    "42288818": ("krcs", "Kroger", "Kroger Reset"),
-    "42235990": ("krcs", "Kroger", "Kroger Grocery"),
     "27277459": ("stgsams", "Sam's Club", "Sheba Multi-Bay"),
     "27315261": ("stgsams", "Sam's Club", "Ghirardelli"),
 }
 
 def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> List[Dict[str, Any]]:
+    # 1. Prefer tracked data/ir_tasks/index.json if present
+    ir_index_path = WORKSPACE_DIR / "data" / "ir_tasks" / "index.json"
+    clean_active = (active_instance_slug or "harr").lower()
+    if "albt" in clean_active:
+        active_key = "albt"
+    elif "krcs" in clean_active or "krog" in clean_active:
+        active_key = "krcs"
+    elif "sams" in clean_active:
+        active_key = "stgsams"
+    else:
+        active_key = "harr"
+
+    if ir_index_path.exists():
+        try:
+            data = json.loads(ir_index_path.read_text(encoding="utf-8"))
+            tasks = data.get("tasks", [])
+            if tasks:
+                return sorted(tasks, key=lambda x: (0 if x.get("instance") == active_key else 1, -x.get("actions_count", 0)))
+        except Exception:
+            pass
+
     catalog = []
     seen_ids = set()
 
-    # 1. Scan all cached task JSON files in workspace
+    # 2. Scan all cached task JSON files in workspace
     for p in sorted(WORKSPACE_DIR.glob("raw_backend_actions_task_*.json")):
         tid = p.stem.replace("raw_backend_actions_task_", "")
         if not tid.isdigit() or tid in seen_ids:
@@ -2247,7 +2265,7 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
             "bays_count": bays_cnt,
         })
 
-    # 2. Add known tasks not yet cached locally
+    # 3. Add known tasks not yet cached locally
     for tid, meta in TASK_METADATA.items():
         if tid not in seen_ids:
             seen_ids.add(tid)
@@ -2260,17 +2278,6 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
                 "actions_count": 0,
                 "bays_count": 1,
             })
-
-    # Sort: active instance first, then by actions count descending
-    clean_active = (active_instance_slug or "harr").lower()
-    if "albt" in clean_active:
-        active_key = "albt"
-    elif "krcs" in clean_active or "krog" in clean_active:
-        active_key = "krcs"
-    elif "sams" in clean_active:
-        active_key = "stgsams"
-    else:
-        active_key = "harr"
 
     catalog.sort(key=lambda x: (0 if x["instance"] == active_key else 1, -x.get("actions_count", 0)))
     return catalog
@@ -3345,22 +3352,87 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 instance_slug = instance
 
             if not raw_actions and task_id:
-                raw_file = WORKSPACE_DIR / f"raw_backend_actions_task_{task_id}.json"
+                # 1. Prefer tracked data/ir_tasks/{task_id}.json fixture (fully committed, reliable on EC2 and local)
+                ir_fixture = WORKSPACE_DIR / "data" / "ir_tasks" / f"{task_id}.json"
+                if ir_fixture.exists():
+                    try:
+                        cached_data = json.loads(ir_fixture.read_text(encoding="utf-8"))
+                        if cached_data.get("slots"):
+                            slots = [Slot.from_dict(s) for s in cached_data["slots"]]
+                            source_desc = cached_data.get("source", f"Task #{task_id} ({instance_slug.upper()})")
+                            instance_slug = cached_data.get("instance", instance_slug)
+                    except Exception as e:
+                        logger.warning(f"Error reading ir_fixture {ir_fixture}: {e}")
+
+                if not slots:
+                    raw_file = WORKSPACE_DIR / f"raw_backend_actions_task_{task_id}.json"
+                    if raw_file.exists():
+                        try:
+                            raw_actions = json.loads(raw_file.read_text(encoding="utf-8"))
+                        except Exception:
+                            raw_actions = []
+                    if not raw_actions and str(task_id) == "42288818":
+                        try:
+                            from mobile_backend_integration_tests.core.ir_task_flow_builder import build_krcs_reference_task_42288818
+                            flow = build_krcs_reference_task_42288818()
+                            raw_actions = flow.get("actions", [])
+                        except Exception:
+                            pass
+                    # If not cached locally and task_id is numeric, fetch live from specified instance!
+                    if not raw_actions and str(task_id).isdigit():
+                        fetched, fetch_err = self._fetch_raw_retailer_actions_with_status(base_url, int(task_id))
+                        if fetched:
+                            raw_actions = fetched
+                            raw_file.write_text(json.dumps(raw_actions, indent=2), encoding="utf-8")
+                        elif fetch_err and ("401" in fetch_err or "Unauthorized" in fetch_err):
+                            return {
+                                "status": "error",
+                                "error_code": "AUTH_REQUIRED",
+                                "message": f"Authentication failed for {base_url} ({fetch_err}). To view Albertsons tasks, please use 'albt' or provide valid login credentials.",
+                                "instance": instance_slug,
+                                "available_instances": [
+                                    {"slug": "harr", "name": "Harris Teeter", "url": "https://harr.rebotics.net"},
+                                    {"slug": "krcs", "name": "Kroger", "url": "https://krcs.rebotics.net"},
+                                    {"slug": "albt", "name": "Albertsons", "url": "https://albt.rebotics.net"},
+                                    {"slug": "stgsams", "name": "Sam's Club (Staging)", "url": "https://stgsams.rebotics.net"},
+                                ],
+                                "available_tasks": available_task_items,
+                            }
+
+            if not slots and raw_actions:
+                slots = extract_slots_from_retailer_actions(raw_actions)
+                if slots:
+                    source_desc = f"Task #{task_id} ({instance_slug.upper()})"
+                else:
+                    slots = [Slot.from_dict(d) for d in REFERENCE_FIXTURE_DATA]
+                    source_desc = f"Task #{task_id} (Non-IR Task - Displaying Reference Sequence)"
+            elif not slots:
+                slots = [Slot.from_dict(d) for d in REFERENCE_FIXTURE_DATA]
+                source_desc = f"Task #{task_id} (Section 7 Reference Fixture)"
+        else:
+            # Default to real retailer API actions for the selected instance
+            target_task_id = INSTANCE_DEFAULT_TASKS.get(catalog_key, 8648127)
+            ir_fixture = WORKSPACE_DIR / "data" / "ir_tasks" / f"{target_task_id}.json"
+            if ir_fixture.exists():
+                try:
+                    cached_data = json.loads(ir_fixture.read_text(encoding="utf-8"))
+                    if cached_data.get("slots"):
+                        slots = [Slot.from_dict(s) for s in cached_data["slots"]]
+                        source_desc = cached_data.get("source", f"Task #{target_task_id} ({instance_slug.upper()})")
+                        instance_slug = cached_data.get("instance", instance_slug)
+                except Exception as e:
+                    logger.warning(f"Error reading default ir_fixture {ir_fixture}: {e}")
+
+            if not slots:
+                raw_file = WORKSPACE_DIR / f"raw_backend_actions_task_{target_task_id}.json"
+                raw_actions = []
                 if raw_file.exists():
                     try:
                         raw_actions = json.loads(raw_file.read_text(encoding="utf-8"))
                     except Exception:
                         raw_actions = []
-                if not raw_actions and str(task_id) == "42288818":
-                    try:
-                        from mobile_backend_integration_tests.core.ir_task_flow_builder import build_krcs_reference_task_42288818
-                        flow = build_krcs_reference_task_42288818()
-                        raw_actions = flow.get("actions", [])
-                    except Exception:
-                        pass
-                # If not cached locally and task_id is numeric, fetch live from specified instance!
-                if not raw_actions and str(task_id).isdigit():
-                    fetched, fetch_err = self._fetch_raw_retailer_actions_with_status(base_url, int(task_id))
+                if not raw_actions:
+                    fetched, fetch_err = self._fetch_raw_retailer_actions_with_status(base_url, target_task_id)
                     if fetched:
                         raw_actions = fetched
                         raw_file.write_text(json.dumps(raw_actions, indent=2), encoding="utf-8")
@@ -3379,52 +3451,12 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                             "available_tasks": available_task_items,
                         }
 
-            if raw_actions:
-                slots = extract_slots_from_retailer_actions(raw_actions)
-                if slots:
-                    source_desc = f"Task #{task_id} ({instance_slug.upper()})"
+                if raw_actions:
+                    slots = extract_slots_from_retailer_actions(raw_actions)
+                    source_desc = f"Task #{target_task_id} ({instance_slug.upper()})"
                 else:
                     slots = [Slot.from_dict(d) for d in REFERENCE_FIXTURE_DATA]
-                    source_desc = f"Task #{task_id} (Non-IR Task - Displaying Reference Sequence)"
-            else:
-                slots = [Slot.from_dict(d) for d in REFERENCE_FIXTURE_DATA]
-                source_desc = f"Task #{task_id} (Section 7 Reference Fixture)"
-        else:
-            # Default to real retailer API actions for the selected instance
-            target_task_id = INSTANCE_DEFAULT_TASKS.get(catalog_key, 8648127)
-            raw_file = WORKSPACE_DIR / f"raw_backend_actions_task_{target_task_id}.json"
-            raw_actions = []
-            if raw_file.exists():
-                try:
-                    raw_actions = json.loads(raw_file.read_text(encoding="utf-8"))
-                except Exception:
-                    raw_actions = []
-            if not raw_actions:
-                fetched, fetch_err = self._fetch_raw_retailer_actions_with_status(base_url, target_task_id)
-                if fetched:
-                    raw_actions = fetched
-                    raw_file.write_text(json.dumps(raw_actions, indent=2), encoding="utf-8")
-                elif fetch_err and ("401" in fetch_err or "Unauthorized" in fetch_err):
-                    return {
-                        "status": "error",
-                        "error_code": "AUTH_REQUIRED",
-                        "message": f"Authentication failed for {base_url} ({fetch_err}). To view Albertsons tasks, please use 'albt' or provide valid login credentials.",
-                        "instance": instance_slug,
-                        "available_instances": [
-                            {"slug": "harr", "name": "Harris Teeter", "url": "https://harr.rebotics.net"},
-                            {"slug": "krcs", "name": "Kroger", "url": "https://krcs.rebotics.net"},
-                            {"slug": "albt", "name": "Albertsons", "url": "https://albt.rebotics.net"},
-                            {"slug": "stgsams", "name": "Sam's Club (Staging)", "url": "https://stgsams.rebotics.net"},
-                        ],
-                        "available_tasks": available_task_items,
-                    }
-
-            if raw_actions:
-                slots = extract_slots_from_retailer_actions(raw_actions)
-                source_desc = f"Task #{target_task_id} ({instance_slug.upper()})"
-            else:
-                slots = [Slot.from_dict(d) for d in REFERENCE_FIXTURE_DATA]
-                source_desc = "Section 7 Reference Fixture"
+                    source_desc = "Section 7 Reference Fixture"
 
         sweep_vertical = payload.get("sweep_vertical", "top_to_bottom")
         sweep_horizontal = payload.get("sweep_horizontal", "snake")
@@ -3442,11 +3474,14 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         actual_touches = sum(len(s.sub_moves) if s.sub_moves else 1 for s in steps)
         effort_saved_pct = round(((naive_touches - actual_touches) / naive_touches) * 100, 1) if naive_touches else 0.0
 
+        raw_bays = sorted(list(set(str(s.bay) for s in slots if s.bay)), key=lambda x: int(x) if x.isdigit() else 999)
         return {
             "status": "success",
             "source": source_desc,
+            "task_id": str(task_id) if task_id else None,
             "instance": instance_slug,
             "base_url": base_url,
+            "bays": raw_bays,
             "available_instances": [
                 {"slug": "harr", "name": "Harris Teeter", "url": "https://harr.rebotics.net"},
                 {"slug": "krcs", "name": "Kroger", "url": "https://krcs.rebotics.net"},
