@@ -1519,7 +1519,7 @@
       </div>
       <div class="kpi-chip success">
         <span>🛒 Same-Bay Cart Stops:</span>
-        <strong>0 (Direct Fix)</strong>
+        <strong id="kpi-cart-stops">0 (Direct Fix)</strong>
       </div>
       <div class="kpi-chip">
         <span>✋ Max In-Hands:</span>
@@ -1881,18 +1881,18 @@
         <div class="comp-panel naive">
           <h4>❌ Naive Retailer Approach</h4>
           <ul>
-            <li>• Puts same-bay items in cart (<code>set_aside</code>)</li>
-            <li>• Double handling (250+ touches)</li>
-            <li>• Staging carts block customer aisles</li>
-            <li>• High risk of slot collision</li>
+            <li id="comp-naive-cart">• Puts same-bay items in cart (<code>set_aside</code>)</li>
+            <li id="comp-naive-touches">• Double handling (250+ touches)</li>
+            <li id="comp-naive-aisles">• Staging carts block customer aisles</li>
+            <li>• High risk of slot collision & displaced stock</li>
           </ul>
         </div>
         <div class="comp-panel optimized">
           <h4>✅ Our Graph Sequencer</h4>
           <ul>
-            <li>• Direct shelf shifts (<code>fix_in_bay</code>) — 0 cart trips</li>
-            <li>• 53%+ touches eliminated</li>
-            <li>• Aisles stay 100% clutter-free</li>
+            <li id="comp-opt-shifts">• Direct shelf shifts (<code>fix_in_bay</code>) — 0 cart trips</li>
+            <li id="comp-opt-saved">• 53%+ touches eliminated</li>
+            <li id="comp-opt-aisles">• Aisles stay 100% clutter-free</li>
             <li>• Backward walk guarantees empty slots</li>
           </ul>
         </div>
@@ -2509,12 +2509,69 @@
       // 3. Render Card 3 (Action Details & Explainer)
       renderActionDetails(isCompleted);
 
-      // 4. Update Header KPIs
+      // 4. Update Header KPIs and Comparison Strip based on loaded task
+      updateExecutiveKPIsAndComparison();
+    }
+
+    function updateExecutiveKPIsAndComparison() {
       const mismatchedTotal = state.slots.filter(s => s.current !== s.target).length;
       const naiveTouches = mismatchedTotal * 2;
-      const actualTouches = state.steps.reduce((acc, s) => acc + (s.subMoves ? s.subMoves.length : 1), 0);
-      const savedPct = naiveTouches > 0 ? Math.round(((naiveTouches - actualTouches) / naiveTouches) * 100) : 53;
-      document.getElementById("kpi-saved-pct").textContent = `${Math.max(35, savedPct)}%`;
+      const actualTouches = state.steps.reduce((acc, s) => {
+        if (s.subMoves && s.subMoves.length) return acc + s.subMoves.length;
+        if (s.sub_moves && s.sub_moves.length) return acc + s.sub_moves.length;
+        return acc + (s.type === 'swap' ? 2 : 1);
+      }, 0);
+      const touchesSaved = Math.max(0, naiveTouches - actualTouches);
+      const savedPct = naiveTouches > 0 ? Math.max(0, Math.round((touchesSaved / naiveTouches) * 100)) : 0;
+      const fixInBayCount = state.steps.filter(s => s.type === "fix_in_bay").length;
+      const cartTouchesAvoided = fixInBayCount * 2;
+      const rawBays = Array.from(new Set(state.slots.map(s => normalizeBay(s.bay || '1'))));
+      const baysCount = rawBays.length || 1;
+
+      // 1. Update Top Header KPIs
+      const kpiSavedEl = document.getElementById("kpi-saved-pct");
+      if (kpiSavedEl) {
+        kpiSavedEl.textContent = `${savedPct}%`;
+        kpiSavedEl.title = `Effort Saved: ${savedPct}% (${touchesSaved} fewer physical touches: ${actualTouches} graph touches vs ${naiveTouches} naive touches)`;
+      }
+
+      const kpiCartStopsEl = document.getElementById("kpi-cart-stops");
+      if (kpiCartStopsEl) {
+        kpiCartStopsEl.textContent = fixInBayCount > 0 ? `0 (${fixInBayCount} Direct Shifts)` : `0 (Direct Fix)`;
+        kpiCartStopsEl.title = `${fixInBayCount} direct same-bay shelf shifts avoided ${fixInBayCount} cart drop-offs and ${cartTouchesAvoided} extra touches`;
+      }
+
+      // 2. Update Naive Retailer Approach (Card 3.2)
+      const compNaiveCartEl = document.getElementById("comp-naive-cart");
+      if (compNaiveCartEl) {
+        compNaiveCartEl.innerHTML = `• Puts same-bay items in cart (<code>set_aside</code>: <strong>${mismatchedTotal}</strong> items staged into carts)`;
+      }
+
+      const compNaiveTouchesEl = document.getElementById("comp-naive-touches");
+      if (compNaiveTouchesEl) {
+        compNaiveTouchesEl.innerHTML = `• Double handling (<strong>${naiveTouches}</strong> touches: pick to cart + place)`;
+      }
+
+      const compNaiveAislesEl = document.getElementById("comp-naive-aisles");
+      if (compNaiveAislesEl) {
+        compNaiveAislesEl.innerHTML = `• Staging carts block customer aisles (<strong>${mismatchedTotal}</strong> items staged in carts)`;
+      }
+
+      // 3. Update Our Graph Sequencer (Card 3.2)
+      const compOptShiftsEl = document.getElementById("comp-opt-shifts");
+      if (compOptShiftsEl) {
+        compOptShiftsEl.innerHTML = `• Direct shelf shifts (<code>fix_in_bay</code>) — <strong>${fixInBayCount} shifts</strong> (${cartTouchesAvoided} cart touches eliminated)`;
+      }
+
+      const compOptSavedEl = document.getElementById("comp-opt-saved");
+      if (compOptSavedEl) {
+        compOptSavedEl.innerHTML = `• <strong>${savedPct}% touches eliminated</strong> (${touchesSaved} touches saved: <strong>${actualTouches}</strong> vs ${naiveTouches})`;
+      }
+
+      const compOptAislesEl = document.getElementById("comp-opt-aisles");
+      if (compOptAislesEl) {
+        compOptAislesEl.innerHTML = `• Aisles stay 100% clutter-free (across all ${baysCount} bay${baysCount > 1 ? 's' : ''})`;
+      }
     }
 
     // Render Mobile Card (Card 1)
