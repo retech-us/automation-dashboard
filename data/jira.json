@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-25T05:04:58.754044+00:00",
+  "lastUpdated": "2026-09-25T05:25:48.162485+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -8,21 +8,21 @@
     "totalDefects": 1000,
     "openDefects": 206,
     "blockers": 134,
-    "inProgress": 256,
+    "inProgress": 257,
     "inQa": 108,
     "resolvedThisWeek": 37,
-    "resolvedTotal": 430
+    "resolvedTotal": 429
   },
   "byPriority": {
     "Highest": 134,
     "High": 252,
-    "Medium": 561,
-    "Low": 53,
+    "Medium": 562,
+    "Low": 52,
     "Lowest": 0
   },
   "byComponent": {
-    "General": 249,
-    "BE REBM": 159,
+    "BE REBM": 160,
+    "General": 248,
     "ANDR": 226,
     "IOS": 209,
     "BE CORE": 22,
@@ -44,13 +44,13 @@
   "byStatus": {
     "QA": 108,
     "Waiting for clarification": 58,
+    "UAT": 148,
     "To  Do": 148,
     "Code Review": 25,
     "In Progress": 31,
-    "UAT": 147,
     "PRODUCTION READY": 37,
     "Dev Complete": 12,
-    "Done": 357,
+    "Done": 356,
     "Staging": 4,
     "Invalid": 73
   },
@@ -244,6 +244,88 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-19971",
+      "summary": "[BE REBM] Remove extra-facing self-heal `capture_exception` call",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.5",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-19950 - [REBM][BE] Sentry optimization \u2014 Phase 2",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Saharsh Solanki",
+      "reporter": "Saharsh Solanki",
+      "created": "2026-07-02T03:53:25.224-0700",
+      "updated": "2026-09-24T22:19:54.124-0700",
+      "ageDays": 84,
+      "staleDays": 0,
+      "labels": [
+        "Backend",
+        "SHIELD"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-19971"
+    },
+    {
+      "key": "REB3-19827",
+      "summary": "[SONA] OOS showing items that are recognized on realogram",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Waiting for clarification",
+      "statusCategory": "new",
+      "priority": "Highest",
+      "component": "BE REBM",
+      "assignee": "Artem Kanarev",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
+      "tester": "Vishal Kohli",
+      "reporter": "Vishal Kohli",
+      "created": "2026-06-12T05:08:47.539-0700",
+      "updated": "2026-09-24T22:09:16.801-0700",
+      "ageDays": 104,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "PILOT",
+        "SONA"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-19827"
+    },
+    {
+      "key": "REB3-20696",
+      "summary": "[BE] add a required final post photo flag",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.34 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Raghav Galhotra",
+      "reporter": "Raghav Galhotra",
+      "created": "2026-09-21T01:10:49.755-0700",
+      "updated": "2026-09-24T22:06:38.247-0700",
+      "ageDays": 3,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20696"
+    },
     {
       "key": "REB3-20735",
       "summary": "[IR][BE] Add config for Get from Back Room Popup for IR tasks",
@@ -570,31 +652,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20703"
     },
     {
-      "key": "REB3-20696",
-      "summary": "[BE] add a required final post photo flag",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.34 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Raghav Galhotra",
-      "reporter": "Raghav Galhotra",
-      "created": "2026-09-21T01:10:49.755-0700",
-      "updated": "2026-09-24T22:00:17.208-0700",
-      "ageDays": 3,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20696"
-    },
-    {
       "key": "REB3-20690",
       "summary": "[ANDR] Info icon visible on bay without uploading any image to Bay",
       "project": "Rebotics 3",
@@ -697,35 +754,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20650"
-    },
-    {
-      "key": "REB3-19827",
-      "summary": "[SONA] OOS showing items that are recognized on realogram",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Waiting for clarification",
-      "statusCategory": "new",
-      "priority": "Highest",
-      "component": "BE REBM",
-      "assignee": "Artem Kanarev",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
-      "tester": "Vishal Kohli",
-      "reporter": "Vishal Kohli",
-      "created": "2026-06-12T05:08:47.539-0700",
-      "updated": "2026-09-24T21:59:34.686-0700",
-      "ageDays": 104,
-      "staleDays": 0,
-      "labels": [
-        "AD-HOC",
-        "PILOT",
-        "SONA"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19827"
     },
     {
       "key": "REB3-20649",
@@ -2713,7 +2741,7 @@
       "created": "2026-09-14T23:04:36.007-0700",
       "updated": "2026-09-23T22:05:53.054-0700",
       "ageDays": 9,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20664"
     },
@@ -3210,7 +3238,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-09-15T22:25:21.435-0700",
       "updated": "2026-09-22T22:29:14.614-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 1,
       "labels": [
         "Backend",
@@ -3318,7 +3346,7 @@
       "created": "2026-09-09T01:52:35.349-0700",
       "updated": "2026-09-22T22:19:53.191-0700",
       "ageDays": 15,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20593"
     },
@@ -8691,7 +8719,7 @@
       "created": "2026-09-09T08:42:19.635-0700",
       "updated": "2026-09-10T22:15:50.288-0700",
       "ageDays": 15,
-      "staleDays": 13,
+      "staleDays": 14,
       "labels": [
         "AD-HOC",
         "ALBT",
@@ -8748,7 +8776,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-09-08T22:10:31.997-0700",
       "updated": "2026-09-10T06:21:22.614-0700",
-      "ageDays": 15,
+      "ageDays": 16,
       "staleDays": 14,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20590"
@@ -9021,7 +9049,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-16T22:18:46.509-0700",
       "updated": "2026-09-09T05:24:14.853-0700",
-      "ageDays": 38,
+      "ageDays": 39,
       "staleDays": 15,
       "labels": [
         "ANDR"
@@ -9693,7 +9721,7 @@
       "created": "2026-09-02T10:53:35.661-0700",
       "updated": "2026-09-08T22:13:53.180-0700",
       "ageDays": 22,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20546"
     },
@@ -9718,7 +9746,7 @@
       "created": "2026-09-03T01:36:07.752-0700",
       "updated": "2026-09-08T22:12:58.028-0700",
       "ageDays": 21,
-      "staleDays": 15,
+      "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20553"
     },
@@ -10382,7 +10410,7 @@
       "reporter": "Pratiksha Raut",
       "created": "2026-08-30T22:17:18.659-0700",
       "updated": "2026-09-08T01:24:37.826-0700",
-      "ageDays": 24,
+      "ageDays": 25,
       "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20506"
@@ -10407,7 +10435,7 @@
       "reporter": "Pratiksha Raut",
       "created": "2026-08-27T22:09:06.702-0700",
       "updated": "2026-09-08T01:24:37.232-0700",
-      "ageDays": 27,
+      "ageDays": 28,
       "staleDays": 16,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20503"
@@ -10692,7 +10720,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-16T22:07:26.972-0700",
       "updated": "2026-09-08T01:22:22.771-0700",
-      "ageDays": 38,
+      "ageDays": 39,
       "staleDays": 16,
       "labels": [
         "IOS"
@@ -12827,7 +12855,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-07-20T22:12:45.467-0700",
       "updated": "2026-09-07T23:51:58.215-0700",
-      "ageDays": 65,
+      "ageDays": 66,
       "staleDays": 16,
       "labels": [
         "ANDR",
@@ -13693,7 +13721,7 @@
       "created": "2023-07-26T10:10:22.752-0700",
       "updated": "2026-09-07T22:17:28.647-0700",
       "ageDays": 1156,
-      "staleDays": 16,
+      "staleDays": 17,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-12442"
     },
@@ -13849,7 +13877,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-09-03T22:16:44.569-0700",
       "updated": "2026-09-04T04:25:13.450-0700",
-      "ageDays": 20,
+      "ageDays": 21,
       "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20568"
@@ -14864,7 +14892,7 @@
       "reporter": "Vishal Kohli",
       "created": "2025-12-16T21:25:14.220-0800",
       "updated": "2026-09-01T08:45:07.512-0700",
-      "ageDays": 281,
+      "ageDays": 282,
       "staleDays": 23,
       "labels": [
         "AD-HOC",
@@ -15220,7 +15248,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-16T22:11:16.134-0700",
       "updated": "2026-09-01T04:02:48.788-0700",
-      "ageDays": 38,
+      "ageDays": 39,
       "staleDays": 23,
       "labels": [
         "ANDR"
@@ -16633,7 +16661,7 @@
       "created": "2026-08-01T23:37:49.067-0700",
       "updated": "2026-08-30T22:18:33.227-0700",
       "ageDays": 53,
-      "staleDays": 24,
+      "staleDays": 25,
       "labels": [
         "ANDR",
         "Customer"
@@ -16661,7 +16689,7 @@
       "created": "2026-02-10T07:12:34.537-0800",
       "updated": "2026-08-30T22:18:20.663-0700",
       "ageDays": 226,
-      "staleDays": 24,
+      "staleDays": 25,
       "labels": [
         "PILOT"
       ],
@@ -19028,7 +19056,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-08-12T22:19:58.719-0700",
       "updated": "2026-08-21T04:42:28.991-0700",
-      "ageDays": 42,
+      "ageDays": 43,
       "staleDays": 34,
       "labels": [
         "SHIELD",
@@ -20511,7 +20539,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-03-18T22:17:47.351-0700",
       "updated": "2026-08-21T04:42:05.292-0700",
-      "ageDays": 189,
+      "ageDays": 190,
       "staleDays": 34,
       "labels": [
         "AD-HOC"
@@ -21289,7 +21317,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-03-11T22:06:19.852-0700",
       "updated": "2026-08-21T04:42:01.820-0700",
-      "ageDays": 196,
+      "ageDays": 197,
       "staleDays": 34,
       "labels": [
         "REGRESSION"
@@ -22591,7 +22619,7 @@
       "reporter": "Vipin Nair",
       "created": "2026-06-04T22:15:11.838-0700",
       "updated": "2026-08-21T04:29:00.219-0700",
-      "ageDays": 111,
+      "ageDays": 112,
       "staleDays": 34,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19779"
@@ -25125,7 +25153,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-08-16T22:22:09.065-0700",
       "updated": "2026-08-20T02:05:59.071-0700",
-      "ageDays": 38,
+      "ageDays": 39,
       "staleDays": 35,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20403"
@@ -26988,7 +27016,7 @@
       "created": "2026-08-03T04:44:17.339-0700",
       "updated": "2026-08-10T22:10:33.983-0700",
       "ageDays": 52,
-      "staleDays": 44,
+      "staleDays": 45,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -27016,8 +27044,8 @@
       "reporter": "Vishal Kohli",
       "created": "2026-06-28T22:17:21.194-0700",
       "updated": "2026-08-10T22:10:28.226-0700",
-      "ageDays": 87,
-      "staleDays": 44,
+      "ageDays": 88,
+      "staleDays": 45,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -27371,31 +27399,6 @@
       "staleDays": 48,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-18632"
-    },
-    {
-      "key": "REB3-12137",
-      "summary": "[CVAT] Add an option to export images as s3 links to all formats",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "Unversioned",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Improvement",
-      "epic": "None",
-      "status": "Done",
-      "statusCategory": "done",
-      "priority": "Low",
-      "component": "General",
-      "assignee": "Farid Khalikov",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/fbdcb80464bf1a003a71ed2b34056f1f?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FFK-2.png",
-      "tester": "Farid Khalikov",
-      "reporter": "Farid Khalikov",
-      "created": "2023-06-26T22:21:24.127-0700",
-      "updated": "2026-08-07T03:02:09.131-0700",
-      "ageDays": 1185,
-      "staleDays": 48,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-12137"
     }
   ]
 }
