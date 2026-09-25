@@ -2210,6 +2210,8 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
         active_key = "krcs"
     elif "sams" in clean_active:
         active_key = "stgsams"
+    elif clean_active == "all":
+        active_key = "all"
     else:
         active_key = "harr"
 
@@ -2218,6 +2220,12 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
             data = json.loads(ir_index_path.read_text(encoding="utf-8"))
             tasks = data.get("tasks", [])
             if tasks:
+                if active_key == "all":
+                    return sorted(tasks, key=lambda x: (0 if x.get("instance") == "harr" else 1, -x.get("actions_count", 0)))
+                # Strictly return ONLY Intelligent Reset tasks matching active instance
+                filtered_tasks = [t for t in tasks if t.get("instance") == active_key]
+                if filtered_tasks:
+                    return sorted(filtered_tasks, key=lambda x: -x.get("actions_count", 0))
                 return sorted(tasks, key=lambda x: (0 if x.get("instance") == active_key else 1, -x.get("actions_count", 0)))
         except Exception:
             pass
@@ -2279,6 +2287,11 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
                 "bays_count": 1,
             })
 
+    if active_key != "all":
+        filtered = [x for x in catalog if x.get("instance") == active_key]
+        if filtered:
+            return sorted(filtered, key=lambda x: -x.get("actions_count", 0))
+
     catalog.sort(key=lambda x: (0 if x["instance"] == active_key else 1, -x.get("actions_count", 0)))
     return catalog
 
@@ -2286,6 +2299,12 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
 class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WORKSPACE_DIR), **kwargs)
+
+    def end_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PATCH")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        super().end_headers()
 
     def _send_json(self, data: Dict[str, Any], status: int = 200) -> None:
         body = json.dumps(data, indent=2).encode("utf-8")
@@ -2804,6 +2823,14 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "total_tasks": len(catalog),
                 "tasks": catalog,
             })
+            return
+
+        elif self.path.startswith("/api/runner/shelf_reset/sequence"):
+            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            task_id = qs.get("task_id", [None])[0] or "8648127"
+            inst = qs.get("instance", [None])[0] or "harr"
+            res = self._handle_shelf_reset_sequence({"task_id": task_id, "instance": inst})
+            self._send_json(res)
             return
 
         elif self.path.startswith("/api/runner/raw_actions_json") or "raw_backend_actions" in self.path:

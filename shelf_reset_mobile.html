@@ -1538,35 +1538,11 @@
         <option value="custom">🌐 Custom Instance...</option>
       </select>
       <select id="dataset-selector" class="task-select" style="max-width:320px; font-weight:700;">
-        <optgroup label="Harris Teeter (HARR)">
-          <option value="8648127" selected>Task #8648127 (Beauty / Diffusers • 1 Bay • 89 Actions)</option>
+        <optgroup label="Harris Teeter (HARR) — Intelligent Reset">
+          <option value="8788767" selected>Task #8788767 (Pedigree Pet Care • 4 Bays • 218 Actions)</option>
           <option value="8668473">Task #8668473 (Cult Wmn Reset • 3 Bays • 244 Actions)</option>
-          <option value="8788767">Task #8788767 (Pedigree Pet Care • 4 Bays • 218 Actions)</option>
           <option value="8648129">Task #8648129 (Cult Wmn Multi-Bay • 3 Bays • 189 Actions)</option>
-        </optgroup>
-        <optgroup label="Kroger (KRCS)">
-          <option value="42484849">Task #42484849 (Pacific Soup Multi-Bay • 4 Bays • 589 Actions)</option>
-          <option value="42126922">Task #42126922 (Stouffer Lasagna • 16 Bays • 393 Actions)</option>
-          <option value="42255971">Task #42255971 (Sheba Portions • 4 Bays • 266 Actions)</option>
-          <option value="42255972">Task #42255972 (Sheba Cuts • 4 Bays • 266 Actions)</option>
-          <option value="42212949">Task #42212949 (Reveal Pet Food • 4 Bays • 264 Actions)</option>
-          <option value="42212950">Task #42212950 (Fancy Feast Beef • 1 Bay • 84 Actions)</option>
-          <option value="42235994">Task #42235994 (Charmin Paper • 3 Bays • 78 Actions)</option>
-          <option value="41004085">Task #41004085 (Grocery Multi-Bay • 2 Bays • 79 Actions)</option>
-          <option value="41810312">Task #41810312 (Mezzetta Marinara • 2 Bays • 65 Actions)</option>
-          <option value="41743485">Task #41743485 (Ghirardelli • 1 Bay • 50 Actions)</option>
-          <option value="42212948">Task #42212948 (Confectionery • 1 Bay • 50 Actions)</option>
-          <option value="42255693">Task #42255693 (Havarti Cheese • 1 Bay • 27 Actions)</option>
-          <option value="42255694">Task #42255694 (Havarti Cheese • 1 Bay • 27 Actions)</option>
-        </optgroup>
-        <optgroup label="Albertsons (ALBT)">
-          <option value="60535563">Task #60535563 (Libby Country Sausage Gravy • 3 Bays • 73 Actions)</option>
-          <option value="8601238">Task #8601238 (Ghirardelli Chocolate • 1 Bay • 50 Actions)</option>
-          <option value="60535562">Task #60535562 (Nissin Cup Noodles • 2 Bays • 11 Actions)</option>
-        </optgroup>
-        <optgroup label="Sam's Club (STGSAMS)">
-          <option value="27277459">Task #27277459 (Sheba Multi-Bay • 3 Bays • 397 Actions)</option>
-          <option value="27315261">Task #27315261 (Ghirardelli • 1 Bay • 50 Actions)</option>
+          <option value="8648127">Task #8648127 (Beauty / Diffusers • 1 Bay • 89 Actions)</option>
         </optgroup>
       </select>
       <div id="custom-task-box" style="display:inline-flex; align-items:center; gap:3px;">
@@ -2018,7 +1994,7 @@
       return { bay: normalizeBay(bay || "1"), shelf: shelf || "1", position: pos || "1" };
     }
 
-    function populateTaskOptions(taskItems, selectedVal) {
+    function populateTaskOptions(taskItems, selectedVal, instanceFilter) {
       const sel = document.getElementById("dataset-selector");
       if (!sel) return;
       if (!taskItems || !taskItems.length) {
@@ -2027,12 +2003,34 @@
         }
         return;
       }
+
+      const activeInst = (instanceFilter || state.instance || (document.getElementById("instance-selector") || {}).value || "harr").toLowerCase();
+
+      // Filter tasks to ONLY those matching the active retailer instance
+      let filtered = taskItems.filter(t => {
+        const tid = String(typeof t === "object" ? t.id : t);
+        if (["reference", "current", "custom", "42288818", "42235990", "60613936"].includes(tid)) return false;
+        if (activeInst === "all") return true;
+        const inst = (typeof t === "object" && t.instance) ? t.instance.toLowerCase() : "";
+        if (activeInst.includes("harr")) return !inst || inst === "harr";
+        if (activeInst.includes("krcs") || activeInst.includes("krog")) return inst === "krcs";
+        if (activeInst.includes("albt")) return inst === "albt";
+        if (activeInst.includes("sams")) return inst === "stgsams";
+        return true;
+      });
+
+      if (!filtered.length) {
+        // Fallback: only include non-excluded tasks
+        filtered = taskItems.filter(t => {
+          const tid = String(typeof t === "object" ? t.id : t);
+          return !["reference", "current", "custom", "42288818", "42235990", "60613936"].includes(tid);
+        });
+      }
+
       sel.innerHTML = "";
 
       const groups = {};
-      taskItems.forEach(t => {
-        const tid = String(typeof t === "object" ? t.id : t);
-        if (["reference", "current", "custom", "42288818", "42235990", "60613936"].includes(tid)) return;
+      filtered.forEach(t => {
         const groupName = (typeof t === "object" && t.group) ? t.group : "Intelligent Reset Tasks";
         if (!groups[groupName]) groups[groupName] = [];
         groups[groupName].push(t);
@@ -2041,7 +2039,7 @@
       const groupNames = Object.keys(groups);
       groupNames.forEach(grpName => {
         const optGroup = document.createElement("optgroup");
-        optGroup.label = grpName;
+        optGroup.label = grpName.includes("Intelligent") ? grpName : `${grpName} — Intelligent Reset`;
         groups[grpName].forEach(t => {
           const tid = String(typeof t === "object" ? t.id : t);
           const label = typeof t === "object" ? t.label : `Task #${tid}`;
@@ -2060,35 +2058,52 @@
       }
     }
 
-    async function fetchTaskCatalog(selectedVal) {
-      try {
-        const apiBase = getApiBase();
-        const inst = state.instance || (document.getElementById("instance-selector") || {}).value || "harr";
-        const res = await fetch(`${apiBase}/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`);
-        if (res && res.ok) {
-          const data = await res.json();
-          if (data && data.tasks && data.tasks.length) {
-            populateTaskOptions(data.tasks, selectedVal || state.dataset);
-            return;
+    async function fetchTaskCatalog(selectedVal, instanceFilter) {
+      const inst = instanceFilter || state.instance || (document.getElementById("instance-selector") || {}).value || "harr";
+      const apiBase = getApiBase();
+      const candidateUrls = [
+        `${apiBase}/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`,
+        `/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`,
+        `http://127.0.0.1:8085/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`,
+        `http://localhost:8085/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`
+      ];
+
+      for (const url of candidateUrls) {
+        try {
+          const res = await fetch(url);
+          if (res && res.ok) {
+            const data = await res.json();
+            if (data && data.tasks && data.tasks.length) {
+              populateTaskOptions(data.tasks, selectedVal || state.dataset, inst);
+              return;
+            }
           }
-        }
-      } catch (e) {
-        console.warn("Could not fetch remote task catalog, checking local ir_tasks index", e);
+        } catch (e) {}
       }
 
-      try {
-        const staticIndexRes = await fetch("data/ir_tasks/index.json");
-        if (staticIndexRes && staticIndexRes.ok) {
-          const idxData = await staticIndexRes.json();
-          if (idxData && idxData.tasks && idxData.tasks.length) {
-            populateTaskOptions(idxData.tasks, selectedVal || state.dataset);
+      // Check local ir_tasks index
+      const staticIndexUrls = [
+        "data/ir_tasks/index.json",
+        `${apiBase}/data/ir_tasks/index.json`,
+        "/data/ir_tasks/index.json",
+        "http://127.0.0.1:8085/data/ir_tasks/index.json"
+      ];
+      for (const idxUrl of staticIndexUrls) {
+        try {
+          const staticIndexRes = await fetch(idxUrl);
+          if (staticIndexRes && staticIndexRes.ok) {
+            const idxData = await staticIndexRes.json();
+            if (idxData && idxData.tasks && idxData.tasks.length) {
+              populateTaskOptions(idxData.tasks, selectedVal || state.dataset, inst);
+              return;
+            }
           }
-        }
-      } catch (staticErr) {}
+        } catch (staticErr) {}
+      }
     }
 
     function applyLoadedData(data, datasetName) {
-      state.dataset = String(datasetName || data.task_id || "8648127");
+      state.dataset = String(datasetName || data.task_id || "8788767");
       state.stepIndex = 0;
       state.history = [];
       state.heldItem = null;
@@ -2125,7 +2140,7 @@
       }
 
       if (data.available_tasks && data.available_tasks.length) {
-        populateTaskOptions(data.available_tasks, state.dataset);
+        populateTaskOptions(data.available_tasks, state.dataset, state.instance);
       }
 
       const fixCount = state.steps.filter(s => s.type === "fix_in_bay").length;
@@ -2141,9 +2156,9 @@
     }
 
     // Load dataset from backend API or static IR fixture fallback
-    async function loadDataset(datasetName = "8648127", instance = null) {
+    async function loadDataset(datasetName = "8788767", instance = null) {
       if (!datasetName || datasetName === "current") {
-        datasetName = "8648127";
+        datasetName = (state.instance === "krcs" ? "42484849" : (state.instance === "albt" ? "60535563" : (state.instance === "stgsams" ? "27277459" : "8788767")));
       }
       state.dataset = String(datasetName);
       if (instance) {
@@ -2156,79 +2171,132 @@
       state.heldItem = null;
       state.activeBayFilter = "ALL";
 
-      // 1. Try Runner Server sequence API
-      try {
-        const apiBase = getApiBase();
-        const res = await fetch(`${apiBase}/api/runner/shelf_reset/sequence`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            task_id: state.dataset,
-            instance: state.instance
-          })
-        });
-        if (res && res.ok) {
-          const data = await res.json();
-          if (data && data.status !== "error" && data.slots && data.slots.length) {
-            applyLoadedData(data, state.dataset);
-            return;
+      const apiBase = getApiBase();
+      const serverBases = [
+        apiBase,
+        "",
+        "http://127.0.0.1:8085",
+        "http://localhost:8085"
+      ].filter((v, i, a) => v !== undefined && a.indexOf(v) === i);
+
+      // 1. Try Runner Server sequence API via POST
+      for (const sBase of serverBases) {
+        try {
+          const res = await fetch(`${sBase}/api/runner/shelf_reset/sequence`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              task_id: state.dataset,
+              instance: state.instance
+            })
+          });
+          if (res && res.ok) {
+            const data = await res.json();
+            if (data && data.status !== "error" && data.slots && data.slots.length) {
+              applyLoadedData(data, state.dataset);
+              return;
+            }
           }
-          console.warn("Backend sequence endpoint returned error or empty slots, falling back to static fixture:", data);
-        }
-      } catch (err) {
-        console.warn("Runner API fetch failed, trying static ir_tasks fixture:", err);
+        } catch (err) {}
       }
 
-      // 2. Direct static fixture fetch for selected IR task (ensures 100% reliability on EC2 / static web servers)
-      try {
-        const staticRes = await fetch(`data/ir_tasks/${state.dataset}.json`);
-        if (staticRes && staticRes.ok) {
-          const staticData = await staticRes.json();
-          if (staticData && staticData.slots && staticData.slots.length) {
-            applyLoadedData(staticData, state.dataset);
-            return;
+      // 1b. Try Runner Server sequence API via GET
+      for (const sBase of serverBases) {
+        try {
+          const res = await fetch(`${sBase}/api/runner/shelf_reset/sequence?task_id=${encodeURIComponent(state.dataset)}&instance=${encodeURIComponent(state.instance)}`);
+          if (res && res.ok) {
+            const data = await res.json();
+            if (data && data.status !== "error" && data.slots && data.slots.length) {
+              applyLoadedData(data, state.dataset);
+              return;
+            }
           }
-        }
-      } catch (staticErr) {
-        console.warn(`Static fetch for data/ir_tasks/${state.dataset}.json failed:`, staticErr);
+        } catch (err) {}
       }
 
-      // 3. Fallback to primary IR task 8648127 fixture
-      try {
-        const fbRes = await fetch("data/ir_tasks/8648127.json");
-        if (fbRes && fbRes.ok) {
-          const fbData = await fbRes.json();
-          if (fbData && fbData.slots && fbData.slots.length) {
-            applyLoadedData(fbData, "8648127");
-            return;
-          }
-        }
-      } catch (e) {}
+      // 2. Direct static fixture fetch for selected IR task
+      const staticCandidateUrls = [];
+      for (const sBase of serverBases) {
+        if (sBase) staticCandidateUrls.push(`${sBase}/data/ir_tasks/${state.dataset}.json`);
+      }
+      staticCandidateUrls.push(`data/ir_tasks/${state.dataset}.json`);
+      staticCandidateUrls.push(`/data/ir_tasks/${state.dataset}.json`);
 
-      loadLocalFallback();
+      for (const sUrl of staticCandidateUrls) {
+        try {
+          const staticRes = await fetch(sUrl);
+          if (staticRes && staticRes.ok) {
+            const staticData = await staticRes.json();
+            if (staticData && staticData.slots && staticData.slots.length) {
+              applyLoadedData(staticData, state.dataset);
+              return;
+            }
+          }
+        } catch (staticErr) {}
+      }
+
+      // 3. Fallback to instance primary task fixture if different
+      const primaryTaskForInst = state.instance === "krcs" ? "42484849" : (state.instance === "albt" ? "60535563" : (state.instance === "stgsams" ? "27277459" : "8788767"));
+      if (primaryTaskForInst !== state.dataset) {
+        for (const sBase of serverBases) {
+          try {
+            const fbUrl = sBase ? `${sBase}/data/ir_tasks/${primaryTaskForInst}.json` : `data/ir_tasks/${primaryTaskForInst}.json`;
+            const fbRes = await fetch(fbUrl);
+            if (fbRes && fbRes.ok) {
+              const fbData = await fbRes.json();
+              if (fbData && fbData.slots && fbData.slots.length) {
+                applyLoadedData(fbData, primaryTaskForInst);
+                return;
+              }
+            }
+          } catch (e) {}
+        }
+      }
+
+      loadLocalFallback(state.dataset, state.instance);
     }
 
-    function loadLocalFallback() {
-      const fallbackSlots = [
-        {"id":"Bay1_S2_P1","bay":"1","current":"Corn Flakes","target":"Orange Juice","shelf":2,"position":"1"},
-        {"id":"Bay1_S2_P2","bay":"1","current":"Orange Juice","target":"Corn Flakes","shelf":2,"position":"2"},
-        {"id":"Bay1_S2_P3","bay":"1","current":"Tomato Soup","target":"Penne Pasta","shelf":2,"position":"3"},
-        {"id":"Bay1_S2_P4","bay":"1","current":"Penne Pasta","target":"Marinara Sauce","shelf":2,"position":"4"},
-        {"id":"Bay1_S2_P5","bay":"1","current":"Marinara Sauce","target":"Tomato Soup","shelf":2,"position":"5"},
-        {"id":"Bay1_S1_P1","bay":"1","current":"Potato Chips","target":"Whole Milk","shelf":1,"position":"1"},
-        {"id":"Bay1_S1_P2","bay":"1","current":null,"target":"Potato Chips","shelf":1,"position":"2"},
-        {"id":"Bay1_S1_P3","bay":"1","current":"Whole Milk","target":null,"shelf":1,"position":"3"},
-        {"id":"Bay1_S1_P4","bay":"1","current":"Granola Bars","target":"Granola Bars","shelf":1,"position":"4"},
-        {"id":"Bay1_S1_P5","bay":"1","current":"Expired Yogurt Drink","target":null,"shelf":1,"position":"5"},
-        {"id":"Bay2_S1_P1","bay":"2","current":"Trail Mix","target":"Keto Bar (new)","shelf":1,"position":"1"},
-        {"id":"Bay2_S1_P2","bay":"2","current":"Protein Bar","target":"Trail Mix","shelf":1,"position":"2"},
-        {"id":"Bay2_S1_P3","bay":"2","current":"Nut Clusters","target":"Protein Bar","shelf":1,"position":"3"},
-        {"id":"Bay2_S1_P4","bay":"2","current":null,"target":"Nut Clusters","shelf":1,"position":"4"}
-      ];
+    function loadLocalFallback(taskId = "8788767", instance = "harr") {
+      const tid = String(taskId || "8788767");
+      let fallbackSlots = [];
+      let sourceName = `Task #${tid}`;
+
+      if (tid === "8788767") {
+        sourceName = "Task #8788767 (Pedigree Pet Care • 4 Bays)";
+        fallbackSlots = [
+          {"id":"Bay1_S1_P1","bay":"1","current":"PEDIGREE DENTASTIX 32 CT 1.66 LB","target":"BLUE DENTAL CHEWS MED 11.5 OZ","shelf":1,"position":"1","productTitle":"PEDIGREE DENTASTIX"},
+          {"id":"Bay1_S1_P2","bay":"1","current":"BLUE DENTAL CHEWS MED 11.5 OZ","target":"PEDIGREE DENTASTIX 32 CT 1.66 LB","shelf":1,"position":"2","productTitle":"BLUE DENTAL CHEWS"},
+          {"id":"Bay2_S1_P1","bay":"2","current":"PURINA ONE CHICKEN & RICE 16.5 LB","target":"PEDIGREE HIGH PROTEIN BEEF & LAMB","shelf":1,"position":"1","productTitle":"PURINA ONE CHICKEN"},
+          {"id":"Bay2_S1_P2","bay":"2","current":"PEDIGREE HIGH PROTEIN BEEF & LAMB","target":"PURINA ONE CHICKEN & RICE 16.5 LB","shelf":1,"position":"2","productTitle":"PEDIGREE HIGH PROTEIN"},
+          {"id":"Bay3_S1_P1","bay":"3","current":"CESAR CLASSIC LOAF VARIETY 24 CT","target":"BLUE LIFE PROTECTION ADULT CHICKEN","shelf":1,"position":"1","productTitle":"CESAR CLASSIC LOAF"},
+          {"id":"Bay3_S1_P2","bay":"3","current":"BLUE LIFE PROTECTION ADULT CHICKEN","target":"CESAR CLASSIC LOAF VARIETY 24 CT","shelf":1,"position":"2","productTitle":"BLUE LIFE PROTECTION"},
+          {"id":"Bay4_S1_P1","bay":"4","current":"GREENIES ORIGINAL TEENIE 43 OZ","target":"DREAMIES CAT TREATS SALMON 60G","shelf":1,"position":"1","productTitle":"GREENIES ORIGINAL TEENIE"},
+          {"id":"Bay4_S1_P2","bay":"4","current":null,"target":"GREENIES ORIGINAL TEENIE 43 OZ","shelf":1,"position":"2","productTitle":"GREENIES ORIGINAL TEENIE"}
+        ];
+      } else if (tid.startsWith("4")) {
+        sourceName = `Task #${tid} (Kroger Soup/Pantry • 4 Bays)`;
+        fallbackSlots = [
+          {"id":"Bay1_S1_P1","bay":"1","current":"Pacific Organic Tomato Soup","target":"Campbell Cream of Mushroom","shelf":1,"position":"1","productTitle":"Pacific Tomato Soup"},
+          {"id":"Bay1_S1_P2","bay":"1","current":"Campbell Cream of Mushroom","target":"Pacific Organic Tomato Soup","shelf":1,"position":"2","productTitle":"Cream of Mushroom"},
+          {"id":"Bay2_S1_P1","bay":"2","current":"Progresso Chicken Noodle","target":"Amy's Organic Lentil","shelf":1,"position":"1","productTitle":"Chicken Noodle"},
+          {"id":"Bay2_S1_P2","bay":"2","current":"Amy's Organic Lentil","target":"Progresso Chicken Noodle","shelf":1,"position":"2","productTitle":"Lentil Soup"}
+        ];
+      } else {
+        sourceName = `Task #${tid} (Intelligent Reset)`;
+        fallbackSlots = [
+          {"id":"Bay1_S1_P1","bay":"1","current":"Beauty Diffuser Lavender 100ml","target":"Diffuser Vanilla Bean","shelf":1,"position":"1","productTitle":"Lavender Diffuser"},
+          {"id":"Bay1_S1_P2","bay":"1","current":"Diffuser Vanilla Bean","target":"Beauty Diffuser Lavender 100ml","shelf":1,"position":"2","productTitle":"Vanilla Diffuser"},
+          {"id":"Bay1_S2_P1","bay":"1","current":"Aromatherapy Mist Eucalyptus","target":"Calming Room Spray 8oz","shelf":2,"position":"1","productTitle":"Eucalyptus Mist"},
+          {"id":"Bay1_S2_P2","bay":"1","current":null,"target":"Aromatherapy Mist Eucalyptus","shelf":2,"position":"2","productTitle":"Eucalyptus Mist"}
+        ];
+      }
       state.slots = fallbackSlots;
       state.steps = clientSideSequenceSlots(fallbackSlots);
-      state.source = "Local Fixture (Client-Side Sequencer)";
-      document.getElementById("brand-subtitle").textContent = `Source: ${state.source} • ${state.slots.length} Slots • ${state.steps.length} Steps`;
+      state.source = `${sourceName} (Client Sequenced)`;
+      const subTitle = document.getElementById("brand-subtitle");
+      if (subTitle) {
+        subTitle.textContent = `[${(state.instance || "HARR").toUpperCase()}] ${state.source} • ${state.slots.length} Slots • ${state.steps.length} Steps`;
+      }
       saveSession();
       render();
     }
@@ -3180,6 +3248,12 @@
           const parsed = JSON.parse(saved);
           const tid = String(parsed.dataset || "");
           if (tid && /^\d+$/.test(tid) && parsed.slots && parsed.slots.length && parsed.steps && parsed.steps.length) {
+            // Discard obsolete dummy fallback sessions
+            const hasDummyItems = parsed.slots.some(s => s.current === "Tomato Soup" || s.target === "Tomato Soup");
+            if (hasDummyItems) {
+              localStorage.removeItem(STORAGE_KEY);
+              return false;
+            }
             state.dataset = tid;
             state.instance = parsed.instance || "harr";
             state.stepIndex = parsed.stepIndex || 0;
@@ -3241,18 +3315,18 @@
           }
         }
         const INSTANCE_PRIMARY_TASK = {
-          "harr": "8648127",
+          "harr": "8788767",
           "krcs": "42484849",
           "albt": "60535563",
           "albtqa": "60535563",
           "stgsams": "27277459",
         };
-        const nextTask = INSTANCE_PRIMARY_TASK[val] || "8648127";
+        const nextTask = INSTANCE_PRIMARY_TASK[val] || "8788767";
         state.instance = val;
         state.dataset = nextTask;
         const dsSel = document.getElementById("dataset-selector");
         if (dsSel) dsSel.value = nextTask;
-        fetchTaskCatalog(nextTask);
+        fetchTaskCatalog(nextTask, val);
         loadDataset(nextTask, state.instance);
       });
     }
@@ -3454,10 +3528,12 @@
 
     // Initial boot
     if (!restoreSession()) {
-      fetchTaskCatalog("8648127");
-      loadDataset("8648127");
+      state.instance = "harr";
+      state.dataset = "8788767";
+      fetchTaskCatalog("8788767", "harr");
+      loadDataset("8788767", "harr");
     } else {
-      fetchTaskCatalog(state.dataset);
+      fetchTaskCatalog(state.dataset, state.instance);
       loadDataset(state.dataset, state.instance);
     }
   </script>
