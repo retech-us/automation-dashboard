@@ -201,9 +201,11 @@
                 <option value="krcs">🎯 Kroger (krcs)</option>
                 <option value="albt">🎯 Albertsons (albt)</option>
                 <option value="stgsams">🎯 Sam's Club (stgsams)</option>
-                <option value="custom">🌐 Custom Instance...</option>
+              <select id="ir-task-dropdown" class="ir-flow-input" style="max-width:220px; font-size:11px; padding:4px 6px; font-weight:600;" onchange="if(this.value){document.getElementById('ir-simple-task-input').value=this.value; window.IrTaskFlow.loadCurrentInputs();}" title="Select an Intelligent Reset Task from available catalog">
+                <option value="">⚡ Select Task...</option>
               </select>
-              <input type="number" id="ir-simple-task-input" class="ir-flow-input" style="width:105px;" value="8648127" placeholder="Task ID" title="Enter any occurrence Task ID" />
+              <input type="number" id="ir-simple-task-input" list="ir-task-catalog-list" class="ir-flow-input" style="width:105px;" value="8648127" placeholder="Task ID" title="Enter any occurrence Task ID or pick from dropdown" />
+              <datalist id="ir-task-catalog-list"></datalist>
               <button type="button" class="btn btn--primary btn--sm" onclick="window.IrTaskFlow.loadCurrentInputs()" title="Fetch live task flow for selected instance">
                 Load
               </button>

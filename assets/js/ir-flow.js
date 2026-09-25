@@ -70,7 +70,60 @@
       input.value = tid;
     }
 
+    loadTaskCatalog(inst);
     loadTask(tid, inst);
+  }
+
+  async function loadTaskCatalog(instance) {
+    const inst = instance || getSelectedInstance();
+    const dropdown = byId('ir-task-dropdown');
+    const datalist = byId('ir-task-catalog-list');
+    if (!dropdown && !datalist) return;
+
+    try {
+      const res = await fetch(`/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.tasks || !Array.isArray(data.tasks)) return;
+
+      if (dropdown) {
+        dropdown.innerHTML = '<option value="">⚡ Select Task...</option>';
+        const groups = {};
+        data.tasks.forEach((t) => {
+          const grp = t.group || 'Other Tasks';
+          if (!groups[grp]) groups[grp] = [];
+          groups[grp].push(t);
+        });
+        Object.entries(groups).forEach(([grpName, tasks]) => {
+          const optGroup = document.createElement('optgroup');
+          optGroup.label = grpName;
+          tasks.forEach((t) => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.label;
+            optGroup.appendChild(opt);
+          });
+          dropdown.appendChild(optGroup);
+        });
+
+        const curTid = (byId('ir-simple-task-input') || {}).value;
+        if (curTid && [...dropdown.options].some((o) => o.value === curTid)) {
+          dropdown.value = curTid;
+        }
+      }
+
+      if (datalist) {
+        datalist.innerHTML = '';
+        data.tasks.forEach((t) => {
+          const opt = document.createElement('option');
+          opt.value = t.id;
+          opt.label = t.label;
+          datalist.appendChild(opt);
+        });
+      }
+    } catch (e) {
+      console.warn('Could not load task catalog', e);
+    }
   }
 
   function onInstanceChange(val) {
@@ -141,6 +194,7 @@
       picker.value = initialInstance;
     }
 
+    loadTaskCatalog(initialInstance);
     loadTask(initialTaskId, initialInstance);
   }
 
