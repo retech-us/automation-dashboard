@@ -2494,6 +2494,9 @@
                 const statusWord = isPast ? "Already Cleared" : "Pre-cleared";
                 clTxt.textContent = `Target Slot: ${statusWord} in Step ${cl.clearedInStep} (${cl.clearedByActionType ? cl.clearedByActionType.toUpperCase() : ''})`;
                 clIcon.textContent = "✅";
+              } else if (cl.clearedBeforePlacement === false) {
+                clTxt.textContent = `Target Slot: Currently Occupied (Collision Warning!)`;
+                clIcon.textContent = "⚠️";
               } else {
                 clTxt.textContent = `Target Slot: Vacated & Collision-Free`;
                 clIcon.textContent = "🛡️";
@@ -2842,12 +2845,19 @@
             const timeWord = isPast ? "already cleared in earlier Step" : "pre-cleared in Step";
             clearedBeforeEl.innerHTML = `<span style="color:#34d399; font-weight:800;">✅ YES:</span> Cleared in <strong>Step ${cl.clearedInStep}</strong> (${cl.clearedByActionType ? cl.clearedByActionType.toUpperCase() : ''})`;
             provTextEl.innerHTML = `<strong>Verification Passed:</strong> Target slot (${destPosLabel}) was ${timeWord} <strong>Step ${cl.clearedInStep}</strong> when '${cl.initialOccupant}' was ${cl.howCleared || 'removed'}. The slot is guaranteed <strong>100% VACANT</strong> before placing '${step.productTitle || step.item}'.`;
+            statusPill.className = "clearance-status-pill vacant";
+            statusPill.innerHTML = `✅ 100% Vacant &amp; Collision-Free`;
+          } else if (cl.clearedBeforePlacement === false) {
+            clearedBeforeEl.innerHTML = `<span style="color:#f87171; font-weight:800;">❌ NO:</span> Target slot still occupied.`;
+            provTextEl.innerHTML = `<strong style="color:#f87171;">Collision Warning:</strong> Target slot (${destPosLabel}) is currently occupied by '${cl.initialOccupant}' and has not been cleared before this step.`;
+            statusPill.className = "clearance-status-pill error";
+            statusPill.innerHTML = `⚠️ Occupied Collision`;
           } else {
             clearedBeforeEl.innerHTML = `<span style="color:#34d399; font-weight:800;">✅ YES:</span> Vacated by preceding sequence dependency.`;
             provTextEl.innerHTML = `Target slot (${destPosLabel}) was vacated prior to this action. Collision-free placement guaranteed.`;
+            statusPill.className = "clearance-status-pill vacant";
+            statusPill.innerHTML = `✅ 100% Vacant &amp; Collision-Free`;
           }
-          statusPill.className = "clearance-status-pill vacant";
-          statusPill.innerHTML = `✅ 100% Vacant &amp; Collision-Free`;
         } else {
           initOccupiedEl.innerHTML = `<span style="color:#34d399;">🟢 No:</span> Naturally <strong>Vacant (Empty Slot)</strong>`;
           clearedBeforeEl.innerHTML = `<span style="color:#34d399; font-weight:800;">✅ YES:</span> Already vacant from the start of reset.`;
@@ -2908,6 +2918,8 @@
           if (cl.clearedInStep) {
             const isPast = cl.clearedInStep <= state.stepIndex;
             clearancePill = `<span style="font-size:9.5px; color:#34d399; font-weight:700;">✅ ${isPast ? 'Cleared in Step ' + cl.clearedInStep : 'Step ' + cl.clearedInStep + ' clears slot'}</span>`;
+          } else if (cl.clearedBeforePlacement === false) {
+            clearancePill = `<span style="font-size:9.5px; color:#f87171; font-weight:700;">⚠️ Occupied Slot</span>`;
           } else {
             clearancePill = `<span style="font-size:9.5px; color:#34d399; font-weight:700;">✅ Vacated &amp; Ready</span>`;
           }
