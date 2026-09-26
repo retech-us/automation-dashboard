@@ -5,18 +5,26 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-09-25T04:26:17Z",
-  "durationMs": 17075527,
+  "finishedAt": "2026-09-26T06:42:54Z",
+  "durationMs": 25265129,
   "summary": {
     "total": 25,
-    "passed": 8,
+    "passed": 10,
     "failed": 0,
-    "broken": 17,
+    "broken": 15,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/36073461582",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/36201550604",
   "topFailures": [
+    {
+      "name": "Navigate through all the steps of the task",
+      "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "feature": "Navigation through steps of the task"
+    },
     {
       "name": "Navigate through all the steps of the task",
       "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
@@ -28,26 +36,18 @@
     {
       "name": "Navigate through task with action step included",
       "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': java.util.NoSuchElementException",
+      "status": "failed",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': \u274c Complete Pending button did not become enabled within timeout: 3900 seconds",
       "feature": "Navigation through steps of the task"
     },
     {
-      "name": "Price tag actions are not generated if the price tag not detected",
-      "fullName": "src/test/resources/featureFiles/08_PriceTagActions.feature:34",
+      "name": "Navigate through task with survey",
+      "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
       "status": "broken",
       "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/08_PriceTagActions.feature:34': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_9",
-      "feature": "to validate Price Tag actions"
-    },
-    {
-      "name": "Tracked Capture Screen Camera icon",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
-      "feature": "Tracked Capture Screen"
+      "reason": "Test failed: 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "feature": "Navigation through steps of the task"
     },
     {
       "name": "Tracked Capture Screen Camera icon",
@@ -55,6 +55,14 @@
       "status": "broken",
       "category": "timeout",
       "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 60 seconds",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen Camera icon",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -66,19 +74,19 @@
       "feature": "Tracked Capture Screen"
     },
     {
-      "name": "Tracked Capture Screen View POG from planogram level",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
+      "name": "Tracked Capture Screen View POG from section level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
       "status": "broken",
       "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen View POG from section level",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -88,34 +96,26 @@
       "category": "unknown",
       "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': Could not find 'Ascending' element using any locator strategy. Please verify the sorting dialog is open and the element is visible.",
-      "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
     "locator": 5,
-    "timeout": 11,
-    "unknown": 5
+    "timeout": 14,
+    "unknown": 11
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 8,
-    "review": 17,
+    "passed": 10,
+    "review": 15,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 32.0,
+      "passPct": 40.0,
       "total": 25,
-      "failed": 17
+      "failed": 15
     }
   ],
   "platform": "iOS",
@@ -131,7 +131,7 @@
       "status": "failure"
     }
   ],
-  "runId": "36073461582",
-  "runNumber": 308,
+  "runId": "36201550604",
+  "runNumber": 309,
   "environment": "CI"
 }
