@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-09-28T13:40:06.965486+00:00",
+  "lastUpdated": "2026-09-28T13:52:04.357680+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -21,8 +21,8 @@
     "Lowest": 0
   },
   "byComponent": {
-    "BE REBM": 153,
     "IOS": 207,
+    "BE REBM": 153,
     "General": 285,
     "ANDR": 217,
     "HAWKEYE": 21,
@@ -42,11 +42,11 @@
     "Customer": 1
   },
   "byStatus": {
+    "UAT": 221,
     "Code Review": 27,
     "To  Do": 145,
     "Invalid": 51,
     "In Progress": 45,
-    "UAT": 221,
     "QA": 65,
     "Staging": 15,
     "Dev Complete": 14,
@@ -230,6 +230,37 @@
   },
   "issues": [
     {
+      "key": "REB3-20126",
+      "summary": "[iOS] [PRGM] Add Manual Retry for Offline Survey/Task Uploads",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI PRGM Sept HF",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Story",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "IOS",
+      "assignee": "anton.mitrofanov",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
+      "tester": "Brianne Tanke",
+      "reporter": "Brianne Tanke",
+      "created": "2026-07-23T01:54:09.274-0700",
+      "updated": "2026-09-28T06:41:47.184-0700",
+      "ageDays": 67,
+      "staleDays": 0,
+      "labels": [
+        "PILOT",
+        "offline-survey",
+        "prgm",
+        "retry-logic",
+        "upload"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20126"
+    },
+    {
       "key": "REB3-20732",
       "summary": "[BE REBM] Wandering Position with same expected and to position - When we have a mismatch in shelf count",
       "project": "Rebotics 3",
@@ -365,37 +396,6 @@
         "upload"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20095"
-    },
-    {
-      "key": "REB3-20126",
-      "summary": "[iOS] [PRGM] Add Manual Retry for Offline Survey/Task Uploads",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI PRGM Sept HF",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Story",
-      "epic": "None",
-      "status": "UAT",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "IOS",
-      "assignee": "anton.mitrofanov",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
-      "tester": "Brianne Tanke",
-      "reporter": "Brianne Tanke",
-      "created": "2026-07-23T01:54:09.274-0700",
-      "updated": "2026-09-28T05:52:57.972-0700",
-      "ageDays": 67,
-      "staleDays": 0,
-      "labels": [
-        "PILOT",
-        "offline-survey",
-        "prgm",
-        "retry-logic",
-        "upload"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20126"
     },
     {
       "key": "REB3-20828",
@@ -1618,7 +1618,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-09-26T06:46:57.192-0700",
       "updated": "2026-09-27T10:17:40.576-0700",
-      "ageDays": 1,
+      "ageDays": 2,
       "staleDays": 0,
       "labels": [
         "ANDR"
@@ -4321,7 +4321,7 @@
       "created": "2026-08-14T03:30:56.559-0700",
       "updated": "2026-09-25T06:50:44.929-0700",
       "ageDays": 45,
-      "staleDays": 2,
+      "staleDays": 3,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -4974,7 +4974,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-22T06:51:09.556-0700",
       "updated": "2026-09-25T00:54:57.629-0700",
-      "ageDays": 5,
+      "ageDays": 6,
       "staleDays": 3,
       "labels": [
         "IOS",
@@ -5300,7 +5300,7 @@
       "created": "2026-07-13T02:47:08.064-0700",
       "updated": "2026-09-24T06:43:28.458-0700",
       "ageDays": 77,
-      "staleDays": 3,
+      "staleDays": 4,
       "labels": [
         "PILOT",
         "PRGM"
@@ -14290,7 +14290,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-06T06:47:52.607-0700",
       "updated": "2026-09-07T23:52:19.656-0700",
-      "ageDays": 52,
+      "ageDays": 53,
       "staleDays": 20,
       "labels": [
         "Android",
@@ -15272,7 +15272,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-07-20T06:40:33.021-0700",
       "updated": "2026-09-07T23:51:57.542-0700",
-      "ageDays": 69,
+      "ageDays": 70,
       "staleDays": 20,
       "labels": [
         "IOS",
@@ -17741,7 +17741,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-08-13T06:48:50.865-0700",
       "updated": "2026-09-01T00:37:01.935-0700",
-      "ageDays": 45,
+      "ageDays": 46,
       "staleDays": 27,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20386"
@@ -18157,7 +18157,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-10T06:43:49.143-0700",
       "updated": "2026-09-01T00:10:49.677-0700",
-      "ageDays": 48,
+      "ageDays": 49,
       "staleDays": 27,
       "labels": [
         "ALBT",
@@ -24297,7 +24297,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-07-27T06:40:48.968-0700",
       "updated": "2026-08-21T04:29:13.543-0700",
-      "ageDays": 62,
+      "ageDays": 63,
       "staleDays": 38,
       "labels": [
         "SHIELD"
