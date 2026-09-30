@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-09-29T07:15:04Z",
-  "durationMs": 13157318,
+  "finishedAt": "2026-09-30T07:20:33Z",
+  "durationMs": 13431676,
   "summary": {
     "total": 112,
-    "passed": 60,
-    "failed": 3,
+    "passed": 63,
+    "failed": 2,
     "broken": 39,
-    "skipped": 9
+    "skipped": 8
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/36517658045",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/36664991847",
   "topFailures": [
     {
       "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
@@ -45,8 +45,8 @@
       "name": "Submit PLUNF action by subuser, rejected by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:73",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:73'",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:73': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI PLUNF Tab",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -68,9 +68,9 @@
     {
       "name": "Submit correction action by subuser, train by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:143",
-      "status": "failed",
-      "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:143': After correction, product UPC should match candidate UPC expected [041460398870",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:143'",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -99,26 +99,26 @@
     }
   ],
   "failureCategories": {
-    "login": 7,
-    "locator": 11,
-    "timeout": 6,
-    "data": 1,
-    "assertion": 3,
+    "login": 5,
+    "locator": 10,
+    "timeout": 9,
+    "data": 2,
+    "assertion": 1,
     "unknown": 14
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
     "total": 112,
-    "passed": 60,
-    "review": 42,
-    "skipped": 9
+    "passed": 63,
+    "review": 41,
+    "skipped": 8
   },
   "historyTrend": [
     {
-      "passPct": 53.6,
+      "passPct": 56.2,
       "total": 112,
-      "failed": 42
+      "failed": 41
     },
     {
       "passPct": 35.1,
@@ -140,7 +140,7 @@
     },
     {
       "name": "sequential-only-tests",
-      "status": "failure"
+      "status": "success"
     },
     {
       "name": "hybrid-tests",
@@ -151,6 +151,6 @@
       "status": "failure"
     }
   ],
-  "runId": "36517658045",
-  "runNumber": 1057
+  "runId": "36664991847",
+  "runNumber": 1058
 }
