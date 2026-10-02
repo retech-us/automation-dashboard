@@ -5,8 +5,8 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-10-01T04:58:34Z",
-  "durationMs": 18813372,
+  "finishedAt": "2026-10-02T05:24:22Z",
+  "durationMs": 20496120,
   "summary": {
     "total": 25,
     "passed": 14,
@@ -15,14 +15,30 @@
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/36792047598",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/36941733264",
   "topFailures": [
+    {
+      "name": "Navigate through all the steps of the task",
+      "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 60 seconds",
+      "feature": "Navigation through steps of the task"
+    },
     {
       "name": "Navigate through all the steps of the task",
       "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
       "status": "broken",
       "category": "unknown",
       "reason": "Test failed: 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "feature": "Navigation through steps of the task"
+    },
+    {
+      "name": "Navigate through task with action step included",
+      "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 80 seconds",
       "feature": "Navigation through steps of the task"
     },
     {
@@ -42,44 +58,36 @@
       "feature": "Tracked Capture Screen"
     },
     {
-      "name": "Tracked Capture Screen Camera icon",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen View POG from planogram level",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
-      "feature": "Tracked Capture Screen"
-    },
-    {
       "name": "Tracked Capture Screen section rejection",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': No selectable reason option found within 40s",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
-      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
-      "status": "failed",
-      "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': No aisle titles are visible after applying the sort. expected [false] but found [true]",
+      "name": "Tracked Capture Screen sorting by Capture when TASKS_CAPTURE_BANNER_AISLE_BASED disabled",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:43",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:43': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': Could not find 'Ascending' element using any locator strategy. Please verify the sorting dialog is open and the element is visible.",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Verify Task Status Filter for Completed Tasks",
+      "fullName": "src/test/resources/featureFiles/04_TaskTabFilters.feature:35",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/04_TaskTabFilters.feature:35': Task filter icon not found after header preparation",
+      "feature": "Verify Task Tab Filters"
     },
     {
       "name": "Verify Task Status Filter for Completed Tasks",
@@ -88,21 +96,12 @@
       "category": "unknown",
       "reason": "Test failed: 'src/test/resources/featureFiles/04_TaskTabFilters.feature:35': Could not start or resume task. Status: UNKNOWN",
       "feature": "Verify Task Tab Filters"
-    },
-    {
-      "name": "Verify Task Status Filter for In Progress Tasks",
-      "fullName": "src/test/resources/featureFiles/04_TaskTabFilters.feature:24",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/04_TaskTabFilters.feature:24': Could not start or resume task. Status: UNKNOWN",
-      "feature": "Verify Task Tab Filters"
     }
   ],
   "failureCategories": {
-    "locator": 3,
-    "timeout": 3,
-    "assertion": 1,
-    "unknown": 14
+    "locator": 4,
+    "timeout": 4,
+    "unknown": 17
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
@@ -132,7 +131,7 @@
       "status": "failure"
     }
   ],
-  "runId": "36792047598",
-  "runNumber": 314,
+  "runId": "36941733264",
+  "runNumber": 315,
   "environment": "CI"
 }
