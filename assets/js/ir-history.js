@@ -169,6 +169,16 @@
     studioLink.style.textDecoration = 'none';
     studioLink.style.display = 'inline-block';
     studioLink.textContent = 'Studio ↗';
+    studioLink.addEventListener('click', (e) => {
+      if (typeof window.setActiveTab === 'function' && document.getElementById('panel-ir-studio')) {
+        e.preventDefault();
+        window.setActiveTab('ir-studio');
+        const studioFrame = document.getElementById('iframe-ir-studio');
+        if (studioFrame) {
+          studioFrame.src = `test_runner.html?task_id=${encodeURIComponent(task.task_id)}&instance=${encodeURIComponent(currentInst)}&auto_load=1`;
+        }
+      }
+    });
     tdId.appendChild(studioLink);
     row.appendChild(tdId);
 
