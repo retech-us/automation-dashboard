@@ -720,17 +720,41 @@
                 <div id="ir-compare-effort-badge" style="font-size:12px; font-weight:800; padding:4px 12px; border-radius:20px;"></div>
               </div>
 
-              <!-- Effort Highlight KPI Cards -->
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+              <!-- Effort Highlight KPI Cards (2x2 Grid) -->
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:14px;">
                 <div style="background:var(--surface-raised, rgba(0,0,0,0.02)); border:1px solid var(--border); border-radius:var(--radius-xs); padding:10px 14px;">
-                  <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Total Physical Shelf Touches</div>
+                  <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Physical Shelf Touches</div>
                   <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">
                     <div style="font-size:12px; font-weight:700;">
-                      <span id="ir-effort-touches-a" style="color:#3B82F6; font-size:18px; font-weight:800;"></span>
+                      <span id="ir-effort-touches-a" style="color:#3B82F6; font-size:17px; font-weight:800;"></span>
                       <span style="color:var(--text-muted); font-size:11px;"> vs </span>
-                      <span id="ir-effort-touches-b" style="color:#10B981; font-size:18px; font-weight:800;"></span>
+                      <span id="ir-effort-touches-b" style="color:#10B981; font-size:17px; font-weight:800;"></span>
                     </div>
-                    <span id="ir-effort-touches-delta" style="font-size:12px; font-weight:800;"></span>
+                    <span id="ir-effort-touches-delta" style="font-size:11.5px; font-weight:800;"></span>
+                  </div>
+                </div>
+
+                <div style="background:var(--surface-raised, rgba(0,0,0,0.02)); border:1px solid var(--border); border-radius:var(--radius-xs); padding:10px 14px;">
+                  <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Estimated Labor Time (SAM)</div>
+                  <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">
+                    <div style="font-size:12px; font-weight:700;">
+                      <span id="ir-labor-min-a" style="color:#3B82F6; font-size:17px; font-weight:800;"></span>
+                      <span style="color:var(--text-muted); font-size:11px;"> vs </span>
+                      <span id="ir-labor-min-b" style="color:#10B981; font-size:17px; font-weight:800;"></span>
+                    </div>
+                    <span id="ir-labor-min-delta" style="font-size:11.5px; font-weight:800;"></span>
+                  </div>
+                </div>
+
+                <div style="background:var(--surface-raised, rgba(0,0,0,0.02)); border:1px solid var(--border); border-radius:var(--radius-xs); padding:10px 14px;">
+                  <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Double-Handling Rate (Cart Staging)</div>
+                  <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">
+                    <div style="font-size:12px; font-weight:700;">
+                      <span id="ir-double-handling-a" style="color:#3B82F6; font-size:17px; font-weight:800;"></span>
+                      <span style="color:var(--text-muted); font-size:11px;"> vs </span>
+                      <span id="ir-double-handling-b" style="color:#10B981; font-size:17px; font-weight:800;"></span>
+                    </div>
+                    <span id="ir-double-handling-delta" style="font-size:11.5px; font-weight:800;"></span>
                   </div>
                 </div>
 
@@ -738,11 +762,11 @@
                   <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Distinct Items Repositioned</div>
                   <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">
                     <div style="font-size:12px; font-weight:700;">
-                      <span id="ir-effort-items-a" style="color:#3B82F6; font-size:18px; font-weight:800;"></span>
+                      <span id="ir-effort-items-a" style="color:#3B82F6; font-size:17px; font-weight:800;"></span>
                       <span style="color:var(--text-muted); font-size:11px;"> vs </span>
-                      <span id="ir-effort-items-b" style="color:#10B981; font-size:18px; font-weight:800;"></span>
+                      <span id="ir-effort-items-b" style="color:#10B981; font-size:17px; font-weight:800;"></span>
                     </div>
-                    <span id="ir-effort-items-delta" style="font-size:12px; font-weight:800;"></span>
+                    <span id="ir-effort-items-delta" style="font-size:11.5px; font-weight:800;"></span>
                   </div>
                 </div>
               </div>
@@ -759,6 +783,68 @@
                     </tr>
                   </thead>
                   <tbody id="ir-compare-effort-tbody">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Algorithmic Quality & Safety Checks Card -->
+            <div id="ir-compare-safety-section" style="background:var(--surface); border:1px solid rgba(245,158,11,0.25); border-radius:var(--radius-sm); padding:14px 16px; margin-bottom:16px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:18px;">🛡️</span>
+                  <div>
+                    <h4 style="font-size:12.5px; font-weight:800; margin:0; color:var(--text);">Algorithmic Health & Safety Verification</h4>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Automated collision detection, cycle conflict audits, and batching efficiency</div>
+                  </div>
+                </div>
+                <span id="ir-safety-overall-badge" style="font-size:11px; font-weight:800; padding:3px 10px; border-radius:20px;"></span>
+              </div>
+
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
+                <div style="background:var(--surface-raised, rgba(0,0,0,0.02)); border:1px solid var(--border); border-radius:var(--radius-xs); padding:10px 12px;">
+                  <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Cycle Conflicts (Mutual Swaps)</div>
+                  <div id="ir-safety-cycles-val" style="font-size:13px; font-weight:800; margin-top:4px;"></div>
+                  <div id="ir-safety-cycles-desc" style="font-size:10px; color:var(--text-muted); margin-top:2px;"></div>
+                </div>
+
+                <div style="background:var(--surface-raised, rgba(0,0,0,0.02)); border:1px solid var(--border); border-radius:var(--radius-xs); padding:10px 12px;">
+                  <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Slot Collisions (Target Overlaps)</div>
+                  <div id="ir-safety-collisions-val" style="font-size:13px; font-weight:800; margin-top:4px;"></div>
+                  <div id="ir-safety-collisions-desc" style="font-size:10px; color:var(--text-muted); margin-top:2px;"></div>
+                </div>
+
+                <div style="background:var(--surface-raised, rgba(0,0,0,0.02)); border:1px solid var(--border); border-radius:var(--radius-xs); padding:10px 12px;">
+                  <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Execution Batches / Steps</div>
+                  <div id="ir-safety-steps-val" style="font-size:13px; font-weight:800; margin-top:4px;"></div>
+                  <div id="ir-safety-steps-desc" style="font-size:10px; color:var(--text-muted); margin-top:2px;"></div>
+                </div>
+
+                <div style="background:var(--surface-raised, rgba(0,0,0,0.02)); border:1px solid var(--border); border-radius:var(--radius-xs); padding:10px 12px;">
+                  <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Distinct UPCs Repositioned</div>
+                  <div id="ir-safety-upcs-val" style="font-size:13px; font-weight:800; margin-top:4px;"></div>
+                  <div id="ir-safety-upcs-desc" style="font-size:10px; color:var(--text-muted); margin-top:2px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Spatial / Bay Disruption Distribution Table -->
+            <div style="margin-bottom:16px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <h4 style="font-size:12.5px; font-weight:700; margin:0; color:var(--text);">📍 Spatial & Bay Disruption Distribution</h4>
+                <span id="ir-spatial-summary-pill" class="meta-pill" style="font-size:10.5px;"></span>
+              </div>
+              <div class="ir-table-wrap">
+                <table class="ir-history-table" style="width:100%;">
+                  <thead>
+                    <tr>
+                      <th>Planogram Bay</th>
+                      <th id="ir-compare-th-bay-a" style="text-align:right; color:#3B82F6;">Instance A</th>
+                      <th id="ir-compare-th-bay-b" style="text-align:right; color:#10B981;">Instance B</th>
+                      <th style="text-align:right;">Variance</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ir-compare-bay-tbody">
                   </tbody>
                 </table>
               </div>
@@ -784,7 +870,7 @@
             </div>
 
             <!-- State Breakdown Table -->
-            <div>
+            <div style="margin-bottom:16px;">
               <h4 style="font-size:12.5px; font-weight:700; margin:0 0 8px 0; color:var(--text);">📋 Breakdown by Action State</h4>
               <div class="ir-table-wrap">
                 <table class="ir-history-table" style="width:100%;">
@@ -797,6 +883,35 @@
                     </tr>
                   </thead>
                   <tbody id="ir-compare-state-tbody">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Item-by-Item UPC Variance Drilldown -->
+            <div style="margin-bottom:16px;">
+              <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+                <div>
+                  <h4 style="font-size:12.5px; font-weight:700; margin:0; color:var(--text);">🔍 Item-by-Item UPC Movement Variance</h4>
+                  <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Compare exact slot relocation paths and optimization status for each product</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <input type="text" id="ir-compare-item-search" placeholder="Search UPC or Title..." oninput="window.IrTaskFlow.filterProductVariance()" style="font-size:11.5px; padding:4px 10px; border-radius:var(--radius-xs); border:1px solid var(--border); background:var(--surface); color:var(--text); width:180px;" />
+                  <span id="ir-compare-item-count" class="meta-pill" style="font-size:10.5px;"></span>
+                </div>
+              </div>
+              <div class="ir-table-wrap" style="max-height:420px; overflow-y:auto;">
+                <table class="ir-history-table" style="width:100%;">
+                  <thead style="position:sticky; top:0; background:var(--surface); z-index:2;">
+                    <tr>
+                      <th style="width:120px;">UPC / SKU</th>
+                      <th>Product Description</th>
+                      <th id="ir-compare-th-item-a" style="color:#3B82F6;">Instance A Action</th>
+                      <th id="ir-compare-th-item-b" style="color:#10B981;">Instance B Action</th>
+                      <th style="text-align:right;">Variance Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ir-compare-item-tbody">
                   </tbody>
                 </table>
               </div>
@@ -1027,7 +1142,7 @@
   <script src="assets/js/jira-tracker.js?v=20260817p"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20260909a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261005a"></script>
+  <script src="assets/js/ir-flow.js?v=20261005b"></script>
   <script src="assets/js/app.v16.js?v=20260923c"></script>
 </body>
 </html>

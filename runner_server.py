@@ -2719,7 +2719,19 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "place_item": 0,
                 "items_repositioned": 0,
                 "total_touches": 0,
+                "labor_seconds": 0.0,
+                "labor_minutes": 0.0,
+                "double_handling_pct": 0.0,
             }
+
+            bay_breakdown: Dict[str, int] = {}
+            intra_bay_count = 0
+            cross_bay_count = 0
+            execution_groups = set()
+            upc_set = set()
+            item_records = []
+            slot_targets_by_group: Dict[str, List[Tuple[Any, Any, Any]]] = {}
+            shelf_moves_by_bay_shelf: Dict[Tuple[Any, Any], List[Tuple[Any, Any]]] = {}
 
             # Breakdown by operational action type and state (strictly excluding Restock)
             for item in operational_actions:
@@ -2729,6 +2741,25 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 exp_act = str(exp.get("action") or "").lower()
                 root_act = str(item.get("action") or item.get("action_type") or "").upper()
                 group_subhead = str((item.get("ir_action_group") or {}).get("subhead") or "").lower()
+
+                # Extract product info
+                p_obj = item.get("product") or {}
+                p_upc = str(p_obj.get("upc") or p_obj.get("sku") or p_obj.get("id") or item.get("upc") or "N/A").strip()
+                p_name = str(p_obj.get("name") or p_obj.get("title") or item.get("product_name") or f"Item {p_upc}").strip()
+                if p_upc and p_upc != "N/A":
+                    upc_set.add(p_upc)
+
+                # Extract positions
+                c_bay = curr.get("bay")
+                e_bay = exp.get("bay")
+                c_shelf = curr.get("shelf")
+                e_shelf = exp.get("shelf")
+                c_pos = curr.get("position")
+                e_pos = exp.get("position")
+
+                # Execution group & Direction
+                grp_id = str(item.get("execution_group_id") or (item.get("ir_action_group") or {}).get("id") or "step_1")
+                execution_groups.add(grp_id)
 
                 if "IDENTIFY" in root_act or curr_act == "identify":
                     act_type = "Identify"
@@ -2743,36 +2774,108 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                         shelf_effort["fix_in_bay"] += 1
                         shelf_effort["items_repositioned"] += 1
                     else:
+                        act_type = "Set Aside / Place Item"
                         result["action_breakdown"]["Set Aside"] = result["action_breakdown"].get("Set Aside", 0) + 1
                         result["action_breakdown"]["Place Item / Add to Shelf"] = result["action_breakdown"].get("Place Item / Add to Shelf", 0) + 1
                         shelf_effort["set_aside"] += 1
                         shelf_effort["place_item"] += 1
                         shelf_effort["items_repositioned"] += 1
                 elif curr_act == "set_aside":
+                    act_type = "Set Aside / Place Item"
                     result["action_breakdown"]["Set Aside"] = result["action_breakdown"].get("Set Aside", 0) + 1
                     result["action_breakdown"]["Place Item / Add to Shelf"] = result["action_breakdown"].get("Place Item / Add to Shelf", 0) + 1
                     shelf_effort["set_aside"] += 1
                     shelf_effort["place_item"] += 1
                     shelf_effort["items_repositioned"] += 1
                 elif exp_act in ("place_on_shelf_add_to_bay", "place_on_shelf"):
-                    result["action_breakdown"]["Place Item / Add to Shelf"] = result["action_breakdown"].get("Place Item / Add to Shelf", 0) + 1
+                    act_type = "Place Item / Add to Shelf"
+                    result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
                     shelf_effort["place_item"] += 1
                 elif curr_act == "" and exp_act == "":
-                    # Product is already at its target planogram location (e.g. shelf 3 pos 1 -> shelf 3 pos 1)
-                    # No movement required
                     act_type = "Already in Position"
                     result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
                 else:
                     act_type = root_act.replace("ACTION_", "").title() or "Other"
                     result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
 
+                # Spatial / Bay tracking
+                active_bay = e_bay if e_bay is not None else (c_bay if c_bay is not None else 1)
+                bay_key = f"Bay {active_bay}"
+                bay_breakdown[bay_key] = bay_breakdown.get(bay_key, 0) + 1
+
+                if c_bay is not None and e_bay is not None:
+                    if c_bay == e_bay:
+                        intra_bay_count += 1
+                    else:
+                        cross_bay_count += 1
+                else:
+                    intra_bay_count += 1
+
+                # Safety: Check slot collisions within execution group
+                if e_bay is not None and e_shelf is not None and e_pos is not None:
+                    target_slot = (e_bay, e_shelf, e_pos)
+                    slot_targets_by_group.setdefault(grp_id, []).append(target_slot)
+
+                # Safety: Check mutual cycle swaps (pos1 -> pos2 and pos2 -> pos1 on same bay/shelf)
+                if c_bay is not None and e_bay is not None and c_bay == e_bay and c_shelf is not None and e_shelf is not None and c_shelf == e_shelf and c_pos is not None and e_pos is not None and c_pos != e_pos:
+                    shelf_moves_by_bay_shelf.setdefault((c_bay, c_shelf), []).append((c_pos, e_pos))
+
                 state = (item.get("state") or "UNKNOWN").replace("STATE_", "")
                 result["state_breakdown"][state] = result["state_breakdown"].get(state, 0) + 1
 
-            shelf_effort["total_touches"] = (
-                shelf_effort["fix_in_bay"] + shelf_effort["set_aside"] + shelf_effort["place_item"]
-            )
+                from_str = f"B{c_bay} S{c_shelf}:{c_pos}" if (c_bay is not None and c_shelf is not None) else "—"
+                to_str = f"B{e_bay} S{e_shelf}:{e_pos}" if (e_bay is not None and e_shelf is not None) else "—"
+                slot_move = f"{from_str} → {to_str}" if (from_str != "—" or to_str != "—") else "In-Place"
+
+                item_records.append({
+                    "upc": p_upc,
+                    "name": p_name,
+                    "action_type": act_type,
+                    "bay": active_bay,
+                    "from_slot": from_str,
+                    "to_slot": to_str,
+                    "slot_move": slot_move,
+                    "group_id": grp_id,
+                })
+
+            # Calculate total touches & labor time modeling (SAM)
+            # Direct Slide: 7.0 seconds; Cart staging (Set Aside 15s + Place 15s): 30.0 seconds
+            total_touches = shelf_effort["fix_in_bay"] + shelf_effort["set_aside"] + shelf_effort["place_item"]
+            shelf_effort["total_touches"] = total_touches
+            labor_seconds = (shelf_effort["fix_in_bay"] * 7.0) + (shelf_effort["set_aside"] * 15.0) + (shelf_effort["place_item"] * 15.0)
+            shelf_effort["labor_seconds"] = round(labor_seconds, 1)
+            shelf_effort["labor_minutes"] = round(labor_seconds / 60.0, 1)
+            repositioned = shelf_effort["items_repositioned"]
+            shelf_effort["double_handling_pct"] = round((shelf_effort["set_aside"] / repositioned) * 100, 1) if repositioned > 0 else 0.0
+
             result["shelf_effort"] = shelf_effort
+            result["bay_breakdown"] = bay_breakdown
+            result["intra_bay_count"] = intra_bay_count
+            result["cross_bay_count"] = cross_bay_count
+            result["unique_upcs_count"] = len(upc_set)
+            result["execution_steps_count"] = len(execution_groups)
+
+            # Detect safety collision count
+            collision_count = 0
+            for gid, targets in slot_targets_by_group.items():
+                seen = set()
+                for tgt in targets:
+                    if tgt in seen:
+                        collision_count += 1
+                    else:
+                        seen.add(tgt)
+            result["collision_count"] = collision_count
+
+            # Detect mutual swap cycles
+            cycle_conflicts = 0
+            for (bs_bay, bs_shelf), move_pairs in shelf_moves_by_bay_shelf.items():
+                pairs_set = set(move_pairs)
+                for (p_from, p_to) in move_pairs:
+                    if (p_to, p_from) in pairs_set:
+                        cycle_conflicts += 1
+            # Each mutual pair is counted twice (A->B and B->A), so divide by 2
+            result["cycle_conflicts"] = cycle_conflicts // 2
+            result["item_records"] = item_records
 
         except urllib.error.HTTPError as e:
             if e.code == 401:
@@ -2835,6 +2938,12 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         items_diff = items_a - items_b
         items_pct = round(((items_a - items_b) / items_b) * 100, 1) if items_b > 0 else 0.0
 
+        # Labor Time Modeling
+        labor_min_a = eff_a.get("labor_minutes", 0.0)
+        labor_min_b = eff_b.get("labor_minutes", 0.0)
+        labor_min_diff = round(labor_min_a - labor_min_b, 1)
+        labor_min_pct = round(((labor_min_a - labor_min_b) / labor_min_b) * 100, 1) if labor_min_b > 0 else 0.0
+
         # Merge all action type keys
         all_types = sorted(set(list(summary_a["action_breakdown"].keys()) + list(summary_b["action_breakdown"].keys())))
         type_comparison = []
@@ -2859,6 +2968,80 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "count_a": a_val,
                 "count_b": b_val,
                 "diff": a_val - b_val,
+            })
+
+        # Spatial / Bay Comparison
+        bays_a = summary_a.get("bay_breakdown") or {}
+        bays_b = summary_b.get("bay_breakdown") or {}
+        all_bays = sorted(set(list(bays_a.keys()) + list(bays_b.keys())))
+        bay_comparison = []
+        for b_name in all_bays:
+            bv_a = bays_a.get(b_name, 0)
+            bv_b = bays_b.get(b_name, 0)
+            bay_comparison.append({
+                "bay": b_name,
+                "count_a": bv_a,
+                "count_b": bv_b,
+                "diff": bv_a - bv_b,
+            })
+
+        # Cross-reference products by UPC for item variance drilldown
+        upcs_a: Dict[str, List[Dict[str, Any]]] = {}
+        for it in summary_a.get("item_records", []):
+            u = it.get("upc") or "N/A"
+            upcs_a.setdefault(u, []).append(it)
+
+        upcs_b: Dict[str, List[Dict[str, Any]]] = {}
+        for it in summary_b.get("item_records", []):
+            u = it.get("upc") or "N/A"
+            upcs_b.setdefault(u, []).append(it)
+
+        all_upcs = sorted(set(list(upcs_a.keys()) + list(upcs_b.keys())))
+        product_variance = []
+        for u in all_upcs:
+            if u == "N/A":
+                continue
+            records_a = upcs_a.get(u, [])
+            records_b = upcs_b.get(u, [])
+            sample = records_a[0] if records_a else records_b[0]
+            p_name = sample.get("name") or f"Item {u}"
+            p_bay = sample.get("bay") or 1
+
+            act_a_str = ", ".join(f"{r['action_type']} ({r['slot_move']})" for r in records_a) if records_a else "Untouched / In-Position"
+            act_b_str = ", ".join(f"{r['action_type']} ({r['slot_move']})" for r in records_b) if records_b else "Untouched / In-Position"
+
+            types_a = set(r["action_type"] for r in records_a)
+            types_b = set(r["action_type"] for r in records_b)
+
+            if "Fix in Bay" in types_a and any(t in types_b for t in ("Set Aside", "Set Aside / Place Item", "Place Item / Add to Shelf")):
+                var_label = "Direct Slide (Eliminated Cart Staging)"
+                var_badge = "success"
+            elif "Already in Position" in types_a and not ("Already in Position" in types_b):
+                var_label = "Unnecessary Move Avoided"
+                var_badge = "success"
+            elif not records_a and records_b:
+                var_label = f"Target Instance {instance_b.upper()} Only"
+                var_badge = "info"
+            elif records_a and not records_b:
+                var_label = f"Instance {instance_a.upper()} Only"
+                var_badge = "warning"
+            elif types_a == types_b:
+                var_label = "Identical Flow"
+                var_badge = "neutral"
+            else:
+                var_label = "Alternative Move Path"
+                var_badge = "accent"
+
+            product_variance.append({
+                "upc": u,
+                "name": p_name,
+                "bay": p_bay,
+                "facings_a": len(records_a),
+                "facings_b": len(records_b),
+                "action_a": act_a_str,
+                "action_b": act_b_str,
+                "variance_label": var_label,
+                "variance_badge": var_badge,
             })
 
         return {
@@ -2904,6 +3087,32 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     },
                 ],
             },
+            "labor_comparison": {
+                "minutes_a": labor_min_a,
+                "minutes_b": labor_min_b,
+                "minutes_diff": labor_min_diff,
+                "minutes_pct": labor_min_pct,
+                "double_handling_pct_a": eff_a.get("double_handling_pct", 0.0),
+                "double_handling_pct_b": eff_b.get("double_handling_pct", 0.0),
+            },
+            "safety_comparison": {
+                "cycles_a": summary_a.get("cycle_conflicts", 0),
+                "cycles_b": summary_b.get("cycle_conflicts", 0),
+                "collisions_a": summary_a.get("collision_count", 0),
+                "collisions_b": summary_b.get("collision_count", 0),
+                "steps_a": summary_a.get("execution_steps_count", 0),
+                "steps_b": summary_b.get("execution_steps_count", 0),
+                "unique_upcs_a": summary_a.get("unique_upcs_count", 0),
+                "unique_upcs_b": summary_b.get("unique_upcs_count", 0),
+            },
+            "spatial_comparison": {
+                "by_bay": bay_comparison,
+                "intra_bay_a": summary_a.get("intra_bay_count", 0),
+                "intra_bay_b": summary_b.get("intra_bay_count", 0),
+                "cross_bay_a": summary_a.get("cross_bay_count", 0),
+                "cross_bay_b": summary_b.get("cross_bay_count", 0),
+            },
+            "product_variance": product_variance,
         }
 
     def _handle_task_flow(self, query: Dict[str, List[str]]) -> Dict[str, Any]:

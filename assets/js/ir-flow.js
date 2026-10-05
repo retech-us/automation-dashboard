@@ -1152,6 +1152,34 @@
       itemsDeltaEl.style.color = isRed ? '#059669' : (itemsDiff === 0 ? 'var(--text-muted)' : '#B45309');
     }
 
+    // Labor Time Modeling (SAM)
+    const labor = data.labor_comparison || {};
+    const laborA = labor.minutes_a || 0;
+    const laborB = labor.minutes_b || 0;
+    const laborDiff = labor.minutes_diff || 0;
+    const laborPct = labor.minutes_pct || 0;
+    const doubleA = labor.double_handling_pct_a || 0;
+    const doubleB = labor.double_handling_pct_b || 0;
+
+    setText('ir-labor-min-a', `${laborA}m`);
+    setText('ir-labor-min-b', `${laborB}m`);
+    const laborDeltaEl = byId('ir-labor-min-delta');
+    if (laborDeltaEl) {
+      const isTimeSaved = laborDiff < 0;
+      laborDeltaEl.textContent = `${laborPct > 0 ? '+' : ''}${laborPct}% (${Math.abs(laborDiff)} min ${isTimeSaved ? 'saved' : 'more'})`;
+      laborDeltaEl.style.color = isTimeSaved ? '#059669' : (laborDiff === 0 ? 'var(--text-muted)' : '#B45309');
+    }
+
+    setText('ir-double-handling-a', `${doubleA}%`);
+    setText('ir-double-handling-b', `${doubleB}%`);
+    const doubleDeltaEl = byId('ir-double-handling-delta');
+    if (doubleDeltaEl) {
+      const doubleDiff = round1(doubleA - doubleB);
+      const isReduced = doubleDiff < 0;
+      doubleDeltaEl.textContent = `${doubleDiff > 0 ? '+' : ''}${doubleDiff}% staged`;
+      doubleDeltaEl.style.color = isReduced ? '#059669' : (doubleDiff === 0 ? 'var(--text-muted)' : '#B45309');
+    }
+
     const effTbody = byId('ir-compare-effort-tbody');
     if (effTbody) {
       const breakdown = eff.breakdown || [];
@@ -1174,6 +1202,72 @@
         <td style="text-align:right; font-size:14px; color:#10B981;">${touchesB}</td>
         <td style="text-align:right; font-size:14px; color:${totDiffColor};">${touchesDiff === 0 ? '—' : (touchesDiff > 0 ? '+' : '') + touchesDiff + ` (${touchesPct > 0 ? '+' : ''}${touchesPct}%)`}</td>
       </tr>`;
+    }
+
+    // Algorithmic Quality & Safety Checks Card
+    const safety = data.safety_comparison || {};
+    const cyclesA = safety.cycles_a || 0;
+    const cyclesB = safety.cycles_b || 0;
+    const collA = safety.collisions_a || 0;
+    const collB = safety.collisions_b || 0;
+    const stepsA = safety.steps_a || 0;
+    const stepsB = safety.steps_b || 0;
+    const upcsA = safety.unique_upcs_a || 0;
+    const upcsB = safety.unique_upcs_b || 0;
+
+    const safetyBadge = byId('ir-safety-overall-badge');
+    if (safetyBadge) {
+      if (cyclesA === 0 && collA === 0) {
+        safetyBadge.textContent = '🟢 Verified Clean Sequencing';
+        safetyBadge.style.background = 'rgba(16,185,129,0.15)';
+        safetyBadge.style.color = '#059669';
+      } else {
+        safetyBadge.textContent = '⚠️ Sequencing Anomalies Detected';
+        safetyBadge.style.background = 'rgba(239,68,68,0.15)';
+        safetyBadge.style.color = '#DC2626';
+      }
+    }
+
+    setText('ir-safety-cycles-val', `${cyclesA} vs ${cyclesB}`);
+    setText('ir-safety-cycles-desc', cyclesA === 0 ? `Zero mutual swaps in ${instNameA}` : `⚠️ ${cyclesA} swap conflict(s) found`);
+    byId('ir-safety-cycles-val').style.color = cyclesA === 0 ? '#059669' : '#DC2626';
+
+    setText('ir-safety-collisions-val', `${collA} vs ${collB}`);
+    setText('ir-safety-collisions-desc', collA === 0 ? 'No target position overlaps' : `⚠️ ${collA} target collision(s)`);
+    byId('ir-safety-collisions-val').style.color = collA === 0 ? '#059669' : '#DC2626';
+
+    setText('ir-safety-steps-val', `${stepsA} vs ${stepsB} batches`);
+    const stepsDiff = stepsA - stepsB;
+    setText('ir-safety-steps-desc', stepsDiff <= 0 ? `${Math.abs(stepsDiff)} fewer associate mobile steps` : `+${stepsDiff} additional steps`);
+
+    setText('ir-safety-upcs-val', `${upcsA} vs ${upcsB} products`);
+    setText('ir-safety-upcs-desc', 'Unique items relocated');
+
+    // Spatial & Bay Disruption Distribution Table
+    setText('ir-compare-th-bay-a', labelA);
+    setText('ir-compare-th-bay-b', labelB);
+    const spatial = data.spatial_comparison || {};
+    const bayTbody = byId('ir-compare-bay-tbody');
+    if (bayTbody) {
+      const bayRows = spatial.by_bay || [];
+      if (bayRows.length === 0) {
+        bayTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:12px; color:var(--text-muted);">No bay distribution data</td></tr>';
+      } else {
+        bayTbody.innerHTML = bayRows.map(r => {
+          const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff > 0 ? '#B45309' : '#059669');
+          const diffPrefix = r.diff > 0 ? '+' : '';
+          return `<tr>
+            <td><strong style="color:var(--text);">${r.bay}</strong></td>
+            <td style="text-align:right; font-weight:700; font-size:13px; color:#3B82F6;">${r.count_a}</td>
+            <td style="text-align:right; font-weight:700; font-size:13px; color:#10B981;">${r.count_b}</td>
+            <td style="text-align:right; font-weight:800; color:${diffColor};">${r.diff === 0 ? '—' : diffPrefix + r.diff}</td>
+          </tr>`;
+        }).join('');
+      }
+    }
+    const spatialPill = byId('ir-spatial-summary-pill');
+    if (spatialPill) {
+      spatialPill.textContent = `${instNameA}: ${spatial.intra_bay_a || 0} Intra-Bay / ${spatial.cross_bay_a || 0} Cross-Bay vs ${instNameB}: ${spatial.intra_bay_b || 0} Intra-Bay / ${spatial.cross_bay_b || 0} Cross-Bay`;
     }
 
     // Error warnings for individual tasks
@@ -1230,6 +1324,76 @@
         }).join('');
       }
     }
+
+    // Item-by-Item UPC Variance Drilldown
+    setText('ir-compare-th-item-a', labelA);
+    setText('ir-compare-th-item-b', labelB);
+    currentProductVarianceList = data.product_variance || [];
+    renderProductVariance();
+  }
+
+  let currentProductVarianceList = [];
+
+  function filterProductVariance() {
+    const input = byId('ir-compare-item-search');
+    const q = (input ? input.value : '').trim().toLowerCase();
+    renderProductVariance(q);
+  }
+
+  function renderProductVariance(filterText = '') {
+    const tbody = byId('ir-compare-item-tbody');
+    const countPill = byId('ir-compare-item-count');
+    if (!tbody) return;
+
+    let items = currentProductVarianceList || [];
+    if (filterText) {
+      items = items.filter(it => 
+        (it.upc && it.upc.toLowerCase().includes(filterText)) ||
+        (it.name && it.name.toLowerCase().includes(filterText)) ||
+        (it.variance_label && it.variance_label.toLowerCase().includes(filterText)) ||
+        (it.action_a && it.action_a.toLowerCase().includes(filterText)) ||
+        (it.action_b && it.action_b.toLowerCase().includes(filterText))
+      );
+    }
+
+    if (countPill) {
+      countPill.textContent = `Showing ${items.length} of ${currentProductVarianceList.length} products`;
+    }
+
+    if (items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px; color:var(--text-muted);">No products match your search</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = items.map(it => {
+      let badgeStyle = 'background:rgba(107,114,128,0.15); color:#4B5563;';
+      if (it.variance_badge === 'success') {
+        badgeStyle = 'background:rgba(16,185,129,0.15); color:#059669; font-weight:700;';
+      } else if (it.variance_badge === 'warning') {
+        badgeStyle = 'background:rgba(245,158,11,0.15); color:#B45309; font-weight:700;';
+      } else if (it.variance_badge === 'info') {
+        badgeStyle = 'background:rgba(59,130,246,0.15); color:#1D4ED8; font-weight:700;';
+      } else if (it.variance_badge === 'accent') {
+        badgeStyle = 'background:rgba(139,92,246,0.15); color:#6D28D9; font-weight:700;';
+      }
+
+      return `<tr>
+        <td style="font-family:monospace; font-size:11.5px; font-weight:700; color:var(--text);">${it.upc}</td>
+        <td>
+          <div style="font-size:12px; font-weight:700; color:var(--text);">${it.name}</div>
+          <div style="font-size:10.5px; color:var(--text-muted);">Bay ${it.bay} • Facings: ${it.facings_a} in A vs ${it.facings_b} in B</div>
+        </td>
+        <td style="font-size:11.5px; color:#2563EB;">${it.action_a}</td>
+        <td style="font-size:11.5px; color:#059669;">${it.action_b}</td>
+        <td style="text-align:right;">
+          <span style="font-size:10.5px; padding:3px 8px; border-radius:12px; display:inline-block; ${badgeStyle}">${it.variance_label}</span>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function round1(val) {
+    return Math.round(val * 10) / 10;
   }
 
   function renderTechnicalLineage(events) {
@@ -1263,6 +1427,7 @@
     syncEmbeddedTabs,
     compareTasks,
     onCompareInstanceChange,
+    filterProductVariance,
     openCredentialsModal,
     closeCredentialsModal,
     onModalInstanceSelect,
