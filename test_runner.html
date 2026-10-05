@@ -1290,6 +1290,10 @@
                         <span id="pog-info-badge" style="font-size: 8.5px; color: #15803D; font-weight: 700;"></span>
                     </label>
                     <select id="cfg-bays" class="form-control" onchange="renderBayUploadGrid()">
+                        <option value="8">8 Bays (32 FT)</option>
+                        <option value="7">7 Bays (28 FT)</option>
+                        <option value="6">6 Bays (24 FT)</option>
+                        <option value="5">5 Bays (20 FT)</option>
                         <option value="4" selected>4 Bays (16 FT)</option>
                         <option value="3">3 Bays (12 FT)</option>
                         <option value="2">2 Bays (8 FT)</option>
@@ -1346,47 +1350,49 @@
                 </div>
             </div>
 
-            <!-- Card 2: Git Branches & Codebase -->
-            <div class="panel" style="border: 1px solid var(--border-light); box-shadow: var(--shadow-xs);">
-                <div class="panel-title">
-                    <span style="display: flex; align-items: center; gap: 6px;">🌿 Git Branches &amp; Repos</span>
-                    <span id="git-status-badge" class="badge badge-green">Ready</span>
-                </div>
+            <!-- Card 2: Git Branches & Codebase (Collapsible DevOps Settings) -->
+            <details class="panel" style="border: 1px solid var(--border-light); box-shadow: var(--shadow-xs); padding: 8px 12px; margin-bottom: 10px;" id="details-git-branches">
+                <summary style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text-secondary); user-select: none;">
+                    <span style="display: flex; align-items: center; gap: 6px;">🌿 Git Branches &amp; Repos (Optional)</span>
+                    <span id="git-status-badge" class="badge badge-green" style="font-size: 8.5px;">Ready</span>
+                </summary>
 
-                <div class="form-group" id="group-andr-branch">
-                    <label class="form-label">
-                        <span>🤖 Android Branch (android-rebotics)</span>
-                        <span id="andr-branches-count" style="font-size: 9px; color: #2563EB; font-weight: 700;"></span>
-                    </label>
-                    <div style="position: relative;">
-                        <input type="text" id="sel-andr-branch" class="form-control" list="datalist-andr-branches" 
-                               placeholder="🔍 Search or enter Android branch..." 
-                               value=""
-                               oninput="onAndroidBranchInput(this.value)" 
-                               onchange="onAndroidBranchChange(this.value)"
-                               style="font-weight: 600; padding-left: 26px; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
-                        <span style="position: absolute; left: 8px; top: 7px; font-size: 11px; opacity: 0.5;">🌿</span>
+                <div style="margin-top: 10px;">
+                    <div class="form-group" id="group-andr-branch">
+                        <label class="form-label">
+                            <span>🤖 Android Branch (android-rebotics)</span>
+                            <span id="andr-branches-count" style="font-size: 9px; color: #2563EB; font-weight: 700;"></span>
+                        </label>
+                        <div style="position: relative;">
+                            <input type="text" id="sel-andr-branch" class="form-control" list="datalist-andr-branches" 
+                                   placeholder="🔍 Search or enter Android branch..." 
+                                   value=""
+                                   oninput="onAndroidBranchInput(this.value)" 
+                                   onchange="onAndroidBranchChange(this.value)"
+                                   style="font-weight: 600; padding-left: 26px; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
+                            <span style="position: absolute; left: 8px; top: 7px; font-size: 11px; opacity: 0.5;">🌿</span>
+                        </div>
+                        <datalist id="datalist-andr-branches"></datalist>
                     </div>
-                    <datalist id="datalist-andr-branches"></datalist>
-                </div>
 
-                <div class="form-group" id="group-ios-branch" style="margin-bottom: 2px;">
-                    <label class="form-label">
-                        <span>🍏 iOS Branch (ios-rebotics)</span>
-                        <span id="ios-branches-count" style="font-size: 9px; color: #2563EB; font-weight: 700;"></span>
-                    </label>
-                    <div style="position: relative;">
-                        <input type="text" id="sel-ios-branch" class="form-control" list="datalist-ios-branches" 
-                               placeholder="🔍 Search or enter iOS branch..." 
-                               value=""
-                               oninput="onIosBranchInput(this.value)" 
-                               onchange="onIosBranchChange(this.value)"
-                               style="font-weight: 600; padding-left: 26px; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
-                        <span style="position: absolute; left: 8px; top: 7px; font-size: 11px; opacity: 0.5;">🌿</span>
+                    <div class="form-group" id="group-ios-branch" style="margin-bottom: 2px;">
+                        <label class="form-label">
+                            <span>🍏 iOS Branch (ios-rebotics)</span>
+                            <span id="ios-branches-count" style="font-size: 9px; color: #2563EB; font-weight: 700;"></span>
+                        </label>
+                        <div style="position: relative;">
+                            <input type="text" id="sel-ios-branch" class="form-control" list="datalist-ios-branches" 
+                                   placeholder="🔍 Search or enter iOS branch..." 
+                                   value=""
+                                   oninput="onIosBranchInput(this.value)" 
+                                   onchange="onIosBranchChange(this.value)"
+                                   style="font-weight: 600; padding-left: 26px; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
+                            <span style="position: absolute; left: 8px; top: 7px; font-size: 11px; opacity: 0.5;">🌿</span>
+                        </div>
+                        <datalist id="datalist-ios-branches"></datalist>
                     </div>
-                    <datalist id="datalist-ios-branches"></datalist>
                 </div>
-            </div>
+            </details>
 
             <!-- TAB 3: Cloud Test Lab Execution (Firebase Test Lab + LambdaTest) -->
             <div id="tab-content-testlab" class="panel" style="display: none; border: 1px solid #D8B4FE; box-shadow: var(--shadow-sm); background: #FFFFFF;">
@@ -2657,7 +2663,14 @@
                 if (data.bays_count) {
                     const selBays = document.getElementById('cfg-bays');
                     if (selBays) {
-                        selBays.value = String(data.bays_count);
+                        const bVal = String(data.bays_count);
+                        if (![...selBays.options].some(o => o.value === bVal)) {
+                            const opt = document.createElement('option');
+                            opt.value = bVal;
+                            opt.textContent = `${bVal} Bays (${data.bays_count * 4} FT)`;
+                            selBays.appendChild(opt);
+                        }
+                        selBays.value = bVal;
                         renderBayUploadGrid();
                     }
                 }
@@ -4161,6 +4174,33 @@
         } catch (e) {
             console.warn('Error reading URL params:', e);
         }
+
+        // Listen for parent dashboard task synchronization
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'IR_STUDIO_SYNC_TASK') {
+                const { taskId, instance } = event.data;
+                if (instance && typeof normalizeBaseUrl === 'function') {
+                    const normUrl = normalizeBaseUrl(instance);
+                    const baseInput = document.getElementById('cfg-base-url');
+                    if (baseInput && baseInput.value !== normUrl) {
+                        baseInput.value = normUrl;
+                        if (typeof onBaseUrlInput === 'function') onBaseUrlInput(normUrl);
+                    }
+                }
+                if (taskId) {
+                    const taskInput = document.getElementById('cfg-task-id-direct');
+                    if (taskInput && taskInput.value !== String(taskId)) {
+                        taskInput.value = String(taskId);
+                        if (typeof onTaskIdInput === 'function') onTaskIdInput(taskId);
+                        const dispTid = document.getElementById('disp-task-id');
+                        if (dispTid) dispTid.textContent = '#' + taskId;
+                        if (typeof loadTaskById === 'function') {
+                            loadTaskById();
+                        }
+                    }
+                }
+            }
+        });
     });
 
     window.addEventListener('keydown', (event) => {

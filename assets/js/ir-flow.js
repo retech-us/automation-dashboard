@@ -257,14 +257,46 @@
         input.value = data.metadata.task_id;
       }
       renderSimplifiedView(data);
+      const liveTaskId = data.metadata ? data.metadata.task_id : targetId;
       if (statusBadge) {
-        const liveTaskId = data.metadata ? data.metadata.task_id : targetId;
         const retailLabel = data.metadata ? (data.metadata.retailer || inst.toUpperCase()) : inst.toUpperCase();
         statusBadge.textContent = `Live: Task #${liveTaskId} (${retailLabel})`;
       }
+      syncEmbeddedTabs(liveTaskId, inst);
     } catch (err) {
       console.error('Failed to load task flow:', err);
       if (statusBadge) statusBadge.textContent = 'Ready';
+    }
+  }
+
+  function syncEmbeddedTabs(taskId, instance) {
+    if (!taskId || taskId === 'latest') return;
+    const inst = instance || getSelectedInstance() || 'harr';
+
+    const mobileFrame = byId('iframe-shelf-mobile');
+    if (mobileFrame && mobileFrame.contentWindow) {
+      try {
+        mobileFrame.contentWindow.postMessage({
+          type: 'IR_SYNC_TASK',
+          taskId: String(taskId),
+          instance: inst
+        }, '*');
+      } catch (e) {
+        console.warn('Could not postMessage to mobileFrame', e);
+      }
+    }
+
+    const studioFrame = byId('iframe-ir-studio');
+    if (studioFrame && studioFrame.contentWindow) {
+      try {
+        studioFrame.contentWindow.postMessage({
+          type: 'IR_STUDIO_SYNC_TASK',
+          taskId: String(taskId),
+          instance: inst
+        }, '*');
+      } catch (e) {
+        console.warn('Could not postMessage to studioFrame', e);
+      }
     }
   }
 
@@ -310,20 +342,18 @@
       }
     });
 
-    // Fallback counts if batches are empty
-    if (movedCount === 0 && restockedCount === 0 && meta.total_action_items) {
-      movedCount = Math.round(meta.total_action_items * 0.45);
-      restockedCount = Math.round(meta.total_action_items * 0.35);
-      removedCount = Math.round(meta.total_action_items * 0.1);
-      exceptionCount = meta.total_action_items - (movedCount + restockedCount + removedCount);
-    }
-
-    // Extract Before vs After compliance
-    let initialScore = 29;
+    // Extract Before vs After compliance truthfully
+    let initialScore = null;
     let finalScore = null;
     const firstBay = Object.values(baySummaries)[0];
     if (firstBay) {
-      initialScore = Math.round(firstBay.initial_pre_compliance_pct || firstBay.pre_compliance_pct || 29);
+      if (firstBay.initial_pre_compliance_pct !== null && firstBay.initial_pre_compliance_pct !== undefined) {
+        initialScore = Math.round(firstBay.initial_pre_compliance_pct);
+      } else if (firstBay.pre_compliance_pct !== null && firstBay.pre_compliance_pct !== undefined) {
+        initialScore = Math.round(firstBay.pre_compliance_pct);
+      } else if (firstBay.compliance_pct !== null && firstBay.compliance_pct !== undefined) {
+        initialScore = Math.round(firstBay.compliance_pct);
+      }
       if (firstBay.post_compliance_pct !== null && firstBay.post_compliance_pct !== undefined) {
         finalScore = Math.round(firstBay.post_compliance_pct);
       }
@@ -358,7 +388,7 @@
         verdictCard.className = 'ir-exec-verdict ir-exec-verdict--review';
         byId('ir-exec-verdict-icon').textContent = '⏳';
         byId('ir-exec-verdict-title').textContent = `Reset In Progress — Active Store Session`;
-        byId('ir-exec-verdict-desc').textContent = `${assocName} is actively working on ${meta.task_title}. Initial baseline shelf compliance was ${initialScore}%. Final post-reset compliance will be evaluated once final photos are submitted.`;
+        byId('ir-exec-verdict-desc').textContent = `${assocName} is actively working on ${meta.task_title}. Initial baseline shelf compliance was ${initialScore !== null ? initialScore + '%' : 'being evaluated'}. Final post-reset compliance will be evaluated once final photos are submitted.`;
       } else if (isPassed) {
         verdictCard.className = 'ir-exec-verdict ir-exec-verdict--pass';
         byId('ir-exec-verdict-icon').textContent = '✅';
@@ -377,36 +407,50 @@
       byId('ir-exec-meta-planogram').textContent = meta.task_title ? `${meta.task_title} (Task #${meta.task_id})` : 'Modular Reset';
       byId('ir-exec-meta-associate').textContent = assocName;
       byId('ir-exec-meta-date').textContent = meta.task_date || 'Recent';
-      byId('ir-exec-meta-time').textContent = `${meta.wall_duration_min || 28} mins shift`;
+      byId('ir-exec-meta-time').textContent = meta.wall_duration_min ? `${meta.wall_duration_min} mins shift` : 'Shift time logged';
     }
 
     // 3. Render 4 Key Stat Cards
     if (isIncomplete) {
-      setText('ir-stat-lift-val', finalScore !== null ? `${initialScore}% ➔ ${finalScore}%` : 'Incomplete');
+      setText('ir-stat-lift-val', finalScore !== null ? `${initialScore !== null ? initialScore + '%' : '—'} ➔ ${finalScore}%` : 'Incomplete');
       setText('ir-stat-lift-badge', 'Stopped Early');
       const progBar = byId('ir-stat-lift-bar');
       if (progBar) progBar.style.width = finalScore !== null ? `${Math.min(finalScore, 100)}%` : '0%';
     } else if (isInProgress) {
-      setText('ir-stat-lift-val', `${initialScore}% ➔ Pending`);
+      setText('ir-stat-lift-val', initialScore !== null ? `${initialScore}% ➔ Pending` : 'Pending');
       setText('ir-stat-lift-badge', 'In Progress');
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = `${Math.min(initialScore, 100)}%`;
+      if (progBar) progBar.style.width = initialScore !== null ? `${Math.min(initialScore, 100)}%` : '20%';
     } else {
-      const liftPct = finalScore !== null ? finalScore - initialScore : 0;
-      setText('ir-stat-lift-val', `${initialScore}% ➔ ${finalScore}%`);
-      setText('ir-stat-lift-badge', liftPct > 0 ? `+${liftPct}% improvement` : 'Maintained');
+      if (initialScore !== null && finalScore !== null) {
+        const liftPct = finalScore - initialScore;
+        setText('ir-stat-lift-val', `${initialScore}% ➔ ${finalScore}%`);
+        setText('ir-stat-lift-badge', liftPct > 0 ? `+${liftPct}% improvement` : (liftPct === 0 ? 'Maintained' : `${liftPct}% variance`));
+      } else if (finalScore !== null) {
+        setText('ir-stat-lift-val', `${finalScore}%`);
+        setText('ir-stat-lift-badge', finalScore >= 95 ? 'Passed 95%' : 'Below 95%');
+      } else {
+        setText('ir-stat-lift-val', '—');
+        setText('ir-stat-lift-badge', 'Not evaluated');
+      }
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = `${Math.min(finalScore || 0, 100)}%`;
+      if (progBar) progBar.style.width = `${Math.min(finalScore || initialScore || 0, 100)}%`;
     }
 
-    setText('ir-stat-work-val', `${meta.total_action_items || (movedCount + restockedCount + removedCount + exceptionCount)} items`);
-    setText('ir-stat-work-sub', `${movedCount} moved • ${restockedCount} restocked • ${removedCount} removed`);
+    const totalWorkItems = meta.total_action_items || (movedCount + restockedCount + removedCount + exceptionCount);
+    setText('ir-stat-work-val', `${totalWorkItems} items`);
+    if (movedCount === 0 && restockedCount === 0 && removedCount === 0 && totalWorkItems > 0) {
+      setText('ir-stat-work-sub', `${totalWorkItems} actions recorded`);
+    } else {
+      setText('ir-stat-work-sub', `${movedCount} moved • ${restockedCount} restocked • ${removedCount} removed`);
+    }
 
-    setText('ir-stat-time-val', `${meta.wall_duration_min || 28} mins`);
+    setText('ir-stat-time-val', meta.wall_duration_min ? `${meta.wall_duration_min} mins` : '—');
     setText('ir-stat-time-sub', 'Associate physical shift labor');
 
-    setText('ir-stat-ai-val', `${firstBay ? firstBay.ai_latency_sec || 24 : 24}s`);
-    setText('ir-stat-ai-sub', 'Fast automated photo check');
+    const aiLatency = (firstBay && firstBay.ai_latency_sec) ? `${firstBay.ai_latency_sec}s` : '—';
+    setText('ir-stat-ai-val', aiLatency);
+    setText('ir-stat-ai-sub', 'Automated photo analysis');
 
     // 4. Render 4 Work Cards
     setText('ir-card-moved-count', movedCount);
@@ -647,6 +691,7 @@
     loadCurrentInputs,
     switchSubView,
     openItemDrawer,
+    syncEmbeddedTabs,
   };
 
   if (document.readyState === 'loading') {

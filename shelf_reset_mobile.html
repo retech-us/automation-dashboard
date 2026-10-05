@@ -3887,8 +3887,31 @@
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeButton(savedTheme);
 
-    // Initial boot
-    if (!restoreSession()) {
+    // Listen for parent dashboard task synchronization
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'IR_SYNC_TASK') {
+        const { taskId, instance } = event.data;
+        if (taskId && (taskId !== state.dataset || (instance && instance !== state.instance))) {
+          if (instance) state.instance = instance;
+          state.dataset = String(taskId);
+          fetchTaskCatalog(state.dataset, state.instance);
+          loadDataset(state.dataset, state.instance);
+        }
+      }
+    });
+
+    // Initial boot with URL parameters support
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramTask = urlParams.get('task_id') || urlParams.get('task');
+    const paramInst = urlParams.get('instance') || urlParams.get('retailer');
+
+    if (paramTask) {
+      state.dataset = String(paramTask);
+      if (paramInst) state.instance = String(paramInst);
+      else if (!state.instance) state.instance = "harr";
+      fetchTaskCatalog(state.dataset, state.instance);
+      loadDataset(state.dataset, state.instance);
+    } else if (!restoreSession()) {
       state.instance = "harr";
       state.dataset = "8788767";
       fetchTaskCatalog("8788767", "harr");
