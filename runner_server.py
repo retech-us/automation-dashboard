@@ -3982,152 +3982,189 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         override_token = payload.get("token") or None
 
         start_t = time.time()
+        cached_file = WORKSPACE_DIR / f"raw_backend_actions_task_{task_id}.json"
+
+        token = None
         try:
             token = get_auth_token(base_url=base_url, username=username, password=password, override_token=override_token)
-        except Exception as auth_e:
-            return {"status": "error", "message": f"Authentication required for {base_url}: {auth_e}"}
+        except Exception:
+            token = None
 
-        if not token:
-            return {"status": "error", "message": f"Username and Password (or Auth Token) are required to load Task #{task_id} from {base_url}."}
+        if not token and not cached_file.exists():
+            return {
+                "status": "error",
+                "message": f"Authentication required for {base_url}. Please provide Username & Password or Auth Token."
+            }
 
-        headers = {"Authorization": f"Token {token}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Token {token}", "Content-Type": "application/json"} if token else {}
         store_planogram_id = None
         raw_items = []
         latest_scan_map = {}
         t_info: Dict[str, Any] = {}
         scan_results: List[Dict[str, Any]] = []
+        is_from_cache = False
+
+        store_id = int(payload.get("store_id") or 0)
+        pog_id = int(payload.get("pog_id") or 0)
+        pog_name = str(payload.get("pog_name") or f"Task #{task_id}")
+        task_status_name = "in_progress"
+        bays_count = int(payload.get("bays_count") or 1)
 
         try:
-            store_id = int(payload.get("store_id") or 0)
-            pog_id = int(payload.get("pog_id") or 0)
-            pog_name = str(payload.get("pog_name") or f"Task #{task_id}")
-            task_status_name = "in_progress"
-            bays_count = int(payload.get("bays_count") or 1)
+            # 1. Fetch Task Info from live backend if authenticated
+            if token:
+                info_endpoints = [
+                    f"{base_url}/api/v1/tasks/{task_id}/",
+                    f"{base_url}/api/v4/tasks/{task_id}/",
+                    f"{base_url}/api/v1/tasks/defs/{task_id}/",
+                ]
+                for ep in info_endpoints:
+                    try:
+                        req = urllib.request.Request(ep, headers=headers)
+                        with urllib.request.urlopen(req, context=ssl_ctx, timeout=7) as resp:
+                            t_info = json.loads(resp.read().decode("utf-8"))
+                            st_val = t_info.get("store") or t_info.get("stores")
+                            if isinstance(st_val, dict):
+                                store_id = st_val.get("id") or store_id
+                            elif isinstance(st_val, int):
+                                store_id = st_val
+                            elif isinstance(st_val, list) and len(st_val) > 0:
+                                store_id = st_val[0].get("id") if isinstance(st_val[0], dict) else int(st_val[0])
+                            
+                            st_obj = t_info.get("status")
+                            task_status_name = st_obj.get("name") if isinstance(st_obj, dict) else str(st_obj)
+                            
+                            pogs = t_info.get("planograms") or t_info.get("store_planograms") or []
+                            if isinstance(pogs, list) and len(pogs) > 0:
+                                pog_item = pogs[0]
+                                if isinstance(pog_item, dict):
+                                    pog_id = pog_item.get("id") or pog_item.get("planogram_id") or pog_id
+                                    store_planogram_id = pog_item.get("store_planogram_id")
+                                    pog_name = pog_item.get("name") or pog_name
+                                    bays_count = pog_item.get("of_bays") or pog_item.get("bays_count") or bays_count
+                                elif isinstance(pog_item, int):
+                                    pog_id = pog_item
+                            elif t_info.get("planogram_id"):
+                                pog_id = int(t_info["planogram_id"])
+                            elif t_info.get("store_planogram_id"):
+                                store_planogram_id = int(t_info["store_planogram_id"])
+                                pog_id = int(t_info.get("planogram", {}).get("id") or t_info.get("planogram_id") or pog_id)
+                            break
+                    except Exception:
+                        pass
 
-            # 1. Fetch Task Info from live backend in real time
-            info_endpoints = [
-                f"{base_url}/api/v1/tasks/{task_id}/",
-                f"{base_url}/api/v4/tasks/{task_id}/",
-                f"{base_url}/api/v1/tasks/defs/{task_id}/",
-            ]
-            for ep in info_endpoints:
+                # 1.5 Scan discovery & polling active in-process scans
+                processing_scans = []
                 try:
-                    req = urllib.request.Request(ep, headers=headers)
-                    with urllib.request.urlopen(req, context=ssl_ctx, timeout=7) as resp:
-                        t_info = json.loads(resp.read().decode("utf-8"))
-                        st_val = t_info.get("store") or t_info.get("stores")
-                        if isinstance(st_val, dict):
-                            store_id = st_val.get("id") or store_id
-                        elif isinstance(st_val, int):
-                            store_id = st_val
-                        elif isinstance(st_val, list) and len(st_val) > 0:
-                            store_id = st_val[0].get("id") if isinstance(st_val[0], dict) else int(st_val[0])
+                    scans_urls = [
+                        f"{base_url}/api/v4/processing/actions/?task={task_id}&ordering=-id&limit=50",
+                        f"{base_url}/api/v1/tasks/{task_id}/scans/?ordering=-id",
+                    ]
+                    for surl in scans_urls:
+                        try:
+                            req = urllib.request.Request(surl, headers=headers)
+                            with urllib.request.urlopen(req, context=ssl_ctx, timeout=6) as resp:
+                                scans_resp = json.loads(resp.read().decode("utf-8"))
+                                scan_results = scans_resp.get("results") or (scans_resp if isinstance(scans_resp, list) else [])
+                                if scan_results:
+                                    break
+                        except Exception:
+                            pass
+
+                    for s in scan_results:
+                        sec = str(s.get("section") or s.get("section_id") or "1")
+                        s_id = s.get("id")
+                        s_status = str(s.get("status") or "").lower()
                         
-                        st_obj = t_info.get("status")
-                        task_status_name = st_obj.get("name") if isinstance(st_obj, dict) else str(st_obj)
+                        if s_status in ("processing", "queued", "in_progress", "created", "waiting_for_cv", "pending", "started"):
+                            processing_scans.append(s)
                         
-                        pogs = t_info.get("planograms") or t_info.get("store_planograms") or []
-                        if isinstance(pogs, list) and len(pogs) > 0:
-                            pog_item = pogs[0]
-                            if isinstance(pog_item, dict):
-                                pog_id = pog_item.get("id") or pog_item.get("planogram_id") or pog_id
-                                store_planogram_id = pog_item.get("store_planogram_id")
-                                pog_name = pog_item.get("name") or pog_name
-                                bays_count = pog_item.get("of_bays") or pog_item.get("bays_count") or bays_count
-                            elif isinstance(pog_item, int):
-                                pog_id = pog_item
-                        elif t_info.get("planogram_id"):
-                            pog_id = int(t_info["planogram_id"])
-                        elif t_info.get("store_planogram_id"):
-                            store_planogram_id = int(t_info["store_planogram_id"])
-                            pog_id = int(t_info.get("planogram", {}).get("id") or t_info.get("planogram_id") or pog_id)
-                        break
+                        if sec not in latest_scan_map or s_id > latest_scan_map[sec]:
+                            latest_scan_map[sec] = s_id
                 except Exception:
                     pass
 
-            # 1.5 Scan discovery & polling active in-process scans
-            processing_scans = []
-            try:
-                scans_urls = [
-                    f"{base_url}/api/v4/processing/actions/?task={task_id}&ordering=-id&limit=50",
-                    f"{base_url}/api/v1/tasks/{task_id}/scans/?ordering=-id",
+                # If scans are still actively processing, wait and poll until CV processing completes
+                if processing_scans:
+                    active_scan_ids = [str(ps.get("id")) for ps in processing_scans]
+                    EXECUTION_STATE["logs"].append(f"⏳ Task #{task_id} has active shelf scan(s) ({', '.join(active_scan_ids)}) in '{processing_scans[0].get('status')}' state. Polling until Hawkeye CV processing finishes...")
+                    for attempt in range(15):
+                        time.sleep(2.5)
+                        all_done = True
+                        for ps in processing_scans:
+                            try:
+                                chk_req = urllib.request.Request(f"{base_url}/api/v4/processing/actions/{ps['id']}/", headers=headers)
+                                with urllib.request.urlopen(chk_req, context=ssl_ctx, timeout=6) as chk_resp:
+                                    chk_data = json.loads(chk_resp.read().decode("utf-8"))
+                                    ps["status"] = str(chk_data.get("status", "done")).lower()
+                                    if ps["status"] not in ("done", "completed", "succeeded"):
+                                        all_done = False
+                            except Exception:
+                                pass
+                        if all_done:
+                            EXECUTION_STATE["logs"].append(f"✅ Active shelf scans ({', '.join(active_scan_ids)}) have completed CV processing!")
+                            break
+
+                # 2. Fetch Live Action List in real-time with cache-busting timestamp
+                ts_cache_buster = int(time.time() * 1000)
+                action_endpoints = [
+                    f"{base_url}/api/v1/tasks/{task_id}/action-list/retailer/?limit=1000&_t={ts_cache_buster}",
+                    f"{base_url}/api/v1/tasks/{task_id}/actions/?limit=1000&_t={ts_cache_buster}",
+                    f"{base_url}/api/v4/tasks/{task_id}/action-list/retailer/?limit=1000&_t={ts_cache_buster}",
+                    f"{base_url}/api/v1/tasks/{task_id}/action-list/?limit=1000&_t={ts_cache_buster}",
                 ]
-                for surl in scans_urls:
+                for act_ep in action_endpoints:
                     try:
-                        req = urllib.request.Request(surl, headers=headers)
-                        with urllib.request.urlopen(req, context=ssl_ctx, timeout=6) as resp:
-                            scans_resp = json.loads(resp.read().decode("utf-8"))
-                            scan_results = scans_resp.get("results") or (scans_resp if isinstance(scans_resp, list) else [])
-                            if scan_results:
+                        req = urllib.request.Request(act_ep, headers=headers)
+                        with urllib.request.urlopen(req, context=ssl_ctx, timeout=10) as resp:
+                            raw_data = json.loads(resp.read().decode("utf-8"))
+                            if isinstance(raw_data, dict):
+                                raw_items = raw_data.get("results") or raw_data.get("data") or raw_data.get("actions") or []
+                            elif isinstance(raw_data, list):
+                                raw_items = raw_data
+                            if raw_items:
                                 break
                     except Exception:
                         pass
 
-                for s in scan_results:
-                    sec = str(s.get("section") or s.get("section_id") or "1")
-                    s_id = s.get("id")
-                    s_status = str(s.get("status") or "").lower()
-                    
-                    if s_status in ("processing", "queued", "in_progress", "created", "waiting_for_cv", "pending", "started"):
-                        processing_scans.append(s)
-                    
-                    if sec not in latest_scan_map or s_id > latest_scan_map[sec]:
-                        latest_scan_map[sec] = s_id
-            except Exception:
-                pass
-
-            # If scans are still actively processing, wait and poll until CV processing completes
-            if processing_scans:
-                active_scan_ids = [str(ps.get("id")) for ps in processing_scans]
-                EXECUTION_STATE["logs"].append(f"⏳ Task #{task_id} has active shelf scan(s) ({', '.join(active_scan_ids)}) in '{processing_scans[0].get('status')}' state. Polling until Hawkeye CV processing finishes...")
-                for attempt in range(15):
-                    time.sleep(2.5)
-                    all_done = True
-                    for ps in processing_scans:
-                        try:
-                            chk_req = urllib.request.Request(f"{base_url}/api/v4/processing/actions/{ps['id']}/", headers=headers)
-                            with urllib.request.urlopen(chk_req, context=ssl_ctx, timeout=6) as chk_resp:
-                                chk_data = json.loads(chk_resp.read().decode("utf-8"))
-                                ps["status"] = str(chk_data.get("status", "done")).lower()
-                                if ps["status"] not in ("done", "completed", "succeeded"):
-                                    all_done = False
-                        except Exception:
-                            pass
-                    if all_done:
-                        EXECUTION_STATE["logs"].append(f"✅ Active shelf scans ({', '.join(active_scan_ids)}) have completed CV processing!")
-                        break
-
-            # 2. Fetch Live Action List in real-time with cache-busting timestamp
-            ts_cache_buster = int(time.time() * 1000)
-            action_endpoints = [
-                f"{base_url}/api/v1/tasks/{task_id}/action-list/retailer/?limit=1000&_t={ts_cache_buster}",
-                f"{base_url}/api/v1/tasks/{task_id}/actions/?limit=1000&_t={ts_cache_buster}",
-                f"{base_url}/api/v4/tasks/{task_id}/action-list/retailer/?limit=1000&_t={ts_cache_buster}",
-                f"{base_url}/api/v1/tasks/{task_id}/action-list/?limit=1000&_t={ts_cache_buster}",
-            ]
-            for act_ep in action_endpoints:
+            # Fall back to local benchmark actions if live returned 0 or unauthenticated
+            if not raw_items and cached_file.exists():
                 try:
-                    req = urllib.request.Request(act_ep, headers=headers)
-                    with urllib.request.urlopen(req, context=ssl_ctx, timeout=10) as resp:
-                        raw_data = json.loads(resp.read().decode("utf-8"))
-                        if isinstance(raw_data, dict):
-                            raw_items = raw_data.get("results") or raw_data.get("data") or raw_data.get("actions") or []
-                        elif isinstance(raw_data, list):
-                            raw_items = raw_data
-                        if raw_items:
-                            break
+                    raw_items = json.loads(cached_file.read_text(encoding="utf-8"))
+                    if not isinstance(raw_items, list):
+                        raw_items = []
+                    is_from_cache = True
                 except Exception:
                     pass
 
             if not raw_items:
+                if not token:
+                    return {"status": "error", "message": f"Authentication required for {base_url}. Please provide Username & Password or Auth Token."}
                 return {"status": "error", "message": f"No action items found for Task #{task_id} on {base_url}. (Live backend returned 0 items)"}
 
             if raw_items and isinstance(raw_items, list) and raw_items[0]:
                 p_info = raw_items[0].get("planogram_info") or (raw_items[0].get("current_position", {}) or {}).get("planogram_info") or {}
-                if p_info.get("name"):
+                if p_info.get("name") and (not pog_name or pog_name.startswith("Task #")):
                     pog_name = p_info["name"]
                 if p_info.get("id"):
                     pog_id = p_info["id"]
+                if p_info.get("of_bays") or p_info.get("bays_count"):
+                    bays_count = p_info.get("of_bays") or p_info.get("bays_count")
+
+                # Count unique bays across actions
+                bays_set = set()
+                for itm in raw_items:
+                    for pos_k in ("current_position", "expected_position"):
+                        pos = itm.get(pos_k) or {}
+                        sec_info = pos.get("section_info") or {}
+                        if sec_info.get("name"):
+                            bays_set.add(str(sec_info["name"]))
+                if bays_set:
+                    bays_count = max(bays_count, len(bays_set))
+
+                st_val = raw_items[0].get("store") or raw_items[0].get("store_id")
+                if st_val and isinstance(st_val, int) and not store_id:
+                    store_id = st_val
 
             actions_list = parse_raw_action_items(raw_items, task_id, pog_id, scan_map=latest_scan_map if latest_scan_map else None)
 
@@ -4146,22 +4183,23 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "adds_total": sum(1 for a in actions_list if a.get("type") == "ADD_TO_SHELF"),
             }
 
-            # Fetch actual POG compliance score from backend (exact same endpoint mobile app uses)
+            # Fetch actual POG compliance score from backend if authenticated
             live_compliance_rate = None
-            try:
-                comp_url = f"{base_url}/api/v1/tasks/{task_id}/capture/retailer/?show_reports=true"
-                comp_req = urllib.request.Request(comp_url, headers=headers)
-                with urllib.request.urlopen(comp_req, context=ssl_ctx, timeout=6) as c_resp:
-                    c_data = json.loads(c_resp.read().decode("utf-8"))
-                    res_list = c_data.get("results") or []
-                    for cat_dto in res_list:
-                        r_obj = cat_dto.get("rates") or {}
-                        c_val = r_obj.get("compliance") or r_obj.get("initial_pre_compliance")
-                        if c_val is not None:
-                            live_compliance_rate = float(c_val) * 100.0 if float(c_val) <= 1.0 else float(c_val)
-                            break
-            except Exception:
-                pass
+            if token:
+                try:
+                    comp_url = f"{base_url}/api/v1/tasks/{task_id}/capture/retailer/?show_reports=true"
+                    comp_req = urllib.request.Request(comp_url, headers=headers)
+                    with urllib.request.urlopen(comp_req, context=ssl_ctx, timeout=6) as c_resp:
+                        c_data = json.loads(c_resp.read().decode("utf-8"))
+                        res_list = c_data.get("results") or []
+                        for cat_dto in res_list:
+                            r_obj = cat_dto.get("rates") or {}
+                            c_val = r_obj.get("compliance") or r_obj.get("initial_pre_compliance")
+                            if c_val is not None:
+                                live_compliance_rate = float(c_val) * 100.0 if float(c_val) <= 1.0 else float(c_val)
+                                break
+                except Exception:
+                    pass
 
             # Generate Multi-Bay Validation Report for current Task ID
             report_filename = generate_and_save_current_task_report(
@@ -4194,8 +4232,9 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             )
             
             now_str = time.strftime("%H:%M:%S", time.localtime())
+            source_tag = "Cached Benchmark" if is_from_cache else f"Live {base_url}"
             EXECUTION_STATE["logs"].append(
-                f"[{now_str}] ⚡ Live-Loaded Task #{task_id} directly from {base_url} (Store #{store_id}, POG #{pog_id} '{pog_name}', {len(actions_list)} live actions)."
+                f"[{now_str}] ⚡ Loaded Task #{task_id} ({source_tag}) (Store #{store_id}, POG #{pog_id} '{pog_name}', {len(actions_list)} actions)."
             )
 
             dur = int((time.time() - start_t) * 1000)
@@ -4235,7 +4274,8 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "instance_slug": instance_slug,
                 "raw_generated_count": raw_generated_count,
                 "displayed_mobile_count": displayed_mobile_count,
-                "message": f"Successfully loaded {len(actions_list)} live actions from {base_url} ({dur}ms)",
+                "is_from_cache": is_from_cache,
+                "message": f"Successfully loaded {len(actions_list)} actions ({source_tag}) ({dur}ms)",
             }
         except Exception as e:
             return {"status": "error", "message": f"Failed to load Task #{task_id} from {base_url}: {e}"}
