@@ -232,6 +232,9 @@
           <button type="button" class="ir-subnav-btn" role="tab" data-subview="history" aria-selected="false">
             📋 3. Browse Past Resets
           </button>
+          <button type="button" class="ir-subnav-btn" role="tab" data-subview="compare" aria-selected="false">
+            ⚖️ 4. Compare Actions
+          </button>
         </nav>
 
         <!-- Dynamic Inline Auth Required Alert Banner -->
@@ -562,6 +565,243 @@
 
           <div class="ir-table-wrap">
             <div id="ir-history-results"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUBVIEW 4: Compare Action Generation Counts -->
+      <section id="ir-subview-compare" class="ir-subview-panel" hidden>
+        <div class="panel" style="padding:20px 24px;">
+          <div style="margin-bottom:16px;">
+            <h3 style="font-size:15px; font-weight:800; margin:0 0 4px 0;">⚖️ Compare Action Generation Counts</h3>
+            <p style="color:var(--text-muted); font-size:12px; margin:0;">
+              Enter two Task IDs from any instances to compare the number of actions generated side-by-side
+            </p>
+          </div>
+
+          <!-- Compare Input Form -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+
+            <!-- Instance A -->
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px;">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+                <span style="font-size:14px; font-weight:800; color:#3B82F6;">A</span>
+                <span style="font-size:12px; font-weight:700; color:var(--text);">Instance A (Source)</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div>
+                  <label style="display:block; font-size:10.5px; font-weight:600; color:var(--text-muted); margin-bottom:3px;">Instance</label>
+                  <select id="ir-compare-instance-a" class="ir-flow-input" onchange="window.IrTaskFlow.onCompareInstanceChange('a')" style="width:100%; font-size:11.5px; padding:5px 8px; font-weight:600;">
+                    <option value="stgsams" selected>Sam's Club (stgsams)</option>
+                    <option value="krcs">Kroger (krcs)</option>
+                    <option value="harr">Harris Teeter (harr)</option>
+                    <option value="albt">Albertsons (albt)</option>
+                    <option value="schn">Schnucks (schn)</option>
+                    <option value="wake">Wakefern (wake)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block; font-size:10.5px; font-weight:600; color:var(--text-muted); margin-bottom:3px;">Task ID</label>
+                  <input type="number" id="ir-compare-task-a" class="ir-flow-input" style="width:100%; font-size:12px; padding:5px 8px; font-weight:700;" value="43878758" placeholder="e.g. 43878758" />
+                </div>
+                <div>
+                  <label style="display:block; font-size:10.5px; font-weight:600; color:var(--text-muted); margin-bottom:3px;">Query Parameters</label>
+                  <input type="text" id="ir-compare-params-a" class="ir-flow-input" style="width:100%; font-size:11px; padding:5px 8px; font-family:monospace;" value="limit=1000&stage=pre_photo&type=set_bay&version=2" />
+                </div>
+                <div>
+                  <label style="display:block; font-size:10.5px; font-weight:600; color:var(--text-muted); margin-bottom:3px;">Auth Token (Optional override)</label>
+                  <input type="password" id="ir-compare-token-a" class="ir-flow-input" style="width:100%; font-size:11px; padding:5px 8px; font-family:monospace;" placeholder="Bearer/Token for Instance A" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Instance B -->
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px;">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+                <span style="font-size:14px; font-weight:800; color:#10B981;">B</span>
+                <span style="font-size:12px; font-weight:700; color:var(--text);">Instance B (Target)</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div>
+                  <label style="display:block; font-size:10.5px; font-weight:600; color:var(--text-muted); margin-bottom:3px;">Instance</label>
+                  <select id="ir-compare-instance-b" class="ir-flow-input" onchange="window.IrTaskFlow.onCompareInstanceChange('b')" style="width:100%; font-size:11.5px; padding:5px 8px; font-weight:600;">
+                    <option value="krcs" selected>Kroger (krcs)</option>
+                    <option value="stgsams">Sam's Club (stgsams)</option>
+                    <option value="harr">Harris Teeter (harr)</option>
+                    <option value="albt">Albertsons (albt)</option>
+                    <option value="schn">Schnucks (schn)</option>
+                    <option value="wake">Wakefern (wake)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block; font-size:10.5px; font-weight:600; color:var(--text-muted); margin-bottom:3px;">Task ID</label>
+                  <input type="number" id="ir-compare-task-b" class="ir-flow-input" style="width:100%; font-size:12px; padding:5px 8px; font-weight:700;" value="43639507" placeholder="e.g. 43639507" />
+                </div>
+                <div>
+                  <label style="display:block; font-size:10.5px; font-weight:600; color:var(--text-muted); margin-bottom:3px;">Query Parameters</label>
+                  <input type="text" id="ir-compare-params-b" class="ir-flow-input" style="width:100%; font-size:11px; padding:5px 8px; font-family:monospace;" value="limit=1000&stage=pre_photo" />
+                </div>
+                <div>
+                  <label style="display:block; font-size:10.5px; font-weight:600; color:var(--text-muted); margin-bottom:3px;">Auth Token (Optional override)</label>
+                  <input type="password" id="ir-compare-token-b" class="ir-flow-input" style="width:100%; font-size:11px; padding:5px 8px; font-family:monospace;" placeholder="Bearer/Token for Instance B" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compare Action Button -->
+          <div style="display:flex; justify-content:center; gap:10px; margin-bottom:16px;">
+            <button type="button" id="btn-ir-compare" class="btn btn--primary" onclick="window.IrTaskFlow.compareTasks()" style="font-size:12.5px; padding:8px 24px; font-weight:800;">
+              ⚖️ Compare Action Counts
+            </button>
+            <span id="ir-compare-status" class="meta-pill" style="font-size:11px; display:none;">Loading…</span>
+          </div>
+
+          <!-- Compare Results Container -->
+          <div id="ir-compare-results" style="display:none;">
+
+            <!-- Verdict Banner -->
+            <div id="ir-compare-verdict" style="border-radius:var(--radius-sm); padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+              <span id="ir-compare-verdict-icon" style="font-size:28px;">⚖️</span>
+              <div>
+                <div id="ir-compare-verdict-title" style="font-size:14px; font-weight:800;"></div>
+                <div id="ir-compare-verdict-desc" style="font-size:11.5px; margin-top:2px;"></div>
+              </div>
+            </div>
+
+            <!-- Side-by-Side Summary Cards -->
+            <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:12px; margin-bottom:16px; align-items:stretch;">
+
+              <!-- Task A Card -->
+              <div id="ir-compare-card-a" style="background:var(--surface); border:1px solid rgba(59,130,246,0.3); border-radius:var(--radius-sm); padding:14px 16px;">
+                <div id="ir-compare-card-a-badge" style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#3B82F6; margin-bottom:8px;">Instance A</div>
+                <div id="ir-compare-card-a-title" style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:4px;"></div>
+                <div id="ir-compare-card-a-meta" style="font-size:10.5px; color:var(--text-muted); line-height:1.6;"></div>
+                <div style="margin-top:10px; display:flex; flex-direction:column; gap:2px;">
+                  <div style="display:flex; align-items:baseline; gap:6px;">
+                    <span id="ir-compare-card-a-count" style="font-size:28px; font-weight:800; color:#3B82F6;"></span>
+                    <span style="font-size:11px; font-weight:600; color:var(--text-muted);">operational actions</span>
+                  </div>
+                  <span id="ir-compare-card-a-unit" style="font-size:10px; font-weight:600; color:var(--text-muted);"></span>
+                </div>
+              </div>
+
+              <!-- VS Divider -->
+              <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;">
+                <span style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">vs</span>
+                <div id="ir-compare-diff-badge" style="font-size:11px; font-weight:800; padding:4px 10px; border-radius:20px; white-space:nowrap;"></div>
+              </div>
+
+              <!-- Task B Card -->
+              <div id="ir-compare-card-b" style="background:var(--surface); border:1px solid rgba(16,185,129,0.3); border-radius:var(--radius-sm); padding:14px 16px;">
+                <div id="ir-compare-card-b-badge" style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#10B981; margin-bottom:8px;">Instance B</div>
+                <div id="ir-compare-card-b-title" style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:4px;"></div>
+                <div id="ir-compare-card-b-meta" style="font-size:10.5px; color:var(--text-muted); line-height:1.6;"></div>
+                <div style="margin-top:10px; display:flex; flex-direction:column; gap:2px;">
+                  <div style="display:flex; align-items:baseline; gap:6px;">
+                    <span id="ir-compare-card-b-count" style="font-size:28px; font-weight:800; color:#10B981;"></span>
+                    <span style="font-size:11px; font-weight:600; color:var(--text-muted);">operational actions</span>
+                  </div>
+                  <span id="ir-compare-card-b-unit" style="font-size:10px; font-weight:600; color:var(--text-muted);"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Shelf Physical Effort Analysis (Excluding Restock) -->
+            <div id="ir-compare-effort-section" style="background:var(--surface); border:1px solid rgba(99,102,241,0.25); border-radius:var(--radius-sm); padding:16px; margin-bottom:16px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:18px;">⚡</span>
+                  <div>
+                    <h4 style="font-size:13px; font-weight:800; margin:0; color:var(--text);">Operational Effort Comparison (Excluding Restock)</h4>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Physical shelf touches: Fix in Bay, Set Aside, and Place Item / Add to Shelf</div>
+                  </div>
+                </div>
+                <div id="ir-compare-effort-badge" style="font-size:12px; font-weight:800; padding:4px 12px; border-radius:20px;"></div>
+              </div>
+
+              <!-- Effort Highlight KPI Cards -->
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                <div style="background:var(--surface-raised, rgba(0,0,0,0.02)); border:1px solid var(--border); border-radius:var(--radius-xs); padding:10px 14px;">
+                  <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Total Physical Shelf Touches</div>
+                  <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">
+                    <div style="font-size:12px; font-weight:700;">
+                      <span id="ir-effort-touches-a" style="color:#3B82F6; font-size:18px; font-weight:800;"></span>
+                      <span style="color:var(--text-muted); font-size:11px;"> vs </span>
+                      <span id="ir-effort-touches-b" style="color:#10B981; font-size:18px; font-weight:800;"></span>
+                    </div>
+                    <span id="ir-effort-touches-delta" style="font-size:12px; font-weight:800;"></span>
+                  </div>
+                </div>
+
+                <div style="background:var(--surface-raised, rgba(0,0,0,0.02)); border:1px solid var(--border); border-radius:var(--radius-xs); padding:10px 14px;">
+                  <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Distinct Items Repositioned</div>
+                  <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">
+                    <div style="font-size:12px; font-weight:700;">
+                      <span id="ir-effort-items-a" style="color:#3B82F6; font-size:18px; font-weight:800;"></span>
+                      <span style="color:var(--text-muted); font-size:11px;"> vs </span>
+                      <span id="ir-effort-items-b" style="color:#10B981; font-size:18px; font-weight:800;"></span>
+                    </div>
+                    <span id="ir-effort-items-delta" style="font-size:12px; font-weight:800;"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Effort Breakdown Table -->
+              <div class="ir-table-wrap">
+                <table class="ir-history-table" style="width:100%;">
+                  <thead>
+                    <tr>
+                      <th>Effort Action Type</th>
+                      <th id="ir-compare-th-eff-a" style="text-align:right; color:#3B82F6;">Instance A</th>
+                      <th id="ir-compare-th-eff-b" style="text-align:right; color:#10B981;">Instance B</th>
+                      <th style="text-align:right;">Difference</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ir-compare-effort-tbody">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Action Type Breakdown Table -->
+            <div style="margin-bottom:16px;">
+              <h4 style="font-size:12.5px; font-weight:700; margin:0 0 8px 0; color:var(--text);">📊 Breakdown by All Action Types</h4>
+              <div class="ir-table-wrap">
+                <table class="ir-history-table" style="width:100%;">
+                  <thead>
+                    <tr>
+                      <th>Action Type</th>
+                      <th id="ir-compare-th-type-a" style="text-align:right; color:#3B82F6;">Instance A</th>
+                      <th id="ir-compare-th-type-b" style="text-align:right; color:#10B981;">Instance B</th>
+                      <th style="text-align:right;">Difference</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ir-compare-type-tbody">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- State Breakdown Table -->
+            <div>
+              <h4 style="font-size:12.5px; font-weight:700; margin:0 0 8px 0; color:var(--text);">📋 Breakdown by Action State</h4>
+              <div class="ir-table-wrap">
+                <table class="ir-history-table" style="width:100%;">
+                  <thead>
+                    <tr>
+                      <th>State</th>
+                      <th id="ir-compare-th-state-a" style="text-align:right; color:#3B82F6;">Instance A</th>
+                      <th id="ir-compare-th-state-b" style="text-align:right; color:#10B981;">Instance B</th>
+                      <th style="text-align:right;">Difference</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ir-compare-state-tbody">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>

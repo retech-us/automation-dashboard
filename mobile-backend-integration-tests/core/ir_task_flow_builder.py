@@ -1262,7 +1262,7 @@ def synthesize_task_flow_from_raw_actions(
     
     sorted_bays = sorted(list(bays_seen)) if bays_seen else ["Bay 1", "Bay 2"]
     
-    task_date = meta.get("task_date") or "2026-09-01"
+    task_date = meta.get("task_date") or datetime.date.today().isoformat()
     base_time = datetime.datetime.strptime(f"{task_date} 09:15:00", "%Y-%m-%d %H:%M:%S")
 
     events: List[FlowEvent] = []

@@ -428,8 +428,41 @@
       picker.value = initialInstance;
     }
 
+    // Support compare inputs Enter key
+    const cmpInputA = byId('ir-compare-task-a');
+    const cmpInputB = byId('ir-compare-task-b');
+    [cmpInputA, cmpInputB].forEach((inp) => {
+      if (inp) {
+        inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            compareTasks();
+          }
+        });
+      }
+    });
+
     loadTaskCatalog(initialInstance);
     loadTask(initialTaskId, initialInstance);
+
+    // Deep-linking support for subview and compare params
+    const subviewParam = urlParams.get('subview') || urlParams.get('tab');
+    if (subviewParam === 'compare') {
+      switchSubView('compare');
+      const paramTaskA = urlParams.get('task_a');
+      const paramTaskB = urlParams.get('task_b');
+      const paramInstA = urlParams.get('instance_a');
+      const paramInstB = urlParams.get('instance_b');
+      if (paramTaskA && cmpInputA) cmpInputA.value = paramTaskA;
+      if (paramTaskB && cmpInputB) cmpInputB.value = paramTaskB;
+      if (paramInstA && byId('ir-compare-instance-a')) byId('ir-compare-instance-a').value = paramInstA;
+      if (paramInstB && byId('ir-compare-instance-b')) byId('ir-compare-instance-b').value = paramInstB;
+      if (paramTaskA && paramTaskB) {
+        compareTasks();
+      }
+    } else if (subviewParam && ['summary', 'story', 'history'].includes(subviewParam)) {
+      switchSubView(subviewParam);
+    }
   }
 
   function switchSubView(viewName) {
@@ -441,7 +474,7 @@
       btn.setAttribute('aria-selected', active ? 'true' : 'false');
     });
 
-    const views = ['summary', 'story', 'history'];
+    const views = ['summary', 'story', 'history', 'compare'];
     views.forEach((v) => {
       const el = byId(`ir-subview-${v}`);
       if (el) el.hidden = (v !== viewName);
@@ -908,6 +941,297 @@
     `).join('');
   }
 
+  function onCompareInstanceChange(which) {
+    const instSelect = byId(`ir-compare-instance-${which}`);
+    const paramsInput = byId(`ir-compare-params-${which}`);
+    const tokenInput = byId(`ir-compare-token-${which}`);
+    if (!instSelect) return;
+    const inst = instSelect.value;
+    const url = normalizeInstanceUrl(inst);
+
+    if (paramsInput) {
+      if (inst === 'stgsams') {
+        paramsInput.value = 'limit=1000&stage=pre_photo&type=set_bay&version=2';
+      } else {
+        paramsInput.value = 'limit=1000&stage=pre_photo';
+      }
+    }
+
+    if (tokenInput && !tokenInput.value) {
+      try {
+        const stored = JSON.parse(localStorage.getItem(`ir_creds_${url}`) || '{}');
+        if (stored.token) tokenInput.value = stored.token;
+      } catch (e) {}
+    }
+  }
+
+  async function compareTasks() {
+    const elA = byId('ir-compare-task-a');
+    const elB = byId('ir-compare-task-b');
+    const taskA = elA ? elA.value.trim() : '';
+    const taskB = elB ? elB.value.trim() : '';
+    const instA = (byId('ir-compare-instance-a') || {}).value || 'stgsams';
+    const instB = (byId('ir-compare-instance-b') || {}).value || 'krcs';
+    const tokenA = (byId('ir-compare-token-a') || {}).value ? byId('ir-compare-token-a').value.trim() : '';
+    const tokenB = (byId('ir-compare-token-b') || {}).value ? byId('ir-compare-token-b').value.trim() : '';
+    const paramsA = (byId('ir-compare-params-a') || {}).value ? byId('ir-compare-params-a').value.trim() : '';
+    const paramsB = (byId('ir-compare-params-b') || {}).value ? byId('ir-compare-params-b').value.trim() : '';
+    const btn = byId('btn-ir-compare');
+    const statusPill = byId('ir-compare-status');
+    const resultsDiv = byId('ir-compare-results');
+
+    if (!taskA || !taskB) {
+      alert('Please enter both Task ID A and Task ID B.');
+      return;
+    }
+
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Comparing…'; }
+    if (statusPill) { statusPill.style.display = 'inline-block'; statusPill.textContent = 'Fetching data from both instances…'; }
+    if (resultsDiv) resultsDiv.style.display = 'none';
+
+    try {
+      let url = `/api/runner/compare_tasks?task_a=${encodeURIComponent(taskA)}&task_b=${encodeURIComponent(taskB)}&instance_a=${encodeURIComponent(instA)}&instance_b=${encodeURIComponent(instB)}`;
+      if (tokenA) url += `&token_a=${encodeURIComponent(tokenA)}`;
+      if (tokenB) url += `&token_b=${encodeURIComponent(tokenB)}`;
+      if (paramsA) url += `&params_a=${encodeURIComponent(paramsA)}`;
+      if (paramsB) url += `&params_b=${encodeURIComponent(paramsB)}`;
+
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+
+      if (data.status === 'error') {
+        if (statusPill) { statusPill.textContent = `❌ ${data.message}`; }
+        return;
+      }
+
+      renderCompareResults(data);
+      if (statusPill) statusPill.style.display = 'none';
+    } catch (err) {
+      console.error('Compare tasks error:', err);
+      if (statusPill) { statusPill.textContent = `❌ Error: ${err.message || err}`; }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '⚖️ Compare Action Counts'; }
+    }
+  }
+
+  function renderCompareResults(data) {
+    const resultsDiv = byId('ir-compare-results');
+    if (!resultsDiv) return;
+    resultsDiv.style.display = 'block';
+
+    const a = data.task_a || {};
+    const b = data.task_b || {};
+    const cmp = data.comparison || {};
+    const totalA = cmp.total_a || 0;
+    const totalB = cmp.total_b || 0;
+    const diff = cmp.difference || 0;
+    const isMatch = cmp.match;
+
+    const instNameA = (a.instance || 'Instance A').toUpperCase();
+    const instNameB = (b.instance || 'Instance B').toUpperCase();
+    const labelA = `${instNameA}${a.task_id ? ` (#${a.task_id})` : ''}`;
+    const labelB = `${instNameB}${b.task_id ? ` (#${b.task_id})` : ''}`;
+
+    // Verdict banner
+    const verdict = byId('ir-compare-verdict');
+    const verdictIcon = byId('ir-compare-verdict-icon');
+    const verdictTitle = byId('ir-compare-verdict-title');
+    const verdictDesc = byId('ir-compare-verdict-desc');
+    if (verdict) {
+      if (a.error || b.error) {
+        verdict.style.background = 'rgba(239,68,68,0.08)';
+        verdict.style.border = '1px solid rgba(239,68,68,0.3)';
+        if (verdictIcon) verdictIcon.textContent = '⚠️';
+        if (verdictTitle) { verdictTitle.textContent = 'Connection or Auth Issue Detected'; verdictTitle.style.color = '#B91C1C'; }
+        if (verdictDesc) { verdictDesc.textContent = a.error || b.error; verdictDesc.style.color = '#991B1B'; }
+      } else if (isMatch) {
+        verdict.style.background = 'rgba(16,185,129,0.08)';
+        verdict.style.border = '1px solid rgba(16,185,129,0.3)';
+        if (verdictIcon) verdictIcon.textContent = '✅';
+        if (verdictTitle) { verdictTitle.textContent = `Action Counts Match — ${totalA} actions each`; verdictTitle.style.color = '#059669'; }
+        if (verdictDesc) { verdictDesc.textContent = `Both tasks generated exactly ${totalA} actions across both instances (${instNameA} & ${instNameB}).`; verdictDesc.style.color = '#065F46'; }
+      } else if (diff > 0) {
+        verdict.style.background = 'rgba(245,158,11,0.08)';
+        verdict.style.border = '1px solid rgba(245,158,11,0.3)';
+        if (verdictIcon) verdictIcon.textContent = '⚠️';
+        if (verdictTitle) { verdictTitle.textContent = `${instNameA} has ${Math.abs(diff)} more action(s) than ${instNameB} (${totalA} vs ${totalB})`; verdictTitle.style.color = '#B45309'; }
+        if (verdictDesc) { verdictDesc.textContent = `Task #${a.task_id} on ${instNameA} generated ${totalA} actions, while Task #${b.task_id} on ${instNameB} generated ${totalB} — a difference of +${Math.abs(diff)} (${cmp.difference_pct > 0 ? '+' : ''}${cmp.difference_pct}%).`; verdictDesc.style.color = '#92400E'; }
+      } else {
+        verdict.style.background = 'rgba(59,130,246,0.08)';
+        verdict.style.border = '1px solid rgba(59,130,246,0.3)';
+        if (verdictIcon) verdictIcon.textContent = '📉';
+        if (verdictTitle) { verdictTitle.textContent = `${instNameB} has ${Math.abs(diff)} more action(s) than ${instNameA} (${totalB} vs ${totalA})`; verdictTitle.style.color = '#1D4ED8'; }
+        if (verdictDesc) { verdictDesc.textContent = `Task #${b.task_id} on ${instNameB} generated ${totalB} actions, while Task #${a.task_id} on ${instNameA} generated ${totalA} — a difference of ${diff} (${cmp.difference_pct}%).`; verdictDesc.style.color = '#1E3A8A'; }
+      }
+    }
+
+    // Card Badges & Headers
+    setText('ir-compare-card-a-badge', `${instNameA} (Instance A)`);
+    setText('ir-compare-card-b-badge', `${instNameB} (Instance B)`);
+
+    // Card A
+    setText('ir-compare-card-a-title', `Task #${a.task_id} — ${a.task_title || ''}`);
+    const metaA = `Instance: ${instNameA}\nStore: ${a.store_name || '—'}\nPerformer: ${a.performer || '—'}\nDate: ${a.task_date || '—'}\nStatus: ${a.status || '—'}\nRestock Excluded: ${a.restock_count || 0} items\nTotal (with restock): ${a.total_raw_including_restock || totalA}`;
+    byId('ir-compare-card-a-meta').innerHTML = metaA.split('\n').map(l => `<div>${l}</div>`).join('');
+    setText('ir-compare-card-a-count', totalA);
+    setText('ir-compare-card-a-unit', `excludes ${a.restock_count || 0} restock actions`);
+
+    // Card B
+    setText('ir-compare-card-b-title', `Task #${b.task_id} — ${b.task_title || ''}`);
+    const metaB = `Instance: ${instNameB}\nStore: ${b.store_name || '—'}\nPerformer: ${b.performer || '—'}\nDate: ${b.task_date || '—'}\nStatus: ${b.status || '—'}\nRestock Excluded: ${b.restock_count || 0} items\nTotal (with restock): ${b.total_raw_including_restock || totalB}`;
+    byId('ir-compare-card-b-meta').innerHTML = metaB.split('\n').map(l => `<div>${l}</div>`).join('');
+    setText('ir-compare-card-b-count', totalB);
+    setText('ir-compare-card-b-unit', `excludes ${b.restock_count || 0} restock actions`);
+
+    // Update Table Column Headers with Instance Names
+    setText('ir-compare-th-type-a', labelA);
+    setText('ir-compare-th-type-b', labelB);
+    setText('ir-compare-th-state-a', labelA);
+    setText('ir-compare-th-state-b', labelB);
+    setText('ir-compare-th-eff-a', labelA);
+    setText('ir-compare-th-eff-b', labelB);
+
+    // Diff badge
+    const diffBadge = byId('ir-compare-diff-badge');
+    if (diffBadge) {
+      if (isMatch) {
+        diffBadge.textContent = '✅ Match';
+        diffBadge.style.background = 'rgba(16,185,129,0.15)';
+        diffBadge.style.color = '#059669';
+      } else {
+        diffBadge.textContent = diff > 0 ? `${instNameA} +${Math.abs(diff)}` : `${instNameB} +${Math.abs(diff)}`;
+        diffBadge.style.background = diff > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)';
+        diffBadge.style.color = diff > 0 ? '#B45309' : '#1D4ED8';
+      }
+    }
+
+    // Operational Effort Comparison (Excluding Restock)
+    const eff = data.effort_comparison || {};
+    const touchesA = eff.touches_a || 0;
+    const touchesB = eff.touches_b || 0;
+    const touchesDiff = eff.touches_diff || 0;
+    const touchesPct = eff.touches_pct || 0;
+    const itemsA = eff.items_a || 0;
+    const itemsB = eff.items_b || 0;
+    const itemsDiff = eff.items_diff || 0;
+    const itemsPct = eff.items_pct || 0;
+
+    const effortBadge = byId('ir-compare-effort-badge');
+    if (effortBadge) {
+      if (touchesDiff === 0) {
+        effortBadge.textContent = '⚖️ Equal Effort (0% change)';
+        effortBadge.style.background = 'rgba(107,114,128,0.15)';
+        effortBadge.style.color = '#4B5563';
+      } else if (touchesDiff < 0) {
+        effortBadge.textContent = `🟢 ${Math.abs(touchesPct)}% Effort Reduction in ${instNameA}`;
+        effortBadge.style.background = 'rgba(16,185,129,0.15)';
+        effortBadge.style.color = '#059669';
+      } else {
+        effortBadge.textContent = `🟠 ${Math.abs(touchesPct)}% Effort Increase in ${instNameA}`;
+        effortBadge.style.background = 'rgba(245,158,11,0.15)';
+        effortBadge.style.color = '#B45309';
+      }
+    }
+
+    setText('ir-effort-touches-a', touchesA);
+    setText('ir-effort-touches-b', touchesB);
+    const touchesDeltaEl = byId('ir-effort-touches-delta');
+    if (touchesDeltaEl) {
+      const isRed = touchesDiff < 0;
+      touchesDeltaEl.textContent = `${touchesPct > 0 ? '+' : ''}${touchesPct}% (${touchesDiff > 0 ? '+' : ''}${touchesDiff} touches)`;
+      touchesDeltaEl.style.color = isRed ? '#059669' : (touchesDiff === 0 ? 'var(--text-muted)' : '#B45309');
+    }
+
+    setText('ir-effort-items-a', itemsA);
+    setText('ir-effort-items-b', itemsB);
+    const itemsDeltaEl = byId('ir-effort-items-delta');
+    if (itemsDeltaEl) {
+      const isRed = itemsDiff < 0;
+      itemsDeltaEl.textContent = `${itemsPct > 0 ? '+' : ''}${itemsPct}% (${itemsDiff > 0 ? '+' : ''}${itemsDiff} items)`;
+      itemsDeltaEl.style.color = isRed ? '#059669' : (itemsDiff === 0 ? 'var(--text-muted)' : '#B45309');
+    }
+
+    const effTbody = byId('ir-compare-effort-tbody');
+    if (effTbody) {
+      const breakdown = eff.breakdown || [];
+      effTbody.innerHTML = breakdown.map(r => {
+        const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff > 0 ? '#B45309' : '#059669');
+        const diffPrefix = r.diff > 0 ? '+' : '';
+        return `<tr>
+          <td><strong style="color:var(--text);">${r.action}</strong></td>
+          <td style="text-align:right; font-weight:700; font-size:13px; color:#3B82F6;">${r.count_a}</td>
+          <td style="text-align:right; font-weight:700; font-size:13px; color:#10B981;">${r.count_b}</td>
+          <td style="text-align:right; font-weight:800; color:${diffColor};">${r.diff === 0 ? '—' : diffPrefix + r.diff}</td>
+        </tr>`;
+      }).join('');
+
+      // Add Total Shelf Touches row
+      const totDiffColor = touchesDiff === 0 ? 'var(--text-muted)' : (touchesDiff < 0 ? '#059669' : '#B45309');
+      effTbody.innerHTML += `<tr style="border-top:2px solid var(--border); font-weight:800; background:rgba(99,102,241,0.04);">
+        <td>TOTAL PHYSICAL SHELF TOUCHES</td>
+        <td style="text-align:right; font-size:14px; color:#3B82F6;">${touchesA}</td>
+        <td style="text-align:right; font-size:14px; color:#10B981;">${touchesB}</td>
+        <td style="text-align:right; font-size:14px; color:${totDiffColor};">${touchesDiff === 0 ? '—' : (touchesDiff > 0 ? '+' : '') + touchesDiff + ` (${touchesPct > 0 ? '+' : ''}${touchesPct}%)`}</td>
+      </tr>`;
+    }
+
+    // Error warnings for individual tasks
+    if (a.error) {
+      byId('ir-compare-card-a-meta').innerHTML += `<div style="color:#EF4444; font-weight:700; margin-top:4px;">⚠️ ${a.error}</div>`;
+    }
+    if (b.error) {
+      byId('ir-compare-card-b-meta').innerHTML += `<div style="color:#EF4444; font-weight:700; margin-top:4px;">⚠️ ${b.error}</div>`;
+    }
+
+    // Action Type Breakdown Table
+    const typeTbody = byId('ir-compare-type-tbody');
+    if (typeTbody) {
+      const rows = (cmp.by_action_type || []);
+      if (rows.length === 0) {
+        typeTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:16px; color:var(--text-muted);">No action type data available</td></tr>';
+      } else {
+        typeTbody.innerHTML = rows.map(r => {
+          const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff > 0 ? '#B45309' : '#1D4ED8');
+          const diffPrefix = r.diff > 0 ? '+' : '';
+          return `<tr>
+            <td><span class="badge badge-gray">${r.type}</span></td>
+            <td style="text-align:right; font-weight:700; font-size:13px;">${r.count_a}</td>
+            <td style="text-align:right; font-weight:700; font-size:13px;">${r.count_b}</td>
+            <td style="text-align:right; font-weight:800; color:${diffColor};">${r.diff === 0 ? '—' : diffPrefix + r.diff}</td>
+          </tr>`;
+        }).join('');
+        // Add total row
+        typeTbody.innerHTML += `<tr style="border-top:2px solid var(--border); font-weight:800;">
+          <td>TOTAL</td>
+          <td style="text-align:right; font-size:14px; color:#3B82F6;">${totalA}</td>
+          <td style="text-align:right; font-size:14px; color:#10B981;">${totalB}</td>
+          <td style="text-align:right; font-size:14px; color:${diff === 0 ? 'var(--text-muted)' : (diff > 0 ? '#B45309' : '#1D4ED8')};">${diff === 0 ? '—' : (diff > 0 ? '+' : '') + diff}</td>
+        </tr>`;
+      }
+    }
+
+    // State Breakdown Table
+    const stateTbody = byId('ir-compare-state-tbody');
+    if (stateTbody) {
+      const rows = (cmp.by_state || []);
+      if (rows.length === 0) {
+        stateTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:16px; color:var(--text-muted);">No state data available</td></tr>';
+      } else {
+        stateTbody.innerHTML = rows.map(r => {
+          const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff > 0 ? '#B45309' : '#1D4ED8');
+          const diffPrefix = r.diff > 0 ? '+' : '';
+          return `<tr>
+            <td><span class="badge ${r.state === 'ACCEPTED' ? 'badge-green' : (r.state === 'REJECTED' ? 'badge-red' : 'badge-gray')}">${r.state}</span></td>
+            <td style="text-align:right; font-weight:700; font-size:13px;">${r.count_a}</td>
+            <td style="text-align:right; font-weight:700; font-size:13px;">${r.count_b}</td>
+            <td style="text-align:right; font-weight:800; color:${diffColor};">${r.diff === 0 ? '—' : diffPrefix + r.diff}</td>
+          </tr>`;
+        }).join('');
+      }
+    }
+  }
+
   function renderTechnicalLineage(events) {
     const tbody = byId('ir-tech-lineage-tbody');
     if (!tbody) return;
@@ -937,6 +1261,8 @@
     switchSubView,
     openItemDrawer,
     syncEmbeddedTabs,
+    compareTasks,
+    onCompareInstanceChange,
     openCredentialsModal,
     closeCredentialsModal,
     onModalInstanceSelect,
