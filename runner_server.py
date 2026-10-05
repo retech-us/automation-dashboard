@@ -2583,6 +2583,329 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             print(f"[task_flow] Could not fetch live data for task {task_id}: {e}")
             return None
 
+    def _fetch_task_action_summary(self, base_url: str, instance: str, task_id: int) -> Dict[str, Any]:
+        """Fetch task metadata and action list counts for comparison purposes."""
+        token = INSTANCE_TOKENS.get(base_url) or TOKEN
+        result: Dict[str, Any] = {
+            "task_id": task_id,
+            "instance": instance,
+            "base_url": base_url,
+            "ok": False,
+            "error": None,
+            "total_actions": 0,
+            "action_breakdown": {},
+            "state_breakdown": {},
+            "task_title": f"Task #{task_id}",
+            "store_name": "",
+            "performer": "",
+            "status": "",
+            "task_date": "",
+        }
+
+    def _fetch_task_action_summary(
+        self,
+        base_url: str,
+        instance: str,
+        task_id: int,
+        token_override: Optional[str] = None,
+        custom_params: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Fetch task metadata and action list counts for comparison purposes."""
+        token = token_override or INSTANCE_TOKENS.get(base_url) or TOKEN
+        if token_override:
+            INSTANCE_TOKENS[base_url] = token_override
+            remember_instance_tokens()
+
+        result: Dict[str, Any] = {
+            "task_id": task_id,
+            "instance": instance,
+            "base_url": base_url,
+            "ok": False,
+            "error": None,
+            "total_actions": 0,
+            "action_breakdown": {},
+            "state_breakdown": {},
+            "task_title": f"Task #{task_id}",
+            "store_name": "",
+            "performer": "",
+            "status": "",
+            "task_date": "",
+            "action_list_url": "",
+        }
+
+        if not token:
+            result["error"] = f"No auth token configured for {instance} ({base_url}). Please provide an authorization token for {instance}."
+            return result
+
+        headers = {"Authorization": f"Token {token}", "Accept": "application/json"}
+
+        # Fetch task metadata
+        try:
+            task_req = urllib.request.Request(f"{base_url}/api/v1/tasks/{task_id}/", headers=headers)
+            with urllib.request.urlopen(task_req, context=ssl_ctx, timeout=15) as resp:
+                task_obj = json.loads(resp.read().decode("utf-8"))
+
+            result["task_title"] = task_obj.get("title") or f"Task #{task_id}"
+            st = task_obj.get("store") or {}
+            result["store_name"] = st.get("name") if isinstance(st, dict) else str(st or "")
+            perf = task_obj.get("performer") or {}
+            if isinstance(perf, dict):
+                p_fn = (perf.get("first_name") or "").strip()
+                p_ln = (perf.get("last_name") or "").strip()
+                result["performer"] = f"{p_fn} {p_ln}".strip() or perf.get("username") or ""
+            else:
+                result["performer"] = str(perf) if perf else ""
+            raw_st = task_obj.get("status")
+            if isinstance(raw_st, dict):
+                result["status"] = raw_st.get("name") or ""
+            else:
+                result["status"] = str(raw_st or "")
+            result["task_date"] = task_obj.get("task_date") or (task_obj.get("created_at") or "")[:10]
+        except urllib.error.HTTPError as e:
+            if e.code == 401:
+                result["error"] = f"HTTP 401 Unauthorized for {instance} metadata. Token invalid or expired."
+            elif e.code == 404:
+                result["error"] = f"HTTP 404: Task #{task_id} not found on {instance}."
+            else:
+                result["error"] = f"HTTP {e.code} error fetching metadata from {instance}: {e.reason}"
+            return result
+        except Exception as e:
+            result["error"] = f"Could not fetch task metadata: {e}"
+            return result
+
+        # Construct Action List Query Parameters
+        if custom_params:
+            qs = custom_params.lstrip("?&")
+        elif "stgsams" in instance or "stgsams" in base_url:
+            qs = "limit=1000&stage=pre_photo&type=set_bay&version=2"
+        elif "krcs" in instance or "krcs" in base_url:
+            qs = "limit=1000&stage=pre_photo"
+        else:
+            qs = "limit=1000&stage=pre_photo"
+
+        act_url = f"{base_url}/api/v1/tasks/{task_id}/action-list/retailer/?{qs}"
+        result["action_list_url"] = act_url
+
+        try:
+            act_req = urllib.request.Request(act_url, headers=headers)
+            with urllib.request.urlopen(act_req, context=ssl_ctx, timeout=25) as resp:
+                act_payload = json.loads(resp.read().decode("utf-8"))
+            raw_actions = act_payload.get("results") if isinstance(act_payload, dict) else act_payload
+            raw_actions = raw_actions if isinstance(raw_actions, list) else []
+
+            result["ok"] = True
+            result["source"] = "live"
+
+            # Filter out restock actions entirely from comparison
+            def _is_restock_item(it: Dict[str, Any]) -> bool:
+                c = it.get("current_position") or {}
+                e = it.get("expected_position") or {}
+                c_act = str(c.get("action") or "").lower()
+                e_act = str(e.get("action") or "").lower()
+                r_act = str(it.get("action") or it.get("action_type") or "").upper()
+                g_sub = str((it.get("ir_action_group") or {}).get("subhead") or "").lower()
+                return bool("RESTOCK" in r_act or e_act == "place_on_shelf_restock" or g_sub == "restock")
+
+            operational_actions = [it for it in raw_actions if not _is_restock_item(it)]
+            restock_actions = [it for it in raw_actions if _is_restock_item(it)]
+
+            result["total_raw_including_restock"] = len(raw_actions)
+            result["restock_count"] = len(restock_actions)
+            result["total_actions"] = len(operational_actions)
+
+            shelf_effort = {
+                "fix_in_bay": 0,
+                "set_aside": 0,
+                "place_item": 0,
+                "items_repositioned": 0,
+                "total_touches": 0,
+            }
+
+            # Breakdown by operational action type and state (strictly excluding Restock)
+            for item in operational_actions:
+                curr = item.get("current_position") or {}
+                exp = item.get("expected_position") or {}
+                curr_act = str(curr.get("action") or "").lower()
+                exp_act = str(exp.get("action") or "").lower()
+                root_act = str(item.get("action") or item.get("action_type") or "").upper()
+                group_subhead = str((item.get("ir_action_group") or {}).get("subhead") or "").lower()
+
+                if "IDENTIFY" in root_act or curr_act == "identify":
+                    act_type = "Identify"
+                    result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
+                elif "REMOVE" in root_act or curr_act == "remove":
+                    act_type = "Remove"
+                    result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
+                elif exp_act in ("fix_position_fix_in_bay", "fix_position_in_bay"):
+                    if curr_act != "set_aside":
+                        act_type = "Fix in Bay"
+                        result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
+                        shelf_effort["fix_in_bay"] += 1
+                        shelf_effort["items_repositioned"] += 1
+                    else:
+                        result["action_breakdown"]["Set Aside"] = result["action_breakdown"].get("Set Aside", 0) + 1
+                        result["action_breakdown"]["Place Item / Add to Shelf"] = result["action_breakdown"].get("Place Item / Add to Shelf", 0) + 1
+                        shelf_effort["set_aside"] += 1
+                        shelf_effort["place_item"] += 1
+                        shelf_effort["items_repositioned"] += 1
+                elif curr_act == "set_aside":
+                    result["action_breakdown"]["Set Aside"] = result["action_breakdown"].get("Set Aside", 0) + 1
+                    result["action_breakdown"]["Place Item / Add to Shelf"] = result["action_breakdown"].get("Place Item / Add to Shelf", 0) + 1
+                    shelf_effort["set_aside"] += 1
+                    shelf_effort["place_item"] += 1
+                    shelf_effort["items_repositioned"] += 1
+                elif exp_act in ("place_on_shelf_add_to_bay", "place_on_shelf"):
+                    result["action_breakdown"]["Place Item / Add to Shelf"] = result["action_breakdown"].get("Place Item / Add to Shelf", 0) + 1
+                    shelf_effort["place_item"] += 1
+                elif curr_act == "" and exp_act == "":
+                    # Product is already at its target planogram location (e.g. shelf 3 pos 1 -> shelf 3 pos 1)
+                    # No movement required
+                    act_type = "Already in Position"
+                    result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
+                else:
+                    act_type = root_act.replace("ACTION_", "").title() or "Other"
+                    result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
+
+                state = (item.get("state") or "UNKNOWN").replace("STATE_", "")
+                result["state_breakdown"][state] = result["state_breakdown"].get(state, 0) + 1
+
+            shelf_effort["total_touches"] = (
+                shelf_effort["fix_in_bay"] + shelf_effort["set_aside"] + shelf_effort["place_item"]
+            )
+            result["shelf_effort"] = shelf_effort
+
+        except urllib.error.HTTPError as e:
+            if e.code == 401:
+                result["error"] = f"HTTP 401 Unauthorized for action-list on {instance}. Token invalid or expired."
+            elif e.code == 404:
+                result["error"] = f"HTTP 404: Action-list not found for Task #{task_id} on {instance}."
+            else:
+                result["error"] = f"HTTP {e.code} error from {instance}: {e.reason}"
+        except Exception as e:
+            result["error"] = f"Could not fetch action list: {e}"
+
+        return result
+
+    def _handle_compare_tasks(self, query: Dict[str, List[str]]) -> Dict[str, Any]:
+        """Compare action generation counts and physical shelf effort between two tasks."""
+        task_a_raw = (query.get("task_a") or [None])[0]
+        task_b_raw = (query.get("task_b") or [None])[0]
+        instance_a = (query.get("instance_a") or [None])[0] or "stgsams"
+        instance_b = (query.get("instance_b") or [None])[0] or "krcs"
+        token_a = (query.get("token_a") or [None])[0]
+        token_b = (query.get("token_b") or [None])[0]
+        params_a = (query.get("params_a") or [None])[0]
+        params_b = (query.get("params_b") or [None])[0]
+
+        if not task_a_raw or not task_b_raw:
+            return {"status": "error", "message": "Both task_a and task_b are required."}
+
+        try:
+            task_a_id = int(task_a_raw)
+            task_b_id = int(task_b_raw)
+        except ValueError:
+            return {"status": "error", "message": "task_a and task_b must be valid integer task IDs."}
+
+        base_url_a = normalize_backend_url(instance_a)
+        base_url_b = normalize_backend_url(instance_b)
+
+        # Fetch both in parallel using ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            future_a = pool.submit(self._fetch_task_action_summary, base_url_a, instance_a, task_a_id, token_a, params_a)
+            future_b = pool.submit(self._fetch_task_action_summary, base_url_b, instance_b, task_b_id, token_b, params_b)
+            summary_a = future_a.result()
+            summary_b = future_b.result()
+
+        # Build comparison
+        count_a = summary_a["total_actions"]
+        count_b = summary_b["total_actions"]
+        diff = count_a - count_b
+        diff_pct = round(((count_a - count_b) / count_b) * 100, 1) if count_b > 0 else (100.0 if count_a > 0 else 0.0)
+
+        # Shelf Effort Comparison (excluding restock)
+        eff_a = summary_a.get("shelf_effort") or {}
+        eff_b = summary_b.get("shelf_effort") or {}
+        touches_a = eff_a.get("total_touches", 0)
+        touches_b = eff_b.get("total_touches", 0)
+        touches_diff = touches_a - touches_b
+        touches_pct = round(((touches_a - touches_b) / touches_b) * 100, 1) if touches_b > 0 else 0.0
+
+        items_a = eff_a.get("items_repositioned", 0)
+        items_b = eff_b.get("items_repositioned", 0)
+        items_diff = items_a - items_b
+        items_pct = round(((items_a - items_b) / items_b) * 100, 1) if items_b > 0 else 0.0
+
+        # Merge all action type keys
+        all_types = sorted(set(list(summary_a["action_breakdown"].keys()) + list(summary_b["action_breakdown"].keys())))
+        type_comparison = []
+        for t in all_types:
+            a_val = summary_a["action_breakdown"].get(t, 0)
+            b_val = summary_b["action_breakdown"].get(t, 0)
+            type_comparison.append({
+                "type": t,
+                "count_a": a_val,
+                "count_b": b_val,
+                "diff": a_val - b_val,
+            })
+
+        # Merge all state keys
+        all_states = sorted(set(list(summary_a["state_breakdown"].keys()) + list(summary_b["state_breakdown"].keys())))
+        state_comparison = []
+        for s in all_states:
+            a_val = summary_a["state_breakdown"].get(s, 0)
+            b_val = summary_b["state_breakdown"].get(s, 0)
+            state_comparison.append({
+                "state": s,
+                "count_a": a_val,
+                "count_b": b_val,
+                "diff": a_val - b_val,
+            })
+
+        return {
+            "status": "success",
+            "task_a": summary_a,
+            "task_b": summary_b,
+            "comparison": {
+                "total_a": count_a,
+                "total_b": count_b,
+                "difference": diff,
+                "difference_pct": diff_pct,
+                "match": count_a == count_b,
+                "by_action_type": type_comparison,
+                "by_state": state_comparison,
+            },
+            "effort_comparison": {
+                "touches_a": touches_a,
+                "touches_b": touches_b,
+                "touches_diff": touches_diff,
+                "touches_pct": touches_pct,
+                "items_a": items_a,
+                "items_b": items_b,
+                "items_diff": items_diff,
+                "items_pct": items_pct,
+                "breakdown": [
+                    {
+                        "action": "Fix in Bay (Direct in-bay slide)",
+                        "count_a": eff_a.get("fix_in_bay", 0),
+                        "count_b": eff_b.get("fix_in_bay", 0),
+                        "diff": eff_a.get("fix_in_bay", 0) - eff_b.get("fix_in_bay", 0),
+                    },
+                    {
+                        "action": "Set Aside (Off shelf to cart)",
+                        "count_a": eff_a.get("set_aside", 0),
+                        "count_b": eff_b.get("set_aside", 0),
+                        "diff": eff_a.get("set_aside", 0) - eff_b.get("set_aside", 0),
+                    },
+                    {
+                        "action": "Place Item / Add to Shelf",
+                        "count_a": eff_a.get("place_item", 0),
+                        "count_b": eff_b.get("place_item", 0),
+                        "diff": eff_a.get("place_item", 0) - eff_b.get("place_item", 0),
+                    },
+                ],
+            },
+        }
+
     def _handle_task_flow(self, query: Dict[str, List[str]]) -> Dict[str, Any]:
         """Serve 10-event chronological task execution flow and action drilldown."""
         instance = (query.get("instance") or [None])[0] or EXECUTION_STATE.get("instance_slug") or "harr"
@@ -2793,6 +3116,12 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "has_saved_token": bool(token),
                 "token_preview": f"{token[:6]}...{token[-4:]}" if token and len(token) > 10 else None
             })
+            return
+
+        elif self.path.startswith("/api/runner/compare_tasks"):
+            self._send_json(self._handle_compare_tasks(
+                urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            ))
             return
 
         elif self.path.startswith("/api/runner/task_flow"):
