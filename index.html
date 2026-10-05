@@ -213,6 +213,10 @@
               <button type="button" class="btn btn--primary btn--sm" onclick="window.IrTaskFlow.loadCurrentInputs()" title="Fetch live task flow for selected instance">
                 Load
               </button>
+              <button type="button" id="btn-ir-credentials" class="btn btn--outline btn--sm" onclick="window.IrTaskFlow.openCredentialsModal()" style="display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:4px 8px; font-weight:700;" title="Provide Username, Password, or Auth Token for selected instance">
+                🔑 <span>Credentials</span>
+                <span id="ir-auth-status-dot" style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#94A3B8;" title="No active session token"></span>
+              </button>
             </div>
           </div>
         </div>
@@ -229,6 +233,25 @@
             📋 3. Browse Past Resets
           </button>
         </nav>
+
+        <!-- Dynamic Inline Auth Required Alert Banner -->
+        <div id="ir-auth-alert-banner" style="display:none; background:#FEF2F2; border:1px solid #FECACA; border-radius:8px; padding:9px 14px; margin:10px 0 0 0; align-items:center; justify-content:space-between; gap:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:16px;">🔒</span>
+            <div>
+              <div id="ir-auth-alert-title" style="font-weight:700; font-size:11.5px; color:#991B1B;">Authentication Required</div>
+              <div id="ir-auth-alert-desc" style="font-size:11px; color:#7F1D1D;">Please provide credentials or a bearer auth token for live access.</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" class="btn btn--primary btn--sm" onclick="window.IrTaskFlow.openCredentialsModal()" style="font-size:11px; padding:3px 10px; font-weight:700;">
+              🔑 Enter Credentials
+            </button>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('ir-auth-alert-banner').style.display='none'" style="font-size:11px; padding:3px 6px;">
+              ✕
+            </button>
+          </div>
+        </div>
       </header>
 
       <!-- SUBVIEW 1: Task Summary & Executive Verdict (Default Active) -->
@@ -705,6 +728,58 @@
       <button class="btn" type="submit">Ask</button>
     </form>
   </aside>
+
+  <!-- Instance Credentials & Auth Token Modal -->
+  <div id="ir-auth-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+    <div style="background:#FFFFFF; border-radius:12px; width:92%; max-width:440px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); overflow:hidden; border:1px solid #E2E8F0;">
+      <div style="padding:14px 18px; background:#F8FAFC; border-bottom:1px solid #E2E8F0; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">🔑</span>
+          <div>
+            <h4 style="margin:0; font-size:13px; font-weight:800; color:#0F172A;">Instance Credentials &amp; Auth Token</h4>
+            <p id="ir-auth-modal-subtitle" style="margin:0; font-size:10.5px; color:#64748B;">Authenticate for live retailer backend calls</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.IrTaskFlow.closeCredentialsModal()" style="border:none; background:transparent; font-size:20px; color:#94A3B8; cursor:pointer; padding:0 4px; line-height:1;">&times;</button>
+      </div>
+      <div style="padding:16px 18px;">
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:11px; font-weight:700; color:#334155; margin-bottom:4px;">Backend Instance URL</label>
+          <div style="display:flex; gap:6px;">
+            <input type="text" id="ir-auth-base-url" class="ir-flow-input" style="flex:1; font-size:11.5px; padding:6px 8px; font-weight:600; color:#1E3A8A; background:#EFF6FF;" placeholder="e.g. https://krcs.rebotics.net" readonly />
+            <select id="ir-auth-instance-select" class="ir-flow-input" style="width:110px; font-size:11px; padding:6px 4px;" onchange="window.IrTaskFlow.onModalInstanceSelect(this.value)">
+              <option value="harr">Harris Teeter</option>
+              <option value="krcs">Kroger</option>
+              <option value="albt">Albertsons</option>
+              <option value="stgsams">Sam's Club</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+          <div>
+            <label style="display:block; font-size:11px; font-weight:700; color:#334155; margin-bottom:4px;">Username</label>
+            <input type="text" id="ir-auth-username" class="ir-flow-input" style="width:100%; font-size:11.5px; padding:6px 8px;" placeholder="Username" autocomplete="username" />
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; font-weight:700; color:#334155; margin-bottom:4px;">Password</label>
+            <input type="password" id="ir-auth-password" class="ir-flow-input" style="width:100%; font-size:11.5px; padding:6px 8px;" placeholder="Password" autocomplete="current-password" />
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label style="font-size:11px; font-weight:700; color:#334155;">Or Bearer Auth Token (Direct)</label>
+            <span id="ir-auth-saved-tag" style="display:none; font-size:9.5px; font-weight:700; color:#166534; background:#DCFCE7; padding:2px 6px; border-radius:4px;">Saved Session</span>
+          </div>
+          <input type="text" id="ir-auth-token" class="ir-flow-input" style="width:100%; font-size:11px; font-family:'JetBrains Mono',monospace; padding:6px 8px;" placeholder="Paste token e.g. b131c80b292622..." />
+        </div>
+        <div id="ir-auth-status-msg" style="display:none; font-size:11px; padding:8px 10px; border-radius:6px; margin-bottom:12px;"></div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" class="btn btn--outline btn--sm" id="btn-ir-auth-test" onclick="window.IrTaskFlow.testCredentialsConnection()" style="font-size:11px; padding:6px 12px;">🔌 Test Connection</button>
+          <button type="button" class="btn btn--primary btn--sm" id="btn-ir-auth-save" onclick="window.IrTaskFlow.saveCredentialsAndReload()" style="font-size:11px; padding:6px 14px; font-weight:800;">💾 Save &amp; Connect</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="assets/bootstrap.js?v=20260901a"></script>
   <script src="assets/js/auth-gate.js?v=20260923b"></script>

@@ -16,12 +16,245 @@
 
   const DEFAULT_INSTANCE_TASKS = {
     harr: 8648127,
-    krcs: 42288818,
-    albt: 8601238,
-    stgsams: 8648127,
+    krcs: 42484849,
+    albt: 60535562,
+    stgsams: 27277459,
     schn: 8648127,
     wake: 8648127,
   };
+
+  function normalizeInstanceUrl(inst) {
+    if (!inst) return 'https://harr.rebotics.net';
+    const clean = String(inst).trim();
+    if (clean.startsWith('http://') || clean.startsWith('https://')) return clean.replace(/\/+$/, '');
+    if (clean === 'krcs' || clean === 'krsc' || clean === 'krog' || clean === 'kroger') return 'https://krcs.rebotics.net';
+    if (clean === 'stgsams' || clean === 'sams') return 'https://stgsams.rebotics.net';
+    if (clean === 'harr' || clean === 'harris') return 'https://harr.rebotics.net';
+    if (clean === 'albt' || clean === 'albe' || clean === 'albertsons') return 'https://albt.rebotics.net';
+    if (clean === 'schn') return 'https://schn.rebotics.net';
+    if (clean === 'wake') return 'https://wake.rebotics.net';
+    return `https://${clean}.rebotics.net`;
+  }
+
+  async function checkAuthStatus(instance) {
+    const inst = instance || getSelectedInstance() || 'harr';
+    const baseUrl = normalizeInstanceUrl(inst);
+    const dot = byId('ir-auth-status-dot');
+    if (!dot) return false;
+
+    try {
+      const res = await fetch(`/api/runner/auth_status?base_url=${encodeURIComponent(baseUrl)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.has_saved_token) {
+          dot.style.background = '#22C55E';
+          dot.title = `Active Session Token (${data.token_preview || 'Saved'})`;
+          return true;
+        }
+      }
+    } catch (e) {}
+    dot.style.background = '#94A3B8';
+    dot.title = 'No active token saved. Click Credentials to configure.';
+    return false;
+  }
+
+  function showAuthAlertBanner(instance, message) {
+    const banner = byId('ir-auth-alert-banner');
+    if (!banner) return;
+    const desc = byId('ir-auth-alert-desc');
+    const title = byId('ir-auth-alert-title');
+    const instName = (instance || getSelectedInstance() || 'Live Instance').toUpperCase();
+    if (title) title.textContent = `Authentication Required for ${instName}`;
+    if (desc) desc.textContent = message || `Live backend access for ${instName} requires valid credentials or a bearer token. Click below to connect.`;
+    banner.style.display = 'flex';
+  }
+
+  function hideAuthAlertBanner() {
+    const banner = byId('ir-auth-alert-banner');
+    if (banner) banner.style.display = 'none';
+  }
+
+  function openCredentialsModal(instOverride) {
+    const modal = byId('ir-auth-modal');
+    if (!modal) return;
+    const inst = instOverride || getSelectedInstance() || 'harr';
+    const baseUrl = normalizeInstanceUrl(inst);
+
+    const baseInput = byId('ir-auth-base-url');
+    if (baseInput) baseInput.value = baseUrl;
+
+    const select = byId('ir-auth-instance-select');
+    if (select) {
+      const slug = baseUrl.replace('https://', '').split('.')[0];
+      if ([...select.options].some((o) => o.value === slug)) {
+        select.value = slug;
+      }
+    }
+
+    const userInput = byId('ir-auth-username');
+    const passInput = byId('ir-auth-password');
+    const tokenInput = byId('ir-auth-token');
+    const statusMsg = byId('ir-auth-status-msg');
+    if (statusMsg) statusMsg.style.display = 'none';
+
+    try {
+      const stored = JSON.parse(localStorage.getItem(`ir_creds_${baseUrl}`) || '{}');
+      if (userInput && stored.username) userInput.value = stored.username;
+      if (tokenInput && stored.token) tokenInput.value = stored.token;
+    } catch (e) {}
+
+    fetch(`/api/runner/auth_status?base_url=${encodeURIComponent(baseUrl)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const savedTag = byId('ir-auth-saved-tag');
+        if (savedTag) {
+          if (d.has_saved_token) {
+            savedTag.style.display = 'inline-block';
+            savedTag.textContent = `Saved: ${d.token_preview || 'Active'}`;
+            if (tokenInput && !tokenInput.value && d.token_preview) {
+              tokenInput.placeholder = `Current: ${d.token_preview}`;
+            }
+          } else {
+            savedTag.style.display = 'none';
+            if (tokenInput) tokenInput.placeholder = 'Paste token e.g. b131c80b29...';
+          }
+        }
+      })
+      .catch(() => {});
+
+    modal.style.display = 'flex';
+  }
+
+  function closeCredentialsModal() {
+    const modal = byId('ir-auth-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function onModalInstanceSelect(slug) {
+    const url = normalizeInstanceUrl(slug);
+    const baseInput = byId('ir-auth-base-url');
+    if (baseInput) baseInput.value = url;
+    openCredentialsModal(slug);
+  }
+
+  async function testCredentialsConnection() {
+    const baseUrl = (byId('ir-auth-base-url') || {}).value || '';
+    const username = (byId('ir-auth-username') || {}).value || '';
+    const password = (byId('ir-auth-password') || {}).value || '';
+    const token = (byId('ir-auth-token') || {}).value || '';
+    const msgEl = byId('ir-auth-status-msg');
+    const btn = byId('btn-ir-auth-test');
+
+    if (!baseUrl) return;
+    if (btn) { btn.textContent = '⏳ Testing...'; btn.disabled = true; }
+    if (msgEl) {
+      msgEl.style.display = 'block';
+      msgEl.style.background = '#EFF6FF';
+      msgEl.style.border = '1px solid #BFDBFE';
+      msgEl.style.color = '#1D4ED8';
+      msgEl.textContent = 'Connecting to backend...';
+    }
+
+    try {
+      const resp = await fetch('/api/runner/auth_ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base_url: baseUrl, username, password, token: token || undefined }),
+      });
+      const data = await resp.json();
+      if (data.status === 'success') {
+        if (msgEl) {
+          msgEl.style.background = '#F0FDF4';
+          msgEl.style.border = '1px solid #BBF7D0';
+          msgEl.style.color = '#166534';
+          msgEl.textContent = `✅ Connected to ${data.instance_slug} (v${data.backend_version || '1.0'}) as '${data.username}' in ${data.latency_ms}ms!`;
+        }
+        checkAuthStatus(data.instance_slug);
+      } else {
+        if (msgEl) {
+          msgEl.style.background = '#FEF2F2';
+          msgEl.style.border = '1px solid #FECACA';
+          msgEl.style.color = '#991B1B';
+          msgEl.textContent = `❌ ${data.message || 'Authentication failed.'}`;
+        }
+      }
+    } catch (e) {
+      if (msgEl) {
+        msgEl.style.background = '#FEF2F2';
+        msgEl.style.border = '1px solid #FECACA';
+        msgEl.style.color = '#991B1B';
+        msgEl.textContent = `❌ Network error: ${e.message || e}`;
+      }
+    } finally {
+      if (btn) { btn.textContent = '🔌 Test Connection'; btn.disabled = false; }
+    }
+  }
+
+  async function saveCredentialsAndReload() {
+    const baseUrl = (byId('ir-auth-base-url') || {}).value || '';
+    const username = (byId('ir-auth-username') || {}).value || '';
+    const password = (byId('ir-auth-password') || {}).value || '';
+    const token = (byId('ir-auth-token') || {}).value || '';
+    const msgEl = byId('ir-auth-status-msg');
+    const btn = byId('btn-ir-auth-save');
+
+    if (!baseUrl) return;
+    if (btn) { btn.textContent = '⏳ Saving...'; btn.disabled = true; }
+
+    try {
+      const resp = await fetch('/api/runner/auth_ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base_url: baseUrl, username, password, token: token || undefined }),
+      });
+      const data = await resp.json();
+      if (data.status === 'success') {
+        try {
+          localStorage.setItem(`ir_creds_${baseUrl}`, JSON.stringify({ username, token: data.token || token }));
+        } catch (e) {}
+
+        const credMsg = {
+          type: 'IR_CREDENTIALS_SYNC',
+          baseUrl,
+          username,
+          password,
+          token: data.token || token,
+        };
+        const studioFrame = byId('iframe-ir-studio');
+        if (studioFrame && studioFrame.contentWindow) {
+          studioFrame.contentWindow.postMessage(credMsg, '*');
+        }
+        const mobileFrame = byId('iframe-shelf-mobile');
+        if (mobileFrame && mobileFrame.contentWindow) {
+          mobileFrame.contentWindow.postMessage(credMsg, '*');
+        }
+
+        hideAuthAlertBanner();
+        checkAuthStatus(data.instance_slug);
+        closeCredentialsModal();
+
+        loadCurrentInputs();
+      } else {
+        if (msgEl) {
+          msgEl.style.display = 'block';
+          msgEl.style.background = '#FEF2F2';
+          msgEl.style.border = '1px solid #FECACA';
+          msgEl.style.color = '#991B1B';
+          msgEl.textContent = `❌ Failed to authenticate: ${data.message || 'Please check credentials'}`;
+        }
+      }
+    } catch (e) {
+      if (msgEl) {
+        msgEl.style.display = 'block';
+        msgEl.style.background = '#FEF2F2';
+        msgEl.style.border = '1px solid #FECACA';
+        msgEl.style.color = '#991B1B';
+        msgEl.textContent = `❌ Network error: ${e.message || e}`;
+      }
+    } finally {
+      if (btn) { btn.textContent = '💾 Save & Connect'; btn.disabled = false; }
+    }
+  }
 
   function getSelectedInstance() {
     const picker = byId('ir-instance-picker');
@@ -70,6 +303,7 @@
       input.value = tid;
     }
 
+    checkAuthStatus(inst);
     loadTaskCatalog(inst);
     loadTask(tid, inst);
   }
@@ -248,10 +482,17 @@
     const statusBadge = byId('ir-header-status-pill');
     if (statusBadge) statusBadge.textContent = targetId === 'latest' ? `Fetching Latest (${inst.toUpperCase()})…` : `Loading Task #${targetId} (${inst.toUpperCase()})…`;
 
+    checkAuthStatus(inst);
+
     try {
       const resp = await fetch(`/api/runner/task_flow?task_id=${encodeURIComponent(targetId)}&instance=${encodeURIComponent(inst)}`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
+      if (data.status === 'error' && (data.error_code === 'AUTH_REQUIRED' || (data.message && data.message.includes('Authentication')))) {
+        showAuthAlertBanner(inst, data.message);
+      } else {
+        hideAuthAlertBanner();
+      }
       currentFlowData = data;
       if (input && data.metadata && data.metadata.task_id) {
         input.value = data.metadata.task_id;
@@ -266,6 +507,9 @@
     } catch (err) {
       console.error('Failed to load task flow:', err);
       if (statusBadge) statusBadge.textContent = 'Ready';
+      if (String(err).includes('401') || String(err).includes('Authentication')) {
+        showAuthAlertBanner(inst, `Authentication required for ${inst.toUpperCase()}. Please provide Username & Password or Auth Token.`);
+      }
     }
   }
 
@@ -292,7 +536,8 @@
         studioFrame.contentWindow.postMessage({
           type: 'IR_STUDIO_SYNC_TASK',
           taskId: String(taskId),
-          instance: inst
+          instance: inst,
+          isSilent: true
         }, '*');
       } catch (e) {
         console.warn('Could not postMessage to studioFrame', e);
@@ -692,6 +937,12 @@
     switchSubView,
     openItemDrawer,
     syncEmbeddedTabs,
+    openCredentialsModal,
+    closeCredentialsModal,
+    onModalInstanceSelect,
+    testCredentialsConnection,
+    saveCredentialsAndReload,
+    checkAuthStatus,
   };
 
   if (document.readyState === 'loading') {

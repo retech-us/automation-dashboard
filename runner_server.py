@@ -2612,12 +2612,28 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 except Exception as err:
                     print(f"[task_flow] Error finding latest task: {err}")
             if not task_id:
-                task_id = 8788767 if "harr" in instance.lower() else 42288818
+                inst_l = instance.lower()
+                if "krcs" in inst_l or "krog" in inst_l:
+                    task_id = 42484849
+                elif "albt" in inst_l:
+                    task_id = 60535562
+                elif "sams" in inst_l:
+                    task_id = 27277459
+                else:
+                    task_id = 8648127
         else:
             try:
                 task_id = int(task_id_raw)
             except ValueError:
-                task_id = 8788767 if "harr" in instance.lower() else 42288818
+                inst_l = instance.lower()
+                if "krcs" in inst_l or "krog" in inst_l:
+                    task_id = 42484849
+                elif "albt" in inst_l:
+                    task_id = 60535562
+                elif "sams" in inst_l:
+                    task_id = 27277459
+                else:
+                    task_id = 8648127
 
         # Check memory cache
         cache_key = (instance, task_id)
@@ -2762,6 +2778,21 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             self._send_json(self._handle_ir_history(
                 urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             ))
+            return
+
+        elif self.path.startswith("/api/runner/auth_status"):
+            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            inst = (qs.get("instance") or qs.get("base_url") or ["harr"])[0]
+            base_url = normalize_backend_url(inst)
+            token = INSTANCE_TOKENS.get(base_url)
+            slug = base_url.replace("https://", "").replace("http://", "").split(".")[0]
+            self._send_json({
+                "status": "success",
+                "base_url": base_url,
+                "instance_slug": slug,
+                "has_saved_token": bool(token),
+                "token_preview": f"{token[:6]}...{token[-4:]}" if token and len(token) > 10 else None
+            })
             return
 
         elif self.path.startswith("/api/runner/task_flow"):
@@ -3620,13 +3651,17 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         override_token = payload.get("token")
         
         if not override_token and (not username or not password):
-            return {
-                "status": "error",
-                "connected": False,
-                "latency_ms": 0,
-                "base_url": base_url,
-                "message": "Username and Password are required to authenticate.",
-            }
+            if base_url in INSTANCE_TOKENS:
+                override_token = INSTANCE_TOKENS[base_url]
+            else:
+                return {
+                    "status": "error",
+                    "connected": False,
+                    "latency_ms": 0,
+                    "base_url": base_url,
+                    "has_saved_token": False,
+                    "message": "Username and Password are required to authenticate.",
+                }
         
         start_t = time.time()
         try:
@@ -3651,6 +3686,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     "backend_version": backend_ver,
                     "username": found_user,
                     "token": token,
+                    "has_saved_token": True,
                     "message": f"Connected to {instance_slug} (v{backend_ver}) as {found_user} ({dur}ms)",
                 }
 
@@ -3993,6 +4029,8 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         if not token and not cached_file.exists():
             return {
                 "status": "error",
+                "error_code": "AUTH_REQUIRED",
+                "base_url": base_url,
                 "message": f"Authentication required for {base_url}. Please provide Username & Password or Auth Token."
             }
 
