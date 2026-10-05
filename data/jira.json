@@ -1,14 +1,14 @@
 {
   "status": "live",
-  "lastUpdated": "2026-10-05T14:06:57.909645+00:00",
+  "lastUpdated": "2026-10-05T14:32:40.578558+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 196,
+    "openDefects": 197,
     "blockers": 129,
-    "inProgress": 357,
+    "inProgress": 356,
     "inQa": 68,
     "resolvedThisWeek": 52,
     "resolvedTotal": 379
@@ -21,13 +21,13 @@
     "Lowest": 0
   },
   "byComponent": {
-    "ANDR": 263,
-    "IOS": 262,
-    "General": 184,
+    "IOS": 263,
     "BE REBM": 172,
+    "ANDR": 264,
+    "General": 183,
     "DE": 14,
     "BE CORE": 21,
-    "FE REBM": 4,
+    "FE REBM": 3,
     "HAWKEYE": 19,
     "FE Hawkeye": 17,
     "PARENT-WORK-ITEM": 28,
@@ -41,16 +41,16 @@
     "CVAT": 2
   },
   "byStatus": {
+    "Code Review": 19,
+    "To  Do": 144,
     "Dev Complete": 12,
-    "To  Do": 143,
-    "Code Review": 18,
     "In Progress": 34,
     "QA": 68,
     "Staging": 2,
     "Waiting for clarification": 53,
     "Invalid": 57,
     "Done": 322,
-    "UAT": 235,
+    "UAT": 233,
     "PRODUCTION READY": 56
   },
   "filterOptions": {
@@ -220,6 +220,135 @@
   },
   "issues": [
     {
+      "key": "REB3-20881",
+      "summary": "[iOS] Fix IR Set Bay batch navigation, empty bay fallback, and completion",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20744 - [iOS][IR][SINGLE USER] Optimize Set Aside and Fix in Bay Logic for Same-Bay Wandering Items",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Nitish Kumar",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
+      "tester": "Nitish Kumar",
+      "reporter": "Nitish Kumar",
+      "created": "2026-10-05T06:53:17.686-0700",
+      "updated": "2026-10-05T07:30:53.267-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "iOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20881"
+    },
+    {
+      "key": "REB3-20883",
+      "summary": "[iOS] Hide option for user to choose/assign Multi-User workflow",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "vikas yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
+      "tester": "Vishal Kohli",
+      "reporter": "Vishal Kohli",
+      "created": "2026-10-05T07:11:34.127-0700",
+      "updated": "2026-10-05T07:29:58.786-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20883"
+    },
+    {
+      "key": "REB3-20884",
+      "summary": "[BE] [IR] Make Multi-user Intelligent workflow configurable ",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Vishal Kohli",
+      "reporter": "Vishal Kohli",
+      "created": "2026-10-05T07:21:32.649-0700",
+      "updated": "2026-10-05T07:29:58.741-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20884"
+    },
+    {
+      "key": "REB3-20877",
+      "summary": "[iOS] Fix misplaced Realogram bounding boxes and tooltips on iPhone",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20744 - [iOS][IR][SINGLE USER] Optimize Set Aside and Fix in Bay Logic for Same-Bay Wandering Items",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Pratiksha Raut",
+      "reporter": "Pratiksha Raut",
+      "created": "2026-10-05T04:13:01.631-0700",
+      "updated": "2026-10-05T07:22:48.964-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "iOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20877"
+    },
+    {
+      "key": "REB3-20882",
+      "summary": "[ANDR] Hide option for user to choose/assign Multi-User workflow",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "ANDR",
+      "assignee": "Gaurav Tripathi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
+      "tester": "Vishal Kohli",
+      "reporter": "Vishal Kohli",
+      "created": "2026-10-05T07:10:04.879-0700",
+      "updated": "2026-10-05T07:12:56.264-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20882"
+    },
+    {
       "key": "REB3-20872",
       "summary": "[ANDR] Pick From action shows incorrect Set Aside location",
       "project": "Rebotics 3",
@@ -243,60 +372,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20872"
-    },
-    {
-      "key": "REB3-20881",
-      "summary": "[iOS] Fix IR Set Bay batch navigation, empty bay fallback, and completion",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20744 - [iOS][IR][SINGLE USER] Optimize Set Aside and Fix in Bay Logic for Same-Bay Wandering Items",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Nitish Kumar",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
-      "tester": "Nitish Kumar",
-      "reporter": "Nitish Kumar",
-      "created": "2026-10-05T06:53:17.686-0700",
-      "updated": "2026-10-05T06:53:54.584-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "iOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20881"
-    },
-    {
-      "key": "REB3-20877",
-      "summary": "[iOS] Fix misplaced Realogram bounding boxes and tooltips on iPhone",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20744 - [iOS][IR][SINGLE USER] Optimize Set Aside and Fix in Bay Logic for Same-Bay Wandering Items",
-      "status": "Code Review",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Pratiksha Raut",
-      "reporter": "Pratiksha Raut",
-      "created": "2026-10-05T04:13:01.631-0700",
-      "updated": "2026-10-05T06:53:18.995-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "iOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20877"
     },
     {
       "key": "REB3-20880",
@@ -6193,7 +6268,7 @@
       "created": "2026-09-11T00:44:50.686-0700",
       "updated": "2026-09-30T07:30:03.937-0700",
       "ageDays": 24,
-      "staleDays": 4,
+      "staleDays": 5,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20631"
     },
@@ -6218,7 +6293,7 @@
       "created": "2026-09-11T00:44:49.795-0700",
       "updated": "2026-09-30T07:30:00.444-0700",
       "ageDays": 24,
-      "staleDays": 4,
+      "staleDays": 5,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20630"
     },
@@ -6243,7 +6318,7 @@
       "created": "2026-09-11T00:44:48.870-0700",
       "updated": "2026-09-30T07:29:57.163-0700",
       "ageDays": 24,
-      "staleDays": 4,
+      "staleDays": 5,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20629"
     },
@@ -6268,7 +6343,7 @@
       "created": "2026-09-24T03:43:51.709-0700",
       "updated": "2026-09-30T07:28:17.460-0700",
       "ageDays": 11,
-      "staleDays": 4,
+      "staleDays": 5,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20731"
     },
@@ -6964,7 +7039,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-09-26T07:22:30.991-0700",
       "updated": "2026-09-29T03:04:08.878-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 6,
       "labels": [
         "ALBT",
@@ -7289,7 +7364,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-09-26T07:25:19.868-0700",
       "updated": "2026-09-28T02:38:02.447-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 7,
       "labels": [
         "ALBT",
@@ -7498,7 +7573,7 @@
       "created": "2026-09-25T11:04:26.177-0700",
       "updated": "2026-09-27T07:30:59.732-0700",
       "ageDays": 9,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [
         "ANDR"
       ],
@@ -9960,7 +10035,7 @@
       "created": "2026-09-21T01:23:30.423-0700",
       "updated": "2026-09-21T07:11:33.074-0700",
       "ageDays": 14,
-      "staleDays": 13,
+      "staleDays": 14,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -10181,7 +10256,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-06-30T07:14:27.708-0700",
       "updated": "2026-09-20T23:53:41.072-0700",
-      "ageDays": 96,
+      "ageDays": 97,
       "staleDays": 14,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19951"
@@ -10882,7 +10957,7 @@
       "created": "2026-08-05T05:30:19.302-0700",
       "updated": "2026-09-18T07:19:30.526-0700",
       "ageDays": 61,
-      "staleDays": 16,
+      "staleDays": 17,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -11413,7 +11488,7 @@
       "reporter": "vikas yadav",
       "created": "2026-08-01T07:25:23.404-0700",
       "updated": "2026-09-17T08:32:20.957-0700",
-      "ageDays": 64,
+      "ageDays": 65,
       "staleDays": 17,
       "labels": [
         "iOS"
@@ -11575,7 +11650,7 @@
       "created": "2026-09-11T04:16:27.714-0700",
       "updated": "2026-09-16T07:19:27.249-0700",
       "ageDays": 24,
-      "staleDays": 18,
+      "staleDays": 19,
       "labels": [
         "AD-HOC",
         "PRGM"
@@ -12968,8 +13043,8 @@
       "reporter": "Akanksha Jangir",
       "created": "2026-09-14T07:21:30.105-0700",
       "updated": "2026-09-14T07:21:30.838-0700",
-      "ageDays": 20,
-      "staleDays": 20,
+      "ageDays": 21,
+      "staleDays": 21,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20659"
     },
@@ -14887,7 +14962,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-06-30T07:09:57.932-0700",
       "updated": "2026-09-08T00:15:01.699-0700",
-      "ageDays": 96,
+      "ageDays": 97,
       "staleDays": 27,
       "labels": [
         "BE",
@@ -16939,7 +17014,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-07-01T07:19:56.030-0700",
       "updated": "2026-09-07T23:51:55.167-0700",
-      "ageDays": 95,
+      "ageDays": 96,
       "staleDays": 27,
       "labels": [
         "IOS"
@@ -17952,7 +18027,7 @@
       "reporter": "Kyveli Tsioli",
       "created": "2026-08-28T07:08:19.365-0700",
       "updated": "2026-09-04T02:11:53.451-0700",
-      "ageDays": 37,
+      "ageDays": 38,
       "staleDays": 31,
       "labels": [
         "AD-HOC",
@@ -18516,7 +18591,7 @@
       "created": "2026-08-11T00:11:15.219-0700",
       "updated": "2026-09-02T07:32:18.237-0700",
       "ageDays": 55,
-      "staleDays": 32,
+      "staleDays": 33,
       "labels": [
         "IOS",
         "PRGM"
@@ -18544,7 +18619,7 @@
       "created": "2026-08-13T00:54:29.801-0700",
       "updated": "2026-09-02T07:31:13.555-0700",
       "ageDays": 53,
-      "staleDays": 32,
+      "staleDays": 33,
       "labels": [
         "IOS",
         "PRGM"
@@ -24686,7 +24761,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-05-15T07:14:04.759-0700",
       "updated": "2026-08-21T04:42:03.492-0700",
-      "ageDays": 142,
+      "ageDays": 143,
       "staleDays": 45,
       "labels": [
         "Customer"
@@ -25793,7 +25868,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-08-10T07:16:00.596-0700",
       "updated": "2026-08-21T04:29:12.803-0700",
-      "ageDays": 55,
+      "ageDays": 56,
       "staleDays": 45,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20318"
@@ -27141,91 +27216,6 @@
         "SHIELD"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-19837"
-    },
-    {
-      "key": "REB3-18782",
-      "summary": "SONA - check stack/pallet post-processing logic.",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "REB3: BE&FE backlog",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Juan Li",
-      "reporter": "Juan Li",
-      "created": "2026-01-20T17:46:15.899-0800",
-      "updated": "2026-08-21T04:28:51.483-0700",
-      "ageDays": 257,
-      "staleDays": 45,
-      "labels": [
-        "AD-HOC",
-        "PILOT"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-18782"
-    },
-    {
-      "key": "REB3-19020",
-      "summary": "[FE REBM][Regression] Edit POG: POG displays incorrect shelf position before saving",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "UAT",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "FE REBM",
-      "assignee": "Ajay Katke",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AK-1.png",
-      "tester": "Ulan Sarymsakov",
-      "reporter": "Ulan Sarymsakov",
-      "created": "2026-02-16T23:50:41.729-0800",
-      "updated": "2026-08-21T04:28:51.221-0700",
-      "ageDays": 230,
-      "staleDays": 45,
-      "labels": [
-        "Customer",
-        "REGRESSION"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19020"
-    },
-    {
-      "key": "REB3-19589",
-      "summary": "AttributeError: 'list' object has no attribute 'split'",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "UAT",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Sourabh Yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/1992b54c65168d62b06676d8fba9defa?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSY-1.png",
-      "tester": "Dev Singh Rathore",
-      "reporter": "Dev Singh Rathore",
-      "created": "2026-05-11T03:28:59.856-0700",
-      "updated": "2026-08-21T04:28:51.183-0700",
-      "ageDays": 147,
-      "staleDays": 45,
-      "labels": [
-        "Backend",
-        "Customer",
-        "REBM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19589"
     }
   ]
 }
