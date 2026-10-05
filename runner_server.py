@@ -2210,10 +2210,14 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
         active_key = "krcs"
     elif "sams" in clean_active:
         active_key = "stgsams"
+    elif "schn" in clean_active:
+        active_key = "schn"
+    elif "wake" in clean_active:
+        active_key = "wake"
     elif clean_active == "all":
         active_key = "all"
     else:
-        active_key = "harr"
+        active_key = clean_active
 
     if ir_index_path.exists():
         try:
@@ -2226,7 +2230,7 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
                 filtered_tasks = [t for t in tasks if t.get("instance") == active_key]
                 if filtered_tasks:
                     return sorted(filtered_tasks, key=lambda x: -x.get("actions_count", 0))
-                return sorted(tasks, key=lambda x: (0 if x.get("instance") == active_key else 1, -x.get("actions_count", 0)))
+                return []
         except Exception:
             pass
 
