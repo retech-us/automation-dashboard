@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-10-06T13:19:31.168044+00:00",
+  "lastUpdated": "2026-10-06T13:37:48.229315+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
@@ -8,8 +8,8 @@
     "totalDefects": 1000,
     "openDefects": 191,
     "blockers": 130,
-    "inProgress": 355,
-    "inQa": 74,
+    "inProgress": 357,
+    "inQa": 72,
     "resolvedThisWeek": 50,
     "resolvedTotal": 380
   },
@@ -21,15 +21,15 @@
     "Lowest": 0
   },
   "byComponent": {
-    "BE REBM": 172,
-    "ANDR": 264,
-    "General": 183,
     "IOS": 265,
+    "ANDR": 264,
+    "BE REBM": 172,
+    "DE": 15,
+    "General": 183,
     "HAWKEYE": 18,
     "PARENT-WORK-ITEM": 27,
     "FE REBM": 3,
     "BE CORE": 21,
-    "DE": 15,
     "FE Hawkeye": 16,
     "OPTIMAL CAPTURE": 1,
     "REPORTING": 1,
@@ -41,10 +41,10 @@
     "CVAT": 2
   },
   "byStatus": {
-    "Waiting for clarification": 56,
-    "UAT": 236,
-    "QA": 74,
+    "UAT": 238,
     "To  Do": 135,
+    "Waiting for clarification": 56,
+    "QA": 72,
     "Dev Complete": 13,
     "In Progress": 29,
     "Code Review": 18,
@@ -219,8 +219,89 @@
   },
   "issues": [
     {
+      "key": "REB3-20877",
+      "summary": "[iOS] Fix misplaced Realogram bounding boxes and tooltips on iPhone",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20744 - [iOS][IR][SINGLE USER] Optimize Set Aside and Fix in Bay Logic for Same-Bay Wandering Items",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Pratiksha Raut",
+      "reporter": "Pratiksha Raut",
+      "created": "2026-10-05T04:13:01.631-0700",
+      "updated": "2026-10-06T06:37:08.954-0700",
+      "ageDays": 1,
+      "staleDays": 0,
+      "labels": [
+        "iOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20877"
+    },
+    {
+      "key": "REB3-20872",
+      "summary": "[ANDR] Pick From action shows incorrect Set Aside location",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "ANDR",
+      "assignee": "Gaurav Tripathi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-10-02T03:26:50.054-0700",
+      "updated": "2026-10-06T06:30:59.060-0700",
+      "ageDays": 4,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20872"
+    },
+    {
+      "key": "REB3-20653",
+      "summary": "[MJHD] Store 1391 after photo task not showing today",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "High",
+      "component": "BE REBM",
+      "assignee": "Artem Kanarev",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
+      "tester": "Aakash Oswal",
+      "reporter": "Aakash Oswal",
+      "created": "2026-09-11T09:21:32.889-0700",
+      "updated": "2026-10-06T06:22:25.440-0700",
+      "ageDays": 24,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "Customer",
+        "MJHD"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20653"
+    },
+    {
       "key": "REB3-20892",
-      "summary": "Survey Task with After Photo task type is showing as Incomplete in FE but Not Available in App, also getting deleted from BE task occurences",
+      "summary": "[MJHD] Survey Task with After Photo task type is showing as Incomplete in FE but Not Available in App, also getting deleted from BE task occurences",
       "project": "Rebotics 3",
       "projectKey": "REB3",
       "fixVersion": "SI 2026.4",
@@ -237,7 +318,7 @@
       "tester": "Ayushi Maheshwari",
       "reporter": "Ayushi Maheshwari",
       "created": "2026-10-06T04:24:20.563-0700",
-      "updated": "2026-10-06T06:18:17.140-0700",
+      "updated": "2026-10-06T06:22:25.361-0700",
       "ageDays": 0,
       "staleDays": 0,
       "labels": [
@@ -246,6 +327,31 @@
         "MJHD"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20892"
+    },
+    {
+      "key": "REB3-20886",
+      "summary": "[KRCS] Shelf Management logic to manage partial fixtures",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "Si 2026.03.X HF - Parking Lot",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Highest",
+      "component": "DE",
+      "assignee": "Sarthak Jagdaley",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/ce94cc3527ade138a273bf54d7643255?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSJ-6.png",
+      "tester": "Akanksha Jangir",
+      "reporter": "Akanksha Jangir",
+      "created": "2026-10-05T22:41:48.148-0700",
+      "updated": "2026-10-06T06:20:17.545-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20886"
     },
     {
       "key": "REB3-20882",
@@ -296,35 +402,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20890"
-    },
-    {
-      "key": "REB3-20653",
-      "summary": "[MJHD] Store 1391 after photo task not showing today",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "High",
-      "component": "BE REBM",
-      "assignee": "Artem Kanarev",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
-      "tester": "Aakash Oswal",
-      "reporter": "Aakash Oswal",
-      "created": "2026-09-11T09:21:32.889-0700",
-      "updated": "2026-10-06T05:39:12.561-0700",
-      "ageDays": 24,
-      "staleDays": 0,
-      "labels": [
-        "AD-HOC",
-        "Customer",
-        "MJHD"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20653"
     },
     {
       "key": "REB3-20686",
@@ -1072,7 +1149,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-10-05T06:20:15.522-0700",
       "updated": "2026-10-06T00:17:25.113-0700",
-      "ageDays": 0,
+      "ageDays": 1,
       "staleDays": 0,
       "labels": [
         "ALBT",
@@ -1160,31 +1237,6 @@
         "SHIELD"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20369"
-    },
-    {
-      "key": "REB3-20886",
-      "summary": "KRCS Shelf Management logic to manage partial fixtures",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "Si 2026.03.X HF - Parking Lot",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Highest",
-      "component": "DE",
-      "assignee": "Sarthak Jagdaley",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/ce94cc3527ade138a273bf54d7643255?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSJ-6.png",
-      "tester": "Akanksha Jangir",
-      "reporter": "Akanksha Jangir",
-      "created": "2026-10-05T22:41:48.148-0700",
-      "updated": "2026-10-05T23:32:58.600-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20886"
     },
     {
       "key": "REB3-20706",
@@ -1316,33 +1368,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20879"
     },
     {
-      "key": "REB3-20877",
-      "summary": "[iOS] Fix misplaced Realogram bounding boxes and tooltips on iPhone",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20744 - [iOS][IR][SINGLE USER] Optimize Set Aside and Fix in Bay Logic for Same-Bay Wandering Items",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Pratiksha Raut",
-      "reporter": "Pratiksha Raut",
-      "created": "2026-10-05T04:13:01.631-0700",
-      "updated": "2026-10-05T10:49:19.854-0700",
-      "ageDays": 1,
-      "staleDays": 0,
-      "labels": [
-        "iOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20877"
-    },
-    {
       "key": "REB3-20883",
       "summary": "[iOS] Hide option for user to choose/assign Multi-User workflow",
       "project": "Rebotics 3",
@@ -1366,31 +1391,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20883"
-    },
-    {
-      "key": "REB3-20872",
-      "summary": "[ANDR] Pick From action shows incorrect Set Aside location",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "ANDR",
-      "assignee": "Gaurav Tripathi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-10-02T03:26:50.054-0700",
-      "updated": "2026-10-05T09:35:56.799-0700",
-      "ageDays": 4,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20872"
     },
     {
       "key": "REB3-20837",
@@ -1519,7 +1519,7 @@
       "created": "2026-10-05T06:07:01.060-0700",
       "updated": "2026-10-05T06:22:54.155-0700",
       "ageDays": 1,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20878"
     },
@@ -3637,7 +3637,7 @@
       "created": "2026-09-30T06:39:33.560-0700",
       "updated": "2026-10-01T06:26:10.833-0700",
       "ageDays": 5,
-      "staleDays": 4,
+      "staleDays": 5,
       "labels": [
         "ANDR"
       ],
@@ -3664,7 +3664,7 @@
       "created": "2026-09-25T01:10:54.744-0700",
       "updated": "2026-10-01T06:25:12.933-0700",
       "ageDays": 11,
-      "staleDays": 4,
+      "staleDays": 5,
       "labels": [
         "ALBT",
         "ANDR"
@@ -3692,7 +3692,7 @@
       "created": "2026-09-25T01:10:52.655-0700",
       "updated": "2026-10-01T06:24:09.900-0700",
       "ageDays": 11,
-      "staleDays": 4,
+      "staleDays": 5,
       "labels": [
         "ALBT",
         "ANDR"
@@ -3720,7 +3720,7 @@
       "created": "2026-09-25T01:10:47.892-0700",
       "updated": "2026-10-01T06:23:06.029-0700",
       "ageDays": 11,
-      "staleDays": 4,
+      "staleDays": 5,
       "labels": [
         "ALBT",
         "ANDR"
@@ -3748,7 +3748,7 @@
       "created": "2026-09-25T01:10:44.456-0700",
       "updated": "2026-10-01T06:22:04.149-0700",
       "ageDays": 11,
-      "staleDays": 4,
+      "staleDays": 5,
       "labels": [
         "ALBT",
         "ANDR"
@@ -3776,7 +3776,7 @@
       "created": "2026-09-30T11:01:14.362-0700",
       "updated": "2026-10-01T06:20:04.004-0700",
       "ageDays": 5,
-      "staleDays": 4,
+      "staleDays": 5,
       "labels": [
         "ANDR"
       ],
@@ -5293,7 +5293,7 @@
       "reporter": "Swati Goel",
       "created": "2026-09-26T06:29:22.824-0700",
       "updated": "2026-09-30T07:49:38.829-0700",
-      "ageDays": 9,
+      "ageDays": 10,
       "staleDays": 5,
       "labels": [
         "IOS"
@@ -6955,7 +6955,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-28T06:26:21.406-0700",
       "updated": "2026-09-30T02:21:00.326-0700",
-      "ageDays": 7,
+      "ageDays": 8,
       "staleDays": 6,
       "labels": [
         "IOS",
@@ -7122,7 +7122,7 @@
       "created": "2026-09-28T04:59:00.486-0700",
       "updated": "2026-09-29T06:31:48.761-0700",
       "ageDays": 8,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [
         "Backend",
         "REBM"
@@ -7576,7 +7576,7 @@
       "created": "2026-09-24T04:26:32.806-0700",
       "updated": "2026-09-28T06:37:25.578-0700",
       "ageDays": 12,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20732"
     },
@@ -7601,7 +7601,7 @@
       "created": "2026-08-05T08:16:17.577-0700",
       "updated": "2026-09-28T06:26:22.650-0700",
       "ageDays": 61,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [
         "IOS",
         "PRGM"
@@ -7629,7 +7629,7 @@
       "created": "2026-07-08T01:34:37.680-0700",
       "updated": "2026-09-28T06:25:51.041-0700",
       "ageDays": 90,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20083"
     },
@@ -11065,7 +11065,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-21T06:30:24.333-0700",
       "updated": "2026-09-20T21:57:49.658-0700",
-      "ageDays": 45,
+      "ageDays": 46,
       "staleDays": 15,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20446"
@@ -17974,7 +17974,7 @@
       "created": "2026-07-02T03:53:25.324-0700",
       "updated": "2026-09-07T06:32:57.948-0700",
       "ageDays": 96,
-      "staleDays": 28,
+      "staleDays": 29,
       "labels": [
         "Backend",
         "SHIELD"
@@ -19969,7 +19969,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-10T06:21:43.634-0700",
       "updated": "2026-09-01T00:10:39.343-0700",
-      "ageDays": 56,
+      "ageDays": 57,
       "staleDays": 35,
       "labels": [
         "ALBT",
@@ -23101,7 +23101,7 @@
       "created": "2026-05-18T10:19:43.709-0700",
       "updated": "2026-08-21T06:19:57.933-0700",
       "ageDays": 140,
-      "staleDays": 45,
+      "staleDays": 46,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19659"
     },
@@ -24357,7 +24357,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-06-18T06:37:14.049-0700",
       "updated": "2026-08-21T04:42:06.483-0700",
-      "ageDays": 109,
+      "ageDays": 110,
       "staleDays": 46,
       "labels": [
         "ANDR",
@@ -24578,7 +24578,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-04-14T06:24:59.885-0700",
       "updated": "2026-08-21T04:42:05.163-0700",
-      "ageDays": 174,
+      "ageDays": 175,
       "staleDays": 46,
       "labels": [
         "Customer"
@@ -25164,7 +25164,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T06:36:15.886-0700",
       "updated": "2026-08-21T04:42:01.863-0700",
-      "ageDays": 126,
+      "ageDays": 127,
       "staleDays": 46,
       "labels": [
         "ALBT",
@@ -26708,7 +26708,7 @@
       "reporter": "Vipin Nair",
       "created": "2026-02-06T05:26:45.615-0800",
       "updated": "2026-08-21T04:28:59.322-0700",
-      "ageDays": 241,
+      "ageDays": 242,
       "staleDays": 46,
       "labels": [
         "SHIELD"
