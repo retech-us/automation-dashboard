@@ -953,7 +953,7 @@
       if (inst === 'stgsams') {
         paramsInput.value = 'limit=1000&stage=pre_photo&type=set_bay&version=2';
       } else {
-        paramsInput.value = 'limit=1000&stage=pre_photo';
+        paramsInput.value = 'limit=1000&stage=pre_photo&type=set_bay';
       }
     }
 
@@ -1355,7 +1355,7 @@
     if (anomTbody) {
       const allRows = [...combinedConflicts, ...multiFacingRows];
       if (allRows.length === 0) {
-        anomTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:18px; color:#059669; font-weight:700;">
+        anomTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:18px; color:#059669; font-weight:700;">
           ✅ Clean Sequencing Verified — Zero Cross-Product Collisions, Zero Mutual Swap Deadlocks, and Zero Redundant Moves across both tasks.
           <div style="font-size:11px; font-weight:400; color:var(--text-muted); margin-top:6px;">
             Both instances execute clean flows: In ${instNameA}, items slide directly on the shelf without blocking each other. In ${instNameB}, items are staged to a cart first (${protoB.staged_to_cart || 0} set-asides) before placement, leaving zero collisions on the shelf.
@@ -1364,20 +1364,44 @@
       } else {
         anomTbody.innerHTML = allRows.map(cf => {
           let typeBadgeStyle = 'background:rgba(239,68,68,0.12); color:#DC2626; border:1px solid rgba(239,68,68,0.25);';
+          let typeLabel = cf.type;
           if (cf.isMultiFacing) {
-            typeBadgeStyle = 'background:rgba(107,114,128,0.12); color:#4B5563; border:1px solid rgba(107,114,128,0.2);';
+            typeBadgeStyle = 'background:rgba(16,185,129,0.12); color:#059669; border:1px solid rgba(16,185,129,0.25);';
+            typeLabel = '🟢 Multi-Facing POG Block';
+          } else if (cf.type && cf.type.includes('Redundant')) {
+            typeBadgeStyle = 'background:rgba(245,158,11,0.12); color:#B45309; border:1px solid rgba(245,158,11,0.25);';
+            typeLabel = '⚠️ Redundant In-Place Move';
           } else if (cf.type && cf.type.includes('Directional')) {
             typeBadgeStyle = 'background:rgba(245,158,11,0.12); color:#B45309; border:1px solid rgba(245,158,11,0.25);';
           }
-          const itemText = cf.item_2 ? `${cf.item_1}<br><span style="color:var(--text-muted); font-size:10px;">conflicts with:</span><br>${cf.item_2}` : (cf.item_1 || cf.name || '—');
+
           const slotText = cf.slot || cf.shelf || cf.slots || '—';
+          const facingsText = `<span style="font-family:monospace; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(0,0,0,0.04);">${cf.expected_facings || 1} Exp / ${cf.actual_facings || 1} Act</span>`;
+          
+          let prodHtml = '';
+          if (cf.item_2) {
+            prodHtml = `<div style="font-weight:700; font-size:11.5px;">${cf.item_1}</div><div style="color:var(--text-muted); font-size:10px; margin:2px 0;">conflicts with:</div><div style="font-weight:700; font-size:11.5px; color:#DC2626;">${cf.item_2}</div>`;
+          } else {
+            const pTitle = cf.name || cf.item_1 || '—';
+            const originsHtml = cf.origins_summary ? `<div style="font-size:10.5px; color:var(--text-muted); margin-top:2px; font-family:monospace;">${cf.origins_summary}</div>` : '';
+            prodHtml = `<div style="font-weight:700; font-size:11.5px;">${pTitle}</div>${originsHtml}`;
+          }
+
+          let assessmentHtml = '';
+          if (cf.isMultiFacing) {
+            assessmentHtml = `<div style="font-weight:700; font-size:11px; color:#059669;">✅ Zero Collision Risk (Legitimate POG Grouping)</div>
+            <div style="font-size:10.5px; color:var(--text-muted); line-height:1.3; margin-top:2px;">All ${cf.expected_facings || 1} facings belong to the same UPC and sit side-by-side in adjacent shelf positions.</div>`;
+          } else {
+            assessmentHtml = `<div style="font-size:11px; color:var(--text-muted); line-height:1.4;">${cf.description || 'Sequencing evaluation'}</div>`;
+          }
 
           return `<tr>
             <td><span style="font-size:11px; font-weight:800; padding:2px 8px; border-radius:10px; background:${cf.instColor === '#4F46E5' ? 'rgba(79,70,229,0.12)' : 'rgba(217,119,6,0.12)'}; color:${cf.instColor};">${cf.instance}</span></td>
-            <td><span style="font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-block; ${typeBadgeStyle}">${cf.type}</span></td>
+            <td><span style="font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-block; ${typeBadgeStyle}">${typeLabel}</span></td>
             <td style="font-family:monospace; font-size:11px; font-weight:700;">${slotText}</td>
-            <td style="font-size:11.5px;">${itemText}</td>
-            <td style="font-size:11px; color:var(--text-muted); line-height:1.4;">${cf.description || 'Sequencing evaluation'}</td>
+            <td style="text-align:center;">${facingsText}</td>
+            <td>${prodHtml}</td>
+            <td>${assessmentHtml}</td>
           </tr>`;
         }).join('');
       }

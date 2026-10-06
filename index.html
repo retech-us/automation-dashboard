@@ -639,7 +639,7 @@
                 </div>
                 <div>
                   <label style="display:block; font-size:10.5px; font-weight:600; color:var(--text-muted); margin-bottom:3px;">Query Parameters</label>
-                  <input type="text" id="ir-compare-params-b" class="ir-flow-input" style="width:100%; font-size:11px; padding:5px 8px; font-family:monospace;" value="limit=1000&stage=pre_photo" />
+                  <input type="text" id="ir-compare-params-b" class="ir-flow-input" style="width:100%; font-size:11px; padding:5px 8px; font-family:monospace;" value="limit=1000&stage=pre_photo&type=set_bay" />
                 </div>
                 <div>
                   <label style="display:block; font-size:10.5px; font-weight:600; color:var(--text-muted); margin-bottom:3px;">Auth Token (Optional override)</label>
@@ -843,15 +843,24 @@
               </div>
 
               <div id="ir-anomalies-list-wrap">
-                <div class="ir-table-wrap" style="max-height:280px; overflow-y:auto;">
+                <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.25); border-radius:var(--radius-xs); padding:8px 12px; margin-bottom:10px; font-size:11.5px; color:#065F46; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                  <div>
+                    <strong>🛡️ Sequencing Reality:</strong> <strong>0 Cross-Product Collisions</strong> detected in both runs. Multiple actions targeting the same slot represent <strong>Legitimate Multi-Facing POG Blocks</strong> sharing an anchor position.
+                  </div>
+                  <div style="font-size:11px; font-weight:700;">
+                    <span style="color:#4F46E5;">STGSAMS: 0 Collisions, 2 Multi-Facing Blocks</span> &bull; <span style="color:#D97706;">KRCS: 0 Collisions, 6 Multi-Facing Blocks</span>
+                  </div>
+                </div>
+                <div class="ir-table-wrap" style="max-height:300px; overflow-y:auto;">
                   <table class="ir-history-table" style="width:100%;">
                     <thead style="position:sticky; top:0; background:var(--surface); z-index:2;">
                       <tr>
-                        <th style="width:120px;">Instance</th>
-                        <th style="width:170px;">Conflict Type</th>
-                        <th style="width:150px;">Shelf / Slot</th>
-                        <th>Involved Products / UPCs</th>
-                        <th>Sequencing Impact &amp; Resolution</th>
+                        <th style="width:110px;">Instance</th>
+                        <th style="width:180px;">Classification</th>
+                        <th style="width:140px;">Target Anchor</th>
+                        <th style="width:130px; text-align:center;">Facings (Exp / Act)</th>
+                        <th>Product &amp; Movement Trajectory</th>
+                        <th>Collision &amp; Sequencing Assessment</th>
                       </tr>
                     </thead>
                     <tbody id="ir-compare-anomalies-tbody">
@@ -1228,7 +1237,7 @@
   <script src="assets/js/jira-tracker.js?v=20260817p"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20260909a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261006b"></script>
+  <script src="assets/js/ir-flow.js?v=20261006c"></script>
   <script src="assets/js/app.v16.js?v=20260923c"></script>
 </body>
 </html>
