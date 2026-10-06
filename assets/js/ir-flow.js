@@ -1335,6 +1335,11 @@
       description: 'Item is already in target planogram position, but unnecessary move was queued.'
     }));
 
+    // Include multi-facing allocations as informative, non-conflict rows
+    const multiFacingRows = [];
+    (anomA.multi_facing || []).forEach(m => multiFacingRows.push({ ...m, instance: instNameA, instColor: '#4F46E5', isMultiFacing: true }));
+    (anomB.multi_facing || []).forEach(m => multiFacingRows.push({ ...m, instance: instNameB, instColor: '#D97706', isMultiFacing: true }));
+
     if (anomHeaderBadge) {
       if (combinedConflicts.length === 0) {
         anomHeaderBadge.textContent = '🟢 0 Conflicts (Clean Sequencing)';
@@ -1348,12 +1353,20 @@
     }
 
     if (anomTbody) {
-      if (combinedConflicts.length === 0) {
-        anomTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:18px; color:#059669; font-weight:700;">✅ Clean Sequencing Verified — Zero Slot Collisions, Zero Mutual Swap Deadlocks, and Zero Redundant Moves across both tasks.</td></tr>`;
+      const allRows = [...combinedConflicts, ...multiFacingRows];
+      if (allRows.length === 0) {
+        anomTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:18px; color:#059669; font-weight:700;">
+          ✅ Clean Sequencing Verified — Zero Cross-Product Collisions, Zero Mutual Swap Deadlocks, and Zero Redundant Moves across both tasks.
+          <div style="font-size:11px; font-weight:400; color:var(--text-muted); margin-top:6px;">
+            Both instances execute clean flows: In ${instNameA}, items slide directly on the shelf without blocking each other. In ${instNameB}, items are staged to a cart first (${protoB.staged_to_cart || 0} set-asides) before placement, leaving zero collisions on the shelf.
+          </div>
+        </td></tr>`;
       } else {
-        anomTbody.innerHTML = combinedConflicts.map(cf => {
+        anomTbody.innerHTML = allRows.map(cf => {
           let typeBadgeStyle = 'background:rgba(239,68,68,0.12); color:#DC2626; border:1px solid rgba(239,68,68,0.25);';
-          if (cf.type && cf.type.includes('Directional')) {
+          if (cf.isMultiFacing) {
+            typeBadgeStyle = 'background:rgba(107,114,128,0.12); color:#4B5563; border:1px solid rgba(107,114,128,0.2);';
+          } else if (cf.type && cf.type.includes('Directional')) {
             typeBadgeStyle = 'background:rgba(245,158,11,0.12); color:#B45309; border:1px solid rgba(245,158,11,0.25);';
           }
           const itemText = cf.item_2 ? `${cf.item_1}<br><span style="color:var(--text-muted); font-size:10px;">conflicts with:</span><br>${cf.item_2}` : (cf.item_1 || cf.name || '—');
@@ -1361,10 +1374,10 @@
 
           return `<tr>
             <td><span style="font-size:11px; font-weight:800; padding:2px 8px; border-radius:10px; background:${cf.instColor === '#4F46E5' ? 'rgba(79,70,229,0.12)' : 'rgba(217,119,6,0.12)'}; color:${cf.instColor};">${cf.instance}</span></td>
-            <td><span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-block; ${typeBadgeStyle}">${cf.type}</span></td>
+            <td><span style="font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-block; ${typeBadgeStyle}">${cf.type}</span></td>
             <td style="font-family:monospace; font-size:11px; font-weight:700;">${slotText}</td>
             <td style="font-size:11.5px;">${itemText}</td>
-            <td style="font-size:11px; color:var(--text-muted); line-height:1.4;">${cf.description || 'Sequencing conflict detected'}</td>
+            <td style="font-size:11px; color:var(--text-muted); line-height:1.4;">${cf.description || 'Sequencing evaluation'}</td>
           </tr>`;
         }).join('');
       }
