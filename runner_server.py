@@ -2926,25 +2926,38 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             result["unique_upcs_count"] = len(upc_set)
             result["execution_steps_count"] = len(execution_groups)
 
-            # Detect safety collision count and details
-            collision_details = []
+            # Detect true slot collisions vs same-UPC multi-facing allocations
+            true_collisions = []
+            multi_facing_allocations = []
             for gid, targets in slot_targets_by_group.items():
                 seen: Dict[Any, Tuple[str, str]] = {}
                 for tgt, upc, name in targets:
                     if tgt in seen:
                         prev_upc, prev_name = seen[tgt]
-                        collision_details.append({
-                            "type": "Target Slot Collision",
-                            "group_id": gid,
-                            "slot": f"Bay {tgt[0]}, Shelf {tgt[1]}:{tgt[2]}",
-                            "item_1": f"{prev_name} (UPC {prev_upc})",
-                            "item_2": f"{name} (UPC {upc})",
-                            "description": f"Multiple items targeted for identical slot Bay {tgt[0]}, Shelf {tgt[1]}:{tgt[2]} in step {gid}",
-                        })
+                        if prev_upc != upc:
+                            true_collisions.append({
+                                "type": "Cross-Product Slot Collision",
+                                "group_id": gid,
+                                "slot": f"Bay {tgt[0]}, Shelf {tgt[1]}:{tgt[2]}",
+                                "item_1": f"{prev_name} (UPC {prev_upc})",
+                                "item_2": f"{name} (UPC {upc})",
+                                "description": f"Algorithmic Overlap: Two different products targeted for identical slot Bay {tgt[0]}, Shelf {tgt[1]}:{tgt[2]}.",
+                            })
+                        else:
+                            multi_facing_allocations.append({
+                                "type": "Multi-Facing Block Allocation (Same UPC)",
+                                "group_id": gid,
+                                "slot": f"Bay {tgt[0]}, Shelf {tgt[1]}:{tgt[2]}",
+                                "item_1": f"{name} (UPC {upc})",
+                                "description": f"Normal POG Grouping: Multiple facings of {name} share planogram block base slot {tgt[1]}:{tgt[2]}.",
+                            })
                     else:
                         seen[tgt] = (upc, name)
-            result["collision_count"] = len(collision_details)
-            result["collision_details"] = collision_details
+
+            result["collision_count"] = len(true_collisions)
+            result["collision_details"] = true_collisions
+            result["multi_facing_count"] = len(multi_facing_allocations)
+            result["multi_facing_details"] = multi_facing_allocations
 
             # Detect mutual swap cycles ($A \leftrightarrow B$ on same shelf)
             cycle_details = []
@@ -3189,6 +3202,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         # Collate all anomalies
         anomalies_a = {
             "collisions": summary_a.get("collision_details", []),
+            "multi_facing": summary_a.get("multi_facing_details", []),
             "cycles": summary_a.get("cycle_details", []),
             "directional": summary_a.get("directional_contradictions", []),
             "redundant_moves": summary_a.get("redundant_moves", []),
@@ -3196,6 +3210,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         }
         anomalies_b = {
             "collisions": summary_b.get("collision_details", []),
+            "multi_facing": summary_b.get("multi_facing_details", []),
             "cycles": summary_b.get("cycle_details", []),
             "directional": summary_b.get("directional_contradictions", []),
             "redundant_moves": summary_b.get("redundant_moves", []),

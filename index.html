@@ -859,6 +859,19 @@
                   </table>
                 </div>
               </div>
+
+              <!-- Educational Legend: Mechanics of Collisions, Cart Staging & Slides -->
+              <div style="margin-top:12px; background:rgba(0,0,0,0.02); border:1px solid var(--border); border-radius:var(--radius-xs); padding:10px 14px; font-size:11px; color:var(--text-muted); line-height:1.6;">
+                <div style="font-weight:700; color:var(--text); margin-bottom:4px; font-size:11.5px;">💡 How Sequencing, Collisions &amp; Physical Movements Work:</div>
+                <ul style="margin:0; padding-left:18px;">
+                  <li><strong>Why Cart Staging (KRCS) Avoids On-Shelf Collisions:</strong> In KRCS, the flow is <em>Set Aside to Cart</em> &rarr; <em>Place from Cart</em>. Because the shelf is completely cleared before items are placed back, on-shelf collisions are physically impossible — but this costs <strong>153 physical shelf touches</strong> and <strong>100% double handling</strong>.</li>
+                  <li><strong>How Direct Slides (STGSAMS) Are Derived:</strong> When products are moved directly on the shelf (`Fix in Bay`), we compare the starting slot to the target slot:
+                    <br>&bull; <code>👉 Slide Right (+N)</code>: Target Slot &gt; Current Slot on the same shelf (e.g. Shelf 1, Slot 2 &rarr; Slot 3).
+                    <br>&bull; <code>👈 Slide Left (-N)</code>: Target Slot &lt; Current Slot on the same shelf (e.g. Shelf 5, Slot 7 &rarr; Slot 5).</li>
+                  <li><strong>What is a Mutual Swap ($A \leftrightarrow B$)?</strong> A mutual swap occurs when Product A at Slot 1 must move to Slot 2, while Product B at Slot 2 must move to Slot 1 simultaneously on the same shelf. In these runs, swaps were <strong>0</strong> because products shifted unidirectionally.</li>
+                  <li><strong>True Collisions vs Multi-Facing POG Blocks:</strong> A true collision is when two <em>different products</em> (different UPCs) target the exact same slot. When multiple records of the <em>same UPC</em> target the same coordinate, it is simply multiple product facings sharing their planogram block anchor position.</li>
+                </ul>
+              </div>
             </div>
 
             <!-- Algorithmic Quality & Safety Checks Card -->
@@ -1215,7 +1228,7 @@
   <script src="assets/js/jira-tracker.js?v=20260817p"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20260909a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261006a"></script>
+  <script src="assets/js/ir-flow.js?v=20261006b"></script>
   <script src="assets/js/app.v16.js?v=20260923c"></script>
 </body>
 </html>
