@@ -2679,9 +2679,9 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         elif "stgsams" in instance or "stgsams" in base_url:
             qs = "limit=1000&stage=pre_photo&type=set_bay&version=2"
         elif "krcs" in instance or "krcs" in base_url:
-            qs = "limit=1000&stage=pre_photo"
+            qs = "limit=1000&stage=pre_photo&type=set_bay"
         else:
-            qs = "limit=1000&stage=pre_photo"
+            qs = "limit=1000&stage=pre_photo&type=set_bay"
 
         act_url = f"{base_url}/api/v1/tasks/{task_id}/action-list/retailer/?{qs}"
         result["action_list_url"] = act_url
@@ -2776,6 +2776,11 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 elif "REMOVE" in root_act or curr_act == "remove":
                     act_type = "Remove"
                     result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
+                elif is_in_place and curr_act == "set_aside":
+                    act_type = "Redundant Cart Cycle"
+                    result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
+                    shelf_effort["set_aside"] += 1
+                    shelf_effort["place_item"] += 1
                 elif exp_act in ("fix_position_fix_in_bay", "fix_position_in_bay"):
                     if is_in_place:
                         act_type = "Redundant Move (Already in Position)"
@@ -2816,11 +2821,14 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 slide_dir = None
 
                 if is_in_place:
-                    if exp_act in ("fix_position_fix_in_bay", "fix_position_in_bay"):
+                    if curr_act == "set_aside":
+                        user_action = "⚠️ Redundant Cart Cycle (Pick to cart & replace in same slot)"
+                        action_badge = "warning"
+                    elif exp_act in ("fix_position_fix_in_bay", "fix_position_in_bay"):
                         user_action = "⚠️ Redundant Move (Item already in target slot)"
                         action_badge = "warning"
                     else:
-                        user_action = "✅ Already in Correct Position (Leave untouched)"
+                        user_action = "✅ Already in Correct Position (Untouched / Preserved)"
                         action_badge = "success"
                 elif curr_act == "set_aside":
                     user_action = "📦 Stage to Cart (Pick off shelf)"
@@ -2866,11 +2874,6 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 else:
                     intra_bay_count += 1
 
-                # Safety: Check slot collisions within execution group
-                if e_bay is not None and e_shelf is not None and e_pos is not None:
-                    target_slot = (e_bay, e_shelf, e_pos)
-                    slot_targets_by_group.setdefault(grp_id, []).append((target_slot, p_upc, p_name))
-
                 # Safety: Check mutual cycle swaps (pos1 -> pos2 and pos2 -> pos1 on same bay/shelf)
                 if (
                     c_bay is not None
@@ -2901,6 +2904,12 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     "slide_dir": slide_dir,
                     "is_in_place": is_in_place,
                     "bay": active_bay,
+                    "curr_bay": c_bay,
+                    "curr_shelf": c_shelf,
+                    "curr_pos": c_pos,
+                    "exp_bay": e_bay,
+                    "exp_shelf": e_shelf,
+                    "exp_pos": e_pos,
                     "from_slot": from_str,
                     "to_slot": to_str,
                     "slot_move": slot_move,
@@ -2927,32 +2936,48 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             result["execution_steps_count"] = len(execution_groups)
 
             # Detect true slot collisions vs same-UPC multi-facing allocations
+            slot_targets_map: Dict[Tuple[Any, Any, Any], List[Dict[str, Any]]] = {}
+            for it in item_records:
+                es = it.get("exp_shelf")
+                ep = it.get("exp_pos")
+                eb = it.get("exp_bay") or 1
+                if es is not None and ep is not None:
+                    slot_targets_map.setdefault((eb, es, ep), []).append(it)
+
             true_collisions = []
             multi_facing_allocations = []
-            for gid, targets in slot_targets_by_group.items():
-                seen: Dict[Any, Tuple[str, str]] = {}
-                for tgt, upc, name in targets:
-                    if tgt in seen:
-                        prev_upc, prev_name = seen[tgt]
-                        if prev_upc != upc:
-                            true_collisions.append({
-                                "type": "Cross-Product Slot Collision",
-                                "group_id": gid,
-                                "slot": f"Bay {tgt[0]}, Shelf {tgt[1]}:{tgt[2]}",
-                                "item_1": f"{prev_name} (UPC {prev_upc})",
-                                "item_2": f"{name} (UPC {upc})",
-                                "description": f"Algorithmic Overlap: Two different products targeted for identical slot Bay {tgt[0]}, Shelf {tgt[1]}:{tgt[2]}.",
-                            })
-                        else:
-                            multi_facing_allocations.append({
-                                "type": "Multi-Facing Block Allocation (Same UPC)",
-                                "group_id": gid,
-                                "slot": f"Bay {tgt[0]}, Shelf {tgt[1]}:{tgt[2]}",
-                                "item_1": f"{name} (UPC {upc})",
-                                "description": f"Normal POG Grouping: Multiple facings of {name} share planogram block base slot {tgt[1]}:{tgt[2]}.",
-                            })
-                    else:
-                        seen[tgt] = (upc, name)
+            for tgt, items in sorted(slot_targets_map.items()):
+                if len(items) <= 1:
+                    continue
+                upcs = sorted(set(x["upc"] for x in items if x.get("upc") and x["upc"] != "N/A"))
+                slot_str = f"Bay {tgt[0]}, Shelf {tgt[1]}:{tgt[2]}"
+                if len(upcs) > 1:
+                    true_collisions.append({
+                        "type": "Cross-Product Slot Collision",
+                        "slot": slot_str,
+                        "upcs": upcs,
+                        "item_1": f"{items[0]['name']} (UPC {items[0]['upc']})",
+                        "item_2": f"{items[1]['name']} (UPC {items[1]['upc']})",
+                        "expected_facings": len(items),
+                        "actual_facings": len(items),
+                        "description": f"Algorithmic Overlap: {len(upcs)} different products targeted for identical slot {slot_str}.",
+                    })
+                elif len(upcs) == 1:
+                    u = upcs[0]
+                    name = items[0]["name"]
+                    origins = [f"Facing {i+1}: from {it['from_slot']}" for i, it in enumerate(items)]
+                    multi_facing_allocations.append({
+                        "type": "Multi-Facing Block (Expected POG Placement)",
+                        "slot": slot_str,
+                        "upc": u,
+                        "name": name,
+                        "item_1": f"{name} (UPC {u})",
+                        "expected_facings": len(items),
+                        "actual_facings": len(items),
+                        "origins": origins,
+                        "origins_summary": ", ".join(origins),
+                        "description": f"Legitimate POG Grouping: {len(items)} facings of {name} allocated side-by-side to anchor slot {slot_str}. Zero collision risk.",
+                    })
 
             result["collision_count"] = len(true_collisions)
             result["collision_details"] = true_collisions
@@ -2995,8 +3020,8 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     })
             result["directional_contradictions"] = directional_contradictions
 
-            # Redundant in-place moves
-            redundant_in_place = [it for it in item_records if it.get("action_type") == "Redundant Move (Already in Position)"]
+            # Redundant in-place moves (redundant slides and redundant cart cycles)
+            redundant_in_place = [it for it in item_records if it.get("action_type") in ("Redundant Move (Already in Position)", "Redundant Cart Cycle")]
             result["redundant_moves_count"] = len(redundant_in_place)
             result["redundant_moves"] = redundant_in_place
 
@@ -3142,6 +3167,53 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             upcs_b.setdefault(u, []).append(it)
 
         all_upcs = sorted(set(list(upcs_a.keys()) + list(upcs_b.keys())))
+        def _format_user_actions(records: List[Dict[str, Any]]) -> str:
+            if not records:
+                return "✅ Already in Correct Position (Untouched / Preserved)"
+            if len(records) == 1:
+                return records[0].get("user_action") or records[0].get("action_type") or "Reposition"
+            uacts = [r.get("user_action") or r.get("action_type") or "" for r in records]
+            if len(set(uacts)) == 1:
+                base = uacts[0]
+                if "Stage to Cart" in base:
+                    return f"📦 Stage {len(records)} Facings to Cart (Pick off shelf)"
+                if "Redundant Cart Cycle" in base:
+                    return f"⚠️ Unnecessary Cart Cycle ({len(records)} facings picked & replaced in same slot)"
+                if "Untouched" in base or "In Correct Position" in base:
+                    return f"✅ {len(records)} Facings in Correct Position (Untouched)"
+                return f"{base} ({len(records)} facings)"
+            parts = []
+            for idx, r in enumerate(records, 1):
+                act = r.get("user_action") or r.get("action_type")
+                parts.append(f"F{idx}: {act}")
+            return " | ".join(parts)
+
+        def _format_action_types(records: List[Dict[str, Any]]) -> str:
+            if not records:
+                return "Untouched / In-Position"
+            if len(records) == 1:
+                return f"{records[0].get('action_type')} ({records[0].get('slot_move')})"
+            types = [r.get("action_type") for r in records]
+            if len(set(types)) == 1:
+                return f"{types[0]} ({len(records)} facings)"
+            parts = []
+            for idx, r in enumerate(records, 1):
+                parts.append(f"F{idx}: {r.get('action_type')}")
+            return " | ".join(parts)
+
+        def _format_slot_moves(records: List[Dict[str, Any]]) -> str:
+            if not records:
+                return "—"
+            if len(records) == 1:
+                return records[0].get("slot_move") or "—"
+            moves = [r.get("slot_move") or "—" for r in records]
+            if len(set(moves)) == 1:
+                return f"{moves[0]} ({len(records)} facings)"
+            parts = []
+            for idx, r in enumerate(records, 1):
+                parts.append(f"F{idx}: {r.get('slot_move', '—')}")
+            return " | ".join(parts)
+
         product_variance = []
         for u in all_upcs:
             if u == "N/A":
@@ -3152,19 +3224,20 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             p_name = sample.get("name") or f"Item {u}"
             p_bay = sample.get("bay") or 1
 
-            act_a_str = ", ".join(f"{r['action_type']} ({r['slot_move']})" for r in records_a) if records_a else "Untouched / In-Position"
-            act_b_str = ", ".join(f"{r['action_type']} ({r['slot_move']})" for r in records_b) if records_b else "Untouched / In-Position"
-
-            uact_a_str = ", ".join(r.get("user_action", r["action_type"]) for r in records_a) if records_a else "✅ Already in Correct Position"
-            uact_b_str = ", ".join(r.get("user_action", r["action_type"]) for r in records_b) if records_b else "✅ Already in Correct Position"
-
-            slot_a_str = ", ".join(r["slot_move"] for r in records_a) if records_a else "—"
-            slot_b_str = ", ".join(r["slot_move"] for r in records_b) if records_b else "—"
+            act_a_str = _format_action_types(records_a)
+            act_b_str = _format_action_types(records_b)
+            uact_a_str = _format_user_actions(records_a)
+            uact_b_str = _format_user_actions(records_b)
+            slot_a_str = _format_slot_moves(records_a)
+            slot_b_str = _format_slot_moves(records_b)
 
             types_a = set(r["action_type"] for r in records_a)
             types_b = set(r["action_type"] for r in records_b)
 
-            if "Fix in Bay" in types_a and any(t in types_b for t in ("Set Aside", "Set Aside / Place Item", "Place Item / Add to Shelf")):
+            if any("Redundant Cart Cycle" in r.get("action_type", "") for r in records_b) and not any("Redundant" in r.get("action_type", "") for r in records_a):
+                var_label = "Redundant Cart Cycle in KRCS (Avoided in STGSAMS)"
+                var_badge = "success"
+            elif "Fix in Bay" in types_a and any(t in types_b for t in ("Set Aside", "Set Aside / Place Item", "Place Item / Add to Shelf", "Redundant Cart Cycle")):
                 var_label = "Direct Slide (Eliminated Cart Staging)"
                 var_badge = "success"
             elif "Already in Position" in types_a and not ("Already in Position" in types_b):
