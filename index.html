@@ -883,6 +883,65 @@
               </div>
             </div>
 
+            <!-- Cart Staging & Shelf Placement Comparison (Same-Bay vs Cross-Bay) -->
+            <div id="ir-compare-staging-section" style="background:var(--surface); border:1px solid rgba(79,70,229,0.3); border-radius:var(--radius-sm); padding:16px; margin-bottom:16px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:20px;">🛒</span>
+                  <div>
+                    <h4 style="font-size:13px; font-weight:800; margin:0; color:var(--text);">Cart Staging &amp; Shelf Placement Analysis (Same-Bay vs Cross-Bay)</h4>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Compare whether Set Aside (off shelf to cart) and Add to Shelf occurred within the same bay or across different bays</div>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <input type="text" id="ir-compare-staging-search" placeholder="Search UPC, Title, or Bay..." oninput="window.IrTaskFlow.filterStagingTable()" style="font-size:11.5px; padding:4px 10px; border-radius:var(--radius-xs); border:1px solid var(--border); background:var(--surface); color:var(--text); width:200px;" />
+                  <span id="ir-staging-header-badge" style="font-size:11.5px; font-weight:800; padding:4px 12px; border-radius:20px;"></span>
+                </div>
+              </div>
+
+              <!-- Executive Staging Comparison Metrics Banner -->
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                <div style="background:rgba(79,70,229,0.05); border:1px solid rgba(79,70,229,0.25); border-radius:var(--radius-xs); padding:12px 14px;">
+                  <div style="font-size:11px; font-weight:700; color:#4F46E5; text-transform:uppercase; letter-spacing:0.5px;" id="ir-staging-lbl-a">STGSAMS Cart Staging Profile</div>
+                  <div style="display:flex; align-items:baseline; gap:10px; margin-top:6px;">
+                    <div style="font-size:20px; font-weight:800; color:#4F46E5;" id="ir-staging-stat-a">0 / 25 Same-Bay (0%)</div>
+                    <span style="font-size:11px; font-weight:700; color:#059669; background:rgba(5,150,105,0.1); padding:2px 8px; border-radius:10px;">✨ 100% Cross-Bay Only</span>
+                  </div>
+                  <div style="font-size:11px; color:var(--text-muted); margin-top:4px;" id="ir-staging-desc-a">
+                    STGSAMS never uses carts for same-bay reorganization. All products remaining in the same bay are slid directly on the shelf.
+                  </div>
+                </div>
+
+                <div style="background:rgba(217,119,6,0.05); border:1px solid rgba(217,119,6,0.25); border-radius:var(--radius-xs); padding:12px 14px;">
+                  <div style="font-size:11px; font-weight:700; color:#D97706; text-transform:uppercase; letter-spacing:0.5px;" id="ir-staging-lbl-b">KRCS Cart Staging Profile</div>
+                  <div style="display:flex; align-items:baseline; gap:10px; margin-top:6px;">
+                    <div style="font-size:20px; font-weight:800; color:#D97706;" id="ir-staging-stat-b">1 / 53 Same-Bay (1.9%)</div>
+                    <span style="font-size:11px; font-weight:700; color:#DC2626; background:rgba(220,38,38,0.1); padding:2px 8px; border-radius:10px;">⚠️ Unnecessary Staging</span>
+                  </div>
+                  <div style="font-size:11px; color:var(--text-muted); margin-top:4px;" id="ir-staging-desc-b">
+                    KRCS puts items onto a cart even when they remain in the exact same bay, incurring redundant pick and placement touches.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Detailed Table -->
+              <div class="ir-table-wrap" style="max-height:360px; overflow-y:auto;">
+                <table class="ir-history-table" style="width:100%;">
+                  <thead style="position:sticky; top:0; background:var(--surface); z-index:2;">
+                    <tr>
+                      <th style="width:115px;">UPC / SKU</th>
+                      <th style="width:200px;">Product Description</th>
+                      <th id="ir-staging-th-a" style="color:#4F46E5;">Instance A (Movement &amp; Mode)</th>
+                      <th id="ir-staging-th-b" style="color:#D97706;">Instance B (Movement &amp; Mode)</th>
+                      <th style="text-align:right;">Efficiency Assessment</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ir-compare-staging-tbody">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             <!-- Algorithmic Quality & Safety Checks Card -->
             <div id="ir-compare-safety-section" style="background:var(--surface); border:1px solid rgba(245,158,11,0.25); border-radius:var(--radius-sm); padding:14px 16px; margin-bottom:16px;">
               <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
@@ -1237,7 +1296,7 @@
   <script src="assets/js/jira-tracker.js?v=20260817p"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20260909a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261006c"></script>
+  <script src="assets/js/ir-flow.js?v=20261006d"></script>
   <script src="assets/js/app.v16.js?v=20260923c"></script>
 </body>
 </html>
