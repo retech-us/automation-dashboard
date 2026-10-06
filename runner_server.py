@@ -3279,6 +3279,99 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "variance_badge": var_badge,
             })
 
+        # Same-Bay vs Cross-Bay Set Aside & Add to Shelf Analysis
+        staging_items = []
+        same_bay_sa_a = sum(1 for r in summary_a.get("item_records", []) if r.get("action_type") in ("Set Aside", "Set Aside / Place Item") and r.get("curr_bay") is not None and r.get("exp_bay") is not None and str(r.get("curr_bay")) == str(r.get("exp_bay")))
+        cross_bay_sa_a = sum(1 for r in summary_a.get("item_records", []) if r.get("action_type") in ("Set Aside", "Set Aside / Place Item") and r.get("curr_bay") is not None and r.get("exp_bay") is not None and str(r.get("curr_bay")) != str(r.get("exp_bay")))
+
+        same_bay_sa_b = sum(1 for r in summary_b.get("item_records", []) if r.get("action_type") in ("Set Aside", "Set Aside / Place Item") and r.get("curr_bay") is not None and r.get("exp_bay") is not None and str(r.get("curr_bay")) == str(r.get("exp_bay")))
+        cross_bay_sa_b = sum(1 for r in summary_b.get("item_records", []) if r.get("action_type") in ("Set Aside", "Set Aside / Place Item") and r.get("curr_bay") is not None and r.get("exp_bay") is not None and str(r.get("curr_bay")) != str(r.get("exp_bay")))
+
+        for u in all_upcs:
+            if u == "N/A":
+                continue
+            records_a = upcs_a.get(u, [])
+            records_b = upcs_b.get(u, [])
+
+            has_sa_a = any(r.get("action_type") in ("Set Aside", "Set Aside / Place Item", "Place Item / Add to Shelf") for r in records_a)
+            has_sa_b = any(r.get("action_type") in ("Set Aside", "Set Aside / Place Item", "Place Item / Add to Shelf") for r in records_b)
+            has_fix_a = any(r.get("action_type") == "Fix in Bay" for r in records_a)
+            has_fix_b = any(r.get("action_type") == "Fix in Bay" for r in records_b)
+
+            if not (has_sa_a or has_sa_b or (has_fix_a and has_sa_b) or (has_fix_b and has_sa_a)):
+                continue
+
+            sample = records_a[0] if records_a else records_b[0]
+            p_name = sample.get("name") or f"Item {u}"
+
+            rec_a = records_a[0] if records_a else None
+            rec_b = records_b[0] if records_b else None
+
+            is_same_bay_a = None
+            slot_a_from = rec_a.get("from_slot", "—") if rec_a else "—"
+            slot_a_to = rec_a.get("to_slot", "—") if rec_a else "—"
+            if rec_a and rec_a.get("curr_bay") is not None and rec_a.get("exp_bay") is not None:
+                is_same_bay_a = bool(str(rec_a.get("curr_bay")) == str(rec_a.get("exp_bay")))
+
+            is_same_bay_b = None
+            slot_b_from = rec_b.get("from_slot", "—") if rec_b else "—"
+            slot_b_to = rec_b.get("to_slot", "—") if rec_b else "—"
+            if rec_b and rec_b.get("curr_bay") is not None and rec_b.get("exp_bay") is not None:
+                is_same_bay_b = bool(str(rec_b.get("curr_bay")) == str(rec_b.get("exp_bay")))
+
+            if has_fix_a and is_same_bay_b is True and has_sa_b:
+                verdict = "✨ Avoided Cart Staging (Direct shelf slide in STGSAMS vs Cart Staging in KRCS)"
+                badge = "success"
+            elif has_sa_a and is_same_bay_a is False:
+                verdict = "🚚 Cross-Bay Relocate via Cart"
+                badge = "indigo"
+            elif has_sa_b and not has_sa_a:
+                verdict = "⚡ Saved Cart Staging in STGSAMS"
+                badge = "success"
+            elif has_fix_a:
+                verdict = "👉 In-Bay Slide (Zero Cart Touches)"
+                badge = "success"
+            else:
+                verdict = "Cross-Bay Transfer"
+                badge = "neutral"
+
+            staging_items.append({
+                "upc": u,
+                "name": p_name,
+                "facings_a": len(records_a),
+                "facings_b": len(records_b),
+                "action_a": _format_action_types(records_a),
+                "action_b": _format_action_types(records_b),
+                "user_action_a": _format_user_actions(records_a),
+                "user_action_b": _format_user_actions(records_b),
+                "from_a": slot_a_from,
+                "to_a": slot_a_to,
+                "is_same_bay_a": is_same_bay_a,
+                "from_b": slot_b_from,
+                "to_b": slot_b_to,
+                "is_same_bay_b": is_same_bay_b,
+                "verdict": verdict,
+                "badge": badge,
+            })
+
+        total_sa_a = eff_a.get("set_aside", 0)
+        total_sa_b = eff_b.get("set_aside", 0)
+        staging_comparison = {
+            "summary_a": {
+                "total_set_aside": total_sa_a,
+                "same_bay": same_bay_sa_a,
+                "cross_bay": cross_bay_sa_a,
+                "same_bay_pct": round((same_bay_sa_a / total_sa_a) * 100, 1) if total_sa_a > 0 else 0.0,
+            },
+            "summary_b": {
+                "total_set_aside": total_sa_b,
+                "same_bay": same_bay_sa_b,
+                "cross_bay": cross_bay_sa_b,
+                "same_bay_pct": round((same_bay_sa_b / total_sa_b) * 100, 1) if total_sa_b > 0 else 0.0,
+            },
+            "items": staging_items,
+        }
+
         # Collate all anomalies
         anomalies_a = {
             "collisions": summary_a.get("collision_details", []),
@@ -3373,6 +3466,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "a": anomalies_a,
                 "b": anomalies_b,
             },
+            "staging_comparison": staging_comparison,
             "product_variance": product_variance,
         }
 

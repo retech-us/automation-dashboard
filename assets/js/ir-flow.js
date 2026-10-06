@@ -1407,6 +1407,9 @@
       }
     }
 
+    // Render Same-Bay vs Cross-Bay Staging Analysis
+    renderStagingComparison(data, instNameA, instNameB);
+
     // Algorithmic Quality & Safety Checks Card
     const safety = data.safety_comparison || {};
     const cyclesA = safety.cycles_a || 0;
@@ -1608,6 +1611,124 @@
     }).join('');
   }
 
+  let currentStagingList = [];
+
+  function filterStagingTable() {
+    const input = byId('ir-compare-staging-search');
+    const q = (input ? input.value : '').trim().toLowerCase();
+    renderStagingRows(q);
+  }
+
+  function renderStagingComparison(data, instNameA, instNameB) {
+    const staging = data.staging_comparison || {};
+    const sumA = staging.summary_a || {};
+    const sumB = staging.summary_b || {};
+    currentStagingList = staging.items || [];
+
+    setText('ir-staging-lbl-a', `${instNameA} Cart Staging Profile`);
+    setText('ir-staging-lbl-b', `${instNameB} Cart Staging Profile`);
+    setText('ir-staging-th-a', `${instNameA} (Movement & Mode)`);
+    setText('ir-staging-th-b', `${instNameB} (Movement & Mode)`);
+
+    const statAEl = byId('ir-staging-stat-a');
+    if (statAEl) statAEl.textContent = `${sumA.same_bay || 0} / ${sumA.total_set_aside || 0} Same-Bay (${sumA.same_bay_pct || 0}%)`;
+
+    const descAEl = byId('ir-staging-desc-a');
+    if (descAEl) {
+      if ((sumA.same_bay || 0) === 0) {
+        descAEl.innerHTML = `<strong>100% of cart usage is strictly cross-bay relocation.</strong> Zero cart touches wasted for intra-bay moves (all same-bay items slide directly on shelf).`;
+      } else {
+        descAEl.textContent = `${sumA.same_bay} items staged to cart within the same bay.`;
+      }
+    }
+
+    const statBEl = byId('ir-staging-stat-b');
+    if (statBEl) statBEl.textContent = `${sumB.same_bay || 0} / ${sumB.total_set_aside || 0} Same-Bay (${sumB.same_bay_pct || 0}%)`;
+
+    const descBEl = byId('ir-staging-desc-b');
+    if (descBEl) {
+      if ((sumB.same_bay || 0) > 0) {
+        descBEl.innerHTML = `<strong>⚠️ ${sumB.same_bay} items unnecessarily staged to cart</strong> despite remaining in the same bay, adding redundant pick and placement touches.`;
+      } else {
+        descBEl.textContent = `All items staged were cross-bay.`;
+      }
+    }
+
+    const badgeEl = byId('ir-staging-header-badge');
+    if (badgeEl) {
+      badgeEl.textContent = `${currentStagingList.length} Staged / Repositioned Products`;
+      badgeEl.style.background = 'rgba(79,70,229,0.12)';
+      badgeEl.style.color = '#4F46E5';
+    }
+
+    renderStagingRows();
+  }
+
+  function renderStagingRows(filterText = '') {
+    const tbody = byId('ir-compare-staging-tbody');
+    if (!tbody) return;
+
+    let items = currentStagingList || [];
+    if (filterText) {
+      items = items.filter(it =>
+        (it.upc && it.upc.toLowerCase().includes(filterText)) ||
+        (it.name && it.name.toLowerCase().includes(filterText)) ||
+        (it.verdict && it.verdict.toLowerCase().includes(filterText)) ||
+        (it.from_a && it.from_a.toLowerCase().includes(filterText)) ||
+        (it.to_a && it.to_a.toLowerCase().includes(filterText)) ||
+        (it.from_b && it.from_b.toLowerCase().includes(filterText)) ||
+        (it.to_b && it.to_b.toLowerCase().includes(filterText)) ||
+        (it.user_action_a && it.user_action_a.toLowerCase().includes(filterText)) ||
+        (it.user_action_b && it.user_action_b.toLowerCase().includes(filterText))
+      );
+    }
+
+    if (items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px; color:var(--text-muted);">No products match your search</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = items.map(it => {
+      let badgeStyle = 'background:rgba(107,114,128,0.15); color:#4B5563;';
+      if (it.badge === 'success') {
+        badgeStyle = 'background:rgba(16,185,129,0.15); color:#059669; font-weight:700;';
+      } else if (it.badge === 'indigo') {
+        badgeStyle = 'background:rgba(79,70,229,0.15); color:#4F46E5; font-weight:700;';
+      } else if (it.badge === 'warning') {
+        badgeStyle = 'background:rgba(245,158,11,0.15); color:#B45309; font-weight:700;';
+      }
+
+      // Format A details
+      const isSameA = it.is_same_bay_a;
+      const sameTagA = isSameA === null ? '' : (isSameA ? '<span style="font-size:10px; font-weight:800; color:#D97706; background:rgba(217,119,6,0.12); padding:1px 6px; border-radius:4px; margin-left:6px;">Same Bay</span>' : '<span style="font-size:10px; font-weight:800; color:#4F46E5; background:rgba(79,70,229,0.12); padding:1px 6px; border-radius:4px; margin-left:6px;">Cross Bay</span>');
+      const trajA = (it.from_a && it.from_a !== '—' && it.to_a && it.to_a !== '—') ? `<div style="font-size:10.5px; font-family:monospace; color:var(--text-muted); margin-top:2px;">${it.from_a} &rarr; ${it.to_a}</div>` : '';
+
+      // Format B details
+      const isSameB = it.is_same_bay_b;
+      const sameTagB = isSameB === null ? '' : (isSameB ? '<span style="font-size:10px; font-weight:800; color:#DC2626; background:rgba(220,38,38,0.12); padding:1px 6px; border-radius:4px; margin-left:6px;">Same Bay (Cart)</span>' : '<span style="font-size:10px; font-weight:800; color:#4F46E5; background:rgba(79,70,229,0.12); padding:1px 6px; border-radius:4px; margin-left:6px;">Cross Bay</span>');
+      const trajB = (it.from_b && it.from_b !== '—' && it.to_b && it.to_b !== '—') ? `<div style="font-size:10.5px; font-family:monospace; color:var(--text-muted); margin-top:2px;">${it.from_b} &rarr; ${it.to_b}</div>` : '';
+
+      return `<tr>
+        <td style="font-family:monospace; font-size:11.5px; font-weight:700; color:var(--text);">${it.upc}</td>
+        <td>
+          <div style="font-size:12px; font-weight:700; color:var(--text);">${it.name}</div>
+          <div style="font-size:10.5px; color:var(--text-muted);">Facings: ${it.facings_a} in A vs ${it.facings_b} in B</div>
+        </td>
+        <td>
+          <div style="font-size:11.5px; font-weight:700; color:#4F46E5;">${it.user_action_a || it.action_a}${sameTagA}</div>
+          ${trajA}
+        </td>
+        <td>
+          <div style="font-size:11.5px; font-weight:700; color:#D97706;">${it.user_action_b || it.action_b}${sameTagB}</div>
+          ${trajB}
+        </td>
+        <td style="text-align:right;">
+          <span style="font-size:10.5px; padding:3px 8px; border-radius:12px; display:inline-block; ${badgeStyle}">${it.verdict}</span>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
   function round1(val) {
     return Math.round(val * 10) / 10;
   }
@@ -1644,6 +1765,7 @@
     compareTasks,
     onCompareInstanceChange,
     filterProductVariance,
+    filterStagingTable,
     openCredentialsModal,
     closeCredentialsModal,
     onModalInstanceSelect,
