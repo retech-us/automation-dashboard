@@ -2780,7 +2780,8 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     act_type = "Redundant Cart Cycle"
                     result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
                     shelf_effort["set_aside"] += 1
-                    shelf_effort["place_item"] += 1
+                    if exp_act in ("place_on_shelf_add_to_bay", "place_on_shelf"):
+                        shelf_effort["place_item"] += 1
                 elif exp_act in ("fix_position_fix_in_bay", "fix_position_in_bay"):
                     if is_in_place:
                         act_type = "Redundant Move (Already in Position)"
@@ -2793,21 +2794,27 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     else:
                         act_type = "Set Aside / Place Item"
                         result["action_breakdown"]["Set Aside"] = result["action_breakdown"].get("Set Aside", 0) + 1
+                        shelf_effort["set_aside"] += 1
+                        shelf_effort["items_repositioned"] += 1
+                elif curr_act == "set_aside":
+                    if exp_act in ("place_on_shelf_add_to_bay", "place_on_shelf"):
+                        act_type = "Set Aside / Place Item"
+                        result["action_breakdown"]["Set Aside"] = result["action_breakdown"].get("Set Aside", 0) + 1
                         result["action_breakdown"]["Place Item / Add to Shelf"] = result["action_breakdown"].get("Place Item / Add to Shelf", 0) + 1
                         shelf_effort["set_aside"] += 1
                         shelf_effort["place_item"] += 1
                         shelf_effort["items_repositioned"] += 1
-                elif curr_act == "set_aside":
-                    act_type = "Set Aside / Place Item"
-                    result["action_breakdown"]["Set Aside"] = result["action_breakdown"].get("Set Aside", 0) + 1
-                    result["action_breakdown"]["Place Item / Add to Shelf"] = result["action_breakdown"].get("Place Item / Add to Shelf", 0) + 1
-                    shelf_effort["set_aside"] += 1
-                    shelf_effort["place_item"] += 1
-                    shelf_effort["items_repositioned"] += 1
+                    else:
+                        act_type = "Set Aside"
+                        result["action_breakdown"]["Set Aside"] = result["action_breakdown"].get("Set Aside", 0) + 1
+                        shelf_effort["set_aside"] += 1
+                        shelf_effort["items_repositioned"] += 1
                 elif exp_act in ("place_on_shelf_add_to_bay", "place_on_shelf"):
                     act_type = "Place Item / Add to Shelf"
                     result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
                     shelf_effort["place_item"] += 1
+                    if curr_act != "set_aside":
+                        shelf_effort["items_repositioned"] += 1
                 elif is_in_place or (curr_act == "" and exp_act == ""):
                     act_type = "Already in Position"
                     result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
