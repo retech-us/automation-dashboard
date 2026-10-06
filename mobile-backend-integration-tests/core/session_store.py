@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 SCHEMA_VERSION = 1
-DEFAULT_MAX_AGE_SECONDS = 12 * 60 * 60
+DEFAULT_MAX_AGE_SECONDS = 30 * 24 * 60 * 60  # 30 days for persistent test & QA automation
 
 
 def _clean(tokens: Dict[str, str]) -> Dict[str, str]:

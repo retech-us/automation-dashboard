@@ -2744,14 +2744,16 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
                 # Extract product info
                 p_obj = item.get("product") or {}
-                p_upc = str(p_obj.get("upc") or p_obj.get("sku") or p_obj.get("id") or item.get("upc") or "N/A").strip()
-                p_name = str(p_obj.get("name") or p_obj.get("title") or item.get("product_name") or f"Item {p_upc}").strip()
+                p_upc = str(item.get("displayed_upc") or item.get("upc") or p_obj.get("upc") or p_obj.get("sku") or p_obj.get("id") or "N/A").strip()
+                p_name = str(item.get("product_title") or p_obj.get("name") or p_obj.get("title") or item.get("product_name") or f"Item {p_upc}").strip()
                 if p_upc and p_upc != "N/A":
                     upc_set.add(p_upc)
 
-                # Extract positions
-                c_bay = curr.get("bay")
-                e_bay = exp.get("bay")
+                # Extract positions with section_info support
+                c_sec = (curr.get("section_info") or {}).get("name") or curr.get("bay")
+                e_sec = (exp.get("section_info") or {}).get("name") or exp.get("bay")
+                c_bay = c_sec if c_sec is not None else 1
+                e_bay = e_sec if e_sec is not None else 1
                 c_shelf = curr.get("shelf")
                 e_shelf = exp.get("shelf")
                 c_pos = curr.get("position")
@@ -2759,7 +2761,14 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
                 # Execution group & Direction
                 grp_id = str(item.get("execution_group_id") or (item.get("ir_action_group") or {}).get("id") or "step_1")
+                grp_direction = str((item.get("ir_action_group") or {}).get("direction") or item.get("direction") or "").lower()
+                grp_subtype = str((item.get("ir_action_group") or {}).get("sub_type") or "").lower()
                 execution_groups.add(grp_id)
+
+                # Action type classification
+                is_in_place = bool(
+                    c_bay == e_bay and c_shelf == e_shelf and str(c_pos) == str(e_pos) and c_pos is not None
+                )
 
                 if "IDENTIFY" in root_act or curr_act == "identify":
                     act_type = "Identify"
@@ -2768,7 +2777,10 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     act_type = "Remove"
                     result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
                 elif exp_act in ("fix_position_fix_in_bay", "fix_position_in_bay"):
-                    if curr_act != "set_aside":
+                    if is_in_place:
+                        act_type = "Redundant Move (Already in Position)"
+                        result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
+                    elif curr_act != "set_aside":
                         act_type = "Fix in Bay"
                         result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
                         shelf_effort["fix_in_bay"] += 1
@@ -2791,12 +2803,55 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     act_type = "Place Item / Add to Shelf"
                     result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
                     shelf_effort["place_item"] += 1
-                elif curr_act == "" and exp_act == "":
+                elif is_in_place or (curr_act == "" and exp_act == ""):
                     act_type = "Already in Position"
                     result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
                 else:
                     act_type = root_act.replace("ACTION_", "").title() or "Other"
                     result["action_breakdown"][act_type] = result["action_breakdown"].get(act_type, 0) + 1
+
+                # Concrete associate action (what user needs to take)
+                user_action = "Reposition In-Bay"
+                action_badge = "neutral"
+                slide_dir = None
+
+                if is_in_place:
+                    if exp_act in ("fix_position_fix_in_bay", "fix_position_in_bay"):
+                        user_action = "⚠️ Redundant Move (Item already in target slot)"
+                        action_badge = "warning"
+                    else:
+                        user_action = "✅ Already in Correct Position (Leave untouched)"
+                        action_badge = "success"
+                elif curr_act == "set_aside":
+                    user_action = "📦 Stage to Cart (Pick off shelf)"
+                    action_badge = "amber"
+                elif exp_act in ("place_on_shelf_add_to_bay", "place_on_shelf"):
+                    user_action = "📥 Place from Cart to Shelf"
+                    action_badge = "indigo"
+                elif c_bay == e_bay and c_shelf == e_shelf and c_pos is not None and e_pos is not None:
+                    try:
+                        cp = int(c_pos)
+                        ep = int(e_pos)
+                        if ep > cp:
+                            slide_dir = "right"
+                            user_action = f"👉 Slide Right (+{ep - cp} slots)"
+                            action_badge = "indigo"
+                        elif ep < cp:
+                            slide_dir = "left"
+                            user_action = f"👈 Slide Left (-{cp - ep} slots)"
+                            action_badge = "indigo"
+                        else:
+                            user_action = "✅ In Correct Position"
+                            action_badge = "success"
+                    except (ValueError, TypeError):
+                        user_action = "Slide In-Bay"
+                        action_badge = "indigo"
+                elif c_bay == e_bay and c_shelf != e_shelf:
+                    user_action = f"↕️ Move Shelf (Shelf {c_shelf} → {e_shelf})"
+                    action_badge = "accent"
+                elif c_bay != e_bay:
+                    user_action = f"🚚 Cross-Bay Relocate (Bay {c_bay} → {e_bay})"
+                    action_badge = "accent"
 
                 # Spatial / Bay tracking
                 active_bay = e_bay if e_bay is not None else (c_bay if c_bay is not None else 1)
@@ -2814,28 +2869,44 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 # Safety: Check slot collisions within execution group
                 if e_bay is not None and e_shelf is not None and e_pos is not None:
                     target_slot = (e_bay, e_shelf, e_pos)
-                    slot_targets_by_group.setdefault(grp_id, []).append(target_slot)
+                    slot_targets_by_group.setdefault(grp_id, []).append((target_slot, p_upc, p_name))
 
                 # Safety: Check mutual cycle swaps (pos1 -> pos2 and pos2 -> pos1 on same bay/shelf)
-                if c_bay is not None and e_bay is not None and c_bay == e_bay and c_shelf is not None and e_shelf is not None and c_shelf == e_shelf and c_pos is not None and e_pos is not None and c_pos != e_pos:
-                    shelf_moves_by_bay_shelf.setdefault((c_bay, c_shelf), []).append((c_pos, e_pos))
+                if (
+                    c_bay is not None
+                    and e_bay is not None
+                    and c_bay == e_bay
+                    and c_shelf is not None
+                    and e_shelf is not None
+                    and c_shelf == e_shelf
+                    and c_pos is not None
+                    and e_pos is not None
+                    and c_pos != e_pos
+                ):
+                    shelf_moves_by_bay_shelf.setdefault((c_bay, c_shelf), []).append((c_pos, e_pos, p_upc, p_name, grp_id))
 
                 state = (item.get("state") or "UNKNOWN").replace("STATE_", "")
                 result["state_breakdown"][state] = result["state_breakdown"].get(state, 0) + 1
 
-                from_str = f"B{c_bay} S{c_shelf}:{c_pos}" if (c_bay is not None and c_shelf is not None) else "—"
-                to_str = f"B{e_bay} S{e_shelf}:{e_pos}" if (e_bay is not None and e_shelf is not None) else "—"
-                slot_move = f"{from_str} → {to_str}" if (from_str != "—" or to_str != "—") else "In-Place"
+                from_str = f"Bay {c_bay}, S{c_shelf}:{c_pos}" if (c_bay is not None and c_shelf is not None and c_pos is not None) else "—"
+                to_str = f"Bay {e_bay}, S{e_shelf}:{e_pos}" if (e_bay is not None and e_shelf is not None and e_pos is not None) else "—"
+                slot_move = f"{from_str} → {to_str}" if (from_str != "—" and to_str != "—") else "In-Place"
 
                 item_records.append({
                     "upc": p_upc,
                     "name": p_name,
                     "action_type": act_type,
+                    "user_action": user_action,
+                    "action_badge": action_badge,
+                    "slide_dir": slide_dir,
+                    "is_in_place": is_in_place,
                     "bay": active_bay,
                     "from_slot": from_str,
                     "to_slot": to_str,
                     "slot_move": slot_move,
                     "group_id": grp_id,
+                    "group_direction": grp_direction,
+                    "group_subtype": grp_subtype,
                 })
 
             # Calculate total touches & labor time modeling (SAM)
@@ -2855,26 +2926,87 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             result["unique_upcs_count"] = len(upc_set)
             result["execution_steps_count"] = len(execution_groups)
 
-            # Detect safety collision count
-            collision_count = 0
+            # Detect safety collision count and details
+            collision_details = []
             for gid, targets in slot_targets_by_group.items():
-                seen = set()
-                for tgt in targets:
+                seen: Dict[Any, Tuple[str, str]] = {}
+                for tgt, upc, name in targets:
                     if tgt in seen:
-                        collision_count += 1
+                        prev_upc, prev_name = seen[tgt]
+                        collision_details.append({
+                            "type": "Target Slot Collision",
+                            "group_id": gid,
+                            "slot": f"Bay {tgt[0]}, Shelf {tgt[1]}:{tgt[2]}",
+                            "item_1": f"{prev_name} (UPC {prev_upc})",
+                            "item_2": f"{name} (UPC {upc})",
+                            "description": f"Multiple items targeted for identical slot Bay {tgt[0]}, Shelf {tgt[1]}:{tgt[2]} in step {gid}",
+                        })
                     else:
-                        seen.add(tgt)
-            result["collision_count"] = collision_count
+                        seen[tgt] = (upc, name)
+            result["collision_count"] = len(collision_details)
+            result["collision_details"] = collision_details
 
-            # Detect mutual swap cycles
-            cycle_conflicts = 0
-            for (bs_bay, bs_shelf), move_pairs in shelf_moves_by_bay_shelf.items():
-                pairs_set = set(move_pairs)
-                for (p_from, p_to) in move_pairs:
-                    if (p_to, p_from) in pairs_set:
-                        cycle_conflicts += 1
-            # Each mutual pair is counted twice (A->B and B->A), so divide by 2
-            result["cycle_conflicts"] = cycle_conflicts // 2
+            # Detect mutual swap cycles ($A \leftrightarrow B$ on same shelf)
+            cycle_details = []
+            for (bs_bay, bs_shelf), move_tuples in shelf_moves_by_bay_shelf.items():
+                moves_map = {(m[0], m[1]): (m[2], m[3], m[4]) for m in move_tuples}
+                for (p1, p2), (u1, n1, g1) in moves_map.items():
+                    if (p2, p1) in moves_map and str(p1) < str(p2):
+                        u2, n2, g2 = moves_map[(p2, p1)]
+                        cycle_details.append({
+                            "type": "Mutual Swap Cycle (Deadlock Risk)",
+                            "shelf": f"Bay {bs_bay}, Shelf {bs_shelf}",
+                            "slots": f"Slot {p1} ↔ Slot {p2}",
+                            "item_1": f"{n1} (UPC {u1}) [{p1} → {p2}]",
+                            "item_2": f"{n2} (UPC {u2}) [{p2} → {p1}]",
+                            "description": f"Deadlock: Product at {p1} cannot slide into {p2} until {p2} moves, and vice versa.",
+                        })
+            result["cycle_conflicts"] = len(cycle_details)
+            result["cycle_details"] = cycle_details
+
+            # Detect directional contradictions within slide execution groups
+            directional_contradictions = []
+            for it in item_records:
+                g_dir = it.get("group_direction")
+                s_dir = it.get("slide_dir")
+                if g_dir and s_dir and g_dir in ("left", "right") and s_dir in ("left", "right") and g_dir != s_dir:
+                    directional_contradictions.append({
+                        "type": "Directional Contradiction",
+                        "upc": it["upc"],
+                        "name": it["name"],
+                        "group_id": it["group_id"],
+                        "group_direction": g_dir,
+                        "item_movement": s_dir,
+                        "slot_move": it["slot_move"],
+                        "description": f"Item moves {s_dir.upper()} ({it['slot_move']}) within a group instructed to slide {g_dir.upper()}.",
+                    })
+            result["directional_contradictions"] = directional_contradictions
+
+            # Redundant in-place moves
+            redundant_in_place = [it for it in item_records if it.get("action_type") == "Redundant Move (Already in Position)"]
+            result["redundant_moves_count"] = len(redundant_in_place)
+            result["redundant_moves"] = redundant_in_place
+
+            # Associate action checklist counts
+            slides_right_c = sum(1 for it in item_records if it.get("slide_dir") == "right")
+            slides_left_c = sum(1 for it in item_records if it.get("slide_dir") == "left")
+            cross_shelf_c = sum(1 for it in item_records if "Move Shelf" in it.get("user_action", ""))
+            cross_bay_c = sum(1 for it in item_records if "Cross-Bay" in it.get("user_action", ""))
+            in_place_clean = sum(1 for it in item_records if it.get("action_type") == "Already in Position")
+
+            result["associate_checklist"] = {
+                "slides_right": slides_right_c,
+                "slides_left": slides_left_c,
+                "total_slides": slides_right_c + slides_left_c,
+                "mutual_swaps": len(cycle_details),
+                "cross_shelf": cross_shelf_c,
+                "cross_bay": cross_bay_c,
+                "staged_to_cart": shelf_effort["set_aside"],
+                "placed_from_cart": shelf_effort["place_item"],
+                "untouched_compliant": in_place_clean,
+                "redundant_moves": len(redundant_in_place),
+            }
+
             result["item_records"] = item_records
 
         except urllib.error.HTTPError as e:
@@ -3010,6 +3142,12 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             act_a_str = ", ".join(f"{r['action_type']} ({r['slot_move']})" for r in records_a) if records_a else "Untouched / In-Position"
             act_b_str = ", ".join(f"{r['action_type']} ({r['slot_move']})" for r in records_b) if records_b else "Untouched / In-Position"
 
+            uact_a_str = ", ".join(r.get("user_action", r["action_type"]) for r in records_a) if records_a else "✅ Already in Correct Position"
+            uact_b_str = ", ".join(r.get("user_action", r["action_type"]) for r in records_b) if records_b else "✅ Already in Correct Position"
+
+            slot_a_str = ", ".join(r["slot_move"] for r in records_a) if records_a else "—"
+            slot_b_str = ", ".join(r["slot_move"] for r in records_b) if records_b else "—"
+
             types_a = set(r["action_type"] for r in records_a)
             types_b = set(r["action_type"] for r in records_b)
 
@@ -3040,9 +3178,29 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "facings_b": len(records_b),
                 "action_a": act_a_str,
                 "action_b": act_b_str,
+                "user_action_a": uact_a_str,
+                "user_action_b": uact_b_str,
+                "slot_a": slot_a_str,
+                "slot_b": slot_b_str,
                 "variance_label": var_label,
                 "variance_badge": var_badge,
             })
+
+        # Collate all anomalies
+        anomalies_a = {
+            "collisions": summary_a.get("collision_details", []),
+            "cycles": summary_a.get("cycle_details", []),
+            "directional": summary_a.get("directional_contradictions", []),
+            "redundant_moves": summary_a.get("redundant_moves", []),
+            "total_conflicts": summary_a.get("collision_count", 0) + summary_a.get("cycle_conflicts", 0) + len(summary_a.get("directional_contradictions", [])),
+        }
+        anomalies_b = {
+            "collisions": summary_b.get("collision_details", []),
+            "cycles": summary_b.get("cycle_details", []),
+            "directional": summary_b.get("directional_contradictions", []),
+            "redundant_moves": summary_b.get("redundant_moves", []),
+            "total_conflicts": summary_b.get("collision_count", 0) + summary_b.get("cycle_conflicts", 0) + len(summary_b.get("directional_contradictions", [])),
+        }
 
         return {
             "status": "success",
@@ -3111,6 +3269,14 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "intra_bay_b": summary_b.get("intra_bay_count", 0),
                 "cross_bay_a": summary_a.get("cross_bay_count", 0),
                 "cross_bay_b": summary_b.get("cross_bay_count", 0),
+            },
+            "associate_protocol": {
+                "checklist_a": summary_a.get("associate_checklist", {}),
+                "checklist_b": summary_b.get("associate_checklist", {}),
+            },
+            "anomalies": {
+                "a": anomalies_a,
+                "b": anomalies_b,
             },
             "product_variance": product_variance,
         }
