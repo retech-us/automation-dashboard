@@ -672,14 +672,14 @@
             <!-- Side-by-Side Summary Cards -->
             <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:12px; margin-bottom:16px; align-items:stretch;">
 
-              <!-- Task A Card -->
-              <div id="ir-compare-card-a" style="background:var(--surface); border:1px solid rgba(59,130,246,0.3); border-radius:var(--radius-sm); padding:14px 16px;">
-                <div id="ir-compare-card-a-badge" style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#3B82F6; margin-bottom:8px;">Instance A</div>
+              <!-- Task A Card (Cobalt Indigo) -->
+              <div id="ir-compare-card-a" style="background:var(--surface); border:1px solid rgba(79,70,229,0.35); border-radius:var(--radius-sm); padding:14px 16px;">
+                <div id="ir-compare-card-a-badge" style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#4F46E5; margin-bottom:8px;">Instance A</div>
                 <div id="ir-compare-card-a-title" style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:4px;"></div>
                 <div id="ir-compare-card-a-meta" style="font-size:10.5px; color:var(--text-muted); line-height:1.6;"></div>
                 <div style="margin-top:10px; display:flex; flex-direction:column; gap:2px;">
                   <div style="display:flex; align-items:baseline; gap:6px;">
-                    <span id="ir-compare-card-a-count" style="font-size:28px; font-weight:800; color:#3B82F6;"></span>
+                    <span id="ir-compare-card-a-count" style="font-size:28px; font-weight:800; color:#4F46E5;"></span>
                     <span style="font-size:11px; font-weight:600; color:var(--text-muted);">operational actions</span>
                   </div>
                   <span id="ir-compare-card-a-unit" style="font-size:10px; font-weight:600; color:var(--text-muted);"></span>
@@ -692,18 +692,59 @@
                 <div id="ir-compare-diff-badge" style="font-size:11px; font-weight:800; padding:4px 10px; border-radius:20px; white-space:nowrap;"></div>
               </div>
 
-              <!-- Task B Card -->
-              <div id="ir-compare-card-b" style="background:var(--surface); border:1px solid rgba(16,185,129,0.3); border-radius:var(--radius-sm); padding:14px 16px;">
-                <div id="ir-compare-card-b-badge" style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#10B981; margin-bottom:8px;">Instance B</div>
+              <!-- Task B Card (Warm Amber) -->
+              <div id="ir-compare-card-b" style="background:var(--surface); border:1px solid rgba(217,119,6,0.35); border-radius:var(--radius-sm); padding:14px 16px;">
+                <div id="ir-compare-card-b-badge" style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#D97706; margin-bottom:8px;">Instance B</div>
                 <div id="ir-compare-card-b-title" style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:4px;"></div>
                 <div id="ir-compare-card-b-meta" style="font-size:10.5px; color:var(--text-muted); line-height:1.6;"></div>
                 <div style="margin-top:10px; display:flex; flex-direction:column; gap:2px;">
                   <div style="display:flex; align-items:baseline; gap:6px;">
-                    <span id="ir-compare-card-b-count" style="font-size:28px; font-weight:800; color:#10B981;"></span>
+                    <span id="ir-compare-card-b-count" style="font-size:28px; font-weight:800; color:#D97706;"></span>
                     <span style="font-size:11px; font-weight:600; color:var(--text-muted);">operational actions</span>
                   </div>
                   <span id="ir-compare-card-b-unit" style="font-size:10px; font-weight:600; color:var(--text-muted);"></span>
                 </div>
+              </div>
+            </div>
+
+            <!-- Associate Action Protocol: What Action User Needs to Take -->
+            <div id="ir-compare-associate-section" style="background:var(--surface); border:1px solid rgba(79,70,229,0.25); border-radius:var(--radius-sm); padding:16px; margin-bottom:16px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:20px;">👷</span>
+                  <div>
+                    <h4 style="font-size:13px; font-weight:800; margin:0; color:var(--text);">Associate Action Protocol: What Action Does the User Need to Take?</h4>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Side-by-side physical movements: Direct in-bay slides, cart staging, and verification of products already in correct positions</div>
+                  </div>
+                </div>
+                <span id="ir-associate-protocol-badge" style="font-size:11.5px; font-weight:800; padding:4px 12px; border-radius:20px;"></span>
+              </div>
+
+              <!-- Side-by-Side Protocol Cards -->
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:12px;">
+                <!-- Protocol Column A -->
+                <div style="background:rgba(79,70,229,0.03); border:1px solid rgba(79,70,229,0.2); border-radius:var(--radius-xs); padding:12px 14px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid rgba(79,70,229,0.15); padding-bottom:6px;">
+                    <span id="ir-associate-col-a-title" style="font-size:12px; font-weight:800; color:#4F46E5;">Instance A Associate Tasks</span>
+                    <span id="ir-associate-a-total-badge" class="meta-pill" style="font-size:10px; font-weight:700;"></span>
+                  </div>
+                  <div id="ir-associate-checklist-a" style="display:flex; flex-direction:column; gap:6px; font-size:11.5px;"></div>
+                </div>
+
+                <!-- Protocol Column B -->
+                <div style="background:rgba(217,119,6,0.03); border:1px solid rgba(217,119,6,0.2); border-radius:var(--radius-xs); padding:12px 14px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid rgba(217,119,6,0.15); padding-bottom:6px;">
+                    <span id="ir-associate-col-b-title" style="font-size:12px; font-weight:800; color:#D97706;">Instance B Associate Tasks</span>
+                    <span id="ir-associate-b-total-badge" class="meta-pill" style="font-size:10px; font-weight:700;"></span>
+                  </div>
+                  <div id="ir-associate-checklist-b" style="display:flex; flex-direction:column; gap:6px; font-size:11.5px;"></div>
+                </div>
+              </div>
+
+              <!-- Verification Callout for Compliant In-Position Items -->
+              <div id="ir-in-position-verification-callout" style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:var(--radius-xs); padding:10px 14px; font-size:11.5px; display:flex; align-items:center; gap:10px;">
+                <span style="font-size:18px;">✅</span>
+                <div id="ir-in-position-verification-text" style="color:#065F46; line-height:1.5;"></div>
               </div>
             </div>
 
@@ -726,9 +767,9 @@
                   <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Physical Shelf Touches</div>
                   <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">
                     <div style="font-size:12px; font-weight:700;">
-                      <span id="ir-effort-touches-a" style="color:#3B82F6; font-size:17px; font-weight:800;"></span>
+                      <span id="ir-effort-touches-a" style="color:#4F46E5; font-size:17px; font-weight:800;"></span>
                       <span style="color:var(--text-muted); font-size:11px;"> vs </span>
-                      <span id="ir-effort-touches-b" style="color:#10B981; font-size:17px; font-weight:800;"></span>
+                      <span id="ir-effort-touches-b" style="color:#D97706; font-size:17px; font-weight:800;"></span>
                     </div>
                     <span id="ir-effort-touches-delta" style="font-size:11.5px; font-weight:800;"></span>
                   </div>
@@ -738,9 +779,9 @@
                   <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Estimated Labor Time (SAM)</div>
                   <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">
                     <div style="font-size:12px; font-weight:700;">
-                      <span id="ir-labor-min-a" style="color:#3B82F6; font-size:17px; font-weight:800;"></span>
+                      <span id="ir-labor-min-a" style="color:#4F46E5; font-size:17px; font-weight:800;"></span>
                       <span style="color:var(--text-muted); font-size:11px;"> vs </span>
-                      <span id="ir-labor-min-b" style="color:#10B981; font-size:17px; font-weight:800;"></span>
+                      <span id="ir-labor-min-b" style="color:#D97706; font-size:17px; font-weight:800;"></span>
                     </div>
                     <span id="ir-labor-min-delta" style="font-size:11.5px; font-weight:800;"></span>
                   </div>
@@ -750,9 +791,9 @@
                   <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Double-Handling Rate (Cart Staging)</div>
                   <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">
                     <div style="font-size:12px; font-weight:700;">
-                      <span id="ir-double-handling-a" style="color:#3B82F6; font-size:17px; font-weight:800;"></span>
+                      <span id="ir-double-handling-a" style="color:#4F46E5; font-size:17px; font-weight:800;"></span>
                       <span style="color:var(--text-muted); font-size:11px;"> vs </span>
-                      <span id="ir-double-handling-b" style="color:#10B981; font-size:17px; font-weight:800;"></span>
+                      <span id="ir-double-handling-b" style="color:#D97706; font-size:17px; font-weight:800;"></span>
                     </div>
                     <span id="ir-double-handling-delta" style="font-size:11.5px; font-weight:800;"></span>
                   </div>
@@ -762,9 +803,9 @@
                   <div style="font-size:10.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Distinct Items Repositioned</div>
                   <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">
                     <div style="font-size:12px; font-weight:700;">
-                      <span id="ir-effort-items-a" style="color:#3B82F6; font-size:17px; font-weight:800;"></span>
+                      <span id="ir-effort-items-a" style="color:#4F46E5; font-size:17px; font-weight:800;"></span>
                       <span style="color:var(--text-muted); font-size:11px;"> vs </span>
-                      <span id="ir-effort-items-b" style="color:#10B981; font-size:17px; font-weight:800;"></span>
+                      <span id="ir-effort-items-b" style="color:#D97706; font-size:17px; font-weight:800;"></span>
                     </div>
                     <span id="ir-effort-items-delta" style="font-size:11.5px; font-weight:800;"></span>
                   </div>
@@ -777,14 +818,46 @@
                   <thead>
                     <tr>
                       <th>Effort Action Type</th>
-                      <th id="ir-compare-th-eff-a" style="text-align:right; color:#3B82F6;">Instance A</th>
-                      <th id="ir-compare-th-eff-b" style="text-align:right; color:#10B981;">Instance B</th>
+                      <th id="ir-compare-th-eff-a" style="text-align:right; color:#4F46E5;">Instance A</th>
+                      <th id="ir-compare-th-eff-b" style="text-align:right; color:#D97706;">Instance B</th>
                       <th style="text-align:right;">Difference</th>
                     </tr>
                   </thead>
                   <tbody id="ir-compare-effort-tbody">
                   </tbody>
                 </table>
+              </div>
+            </div>
+
+            <!-- Sequencing Anomalies & Algorithmic Conflict Inspector -->
+            <div id="ir-compare-anomalies-section" style="background:var(--surface); border:1px solid rgba(239,68,68,0.3); border-radius:var(--radius-sm); padding:16px; margin-bottom:16px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:20px;">🚨</span>
+                  <div>
+                    <h4 style="font-size:13px; font-weight:800; margin:0; color:var(--text);">Sequencing Anomalies &amp; Conflict Inspector</h4>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Automated detection of Slot Collisions, Cyclic Deadlocks (Mutual Swaps), Directional Contradictions, and Redundant Moves</div>
+                  </div>
+                </div>
+                <span id="ir-anomalies-header-badge" style="font-size:11.5px; font-weight:800; padding:4px 12px; border-radius:20px;"></span>
+              </div>
+
+              <div id="ir-anomalies-list-wrap">
+                <div class="ir-table-wrap" style="max-height:280px; overflow-y:auto;">
+                  <table class="ir-history-table" style="width:100%;">
+                    <thead style="position:sticky; top:0; background:var(--surface); z-index:2;">
+                      <tr>
+                        <th style="width:120px;">Instance</th>
+                        <th style="width:170px;">Conflict Type</th>
+                        <th style="width:150px;">Shelf / Slot</th>
+                        <th>Involved Products / UPCs</th>
+                        <th>Sequencing Impact &amp; Resolution</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ir-compare-anomalies-tbody">
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
@@ -839,8 +912,8 @@
                   <thead>
                     <tr>
                       <th>Planogram Bay</th>
-                      <th id="ir-compare-th-bay-a" style="text-align:right; color:#3B82F6;">Instance A</th>
-                      <th id="ir-compare-th-bay-b" style="text-align:right; color:#10B981;">Instance B</th>
+                      <th id="ir-compare-th-bay-a" style="text-align:right; color:#4F46E5;">Instance A</th>
+                      <th id="ir-compare-th-bay-b" style="text-align:right; color:#D97706;">Instance B</th>
                       <th style="text-align:right;">Variance</th>
                     </tr>
                   </thead>
@@ -858,8 +931,8 @@
                   <thead>
                     <tr>
                       <th>Action Type</th>
-                      <th id="ir-compare-th-type-a" style="text-align:right; color:#3B82F6;">Instance A</th>
-                      <th id="ir-compare-th-type-b" style="text-align:right; color:#10B981;">Instance B</th>
+                      <th id="ir-compare-th-type-a" style="text-align:right; color:#4F46E5;">Instance A</th>
+                      <th id="ir-compare-th-type-b" style="text-align:right; color:#D97706;">Instance B</th>
                       <th style="text-align:right;">Difference</th>
                     </tr>
                   </thead>
@@ -877,8 +950,8 @@
                   <thead>
                     <tr>
                       <th>State</th>
-                      <th id="ir-compare-th-state-a" style="text-align:right; color:#3B82F6;">Instance A</th>
-                      <th id="ir-compare-th-state-b" style="text-align:right; color:#10B981;">Instance B</th>
+                      <th id="ir-compare-th-state-a" style="text-align:right; color:#4F46E5;">Instance A</th>
+                      <th id="ir-compare-th-state-b" style="text-align:right; color:#D97706;">Instance B</th>
                       <th style="text-align:right;">Difference</th>
                     </tr>
                   </thead>
@@ -892,22 +965,22 @@
             <div style="margin-bottom:16px;">
               <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
                 <div>
-                  <h4 style="font-size:12.5px; font-weight:700; margin:0; color:var(--text);">🔍 Item-by-Item UPC Movement Variance</h4>
-                  <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Compare exact slot relocation paths and optimization status for each product</div>
+                  <h4 style="font-size:12.5px; font-weight:700; margin:0; color:var(--text);">🔍 Item-by-Item Movement &amp; Associate Action Drilldown</h4>
+                  <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Compare exact associate operations (Slide Left/Right, Move Shelf, Stage to Cart) and verified in-position items</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
-                  <input type="text" id="ir-compare-item-search" placeholder="Search UPC or Title..." oninput="window.IrTaskFlow.filterProductVariance()" style="font-size:11.5px; padding:4px 10px; border-radius:var(--radius-xs); border:1px solid var(--border); background:var(--surface); color:var(--text); width:180px;" />
+                  <input type="text" id="ir-compare-item-search" placeholder="Search UPC, Title, or Action..." oninput="window.IrTaskFlow.filterProductVariance()" style="font-size:11.5px; padding:4px 10px; border-radius:var(--radius-xs); border:1px solid var(--border); background:var(--surface); color:var(--text); width:200px;" />
                   <span id="ir-compare-item-count" class="meta-pill" style="font-size:10.5px;"></span>
                 </div>
               </div>
-              <div class="ir-table-wrap" style="max-height:420px; overflow-y:auto;">
+              <div class="ir-table-wrap" style="max-height:450px; overflow-y:auto;">
                 <table class="ir-history-table" style="width:100%;">
                   <thead style="position:sticky; top:0; background:var(--surface); z-index:2;">
                     <tr>
-                      <th style="width:120px;">UPC / SKU</th>
-                      <th>Product Description</th>
-                      <th id="ir-compare-th-item-a" style="color:#3B82F6;">Instance A Action</th>
-                      <th id="ir-compare-th-item-b" style="color:#10B981;">Instance B Action</th>
+                      <th style="width:115px;">UPC / SKU</th>
+                      <th style="width:200px;">Product Description</th>
+                      <th id="ir-compare-th-item-a" style="color:#4F46E5;">Instance A Action (User Takes)</th>
+                      <th id="ir-compare-th-item-b" style="color:#D97706;">Instance B Action (User Takes)</th>
                       <th style="text-align:right;">Variance Status</th>
                     </tr>
                   </thead>
@@ -1142,7 +1215,7 @@
   <script src="assets/js/jira-tracker.js?v=20260817p"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20260909a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261005b"></script>
+  <script src="assets/js/ir-flow.js?v=20261006a"></script>
   <script src="assets/js/app.v16.js?v=20260923c"></script>
 </body>
 </html>

@@ -1052,32 +1052,32 @@
         if (verdictTitle) { verdictTitle.textContent = `Action Counts Match — ${totalA} actions each`; verdictTitle.style.color = '#059669'; }
         if (verdictDesc) { verdictDesc.textContent = `Both tasks generated exactly ${totalA} actions across both instances (${instNameA} & ${instNameB}).`; verdictDesc.style.color = '#065F46'; }
       } else if (diff > 0) {
-        verdict.style.background = 'rgba(245,158,11,0.08)';
-        verdict.style.border = '1px solid rgba(245,158,11,0.3)';
-        if (verdictIcon) verdictIcon.textContent = '⚠️';
-        if (verdictTitle) { verdictTitle.textContent = `${instNameA} has ${Math.abs(diff)} more action(s) than ${instNameB} (${totalA} vs ${totalB})`; verdictTitle.style.color = '#B45309'; }
-        if (verdictDesc) { verdictDesc.textContent = `Task #${a.task_id} on ${instNameA} generated ${totalA} actions, while Task #${b.task_id} on ${instNameB} generated ${totalB} — a difference of +${Math.abs(diff)} (${cmp.difference_pct > 0 ? '+' : ''}${cmp.difference_pct}%).`; verdictDesc.style.color = '#92400E'; }
+        verdict.style.background = 'rgba(79,70,229,0.08)';
+        verdict.style.border = '1px solid rgba(79,70,229,0.3)';
+        if (verdictIcon) verdictIcon.textContent = '📊';
+        if (verdictTitle) { verdictTitle.textContent = `${instNameA} has ${Math.abs(diff)} more operational action(s) than ${instNameB} (${totalA} vs ${totalB})`; verdictTitle.style.color = '#4F46E5'; }
+        if (verdictDesc) { verdictDesc.textContent = `Task #${a.task_id} on ${instNameA} generated ${totalA} actions, while Task #${b.task_id} on ${instNameB} generated ${totalB} — a difference of +${Math.abs(diff)} (${cmp.difference_pct > 0 ? '+' : ''}${cmp.difference_pct}%).`; verdictDesc.style.color = '#4338CA'; }
       } else {
-        verdict.style.background = 'rgba(59,130,246,0.08)';
-        verdict.style.border = '1px solid rgba(59,130,246,0.3)';
+        verdict.style.background = 'rgba(217,119,6,0.08)';
+        verdict.style.border = '1px solid rgba(217,119,6,0.3)';
         if (verdictIcon) verdictIcon.textContent = '📉';
-        if (verdictTitle) { verdictTitle.textContent = `${instNameB} has ${Math.abs(diff)} more action(s) than ${instNameA} (${totalB} vs ${totalA})`; verdictTitle.style.color = '#1D4ED8'; }
-        if (verdictDesc) { verdictDesc.textContent = `Task #${b.task_id} on ${instNameB} generated ${totalB} actions, while Task #${a.task_id} on ${instNameA} generated ${totalA} — a difference of ${diff} (${cmp.difference_pct}%).`; verdictDesc.style.color = '#1E3A8A'; }
+        if (verdictTitle) { verdictTitle.textContent = `${instNameB} has ${Math.abs(diff)} more operational action(s) than ${instNameA} (${totalB} vs ${totalA})`; verdictTitle.style.color = '#D97706'; }
+        if (verdictDesc) { verdictDesc.textContent = `Task #${b.task_id} on ${instNameB} generated ${totalB} actions, while Task #${a.task_id} on ${instNameA} generated ${totalA} — a difference of ${diff} (${cmp.difference_pct}%).`; verdictDesc.style.color = '#B45309'; }
       }
     }
 
-    // Card Badges & Headers
+    // Card Badges & Headers (Cobalt Indigo vs Warm Amber)
     setText('ir-compare-card-a-badge', `${instNameA} (Instance A)`);
     setText('ir-compare-card-b-badge', `${instNameB} (Instance B)`);
 
-    // Card A
+    // Card A (Cobalt Indigo)
     setText('ir-compare-card-a-title', `Task #${a.task_id} — ${a.task_title || ''}`);
     const metaA = `Instance: ${instNameA}\nStore: ${a.store_name || '—'}\nPerformer: ${a.performer || '—'}\nDate: ${a.task_date || '—'}\nStatus: ${a.status || '—'}\nRestock Excluded: ${a.restock_count || 0} items\nTotal (with restock): ${a.total_raw_including_restock || totalA}`;
     byId('ir-compare-card-a-meta').innerHTML = metaA.split('\n').map(l => `<div>${l}</div>`).join('');
     setText('ir-compare-card-a-count', totalA);
     setText('ir-compare-card-a-unit', `excludes ${a.restock_count || 0} restock actions`);
 
-    // Card B
+    // Card B (Warm Amber)
     setText('ir-compare-card-b-title', `Task #${b.task_id} — ${b.task_title || ''}`);
     const metaB = `Instance: ${instNameB}\nStore: ${b.store_name || '—'}\nPerformer: ${b.performer || '—'}\nDate: ${b.task_date || '—'}\nStatus: ${b.status || '—'}\nRestock Excluded: ${b.restock_count || 0} items\nTotal (with restock): ${b.total_raw_including_restock || totalB}`;
     byId('ir-compare-card-b-meta').innerHTML = metaB.split('\n').map(l => `<div>${l}</div>`).join('');
@@ -1101,12 +1101,109 @@
         diffBadge.style.color = '#059669';
       } else {
         diffBadge.textContent = diff > 0 ? `${instNameA} +${Math.abs(diff)}` : `${instNameB} +${Math.abs(diff)}`;
-        diffBadge.style.background = diff > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)';
-        diffBadge.style.color = diff > 0 ? '#B45309' : '#1D4ED8';
+        diffBadge.style.background = diff > 0 ? 'rgba(79,70,229,0.15)' : 'rgba(217,119,6,0.15)';
+        diffBadge.style.color = diff > 0 ? '#4F46E5' : '#D97706';
       }
     }
 
+    // -------------------------------------------------------------
+    // Associate Action Protocol: What Action User Needs to Take
+    // -------------------------------------------------------------
+    const proto = data.associate_protocol || {};
+    const protoA = proto.checklist_a || a.associate_checklist || {};
+    const protoB = proto.checklist_b || b.associate_checklist || {};
+
+    setText('ir-associate-col-a-title', `${labelA} Physical Tasks`);
+    setText('ir-associate-col-b-title', `${labelB} Physical Tasks`);
+    setText('ir-associate-a-total-badge', `${totalA} Ops`);
+    setText('ir-associate-b-total-badge', `${totalB} Ops`);
+
+    const protoBadge = byId('ir-associate-protocol-badge');
+    if (protoBadge) {
+      if ((protoA.staged_to_cart || 0) === 0 && (protoB.staged_to_cart || 0) > 0) {
+        protoBadge.textContent = `🟢 Direct Slide Optimized (0 Cart Staging in ${instNameA})`;
+        protoBadge.style.background = 'rgba(16,185,129,0.15)';
+        protoBadge.style.color = '#059669';
+      } else {
+        protoBadge.textContent = '📋 Associate Physical Protocols';
+        protoBadge.style.background = 'rgba(79,70,229,0.15)';
+        protoBadge.style.color = '#4F46E5';
+      }
+    }
+
+    function buildChecklistHtml(p, colorClass) {
+      const slidesR = p.slides_right || 0;
+      const slidesL = p.slides_left || 0;
+      const totalSlides = p.total_slides || (slidesR + slidesL);
+      const swaps = p.mutual_swaps || 0;
+      const xShelf = p.cross_shelf || 0;
+      const xBay = p.cross_bay || 0;
+      const staged = p.staged_to_cart || 0;
+      const placed = p.placed_from_cart || 0;
+      const inPlace = p.untouched_compliant || 0;
+      const redundant = p.redundant_moves || 0;
+
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0;">
+          <span>👉 <strong>Slide Right</strong> (In-Bay):</span>
+          <span style="font-weight:700; ${colorClass}">${slidesR} items</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0;">
+          <span>👈 <strong>Slide Left</strong> (In-Bay):</span>
+          <span style="font-weight:700; ${colorClass}">${slidesL} items</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; border-top:1px dashed var(--border);">
+          <span>↔️ <strong>Total In-Bay Slides</strong>:</span>
+          <span style="font-weight:800; ${colorClass}">${totalSlides} direct slides</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0;">
+          <span>🔄 <strong>Mutual Swaps</strong> ($A \\leftrightarrow B$):</span>
+          <span style="font-weight:700; color:${swaps > 0 ? '#DC2626' : 'var(--text-muted)'};">${swaps}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0;">
+          <span>↕️ <strong>Move Shelf</strong> (Vertical Shift):</span>
+          <span style="font-weight:700;">${xShelf}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0;">
+          <span>🚚 <strong>Cross-Bay Moves</strong>:</span>
+          <span style="font-weight:700;">${xBay}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; border-top:1px dashed var(--border);">
+          <span>📦 <strong>Stage to Cart</strong> (Off-Shelf):</span>
+          <span style="font-weight:700; color:${staged > 0 ? '#D97706' : 'var(--text-muted)'};">${staged} items</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0;">
+          <span>📥 <strong>Place from Cart</strong> (On-Shelf):</span>
+          <span style="font-weight:700; color:${placed > 0 ? '#D97706' : 'var(--text-muted)'};">${placed} items</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; border-top:1px dashed var(--border);">
+          <span>✅ <strong>In Target Position</strong> (Untouched):</span>
+          <span style="font-weight:800; color:#059669;">${inPlace} verified untouched</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0;">
+          <span>⚠️ <strong>Redundant Moves Flagged</strong>:</span>
+          <span style="font-weight:700; color:${redundant > 0 ? '#DC2626' : '#059669'};">${redundant === 0 ? '0 (Clean)' : redundant + ' redundant'}</span>
+        </div>
+      `;
+    }
+
+    const checkListAEl = byId('ir-associate-checklist-a');
+    if (checkListAEl) checkListAEl.innerHTML = buildChecklistHtml(protoA, 'color:#4F46E5;');
+
+    const checkListBEl = byId('ir-associate-checklist-b');
+    if (checkListBEl) checkListBEl.innerHTML = buildChecklistHtml(protoB, 'color:#D97706;');
+
+    const inPlaceTextEl = byId('ir-in-position-verification-text');
+    if (inPlaceTextEl) {
+      const inPlaceCountA = protoA.untouched_compliant || 0;
+      const redundantA = protoA.redundant_moves || 0;
+      const stagedB = protoB.staged_to_cart || 0;
+      inPlaceTextEl.innerHTML = `<strong>Position Integrity Check:</strong> In <strong>${instNameA}</strong>, <strong>${inPlaceCountA} product(s)</strong> are already in their correct target planogram coordinates. They were verified untouched and <strong>${redundantA} redundant moves</strong> were generated. In contrast, <strong>${instNameB}</strong> required <strong>${stagedB} cart-staging operations</strong>.`;
+    }
+
+    // -------------------------------------------------------------
     // Operational Effort Comparison (Excluding Restock)
+    // -------------------------------------------------------------
     const eff = data.effort_comparison || {};
     const touchesA = eff.touches_a || 0;
     const touchesB = eff.touches_b || 0;
@@ -1129,8 +1226,8 @@
         effortBadge.style.color = '#059669';
       } else {
         effortBadge.textContent = `🟠 ${Math.abs(touchesPct)}% Effort Increase in ${instNameA}`;
-        effortBadge.style.background = 'rgba(245,158,11,0.15)';
-        effortBadge.style.color = '#B45309';
+        effortBadge.style.background = 'rgba(217,119,6,0.15)';
+        effortBadge.style.color = '#D97706';
       }
     }
 
@@ -1140,7 +1237,7 @@
     if (touchesDeltaEl) {
       const isRed = touchesDiff < 0;
       touchesDeltaEl.textContent = `${touchesPct > 0 ? '+' : ''}${touchesPct}% (${touchesDiff > 0 ? '+' : ''}${touchesDiff} touches)`;
-      touchesDeltaEl.style.color = isRed ? '#059669' : (touchesDiff === 0 ? 'var(--text-muted)' : '#B45309');
+      touchesDeltaEl.style.color = isRed ? '#059669' : (touchesDiff === 0 ? 'var(--text-muted)' : '#D97706');
     }
 
     setText('ir-effort-items-a', itemsA);
@@ -1149,7 +1246,7 @@
     if (itemsDeltaEl) {
       const isRed = itemsDiff < 0;
       itemsDeltaEl.textContent = `${itemsPct > 0 ? '+' : ''}${itemsPct}% (${itemsDiff > 0 ? '+' : ''}${itemsDiff} items)`;
-      itemsDeltaEl.style.color = isRed ? '#059669' : (itemsDiff === 0 ? 'var(--text-muted)' : '#B45309');
+      itemsDeltaEl.style.color = isRed ? '#059669' : (itemsDiff === 0 ? 'var(--text-muted)' : '#D97706');
     }
 
     // Labor Time Modeling (SAM)
@@ -1167,7 +1264,7 @@
     if (laborDeltaEl) {
       const isTimeSaved = laborDiff < 0;
       laborDeltaEl.textContent = `${laborPct > 0 ? '+' : ''}${laborPct}% (${Math.abs(laborDiff)} min ${isTimeSaved ? 'saved' : 'more'})`;
-      laborDeltaEl.style.color = isTimeSaved ? '#059669' : (laborDiff === 0 ? 'var(--text-muted)' : '#B45309');
+      laborDeltaEl.style.color = isTimeSaved ? '#059669' : (laborDiff === 0 ? 'var(--text-muted)' : '#D97706');
     }
 
     setText('ir-double-handling-a', `${doubleA}%`);
@@ -1177,31 +1274,100 @@
       const doubleDiff = round1(doubleA - doubleB);
       const isReduced = doubleDiff < 0;
       doubleDeltaEl.textContent = `${doubleDiff > 0 ? '+' : ''}${doubleDiff}% staged`;
-      doubleDeltaEl.style.color = isReduced ? '#059669' : (doubleDiff === 0 ? 'var(--text-muted)' : '#B45309');
+      doubleDeltaEl.style.color = isReduced ? '#059669' : (doubleDiff === 0 ? 'var(--text-muted)' : '#D97706');
     }
 
     const effTbody = byId('ir-compare-effort-tbody');
     if (effTbody) {
       const breakdown = eff.breakdown || [];
       effTbody.innerHTML = breakdown.map(r => {
-        const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff > 0 ? '#B45309' : '#059669');
+        const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff < 0 ? '#059669' : '#D97706');
         const diffPrefix = r.diff > 0 ? '+' : '';
         return `<tr>
           <td><strong style="color:var(--text);">${r.action}</strong></td>
-          <td style="text-align:right; font-weight:700; font-size:13px; color:#3B82F6;">${r.count_a}</td>
-          <td style="text-align:right; font-weight:700; font-size:13px; color:#10B981;">${r.count_b}</td>
+          <td style="text-align:right; font-weight:700; font-size:13px; color:#4F46E5;">${r.count_a}</td>
+          <td style="text-align:right; font-weight:700; font-size:13px; color:#D97706;">${r.count_b}</td>
           <td style="text-align:right; font-weight:800; color:${diffColor};">${r.diff === 0 ? '—' : diffPrefix + r.diff}</td>
         </tr>`;
       }).join('');
 
       // Add Total Shelf Touches row
-      const totDiffColor = touchesDiff === 0 ? 'var(--text-muted)' : (touchesDiff < 0 ? '#059669' : '#B45309');
-      effTbody.innerHTML += `<tr style="border-top:2px solid var(--border); font-weight:800; background:rgba(99,102,241,0.04);">
+      const totDiffColor = touchesDiff === 0 ? 'var(--text-muted)' : (touchesDiff < 0 ? '#059669' : '#D97706');
+      effTbody.innerHTML += `<tr style="border-top:2px solid var(--border); font-weight:800; background:rgba(79,70,229,0.04);">
         <td>TOTAL PHYSICAL SHELF TOUCHES</td>
-        <td style="text-align:right; font-size:14px; color:#3B82F6;">${touchesA}</td>
-        <td style="text-align:right; font-size:14px; color:#10B981;">${touchesB}</td>
+        <td style="text-align:right; font-size:14px; color:#4F46E5;">${touchesA}</td>
+        <td style="text-align:right; font-size:14px; color:#D97706;">${touchesB}</td>
         <td style="text-align:right; font-size:14px; color:${totDiffColor};">${touchesDiff === 0 ? '—' : (touchesDiff > 0 ? '+' : '') + touchesDiff + ` (${touchesPct > 0 ? '+' : ''}${touchesPct}%)`}</td>
       </tr>`;
+    }
+
+    // -------------------------------------------------------------
+    // Sequencing Anomalies & Conflict Inspector Table
+    // -------------------------------------------------------------
+    const anomalies = data.anomalies || {};
+    const anomA = anomalies.a || {};
+    const anomB = anomalies.b || {};
+    const anomTbody = byId('ir-compare-anomalies-tbody');
+    const anomHeaderBadge = byId('ir-anomalies-header-badge');
+
+    const combinedConflicts = [];
+    (anomA.collisions || []).forEach(c => combinedConflicts.push({ ...c, instance: instNameA, instColor: '#4F46E5' }));
+    (anomA.cycles || []).forEach(c => combinedConflicts.push({ ...c, instance: instNameA, instColor: '#4F46E5' }));
+    (anomA.directional || []).forEach(c => combinedConflicts.push({ ...c, instance: instNameA, instColor: '#4F46E5' }));
+    (anomA.redundant_moves || []).forEach(c => combinedConflicts.push({
+      type: 'Redundant In-Place Move',
+      instance: instNameA,
+      instColor: '#4F46E5',
+      slot: c.slot_move || '—',
+      item_1: `${c.name} (UPC ${c.upc})`,
+      description: 'Item is already in target planogram position, but unnecessary move was queued.'
+    }));
+
+    (anomB.collisions || []).forEach(c => combinedConflicts.push({ ...c, instance: instNameB, instColor: '#D97706' }));
+    (anomB.cycles || []).forEach(c => combinedConflicts.push({ ...c, instance: instNameB, instColor: '#D97706' }));
+    (anomB.directional || []).forEach(c => combinedConflicts.push({ ...c, instance: instNameB, instColor: '#D97706' }));
+    (anomB.redundant_moves || []).forEach(c => combinedConflicts.push({
+      type: 'Redundant In-Place Move',
+      instance: instNameB,
+      instColor: '#D97706',
+      slot: c.slot_move || '—',
+      item_1: `${c.name} (UPC ${c.upc})`,
+      description: 'Item is already in target planogram position, but unnecessary move was queued.'
+    }));
+
+    if (anomHeaderBadge) {
+      if (combinedConflicts.length === 0) {
+        anomHeaderBadge.textContent = '🟢 0 Conflicts (Clean Sequencing)';
+        anomHeaderBadge.style.background = 'rgba(16,185,129,0.15)';
+        anomHeaderBadge.style.color = '#059669';
+      } else {
+        anomHeaderBadge.textContent = `🚨 ${combinedConflicts.length} Conflict(s) Detected`;
+        anomHeaderBadge.style.background = 'rgba(239,68,68,0.15)';
+        anomHeaderBadge.style.color = '#DC2626';
+      }
+    }
+
+    if (anomTbody) {
+      if (combinedConflicts.length === 0) {
+        anomTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:18px; color:#059669; font-weight:700;">✅ Clean Sequencing Verified — Zero Slot Collisions, Zero Mutual Swap Deadlocks, and Zero Redundant Moves across both tasks.</td></tr>`;
+      } else {
+        anomTbody.innerHTML = combinedConflicts.map(cf => {
+          let typeBadgeStyle = 'background:rgba(239,68,68,0.12); color:#DC2626; border:1px solid rgba(239,68,68,0.25);';
+          if (cf.type && cf.type.includes('Directional')) {
+            typeBadgeStyle = 'background:rgba(245,158,11,0.12); color:#B45309; border:1px solid rgba(245,158,11,0.25);';
+          }
+          const itemText = cf.item_2 ? `${cf.item_1}<br><span style="color:var(--text-muted); font-size:10px;">conflicts with:</span><br>${cf.item_2}` : (cf.item_1 || cf.name || '—');
+          const slotText = cf.slot || cf.shelf || cf.slots || '—';
+
+          return `<tr>
+            <td><span style="font-size:11px; font-weight:800; padding:2px 8px; border-radius:10px; background:${cf.instColor === '#4F46E5' ? 'rgba(79,70,229,0.12)' : 'rgba(217,119,6,0.12)'}; color:${cf.instColor};">${cf.instance}</span></td>
+            <td><span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-block; ${typeBadgeStyle}">${cf.type}</span></td>
+            <td style="font-family:monospace; font-size:11px; font-weight:700;">${slotText}</td>
+            <td style="font-size:11.5px;">${itemText}</td>
+            <td style="font-size:11px; color:var(--text-muted); line-height:1.4;">${cf.description || 'Sequencing conflict detected'}</td>
+          </tr>`;
+        }).join('');
+      }
     }
 
     // Algorithmic Quality & Safety Checks Card
@@ -1254,12 +1420,12 @@
         bayTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:12px; color:var(--text-muted);">No bay distribution data</td></tr>';
       } else {
         bayTbody.innerHTML = bayRows.map(r => {
-          const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff > 0 ? '#B45309' : '#059669');
+          const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff > 0 ? '#4F46E5' : '#D97706');
           const diffPrefix = r.diff > 0 ? '+' : '';
           return `<tr>
             <td><strong style="color:var(--text);">${r.bay}</strong></td>
-            <td style="text-align:right; font-weight:700; font-size:13px; color:#3B82F6;">${r.count_a}</td>
-            <td style="text-align:right; font-weight:700; font-size:13px; color:#10B981;">${r.count_b}</td>
+            <td style="text-align:right; font-weight:700; font-size:13px; color:#4F46E5;">${r.count_a}</td>
+            <td style="text-align:right; font-weight:700; font-size:13px; color:#D97706;">${r.count_b}</td>
             <td style="text-align:right; font-weight:800; color:${diffColor};">${r.diff === 0 ? '—' : diffPrefix + r.diff}</td>
           </tr>`;
         }).join('');
@@ -1286,21 +1452,21 @@
         typeTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:16px; color:var(--text-muted);">No action type data available</td></tr>';
       } else {
         typeTbody.innerHTML = rows.map(r => {
-          const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff > 0 ? '#B45309' : '#1D4ED8');
+          const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff > 0 ? '#4F46E5' : '#D97706');
           const diffPrefix = r.diff > 0 ? '+' : '';
           return `<tr>
             <td><span class="badge badge-gray">${r.type}</span></td>
-            <td style="text-align:right; font-weight:700; font-size:13px;">${r.count_a}</td>
-            <td style="text-align:right; font-weight:700; font-size:13px;">${r.count_b}</td>
+            <td style="text-align:right; font-weight:700; font-size:13px; color:#4F46E5;">${r.count_a}</td>
+            <td style="text-align:right; font-weight:700; font-size:13px; color:#D97706;">${r.count_b}</td>
             <td style="text-align:right; font-weight:800; color:${diffColor};">${r.diff === 0 ? '—' : diffPrefix + r.diff}</td>
           </tr>`;
         }).join('');
         // Add total row
-        typeTbody.innerHTML += `<tr style="border-top:2px solid var(--border); font-weight:800;">
+        typeTbody.innerHTML += `<tr style="border-top:2px solid var(--border); font-weight:800; background:rgba(79,70,229,0.04);">
           <td>TOTAL</td>
-          <td style="text-align:right; font-size:14px; color:#3B82F6;">${totalA}</td>
-          <td style="text-align:right; font-size:14px; color:#10B981;">${totalB}</td>
-          <td style="text-align:right; font-size:14px; color:${diff === 0 ? 'var(--text-muted)' : (diff > 0 ? '#B45309' : '#1D4ED8')};">${diff === 0 ? '—' : (diff > 0 ? '+' : '') + diff}</td>
+          <td style="text-align:right; font-size:14px; color:#4F46E5;">${totalA}</td>
+          <td style="text-align:right; font-size:14px; color:#D97706;">${totalB}</td>
+          <td style="text-align:right; font-size:14px; color:${diff === 0 ? 'var(--text-muted)' : (diff > 0 ? '#4F46E5' : '#D97706')};">${diff === 0 ? '—' : (diff > 0 ? '+' : '') + diff}</td>
         </tr>`;
       }
     }
@@ -1313,12 +1479,12 @@
         stateTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:16px; color:var(--text-muted);">No state data available</td></tr>';
       } else {
         stateTbody.innerHTML = rows.map(r => {
-          const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff > 0 ? '#B45309' : '#1D4ED8');
+          const diffColor = r.diff === 0 ? 'var(--text-muted)' : (r.diff > 0 ? '#4F46E5' : '#D97706');
           const diffPrefix = r.diff > 0 ? '+' : '';
           return `<tr>
             <td><span class="badge ${r.state === 'ACCEPTED' ? 'badge-green' : (r.state === 'REJECTED' ? 'badge-red' : 'badge-gray')}">${r.state}</span></td>
-            <td style="text-align:right; font-weight:700; font-size:13px;">${r.count_a}</td>
-            <td style="text-align:right; font-weight:700; font-size:13px;">${r.count_b}</td>
+            <td style="text-align:right; font-weight:700; font-size:13px; color:#4F46E5;">${r.count_a}</td>
+            <td style="text-align:right; font-weight:700; font-size:13px; color:#D97706;">${r.count_b}</td>
             <td style="text-align:right; font-weight:800; color:${diffColor};">${r.diff === 0 ? '—' : diffPrefix + r.diff}</td>
           </tr>`;
         }).join('');
@@ -1326,8 +1492,8 @@
     }
 
     // Item-by-Item UPC Variance Drilldown
-    setText('ir-compare-th-item-a', labelA);
-    setText('ir-compare-th-item-b', labelB);
+    setText('ir-compare-th-item-a', `${labelA} Action (User Takes)`);
+    setText('ir-compare-th-item-b', `${labelB} Action (User Takes)`);
     currentProductVarianceList = data.product_variance || [];
     renderProductVariance();
   }
@@ -1351,6 +1517,8 @@
         (it.upc && it.upc.toLowerCase().includes(filterText)) ||
         (it.name && it.name.toLowerCase().includes(filterText)) ||
         (it.variance_label && it.variance_label.toLowerCase().includes(filterText)) ||
+        (it.user_action_a && it.user_action_a.toLowerCase().includes(filterText)) ||
+        (it.user_action_b && it.user_action_b.toLowerCase().includes(filterText)) ||
         (it.action_a && it.action_a.toLowerCase().includes(filterText)) ||
         (it.action_b && it.action_b.toLowerCase().includes(filterText))
       );
@@ -1372,10 +1540,15 @@
       } else if (it.variance_badge === 'warning') {
         badgeStyle = 'background:rgba(245,158,11,0.15); color:#B45309; font-weight:700;';
       } else if (it.variance_badge === 'info') {
-        badgeStyle = 'background:rgba(59,130,246,0.15); color:#1D4ED8; font-weight:700;';
+        badgeStyle = 'background:rgba(79,70,229,0.15); color:#4F46E5; font-weight:700;';
       } else if (it.variance_badge === 'accent') {
         badgeStyle = 'background:rgba(139,92,246,0.15); color:#6D28D9; font-weight:700;';
       }
+
+      const actA = it.user_action_a || it.action_a || '—';
+      const actB = it.user_action_b || it.action_b || '—';
+      const slotA = it.slot_a && it.slot_a !== '—' ? `<div style="font-size:10px; color:var(--text-muted); font-family:monospace; margin-top:2px;">${it.slot_a}</div>` : '';
+      const slotB = it.slot_b && it.slot_b !== '—' ? `<div style="font-size:10px; color:var(--text-muted); font-family:monospace; margin-top:2px;">${it.slot_b}</div>` : '';
 
       return `<tr>
         <td style="font-family:monospace; font-size:11.5px; font-weight:700; color:var(--text);">${it.upc}</td>
@@ -1383,8 +1556,14 @@
           <div style="font-size:12px; font-weight:700; color:var(--text);">${it.name}</div>
           <div style="font-size:10.5px; color:var(--text-muted);">Bay ${it.bay} • Facings: ${it.facings_a} in A vs ${it.facings_b} in B</div>
         </td>
-        <td style="font-size:11.5px; color:#2563EB;">${it.action_a}</td>
-        <td style="font-size:11.5px; color:#059669;">${it.action_b}</td>
+        <td>
+          <div style="font-size:11.5px; font-weight:700; color:#4F46E5;">${actA}</div>
+          ${slotA}
+        </td>
+        <td>
+          <div style="font-size:11.5px; font-weight:700; color:#D97706;">${actB}</div>
+          ${slotB}
+        </td>
         <td style="text-align:right;">
           <span style="font-size:10.5px; padding:3px 8px; border-radius:12px; display:inline-block; ${badgeStyle}">${it.variance_label}</span>
         </td>
