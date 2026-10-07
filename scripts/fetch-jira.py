@@ -20,7 +20,9 @@ if raw_base_url and not raw_base_url.startswith("http://") and not raw_base_url.
 JIRA_BASE_URL = raw_base_url
 JIRA_USER_EMAIL = os.environ.get("JIRA_USER_EMAIL", "").strip()
 JIRA_API_TOKEN = os.environ.get("JIRA_API_TOKEN", "").strip()
-JIRA_PROJECT_KEY = os.environ.get("JIRA_PROJECT_KEY", "").strip()
+# Default to Store Intell QA project REB3 when secret/env is unset.
+# https://retech.atlassian.net/jira/software/c/projects/REB3
+JIRA_PROJECT_KEY = os.environ.get("JIRA_PROJECT_KEY", "REB3").strip() or "REB3"
 JIRA_CUSTOM_JQL = os.environ.get("JIRA_JQL", "").strip()
 
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "jira.json")
@@ -101,16 +103,23 @@ def fetch_jira_live():
     # 4. Construct candidate bounded JQL queries
     jql_candidates = []
     if JIRA_CUSTOM_JQL:
-        jql_candidates.append(JIRA_CUSTOM_JQL)
+        # If custom JQL omits project, pin it to the configured key so we never
+        # silently pull another team's board.
+        custom = JIRA_CUSTOM_JQL
+        if clean_key and "project" not in custom.lower():
+            custom = f'project = "{clean_key}" AND ({custom})'
+        jql_candidates.append(custom)
     if clean_key:
         jql_candidates.append(f'project = "{clean_key}" ORDER BY updated DESC')
         jql_candidates.append(f'project = "{clean_key}"')
         jql_candidates.append(f'project = {clean_key}')
         jql_candidates.append(f'project in ("{clean_key}")')
         jql_candidates.append(f'project = "{clean_key}" AND created >= -365d')
-    # Bounded fallback to any updated issue in the workspace
-    jql_candidates.append('ORDER BY updated DESC')
-    jql_candidates.append('created >= -365d ORDER BY created DESC')
+    else:
+        # Only when no project key is configured — avoid workspace-wide pulls
+        # that mix in unrelated projects (e.g. STORE vs REB3).
+        jql_candidates.append('ORDER BY updated DESC')
+        jql_candidates.append('created >= -365d ORDER BY created DESC')
 
     raw_issues = []
     executed_jql = ""
@@ -364,11 +373,15 @@ def fetch_jira_live():
             "url": f"{JIRA_BASE_URL}/browse/{key}"
         })
 
+    # Prefer the human project name from issues (e.g. "Rebotics 3") over the key alone.
+    project_display = next(iter(sorted(projects_set)), None) if projects_set else None
+
     return {
         "status": "live",
         "lastUpdated": now.isoformat(),
         "jiraUrl": JIRA_BASE_URL,
         "projectKey": clean_key or JIRA_PROJECT_KEY,
+        "projectName": project_display or clean_key or JIRA_PROJECT_KEY,
         "executedJql": executed_jql,
         "summary": {
             "totalDefects": len(issues),
@@ -404,7 +417,8 @@ def main():
             "lastUpdated": now,
             "lastError": str(err),
             "jiraUrl": JIRA_BASE_URL or "https://your-domain.atlassian.net",
-            "projectKey": JIRA_PROJECT_KEY or "STORE",
+            "projectKey": JIRA_PROJECT_KEY or "REB3",
+            "projectName": "Rebotics 3" if (JIRA_PROJECT_KEY or "REB3") == "REB3" else (JIRA_PROJECT_KEY or "REB3"),
             "summary": {
                 "totalDefects": 0,
                 "openDefects": 0,

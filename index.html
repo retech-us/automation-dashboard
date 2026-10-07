@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20260909a" />
+  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261007e" />
   <script>
     (function() {
       try {
@@ -129,8 +129,68 @@
       <section class="panel" id="failures-panel">
         <div class="panel__header">
           <h2>Needs attention</h2>
-          <p>Triage feed of all tracked failures, regressions, flaky tests &amp; infra blockers</p>
+          <p>Triage feed of all tracked failures, regressions, flaky tests &amp; infra blockers — filter, then link or open Jira</p>
         </div>
+        <form id="attention-filters" class="attention-filters" aria-label="Filter failures">
+          <label class="attention-filters__field">
+            <span>Suite</span>
+            <select id="attention-filter-suite" name="suite">
+              <option value="">All suites</option>
+              <option value="web">Web</option>
+              <option value="mobile-ios">iOS</option>
+              <option value="mobile-android">Android</option>
+              <option value="api">API</option>
+            </select>
+          </label>
+          <label class="attention-filters__field">
+            <span>Bucket</span>
+            <select id="attention-filter-bucket" name="bucket">
+              <option value="">All buckets</option>
+              <option value="defect">Likely defect</option>
+              <option value="flaky">Flaky</option>
+              <option value="environment">Environment</option>
+            </select>
+          </label>
+          <label class="attention-filters__field">
+            <span>Product area</span>
+            <select id="attention-filter-area" name="area">
+              <option value="">All areas</option>
+              <option value="login">Login &amp; Access</option>
+              <option value="scans">Scans &amp; Capture</option>
+              <option value="tasks">Tasks</option>
+              <option value="approvals">Approvals &amp; AI Review</option>
+              <option value="price">Price Tags</option>
+              <option value="imports">Imports &amp; Data</option>
+              <option value="mobile">Mobile Associate</option>
+              <option value="api">API Contracts</option>
+            </select>
+          </label>
+          <label class="attention-filters__field">
+            <span>Lifecycle</span>
+            <select id="attention-filter-lifecycle" name="lifecycle">
+              <option value="">All stages</option>
+              <option value="detected">Detected</option>
+              <option value="investigating">Investigating</option>
+              <option value="linked">Jira linked</option>
+              <option value="fixed">Fixed</option>
+              <option value="reopened">Reopened</option>
+            </select>
+          </label>
+          <label class="attention-filters__field">
+            <span>Gaps</span>
+            <select id="attention-filter-orphan" name="orphan">
+              <option value="">All items</option>
+              <option value="unlinked">Failures with no Jira</option>
+              <option value="jira">Open Jira with no failing test</option>
+            </select>
+          </label>
+          <label class="attention-filters__field attention-filters__field--grow">
+            <span>Search</span>
+            <input type="search" id="attention-filter-q" name="q" placeholder="Title, feature, reason…" autocomplete="off" />
+          </label>
+          <button type="button" id="attention-filter-clear" class="btn btn--ghost">Clear</button>
+        </form>
+        <p id="attention-filter-summary" class="attention-filter-summary" hidden></p>
         <div id="failures-list" class="failures-list"></div>
         <p id="failures-empty" class="empty-state" hidden>No mapped failures in the current snapshot.</p>
       </section>
@@ -294,6 +354,17 @@
             </div>
           </div>
         </div>
+
+        <!-- Live quality findings from the runner snapshot (was previously rendered but hidden) -->
+        <section class="panel ir-quality-panel" aria-label="Intelligent Reset quality findings">
+          <div class="panel__header">
+            <h2>Quality findings</h2>
+            <p>Checks from the loaded task — what failed, with evidence you can put in Jira</p>
+          </div>
+          <div id="ir-quality-findings" class="ir-quality-findings"></div>
+          <div id="ir-quality-scans" class="ir-quality-scans"></div>
+          <div id="ir-quality-actions" class="ir-quality-actions-panel"></div>
+        </section>
 
         <!-- 4 Key Non-Technical Metric Cards -->
         <div class="ir-simple-kpi-grid">
@@ -1075,10 +1146,6 @@
         </div>
       </section>
 
-      <!-- Quality Findings & Scan Containers for Compatibility -->
-      <div id="ir-quality-findings" hidden></div>
-      <div id="ir-quality-scans" hidden></div>
-
       <!-- Action Batch Item Slide-over Drawer -->
       <div id="ir-flow-drawer-overlay" class="ir-flow-drawer-overlay" onclick="window.IrTaskFlow.openItemDrawer('', [])"></div>
       <aside id="ir-flow-drawer" class="ir-flow-drawer" aria-label="Action Batch Items Detail">
@@ -1175,7 +1242,7 @@
             </a>
           </div>
         </div>
-        <iframe id="iframe-ir-studio" src="test_runner.html?v=20260923c" title="Intelligent Reset Studio" style="width:100%; height:calc(100vh - 170px); border:none; display:block; background:var(--surface);"></iframe>
+        <iframe id="iframe-ir-studio" src="test_runner.html?v=20261007a" title="Intelligent Reset Studio" style="width:100%; height:calc(100vh - 170px); border:none; display:block; background:var(--surface);"></iframe>
       </section>
     </div>
 
@@ -1293,10 +1360,11 @@
   <script src="assets/bootstrap.js?v=20260901a"></script>
   <script src="assets/js/auth-gate.js?v=20260923b"></script>
   <script src="assets/js/live-tracker.js?v=20260817p"></script>
-  <script src="assets/js/jira-tracker.js?v=20260817p"></script>
-  <script src="assets/js/ir-live-dashboard.js?v=20260909a"></script>
+  <script src="assets/js/jira-tracker.js?v=20261007f"></script>
+  <script src="assets/js/issue-bridge.js?v=20261007e"></script>
+  <script src="assets/js/ir-live-dashboard.js?v=20261007a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
   <script src="assets/js/ir-flow.js?v=20261006d"></script>
-  <script src="assets/js/app.v16.js?v=20260923c"></script>
+  <script src="assets/js/app.v16.js?v=20261007e"></script>
 </body>
 </html>

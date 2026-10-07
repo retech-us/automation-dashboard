@@ -373,6 +373,47 @@
             background: rgba(255, 255, 255, 0.6);
         }
 
+        /* Focused Studio: hide create/lab/devops until Advanced is on */
+        .studio-advanced-only {
+            display: none !important;
+        }
+        body.studio-show-advanced .header-pill.studio-advanced-only {
+            display: inline-flex !important;
+        }
+        body.studio-show-advanced .mode-tabs.studio-advanced-only {
+            display: grid !important;
+        }
+        body.studio-show-advanced .panel.studio-advanced-only,
+        body.studio-show-advanced details.studio-advanced-only,
+        body.studio-show-advanced input.studio-advanced-only,
+        body.studio-show-advanced .form-control.studio-advanced-only {
+            display: block !important;
+        }
+        body:not(.studio-show-advanced) #tab-content-fresh,
+        body:not(.studio-show-advanced) #tab-content-testlab {
+            display: none !important;
+        }
+        body:not(.studio-show-advanced) #tab-content-existing {
+            display: block !important;
+        }
+        #btn-studio-advanced[aria-pressed="true"] {
+            background: #1E3A8A;
+            color: #FFFFFF;
+            border-color: #1E3A8A;
+        }
+        .studio-session-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .studio-session-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
         .mode-tab-btn.active {
             background: #FFFFFF;
             color: var(--brand-navy-900);
@@ -1072,33 +1113,32 @@
 
 <div class="container">
 
-    <!-- Top Studio Header -->
+    <!-- Top Studio Header — keep load/report status; tools live under Advanced -->
     <div class="runner-header">
         <div class="header-title-area">
-            <h1><span style="font-size: 18px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">🛒</span> Intelligent Reset Studio <span style="font-size: 10px; padding: 2px 8px; border-radius: 9999px; background: rgba(37, 99, 235, 0.4); border: 1px solid rgba(147, 197, 253, 0.5); font-weight: 700; color: #DBEAFE; letter-spacing: 0.05em;">PRO</span></h1>
-            <p>Direct Mobile &amp; Backend E2E Simulator &bull; Automated Historical Post-Mortem Audit</p>
+            <h1>Intelligent Reset Studio</h1>
+            <p>Load a task, check quality, open the evidence report</p>
         </div>
         <div class="header-badges">
             <a id="link-e2e-audit-report" href="javascript:void(0)" onclick="openE2EAuditReport()" class="header-pill" style="display: none; text-decoration: none; cursor: pointer; background: rgba(56, 189, 248, 0.25); border-color: rgba(56, 189, 248, 0.5); color: #BAE6FD;">
-                📡 E2E Audit Report (<span id="header-e2e-task">No Active Test</span>)
+                Evidence report (<span id="header-e2e-task">—</span>)
             </a>
             <a id="link-validation-report" href="javascript:void(0)" onclick="openActiveTaskReport()" class="header-pill" style="display: none; text-decoration: none; cursor: pointer; background: rgba(59, 130, 246, 0.25); border-color: rgba(96, 165, 250, 0.5); color: #BFDBFE;">
-                📄 Multi-Bay Report (<span id="header-report-task">No Active Test</span>)
+                Multi-bay report (<span id="header-report-task">—</span>)
             </a>
-            <a id="link-raw-json" href="/api/runner/raw_actions_json" target="_blank" class="header-pill" style="text-decoration: none; color: #F1F5F9; cursor: pointer;">
-                📦 Raw Action JSON ↗
+            <a id="link-raw-json" href="/api/runner/raw_actions_json" target="_blank" class="header-pill studio-advanced-only" style="text-decoration: none; color: #F1F5F9; cursor: pointer;">
+                Raw Action JSON ↗
             </a>
-            <a id="link-task-flow-replay" href="javascript:void(0)" onclick="openTaskFlowReplay()" class="header-pill" style="text-decoration: none; cursor: pointer; background: rgba(168, 85, 247, 0.25); border-color: rgba(192, 132, 252, 0.5); color: #E9D5FF;">
-                ⏱️ Flow Replay
+            <a id="link-task-flow-replay" href="javascript:void(0)" onclick="openTaskFlowReplay()" class="header-pill studio-advanced-only" style="text-decoration: none; cursor: pointer; background: rgba(168, 85, 247, 0.25); border-color: rgba(192, 132, 252, 0.5); color: #E9D5FF;">
+                Flow Replay
             </a>
-            <a id="link-shelf-reset" href="/shelf_reset_mobile.html" class="header-pill" style="text-decoration: none; color: #F1F5F9; cursor: pointer; background: rgba(16, 185, 129, 0.25); border-color: rgba(52, 211, 153, 0.5);">
-                📱 Shelf Reset Mobile UI
+            <a id="link-shelf-reset" href="/shelf_reset_mobile.html" class="header-pill studio-advanced-only" style="text-decoration: none; color: #F1F5F9; cursor: pointer; background: rgba(16, 185, 129, 0.25); border-color: rgba(52, 211, 153, 0.5);">
+                Shelf Reset Mobile
             </a>
-            <div class="header-pill">⚡ Instance: <b id="header-env">No Instance Selected</b></div>
-            <div class="header-pill">🤖 Android: <b id="disp-andr-branch">Not Selected</b></div>
-            <div class="header-pill">🍏 iOS: <b id="disp-ios-branch">Not Selected</b></div>
+            <div class="header-pill">Instance: <b id="header-env">None</b></div>
+            <div class="header-pill studio-advanced-only">Android: <b id="disp-andr-branch">—</b></div>
+            <div class="header-pill studio-advanced-only">iOS: <b id="disp-ios-branch">—</b></div>
             <div id="header-quality-gate" class="header-pill" style="background: rgba(16, 185, 129, 0.2); color: #6EE7B7; border-color: rgba(52, 211, 153, 0.4);">
-                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #34D399; box-shadow: 0 0 8px #34D399;"></span>
                 Status: <b id="disp-quality-gate">Ready</b>
             </div>
         </div>
@@ -1106,20 +1146,21 @@
 
     <!-- Session Control Bar -->
     <div class="quick-presets-bar">
-        <div class="preset-chips-left">
-            <span class="preset-title">⚡ Pipeline Mode:</span>
-            <span style="font-size: 11px; color: #475569; font-weight: 500;">Direct backend instance, store, modular planogram &amp; task verification</span>
-            <button type="button" class="preset-chip chip-reset" onclick="resetSession()">
-                🔄 Reset Session
-            </button>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Active Task:</span>
+        <div class="studio-session-meta">
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Active task</span>
             <span id="disp-task-id" class="badge badge-gray" style="font-size: 11px; font-weight: 800; padding: 3px 8px;">Not Loaded</span>
             <span id="disp-active-status-badge" class="badge badge-blue" style="font-size: 10.5px; padding: 3px 10px; font-weight: 700;">
-                STATUS: IDLE
+                IDLE
             </span>
             <span id="disp-task-status" style="display: none;">IDLE</span>
+        </div>
+        <div class="studio-session-actions">
+            <button type="button" id="btn-studio-advanced" class="preset-chip" aria-pressed="false" onclick="toggleStudioAdvanced()">
+                Advanced
+            </button>
+            <button type="button" class="preset-chip chip-reset" onclick="resetSession()">
+                Reset session
+            </button>
         </div>
     </div>
 
@@ -1156,21 +1197,21 @@
         <!-- Column 1: Task Controller & Status -->
         <div class="scrollable-col">
             
-            <!-- Execution Mode Switcher Tabs -->
-            <div class="mode-tabs">
+            <!-- Execution Mode Switcher Tabs (Advanced) -->
+            <div class="mode-tabs studio-advanced-only">
                 <button type="button" id="tab-btn-existing" class="mode-tab-btn active" onclick="switchExecutionTab('existing')">
-                    ⚡ 1. Task ID
+                    Task ID
                 </button>
                 <button type="button" id="tab-btn-fresh" class="mode-tab-btn" onclick="switchExecutionTab('fresh')">
-                    🚀 2. Fresh E2E
+                    Fresh E2E
                 </button>
                 <button type="button" id="tab-btn-testlab" class="mode-tab-btn" onclick="switchExecutionTab('testlab')">
-                    🧪 3. Test Lab
+                    Test Lab
                 </button>
             </div>
 
-            <!-- Target Mobile Platform Selector Card (Both / Android / iOS) -->
-            <div class="panel" style="border: 1px solid #C7D2FE; padding: 10px 12px; margin-bottom: 10px; background: linear-gradient(180deg, #FAF5FF 0%, #F8FAFC 100%);">
+            <!-- Target Mobile Platform Selector Card (Advanced) -->
+            <div class="panel studio-advanced-only" style="border: 1px solid #C7D2FE; padding: 10px 12px; margin-bottom: 10px; background: linear-gradient(180deg, #FAF5FF 0%, #F8FAFC 100%);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <span style="font-size: 10px; font-weight: 800; color: #4338CA; text-transform: uppercase; letter-spacing: 0.04em;">🎯 Target Mobile Platform</span>
                     <span id="platform-indicator-badge" class="badge badge-purple" style="font-size: 9px; font-weight: 700;">📱 Dual (Android &amp; iOS)</span>
@@ -1189,41 +1230,39 @@
                 <input type="hidden" id="cfg-platform" value="both">
             </div>
 
-            <!-- TAB 1: Fast Load Existing Task ID -->
+            <!-- Primary: Load Existing Task -->
             <div id="tab-content-existing" class="panel" style="border: 1px solid #BFDBFE; box-shadow: var(--shadow-sm); background: #FFFFFF;">
                 <div class="panel-title" style="color: #1D4ED8; margin-bottom: 10px;">
-                    <span style="display: flex; align-items: center; gap: 6px;">⚡ Run Existing Task ID</span>
-                    <span class="badge badge-blue">Fast Mode</span>
+                    <span>Load existing task</span>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Task ID (Occurrence Number)</label>
-                    <input type="number" id="cfg-task-id-direct" class="form-control" value="" placeholder="Enter Task ID (e.g. 27315169)" oninput="onTaskIdInput(this.value)" style="font-weight: 800; font-size: 13px; color: #1E3A8A; height: 32px; background: #EFF6FF; border-color: #BFDBFE;">
+                    <label class="form-label">Task ID</label>
+                    <input type="number" id="cfg-task-id-direct" class="form-control" value="" placeholder="e.g. 27315169" oninput="onTaskIdInput(this.value)" style="font-weight: 800; font-size: 13px; color: #1E3A8A; height: 32px; background: #EFF6FF; border-color: #BFDBFE;">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Backend Instance URL</label>
-                    <input type="text" id="cfg-base-url" class="form-control" value="" placeholder="e.g. https://stgsams.rebotics.net" oninput="onBaseUrlInput(this.value)" style="font-weight: 600;">
+                    <label class="form-label">Instance URL</label>
+                    <input type="text" id="cfg-base-url" class="form-control" value="" placeholder="e.g. https://harr.rebotics.net" oninput="onBaseUrlInput(this.value)" style="font-weight: 600;">
                 </div>
 
-                <!-- Credentials for Live Remote Instances -->
                 <div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 8px 10px; margin-bottom: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="font-size: 9.5px; font-weight: 800; color: #1E3A8A; text-transform: uppercase; letter-spacing: 0.04em;">🔑 Credentials &amp; Bearer Token</span>
+                        <span style="font-size: 9.5px; font-weight: 800; color: #1E3A8A; text-transform: uppercase; letter-spacing: 0.04em;">Sign in</span>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
                         <input type="text" id="cfg-username" class="form-control" placeholder="Username" style="height: 26px; font-size: 10.5px;" oninput="onExistingCredsInput()">
                         <input type="password" id="cfg-password" class="form-control" placeholder="Password" style="height: 26px; font-size: 10.5px;" oninput="onExistingCredsInput()">
                     </div>
-                    <input type="text" id="cfg-token" class="form-control" placeholder="Or paste Auth Token directly (optional)" style="height: 26px; font-size: 10.5px; font-family: 'JetBrains Mono', monospace;" oninput="onExistingCredsInput()">
+                    <input type="text" id="cfg-token" class="form-control studio-advanced-only" placeholder="Or paste auth token (optional)" style="height: 26px; font-size: 10.5px; font-family: 'JetBrains Mono', monospace;" oninput="onExistingCredsInput()">
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px;">
                     <button type="button" id="btn-fast-load" class="btn btn-primary btn-block" style="padding: 9px; font-size: 12px; font-weight: 800;" onclick="loadTaskById()">
-                        🚀 Load Actions &amp; Start Test
+                        Load task
                     </button>
                     <button type="button" id="btn-historical-audit" class="btn btn-teal btn-block" style="padding: 8px; font-size: 11px;" onclick="runHistoricalTaskAudit()">
-                        📊 Run Historical Post-Mortem Audit
+                        Run full check
                     </button>
                 </div>
             </div>
@@ -1350,8 +1389,8 @@
                 </div>
             </div>
 
-            <!-- Card 2: Git Branches & Codebase (Collapsible DevOps Settings) -->
-            <details class="panel" style="border: 1px solid var(--border-light); box-shadow: var(--shadow-xs); padding: 8px 12px; margin-bottom: 10px;" id="details-git-branches">
+            <!-- Card 2: Git Branches (Advanced) -->
+            <details class="panel studio-advanced-only" style="border: 1px solid var(--border-light); box-shadow: var(--shadow-xs); padding: 8px 12px; margin-bottom: 10px;" id="details-git-branches">
                 <summary style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text-secondary); user-select: none;">
                     <span style="display: flex; align-items: center; gap: 6px;">🌿 Git Branches &amp; Repos (Optional)</span>
                     <span id="git-status-badge" class="badge badge-green" style="font-size: 8.5px;">Ready</span>
@@ -1970,6 +2009,20 @@
         if (el) el.value = val;
     }
 
+    function toggleStudioAdvanced(force) {
+        const open = typeof force === 'boolean'
+            ? force
+            : !document.body.classList.contains('studio-show-advanced');
+        document.body.classList.toggle('studio-show-advanced', open);
+        const btn = document.getElementById('btn-studio-advanced');
+        if (btn) {
+            btn.setAttribute('aria-pressed', open ? 'true' : 'false');
+            btn.textContent = open ? 'Advanced ▾' : 'Advanced';
+        }
+        // Closing Advanced always returns to the everyday Task ID flow.
+        if (!open) switchExecutionTab('existing');
+    }
+
     function switchExecutionTab(tab) {
         const btnExisting = document.getElementById('tab-btn-existing');
         const btnFresh = document.getElementById('tab-btn-fresh');
@@ -1977,6 +2030,11 @@
         const contentExisting = document.getElementById('tab-content-existing');
         const contentFresh = document.getElementById('tab-content-fresh');
         const contentTestLab = document.getElementById('tab-content-testlab');
+
+        // Fresh / Test Lab require Advanced so the controls stay discoverable.
+        if ((tab === 'fresh' || tab === 'testlab') && !document.body.classList.contains('studio-show-advanced')) {
+            toggleStudioAdvanced(true);
+        }
 
         // Reset classes and displays
         if (btnExisting) btnExisting.className = 'mode-tab-btn';
@@ -4158,6 +4216,7 @@
 
     // Initialize on page load
     window.addEventListener('DOMContentLoaded', () => {
+        toggleStudioAdvanced(false);
         updateHeaderInstanceAndVersion('', '');
         renderBayUploadGrid();
         fetchGitBranches();
