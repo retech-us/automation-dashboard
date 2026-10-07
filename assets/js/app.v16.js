@@ -693,9 +693,72 @@ function repoLabel(repoId) {
   return `${d.icon} ${d.label}`.trim();
 }
 
+/** Index of rendered failures by IssueBridge id — used by Jira action buttons. */
+let FAILURE_INDEX = {};
+
+function failureBridgeId(f) {
+  return window.IssueBridge ? window.IssueBridge.failureId(f) : `${f.repo}|${f.name}|${f.feature}`;
+}
+
+function renderFailureLifecycleBlock(f) {
+  if (!window.IssueBridge) return '';
+  const id = failureBridgeId(f);
+  const state = window.IssueBridge.getState(f);
+  const meta = window.IssueBridge.STATES[state] || window.IssueBridge.STATES.detected;
+  const actions = [];
+  if (state === 'detected' || state === 'reopened') {
+    actions.push(`<button type="button" class="btn btn--ghost" data-lifecycle-state="investigating" data-lifecycle-id="${escapeHtml(id)}">Mark investigating</button>`);
+  }
+  if (state === 'investigating' || state === 'linked' || state === 'reopened') {
+    actions.push(`<button type="button" class="btn btn--ghost" data-lifecycle-state="fixed" data-lifecycle-id="${escapeHtml(id)}">Mark fixed</button>`);
+  }
+  if (state === 'fixed') {
+    actions.push(`<button type="button" class="btn btn--ghost" data-lifecycle-state="verified" data-lifecycle-id="${escapeHtml(id)}">Mark verified</button>`);
+  }
+  if (state !== 'detected') {
+    actions.push(`<button type="button" class="btn btn--ghost" data-lifecycle-state="detected" data-lifecycle-id="${escapeHtml(id)}">Reset</button>`);
+  }
+  return `
+    <div class="failure-lifecycle">
+      <span class="lifecycle-pill lifecycle-pill--${escapeHtml(state)}">${escapeHtml(meta.label)}</span>
+      <span class="failure-lifecycle__hint">${escapeHtml(meta.nextHint)}</span>
+      <div class="failure-lifecycle__actions">${actions.join('')}</div>
+    </div>`;
+}
+
+function renderFailureJiraBlock(f) {
+  if (!window.IssueBridge) return '';
+  const id = failureBridgeId(f);
+  const linked = window.IssueBridge.getLink(f);
+  if (linked?.key) {
+    const href = linked.url || window.IssueBridge.browseUrl(linked.key);
+    return `
+      <div class="failure-jira">
+        <span class="failure-jira__linked">Linked: <a href="${escapeHtml(href)}" target="_blank" rel="noopener">${escapeHtml(linked.key)}</a></span>
+        <button type="button" class="btn btn--ghost" data-jira-unlink="${escapeHtml(id)}">Unlink</button>
+        <a class="btn btn--ghost" href="${escapeHtml(href)}" target="_blank" rel="noopener">Open in Jira</a>
+      </div>`;
+  }
+  const matches = window.IssueBridge.findMatches(f, 3);
+  const matchHtml = matches.length
+    ? `<span class="failure-jira__matches">Possible: ${matches.map((m) =>
+      `<button type="button" class="btn btn--ghost" data-jira-link="${escapeHtml(id)}" data-jira-key="${escapeHtml(m.key)}" data-jira-url="${escapeHtml(m.url || window.IssueBridge.browseUrl(m.key))}">${escapeHtml(m.key)}</button>`
+    ).join(' ')}</span>`
+    : '<span class="failure-jira__matches">No close match in synced Jira data</span>';
+  return `
+    <div class="failure-jira">
+      ${matchHtml}
+      <button type="button" class="btn btn--ghost" data-jira-create="${escapeHtml(id)}">Create in Jira</button>
+      <button type="button" class="btn btn--ghost" data-jira-search="${escapeHtml(id)}">Search Jira tab</button>
+    </div>`;
+}
+
 function renderFailureItem(f) {
   const status = f.status === 'broken' ? 'broken' : 'failed';
   const explanation = explainFailure(f);
+  const id = failureBridgeId(f);
+  const lifeState = window.IssueBridge ? window.IssueBridge.getState(f) : 'detected';
+  FAILURE_INDEX[id] = f;
   const links = [];
   if (hasValue(f.reportUrl)) {
     links.push(`<a class="failure-link tech-only" href="${escapeHtml(f.reportUrl)}" target="_blank" rel="noopener">Allure</a>`);
@@ -705,9 +768,10 @@ function renderFailureItem(f) {
   }
   const linksHtml = links.length ? `<div class="failure-links">${links.join('')}</div>` : '';
   return `
-    <div class="failure-item failure-item--${explanation.bucketId}">
+    <div class="failure-item failure-item--${explanation.bucketId} failure-item--life-${escapeHtml(lifeState)}" data-failure-id="${escapeHtml(id)}" data-repo="${escapeHtml(f.repo || '')}" data-bucket="${escapeHtml(explanation.bucketId)}" data-lifecycle="${escapeHtml(lifeState)}">
       <div class="failure-item__tags">
         <span class="bucket-pill bucket-pill--${explanation.bucketId}">${escapeHtml(explanation.bucketLabel)}</span>
+        <span class="lifecycle-pill lifecycle-pill--${escapeHtml(lifeState)}">${escapeHtml((window.IssueBridge?.STATES?.[lifeState] || {}).label || 'Detected')}</span>
         <span class="status-pill status-pill--${status}">${status === 'broken' ? 'unstable' : 'failed'}</span>
         <span class="suite-tag">${escapeHtml(repoLabel(f.repo))}</span>
       </div>
@@ -718,6 +782,89 @@ function renderFailureItem(f) {
         <p class="failure-next"><strong>Suggested next step:</strong> ${escapeHtml(explanation.nextStep)}</p>
         ${explanation.detail ? `<p class="failure-meta tech-only">${escapeHtml(explanation.detail)}</p>` : ''}
         ${linksHtml}
+        ${renderFailureLifecycleBlock(f)}
+        ${renderFailureJiraBlock(f)}
+      </div>
+    </div>`;
+}
+
+function renderVerifiedClearedSection() {
+  if (!window.IssueBridge) return '';
+  const rows = window.IssueBridge.listVerified(12);
+  if (!rows.length) return '';
+  const items = rows.map((row) => {
+    const when = row.verifiedAt || row.updatedAt || '';
+    const day = when ? new Date(when).toLocaleDateString() : '';
+    const jira = row.key
+      ? `<a href="${escapeHtml(row.url || window.IssueBridge.browseUrl(row.key))}" target="_blank" rel="noopener">${escapeHtml(row.key)}</a>`
+      : 'No ticket';
+    return `<li><strong>${escapeHtml(row.title || 'Cleared failure')}</strong> · ${escapeHtml(repoLabel(row.repo))} · ${jira}${day ? ` · ${escapeHtml(day)}` : ''}</li>`;
+  }).join('');
+  return `
+    <div class="verified-cleared" aria-label="Recently verified failures">
+      <h3>Recently verified (cleared)</h3>
+      <p>These were linked/fixed and no longer appear in the latest failure list.</p>
+      <ul>${items}</ul>
+    </div>`;
+}
+
+function renderOrphanSummaryBar(orphans, activeOrphan) {
+  if (!orphans) return '';
+  const unlinked = orphans.counts.unlinked || 0;
+  const jira = orphans.counts.orphanJira || 0;
+  if (!unlinked && !jira) {
+    return `
+      <div class="orphan-summary orphan-summary--ok" aria-label="Automation and Jira coverage">
+        <strong>Coverage looks tight.</strong>
+        <span>Every mapped failure has a Jira link or a close ticket match, and open bugs have a matching failure signal.</span>
+      </div>`;
+  }
+  return `
+    <div class="orphan-summary" aria-label="Automation and Jira gaps">
+      <div class="orphan-summary__copy">
+        <strong>Gaps to close</strong>
+        <span>Failures without tickets, and open bugs with no failing test.</span>
+      </div>
+      <div class="orphan-summary__actions">
+        <button type="button" class="btn btn--ghost orphan-chip ${activeOrphan === 'unlinked' ? 'orphan-chip--active' : ''}" data-orphan-filter="unlinked">
+          ${unlinked} failure${unlinked === 1 ? '' : 's'} with no Jira
+        </button>
+        <button type="button" class="btn btn--ghost orphan-chip ${activeOrphan === 'jira' ? 'orphan-chip--active' : ''}" data-orphan-filter="jira">
+          ${jira} open Jira bug${jira === 1 ? '' : 's'} with no failing test
+        </button>
+        ${activeOrphan ? '<button type="button" class="btn btn--ghost" data-orphan-filter="">Show all failures</button>' : ''}
+      </div>
+    </div>`;
+}
+
+function renderOrphanJiraPanel(orphanIssues) {
+  if (!orphanIssues?.length) {
+    return `
+      <div class="orphan-jira-panel" aria-label="Open Jira bugs with no failing test">
+        <h3>Open Jira bugs with no failing test</h3>
+        <p class="empty-state">No open Jira bugs look disconnected from the current failure list.</p>
+      </div>`;
+  }
+  const rows = orphanIssues.slice(0, 40).map((issue) => `
+    <tr>
+      <td><a href="${escapeHtml(issue.url)}" target="_blank" rel="noopener">${escapeHtml(issue.key)}</a></td>
+      <td>${escapeHtml(issue.summary)}</td>
+      <td>${escapeHtml(issue.status)}</td>
+      <td>${escapeHtml(issue.priority || '—')}</td>
+      <td>${escapeHtml(issue.assignee || 'Unassigned')}</td>
+      <td>
+        <button type="button" class="btn btn--ghost" data-jira-orphan-search="${escapeHtml(issue.key)}" data-jira-orphan-summary="${escapeHtml(issue.summary)}">Search failures</button>
+      </td>
+    </tr>`).join('');
+  return `
+    <div class="orphan-jira-panel" aria-label="Open Jira bugs with no failing test">
+      <h3>Open Jira bugs with no failing test</h3>
+      <p>These open defects are not linked to a current automation failure and do not closely match one. Confirm they are still real, or close/update them.</p>
+      <div class="orphan-jira-table-wrap">
+        <table class="orphan-jira-table">
+          <thead><tr><th>Key</th><th>Summary</th><th>Status</th><th>Priority</th><th>Assignee</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>
     </div>`;
 }
@@ -1070,17 +1217,21 @@ function computeReleaseGate(summaries) {
       blockers.push({
         title: `${REPO_DISPLAY[s.id]?.label || s.title} at risk`,
         detail: s.sentence || `${s.passPct}% pass · ${s.counts?.review || 0} need review`,
-        tab: 'suites',
+        tab: 'attention',
+        suite: s.id,
+        bucket: '',
       });
     }
   }
   for (const f of failures.slice(0, 8)) {
     const exp = explainFailure(f);
-    if (exp.bucket === 'defect' || exp.bucket === 'environment') {
+    if (exp.bucketId === 'defect' || exp.bucketId === 'environment') {
       blockers.push({
         title: friendlyFailureTitle(f),
         detail: `${exp.bucketLabel} · ${REPO_DISPLAY[f.repo]?.label || f.repo}`,
         tab: 'attention',
+        suite: f.repo || '',
+        bucket: exp.bucketId || exp.bucket || '',
       });
     }
   }
@@ -1117,6 +1268,8 @@ function computeReleaseGate(summaries) {
       title: friendlyFailureTitle(f),
       detail: `${exp.bucketLabel} · ${REPO_DISPLAY[f.repo]?.label || f.repo}`,
       tab: 'attention',
+      suite: f.repo || '',
+      bucket: exp.bucketId || exp.bucket || '',
     });
   }
 
@@ -1211,7 +1364,7 @@ function renderOverallBanner(summaries) {
   const blockers = gate.blockers.length
     ? `<ol class="gate-blockers">${gate.blockers.map((b, i) => `
         <li>
-          <button type="button" class="gate-blocker" data-goto-tab="${escapeHtml(b.tab || 'attention')}">
+          <button type="button" class="gate-blocker" data-goto-tab="${escapeHtml(b.tab || 'attention')}" data-goto-attention data-suite-filter="${escapeHtml(b.suite || '')}" data-bucket="${escapeHtml(b.bucket || '')}">
             <span class="gate-blocker__n">${i + 1}</span>
             <span>
               <strong>${escapeHtml(b.title)}</strong>
@@ -1245,7 +1398,7 @@ function renderOverallBanner(summaries) {
     const wowSuite = (wow.suites || []).find((x) => x.id === s.id);
     const d = formatDelta(wowSuite?.delta);
     return `
-    <article class="suite-health suite-health--${s.level}" data-suite="${escapeHtml(s.id)}">
+    <article class="suite-health suite-health--${s.level}" data-suite="${escapeHtml(s.id)}" data-goto-attention data-suite-filter="${escapeHtml(s.id)}" role="button" tabindex="0" title="Open Needs attention for this suite">
       <div class="suite-health__top">
         <span class="suite-health__name">${s.icon} ${escapeHtml(REPO_DISPLAY[s.id]?.label || s.title)}</span>
         <span class="suite-health__badge">${escapeHtml(s.label)}</span>
@@ -1258,6 +1411,7 @@ function renderOverallBanner(summaries) {
         ${wowSuite?.delta != null ? ` · <span class="trend-dir trend-dir--${d.cls}">${escapeHtml(d.text)} vs last week</span>` : ''}
       </p>
       <p class="suite-health__sentence">${escapeHtml(s.sentence)}</p>
+      <p class="suite-health__cta">${s.counts.review ? `View ${s.counts.review} needing review →` : 'Open suite triage →'}</p>
     </article>`;
   }).join('');
 
@@ -1323,7 +1477,7 @@ function renderBusinessAreas(summaries) {
       ? `<p class="area-tile__sample">${escapeHtml(friendlyFailureTitle(area.sample[0]))} — ${escapeHtml(explainFailure(area.sample[0]).meaning)}</p>`
       : `<p class="area-tile__sample area-tile__sample--ok">No open issues mapped here</p>`;
     return `
-      <article class="area-tile area-tile--${area.status}">
+      <article class="area-tile area-tile--${area.status}" data-goto-attention data-area="${escapeHtml(area.id)}" role="button" tabindex="0" title="Open Needs attention filtered to ${escapeHtml(area.label)}">
         <div class="area-tile__top">
           <span class="area-dot" aria-hidden="true"></span>
           <span class="area-tile__status">${statusLabel}</span>
@@ -1331,6 +1485,7 @@ function renderBusinessAreas(summaries) {
         <h3 class="area-tile__title">${escapeHtml(area.label)}</h3>
         <p class="area-tile__blurb">${escapeHtml(area.blurb)}</p>
         ${sample}
+        <p class="area-tile__cta">${area.hitCount ? `View ${area.hitCount} issue${area.hitCount === 1 ? '' : 's'} →` : 'Open triage →'}</p>
       </article>`;
   }).join('');
 
@@ -1497,7 +1652,7 @@ function renderIssueTriage(summaries) {
         <span>${escapeHtml(REPO_DISPLAY[f.repo]?.label || f.repo)}</span>
       </li>`).join('') || '<li class="triage-empty">None in the latest mapped failures</li>';
     return `
-      <article class="triage-card triage-card--${id}">
+      <article class="triage-card triage-card--${id}" data-goto-attention data-bucket="${id}" role="button" tabindex="0" title="Open Needs attention filtered to ${escapeHtml(meta.label)}">
         <div class="triage-card__top">
           <h3>${escapeHtml(meta.label)}</h3>
           <span class="triage-count">${n}</span>
@@ -1505,6 +1660,7 @@ function renderIssueTriage(summaries) {
         <p class="triage-card__blurb">${escapeHtml(meta.blurb)}</p>
         <p class="triage-card__next"><strong>Do this:</strong> ${escapeHtml(meta.nextStep)}</p>
         <ul class="triage-samples">${sampleHtml}</ul>
+        <p class="triage-card__cta">${n ? `Review ${n} in Needs attention →` : 'Open Needs attention →'}</p>
       </article>`;
   }).join('');
 
@@ -1874,18 +2030,133 @@ function renderAiImpact(summaries, aiImpact, aiUsage) {
     </div>`;
 }
 
-function renderFailures(summaries) {
+function collectAttentionFailures(summaries) {
   const items = [];
-  for (const summary of summaries) {
+  for (const summary of summaries || []) {
     if (!summary?.topFailures?.length) continue;
     for (const failure of summary.topFailures.slice(0, 8)) {
       items.push({ repo: summary.repo, ...failure });
     }
   }
-  if (!items.length) return null;
+  return items;
+}
+
+function filterAttentionFailures(items, filters) {
+  const suite = (filters.suite || '').trim();
+  const bucket = (filters.bucket || '').trim();
+  const areaId = (filters.area || '').trim();
+  const lifecycle = (filters.lifecycle || '').trim();
+  const orphan = (filters.orphan || '').trim();
+  const q = (filters.q || '').trim().toLowerCase();
+  const area = BUSINESS_AREAS.find((a) => a.id === areaId) || null;
+  const byRepo = Object.fromEntries((CURRENT_RESULTS || []).map((s) => [s.repo, s]));
+
+  return items.filter((f) => {
+    if (suite && f.repo !== suite) return false;
+    if (bucket && classifyIssueBucket(f) !== bucket) return false;
+    if (area && !matchArea(area, f, byRepo[f.repo])) return false;
+    if (lifecycle && window.IssueBridge && window.IssueBridge.getState(f) !== lifecycle) return false;
+    if (orphan === 'unlinked' && window.IssueBridge && window.IssueBridge.getLink(f)) return false;
+    if (q) {
+      const blob = `${friendlyFailureTitle(f)} ${f.name || ''} ${f.feature || ''} ${f.reason || ''} ${f.category || ''}`.toLowerCase();
+      if (!blob.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function syncAttentionFilterControls(filters) {
+  const suite = document.getElementById('attention-filter-suite');
+  const bucket = document.getElementById('attention-filter-bucket');
+  const area = document.getElementById('attention-filter-area');
+  const lifecycle = document.getElementById('attention-filter-lifecycle');
+  const orphan = document.getElementById('attention-filter-orphan');
+  const q = document.getElementById('attention-filter-q');
+  if (suite) suite.value = filters.suite || '';
+  if (bucket) bucket.value = filters.bucket || '';
+  if (area) area.value = filters.area || '';
+  if (lifecycle) lifecycle.value = filters.lifecycle || '';
+  if (orphan) orphan.value = filters.orphan || '';
+  if (q) q.value = filters.q || '';
+}
+
+function readAttentionFiltersFromForm() {
+  return {
+    suite: document.getElementById('attention-filter-suite')?.value || '',
+    bucket: document.getElementById('attention-filter-bucket')?.value || '',
+    area: document.getElementById('attention-filter-area')?.value || '',
+    lifecycle: document.getElementById('attention-filter-lifecycle')?.value || '',
+    orphan: document.getElementById('attention-filter-orphan')?.value || '',
+    q: document.getElementById('attention-filter-q')?.value || '',
+  };
+}
+
+function gotoAttention(filters = {}) {
+  const next = {
+    suite: filters.suite || '',
+    bucket: filters.bucket || '',
+    area: filters.area || '',
+    lifecycle: filters.lifecycle || '',
+    orphan: filters.orphan || '',
+    q: filters.q || '',
+  };
+  if (window.IssueBridge) window.IssueBridge.writeAttentionFilters(next);
+  else {
+    const url = new URL(window.location.href);
+    for (const [k, v] of Object.entries(next)) {
+      if (v) url.searchParams.set(k, v);
+      else url.searchParams.delete(k);
+    }
+    window.history.replaceState({}, '', url);
+  }
+  syncAttentionFilterControls(next);
+  setActiveTab('attention');
+  if (CURRENT_RESULTS?.length) renderDashboard(CURRENT_RESULTS, AI_IMPACT_CACHE, AI_USAGE_CACHE);
+}
+
+function renderFailures(summaries) {
+  FAILURE_INDEX = {};
+  const all = collectAttentionFailures(summaries);
+  if (window.IssueBridge) window.IssueBridge.reconcile(all);
+  const orphans = window.IssueBridge ? window.IssueBridge.findOrphans(all) : null;
+
+  if (!all.length) {
+    const orphanBar = renderOrphanSummaryBar(orphans, '');
+    const jiraPanel = orphans?.counts.orphanJira ? renderOrphanJiraPanel(orphans.orphanJira) : '';
+    const clearedOnly = renderVerifiedClearedSection();
+    return `${orphanBar}${jiraPanel}${clearedOnly}` || null;
+  }
+
+  const filters = window.IssueBridge
+    ? window.IssueBridge.readAttentionFilters()
+    : readAttentionFiltersFromForm();
+  syncAttentionFilterControls(filters);
+  const orphanMode = filters.orphan || '';
+  const orphanBar = renderOrphanSummaryBar(orphans, orphanMode);
+
+  if (orphanMode === 'jira') {
+    return `${orphanBar}${renderOrphanJiraPanel(orphans?.orphanJira || [])}${renderVerifiedClearedSection()}`;
+  }
+
+  const items = filterAttentionFailures(all, filters);
+
+  const summaryEl = document.getElementById('attention-filter-summary');
+  if (summaryEl) {
+    const active = ['suite', 'bucket', 'area', 'lifecycle', 'orphan', 'q'].filter((k) => filters[k]).length;
+    summaryEl.hidden = !active;
+    summaryEl.textContent = active
+      ? `Showing ${items.length} of ${all.length} mapped failures (filters applied).`
+      : '';
+  }
+
+  const cleared = renderVerifiedClearedSection();
+  if (!items.length) {
+    return `${orphanBar}${renderCategorySummaryBar(summaries)}<p class="empty-state">No failures match these filters. Clear filters or pick another suite/area.</p>${cleared}`;
+  }
+
   const categoryBar = renderCategorySummaryBar(summaries);
   const list = items.slice(0, 50).map((f) => renderFailureItem(f)).join('');
-  return `${categoryBar}<div class="failures-list-inner">${list}</div>`;
+  return `${orphanBar}${categoryBar}<div class="failures-list-inner">${list}</div>${cleared}`;
 }
 
 function escapeHtml(str) {
@@ -2033,10 +2304,13 @@ function aggregateTrendSeries(points, range) {
     else slot.hasReal = true;
     if (slot.hasReal) slot.estimatedOnly = false;
     const weight = Math.max(1, p.total || 1);
-    const cur = slot.suites[p.suite] || { sum: 0, weight: 0, passed: 0, total: 0, estimated: 0 };
+    const cur = slot.suites[p.suite] || { sum: 0, weight: 0, passed: 0, failed: 0, total: 0, estimated: 0 };
     cur.sum += p.passPct * weight;
     cur.weight += weight;
     cur.passed += p.passed || 0;
+    cur.failed += p.failed != null
+      ? p.failed
+      : Math.max(0, (p.total || 0) - (p.passed || 0));
     cur.total += p.total || 0;
     if (isEst) cur.estimated += weight;
     slot.suites[p.suite] = cur;
@@ -2056,7 +2330,7 @@ function aggregateTrendSeries(points, range) {
     });
     totals[suite] = keys.map((b) => {
       const cur = b.suites[suite];
-      return cur ? { passed: cur.passed, total: cur.total } : null;
+      return cur ? { passed: cur.passed, failed: cur.failed, total: cur.total } : null;
     });
   }
 
@@ -2074,20 +2348,22 @@ function aggregateTrendSeries(points, range) {
 
   totals.overall = keys.map((b) => {
     let passed = 0;
+    let failed = 0;
     let total = 0;
     for (const suite of suites) {
       const cur = b.suites[suite];
       if (!cur) continue;
       passed += cur.passed || 0;
+      failed += cur.failed || 0;
       total += cur.total || 0;
     }
-    return total ? { passed, total } : null;
+    return total ? { passed, failed, total } : null;
   });
 
   const estimated = filtered.some((p) => p.source === 'estimated-backfill');
   const estimatedFlags = keys.map((b) => !!b.estimatedOnly);
   const mixedFlags = keys.map((b) => !!(b.hasEstimated && b.hasReal));
-  return {
+  const result = {
     labels,
     labelsLong,
     keys: keysList,
@@ -2102,6 +2378,62 @@ function aggregateTrendSeries(points, range) {
     range,
     includeEstimated: INCLUDE_ESTIMATED,
   };
+  result.regressions = detectTrendRegressions(result);
+  return result;
+}
+
+/** Period-over-period pass-rate drops (≥ threshold pts) with the suite that fell hardest. */
+function detectTrendRegressions(agg, threshold = 3) {
+  const overall = agg.series?.overall || [];
+  const flags = overall.map(() => null);
+  const suiteIds = REPO_CONFIG.map((c) => c.id);
+  for (let i = 1; i < overall.length; i++) {
+    const prev = overall[i - 1];
+    const cur = overall[i];
+    if (prev == null || cur == null) continue;
+    const drop = Math.round((prev - cur) * 10) / 10;
+    if (drop < threshold) continue;
+    let worstSuite = '';
+    let worstDrop = 0;
+    for (const suite of suiteIds) {
+      const a = agg.series?.[suite]?.[i - 1];
+      const b = agg.series?.[suite]?.[i];
+      if (a == null || b == null) continue;
+      const d = Math.round((a - b) * 10) / 10;
+      if (d > worstDrop) {
+        worstDrop = d;
+        worstSuite = suite;
+      }
+    }
+    const t = agg.totals?.overall?.[i];
+    const failed = t?.failed != null
+      ? t.failed
+      : Math.max(0, (t?.total || 0) - (t?.passed || 0));
+    flags[i] = { drop, suite: worstSuite, suiteDrop: worstDrop, failed };
+  }
+  return flags;
+}
+
+function periodFailedCount(totalsSlot) {
+  if (!totalsSlot) return 0;
+  if (totalsSlot.failed != null) return totalsSlot.failed;
+  return Math.max(0, (totalsSlot.total || 0) - (totalsSlot.passed || 0));
+}
+
+/** Suite to open in Attention for a period — regression culprit, else most failures. */
+function suiteForPeriodDrill(agg, idx) {
+  const reg = agg.regressions?.[idx];
+  if (reg?.suite) return reg.suite;
+  let best = '';
+  let bestFail = -1;
+  for (const c of REPO_CONFIG) {
+    const failed = periodFailedCount(agg.totals?.[c.id]?.[idx]);
+    if (failed > bestFail) {
+      bestFail = failed;
+      best = c.id;
+    }
+  }
+  return bestFail > 0 ? best : '';
 }
 
 function seriesStats(values) {
@@ -2246,10 +2578,20 @@ function renderTrendChartSvg(agg) {
       </g>`;
   }).join('');
 
+  const regressBands = (agg.labels || []).map((_, i) => {
+    if (!agg.regressions?.[i]) return '';
+    const x = padXLeft + (agg.labels.length === 1 ? usableW / 2 : (i / (agg.labels.length - 1)) * usableW);
+    const half = agg.labels.length <= 1 ? usableW / 2 : (usableW / (agg.labels.length - 1)) / 2;
+    const w = Math.max(12, half * 2);
+    return `<rect class="chart-regress-band" x="${x - half}" y="${padY}" width="${w}" height="${usableH}" />`;
+  }).join('');
+
   const hitZones = (agg.labels || []).map((_, i) => {
     const x = padXLeft + (agg.labels.length === 1 ? usableW / 2 : (i / (agg.labels.length - 1)) * usableW);
     const half = agg.labels.length <= 1 ? usableW / 2 : (usableW / (agg.labels.length - 1)) / 2;
-    return `<rect class="chart-hit" data-idx="${i}" x="${x - half}" y="${padY}" width="${Math.max(12, half * 2)}" height="${usableH}" fill="transparent" />`;
+    const suite = suiteForPeriodDrill(agg, i);
+    const reg = agg.regressions?.[i];
+    return `<rect class="chart-hit ${reg ? 'chart-hit--regress' : ''}" data-idx="${i}" data-trend-drill data-suite="${escapeHtml(suite)}" x="${x - half}" y="${padY}" width="${Math.max(12, half * 2)}" height="${usableH}" fill="transparent" />`;
   }).join('');
 
   const payloadRaw = JSON.stringify({
@@ -2257,6 +2599,7 @@ function renderTrendChartSvg(agg) {
     labelsLong: agg.labelsLong,
     series: agg.series,
     totals: agg.totals,
+    regressions: agg.regressions,
     lines: lines.map((l) => ({ id: l.id, label: l.label, color: l.color })),
     chartBox: { padXLeft, padXRight, padY, width, height, usableW, usableH },
   });
@@ -2276,13 +2619,14 @@ function renderTrendChartSvg(agg) {
     <div class="chart-wrap" data-trend-chart data-trend-json="${payloadAttr}">
       <div class="chart-tooltip" id="trend-tooltip" hidden></div>
       <div class="chart-scan" aria-hidden="true"></div>
-      <svg class="trend-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Automation pass-rate trend">
+      <svg class="trend-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Automation pass-rate trend — click a period to open failing tests">
         <defs>
           <linearGradient id="overallGlow" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#94a3b8" stop-opacity="0.45" />
             <stop offset="100%" stop-color="#94a3b8" stop-opacity="0" />
           </linearGradient>
         </defs>
+        ${regressBands}
         ${grid}
         ${guideNotes}
         ${paths}
@@ -2304,14 +2648,21 @@ function renderTrendValueTable(agg) {
     const cells = lines.map((line) => {
       const v = agg.series[line.id]?.[i];
       const t = agg.totals?.[line.id]?.[i];
+      const failed = periodFailedCount(t);
       const detail = t?.total ? `${t.passed}/${t.total}` : '';
+      const failBit = failed ? ` · ${failed} fail` : '';
       return `<td>
         <strong style="color:${line.color}">${formatPct(v)}</strong>
-        ${detail ? `<span class="trend-table__sub">${escapeHtml(detail)}</span>` : ''}
+        ${detail ? `<span class="trend-table__sub">${escapeHtml(detail)}${escapeHtml(failBit)}</span>` : ''}
       </td>`;
     }).join('');
-    return `<tr>
-      <th scope="row">${escapeHtml(agg.labelsLong?.[i] || label)}</th>
+    const reg = agg.regressions?.[i];
+    const suite = suiteForPeriodDrill(agg, i);
+    const regLabel = reg
+      ? `<span class="trend-table__regress">▼ ${reg.drop} pts</span>`
+      : '';
+    return `<tr class="trend-table__row ${reg ? 'is-regression' : ''}" data-trend-drill data-suite="${escapeHtml(suite)}" tabindex="0" role="button" title="Open Needs attention for this period">
+      <th scope="row">${escapeHtml(agg.labelsLong?.[i] || label)}${regLabel}</th>
       ${cells}
     </tr>`;
   }).join('');
@@ -2328,12 +2679,43 @@ function renderTrendValueTable(agg) {
         </thead>
         <tbody>${rows}</tbody>
       </table>
+      <p class="trend-table__hint">Click a period row to open current failing tests (suite with the biggest drop or most failures).</p>
+    </div>`;
+}
+
+function renderTrendFailureStrip(agg) {
+  const totals = agg.totals?.overall || [];
+  const fails = totals.map((t) => periodFailedCount(t));
+  const max = Math.max(1, ...fails);
+  const bars = fails.map((f, i) => {
+    const reg = agg.regressions?.[i];
+    const h = f ? Math.max(6, Math.round((f / max) * 36)) : 3;
+    const suite = suiteForPeriodDrill(agg, i);
+    const label = agg.labelsLong?.[i] || agg.labels?.[i] || '';
+    return `
+      <button type="button"
+        class="fail-strip__bar ${reg ? 'is-regression' : ''} ${f ? '' : 'is-zero'}"
+        style="--bar-h:${h}px"
+        data-trend-drill
+        data-suite="${escapeHtml(suite)}"
+        title="${escapeHtml(label)}: ${f} failed${reg ? ` · ▼ ${reg.drop} pts` : ''}">
+        <span class="fail-strip__val">${f || ''}</span>
+      </button>`;
+  }).join('');
+  return `
+    <div class="fail-strip" aria-label="Failures per period">
+      <span class="fail-strip__label">Failures</span>
+      <div class="fail-strip__bars">${bars}</div>
+      <span class="fail-strip__hint">Click a bar → Needs attention</span>
     </div>`;
 }
 
 function renderTrendSummaryStrip(agg) {
   const overall = seriesStats(agg.series.overall || []);
   if (!overall) return '';
+  const regressCount = (agg.regressions || []).filter(Boolean).length;
+  const latestFail = periodFailedCount(agg.totals?.overall?.[(agg.totals.overall.length || 1) - 1]);
+  const latestSuite = suiteForPeriodDrill(agg, (agg.labels?.length || 1) - 1);
   return `
     <div class="trend-summary">
       <div class="trend-summary__item">
@@ -2341,8 +2723,8 @@ function renderTrendSummaryStrip(agg) {
         <strong>${formatPct(overall.latest)}</strong>
       </div>
       <div class="trend-summary__item">
-        <span class="trend-summary__label">Period average</span>
-        <strong>${formatPct(overall.avg)}</strong>
+        <span class="trend-summary__label">Latest failures</span>
+        <strong>${latestFail}</strong>
       </div>
       <div class="trend-summary__item">
         <span class="trend-summary__label">Best / worst</span>
@@ -2351,6 +2733,15 @@ function renderTrendSummaryStrip(agg) {
       <div class="trend-summary__item">
         <span class="trend-summary__label">Change in range</span>
         <strong class="trend-dir trend-dir--${overall.dir.cls}">${escapeHtml(overall.dir.label)}</strong>
+      </div>
+      <div class="trend-summary__item">
+        <span class="trend-summary__label">Regressions (≥3 pts)</span>
+        <strong class="${regressCount ? 'trend-dir trend-dir--down' : ''}">${regressCount || 'None'}</strong>
+      </div>
+      <div class="trend-summary__item trend-summary__item--action">
+        <button type="button" class="btn btn--ghost btn--sm" data-trend-drill data-suite="${escapeHtml(latestSuite)}">
+          Open latest failures
+        </button>
       </div>
     </div>`;
 }
@@ -2400,7 +2791,7 @@ function renderTrendsPanel(summaries) {
     <div class="panel__header trend-panel__header">
       <div>
         <h2>Automation trends</h2>
-        <p>Pass rate over time — real CI points by default. Hover for exact values.</p>
+        <p>Pass rate over time — click a period (chart, failure bar, or table) to open Needs attention.</p>
       </div>
       <div class="trend-panel__controls">
         <div class="range-toggle" role="group" aria-label="Trend range">${rangeBtns}</div>
@@ -2409,9 +2800,11 @@ function renderTrendsPanel(summaries) {
     </div>
     ${hasData ? renderTrendSummaryStrip(agg) : ''}
     ${hasData ? renderTrendChartSvg(agg) : '<p class="loading-cards">No trend history yet — it grows as CI publishes runs.</p>'}
+    ${hasData ? renderTrendFailureStrip(agg) : ''}
     <p class="chart-footnote">
       Showing ${escapeHtml(range.label.toLowerCase())} buckets
       · ${agg.bucketCount} periods · ${agg.pointCount} raw points
+      · amber bands mark ≥3 pt overall drops
       ${INCLUDE_ESTIMATED
         ? ` · estimated backfill visible (${agg.estimatedPointCount || 0} points) — dashed markers`
         : ' · estimated backfill hidden'}
@@ -2603,12 +2996,19 @@ function wireTrendChart() {
     const rows = lines.map((l) => {
       const v = data.series?.[l.id]?.[idx];
       const t = data.totals?.[l.id]?.[idx];
-      const detail = t?.total ? ` (${t.passed}/${t.total})` : '';
+      const failed = periodFailedCount(t);
+      const detail = t?.total ? ` (${t.passed}/${t.total}${failed ? `, ${failed} fail` : ''})` : '';
       return `<div class="chart-tooltip__row"><span><i style="background:${l.color}"></i>${escapeHtml(l.label)}</span><strong>${formatPct(v)}${escapeHtml(detail)}</strong></div>`;
     }).join('');
+    const reg = data.regressions?.[idx];
+    const overallFail = periodFailedCount(data.totals?.overall?.[idx]);
+    const foot = reg
+      ? `<div class="chart-tooltip__foot chart-tooltip__foot--regress">▼ ${reg.drop} pts${reg.suite ? ` · ${REPO_DISPLAY[reg.suite]?.label || reg.suite}` : ''} · click to open failures</div>`
+      : `<div class="chart-tooltip__foot">Click to open Needs attention${overallFail ? ` (${overallFail} failed)` : ''}</div>`;
     tooltip.innerHTML = `
       <div class="chart-tooltip__title">${escapeHtml(data.labelsLong?.[idx] || data.labels?.[idx] || '')}</div>
-      ${rows}`;
+      ${rows}
+      ${foot}`;
     tooltip.hidden = false;
     const rect = wrap.getBoundingClientRect();
     const left = Math.min(rect.width - 220, Math.max(8, clientX - rect.left + 12));
@@ -2635,6 +3035,7 @@ function wireTrendChart() {
       showIdx(Number(hit.getAttribute('data-idx')), e.clientX, e.clientY);
     });
     hit.addEventListener('mouseleave', hideTip);
+    hit.style.cursor = 'pointer';
   });
 }
 
@@ -2769,7 +3170,7 @@ function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
   if (tab === 'ir-studio') {
     const frame = document.getElementById('iframe-ir-studio');
     if (frame && !frame.getAttribute('src')) {
-      frame.src = 'test_runner.html?v=20260923b';
+      frame.src = 'test_runner.html?v=20261007a';
     }
   }
   document.body.classList.toggle('shelf-mobile-active', tab === 'shelf-mobile');
@@ -2781,6 +3182,7 @@ function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
     const url = new URL(window.location.href);
     if (tab === 'overview') url.searchParams.delete('tab');
     else url.searchParams.set('tab', tab);
+    // Keep suite/bucket/area/q so Overview → Attention → Jira round-trips stay filtered.
     window.history.replaceState({}, '', url);
   }
 }
@@ -2895,64 +3297,8 @@ function formatRulesInline(text) {
 }
 
 function renderSmartUISection(summaries) {
-  return `
-    <div class="panel__header">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <h2>🎨 SmartUI Visual Regression &amp; Layout Health</h2>
-        <span class="ai-badge-shimmer">Visual AI</span>
-      </div>
-      <p>Automated visual baseline pixel-diff &amp; responsive layout comparison across Web, Mobile &amp; API platforms</p>
-    </div>
-    <div class="smartui-grid">
-      <div class="smartui-card">
-        <div class="smartui-card__top">
-          <h3 class="smartui-card__title">🌐 Web UI Viewports</h3>
-          <span class="smartui-status-pill smartui-status-pill--pass">0 Visual Diffs</span>
-        </div>
-        <div class="smartui-stats-row">
-          <span>Baselines: <strong>48 Screens</strong></span>
-          <span>Strictness: <strong>99.8% Match</strong></span>
-        </div>
-        <div class="smartui-browsers">
-          <span>Matrix:</span>
-          <span class="smartui-browser-tag">Chrome 1920px</span>
-          <span class="smartui-browser-tag">Safari 1366px</span>
-          <span class="smartui-browser-tag">Firefox</span>
-        </div>
-      </div>
-      <div class="smartui-card">
-        <div class="smartui-card__top">
-          <h3 class="smartui-card__title">🍎 iOS Associate App</h3>
-          <span class="smartui-status-pill smartui-status-pill--pass">0 Visual Diffs</span>
-        </div>
-        <div class="smartui-stats-row">
-          <span>Baselines: <strong>32 Screens</strong></span>
-          <span>Devices: <strong>iPhone 15, iPad Pro</strong></span>
-        </div>
-        <div class="smartui-browsers">
-          <span>Resolution:</span>
-          <span class="smartui-browser-tag">Retina @3x</span>
-          <span class="smartui-browser-tag">Dark Mode</span>
-          <span class="smartui-browser-tag">Light Mode</span>
-        </div>
-      </div>
-      <div class="smartui-card">
-        <div class="smartui-card__top">
-          <h3 class="smartui-card__title">🤖 Android Associate App</h3>
-          <span class="smartui-status-pill smartui-status-pill--pass">0 Visual Diffs</span>
-        </div>
-        <div class="smartui-stats-row">
-          <span>Baselines: <strong>30 Screens</strong></span>
-          <span>Devices: <strong>Pixel 8, Samsung S23</strong></span>
-        </div>
-        <div class="smartui-browsers">
-          <span>Density:</span>
-          <span class="smartui-browser-tag">xxhdpi</span>
-          <span class="smartui-browser-tag">Adaptive Layout</span>
-        </div>
-      </div>
-    </div>
-  `;
+  // No live SmartUI feed is wired yet — hide rather than show fake "0 Visual Diffs".
+  return '';
 }
 
 function renderDashboard(results, aiImpact, aiUsage) {
@@ -2970,7 +3316,11 @@ function renderDashboard(results, aiImpact, aiUsage) {
   if (areasEl) areasEl.innerHTML = renderBusinessAreas(results);
 
   const smartuiEl = document.getElementById('smartui-section');
-  if (smartuiEl) smartuiEl.innerHTML = renderSmartUISection(results);
+  if (smartuiEl) {
+    const smartuiHtml = renderSmartUISection(results);
+    smartuiEl.innerHTML = smartuiHtml;
+    smartuiEl.hidden = !smartuiHtml;
+  }
 
   const trendsEl = document.getElementById('trends-panel');
   if (trendsEl) {
@@ -3590,6 +3940,18 @@ function wireControls() {
       setTrendRange(btn.getAttribute('data-trend-range'));
       return;
     }
+    const drill = event.target.closest('[data-trend-drill]');
+    if (drill) {
+      gotoAttention({ suite: drill.getAttribute('data-suite') || '' });
+      return;
+    }
+  });
+  document.getElementById('trends-panel')?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const drill = event.target.closest('[data-trend-drill]');
+    if (!drill) return;
+    event.preventDefault();
+    gotoAttention({ suite: drill.getAttribute('data-suite') || '' });
   });
   document.getElementById('trends-panel')?.addEventListener('change', (event) => {
     const input = event.target.closest('#include-estimated');
@@ -3597,9 +3959,127 @@ function wireControls() {
     setIncludeEstimated(input.checked);
   });
   document.getElementById('overall-banner')?.addEventListener('click', (event) => {
+    const drill = event.target.closest('[data-goto-attention]');
+    if (drill) {
+      gotoAttention({
+        suite: drill.getAttribute('data-suite-filter') || '',
+        bucket: drill.getAttribute('data-bucket') || '',
+        area: drill.getAttribute('data-area') || '',
+      });
+      return;
+    }
     const btn = event.target.closest('[data-goto-tab]');
     if (!btn) return;
     setActiveTab(btn.getAttribute('data-goto-tab'));
+  });
+
+  document.getElementById('business-areas')?.addEventListener('click', (event) => {
+    const tile = event.target.closest('[data-goto-attention]');
+    if (!tile) return;
+    gotoAttention({ area: tile.getAttribute('data-area') || '' });
+  });
+  document.getElementById('business-areas')?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const tile = event.target.closest('[data-goto-attention]');
+    if (!tile) return;
+    event.preventDefault();
+    gotoAttention({ area: tile.getAttribute('data-area') || '' });
+  });
+
+  document.getElementById('issue-triage')?.addEventListener('click', (event) => {
+    const card = event.target.closest('[data-goto-attention]');
+    if (!card) return;
+    gotoAttention({ bucket: card.getAttribute('data-bucket') || '' });
+  });
+
+  const attentionForm = document.getElementById('attention-filters');
+  const applyFormFilters = () => {
+    const filters = readAttentionFiltersFromForm();
+    if (window.IssueBridge) window.IssueBridge.writeAttentionFilters(filters);
+    if (CURRENT_RESULTS?.length) renderDashboard(CURRENT_RESULTS, AI_IMPACT_CACHE, AI_USAGE_CACHE);
+  };
+  attentionForm?.addEventListener('change', applyFormFilters);
+  attentionForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    applyFormFilters();
+  });
+  document.getElementById('attention-filter-q')?.addEventListener('input', () => {
+    clearTimeout(applyFormFilters._t);
+    applyFormFilters._t = setTimeout(applyFormFilters, 250);
+  });
+  document.getElementById('attention-filter-clear')?.addEventListener('click', () => {
+    if (window.IssueBridge) window.IssueBridge.clearAttentionFilters();
+    syncAttentionFilterControls({ suite: '', bucket: '', area: '', lifecycle: '', orphan: '', q: '' });
+    if (CURRENT_RESULTS?.length) renderDashboard(CURRENT_RESULTS, AI_IMPACT_CACHE, AI_USAGE_CACHE);
+  });
+
+  document.getElementById('failures-list')?.addEventListener('click', (event) => {
+    const orphanBtn = event.target.closest('[data-orphan-filter]');
+    if (orphanBtn) {
+      gotoAttention({
+        ...readAttentionFiltersFromForm(),
+        orphan: orphanBtn.getAttribute('data-orphan-filter') || '',
+      });
+      return;
+    }
+    const orphanSearch = event.target.closest('[data-jira-orphan-search]');
+    if (orphanSearch) {
+      const summary = orphanSearch.getAttribute('data-jira-orphan-summary') || '';
+      const key = orphanSearch.getAttribute('data-jira-orphan-search') || '';
+      gotoAttention({
+        orphan: '',
+        q: summary.split(/\s+/).slice(0, 4).join(' ') || key,
+      });
+      return;
+    }
+    const lifeBtn = event.target.closest('[data-lifecycle-state]');
+    if (lifeBtn && window.IssueBridge) {
+      const f = FAILURE_INDEX[lifeBtn.getAttribute('data-lifecycle-id')];
+      const state = lifeBtn.getAttribute('data-lifecycle-state');
+      if (f && state) window.IssueBridge.setState(f, state, { source: 'manual' });
+      if (CURRENT_RESULTS?.length) renderDashboard(CURRENT_RESULTS, AI_IMPACT_CACHE, AI_USAGE_CACHE);
+      return;
+    }
+    const unlink = event.target.closest('[data-jira-unlink]');
+    if (unlink && window.IssueBridge) {
+      const f = FAILURE_INDEX[unlink.getAttribute('data-jira-unlink')];
+      if (f) window.IssueBridge.setLink(f, null);
+      if (CURRENT_RESULTS?.length) renderDashboard(CURRENT_RESULTS, AI_IMPACT_CACHE, AI_USAGE_CACHE);
+      return;
+    }
+    const linkBtn = event.target.closest('[data-jira-link]');
+    if (linkBtn && window.IssueBridge) {
+      const f = FAILURE_INDEX[linkBtn.getAttribute('data-jira-link')];
+      if (f) {
+        window.IssueBridge.setLink(f, {
+          key: linkBtn.getAttribute('data-jira-key'),
+          url: linkBtn.getAttribute('data-jira-url'),
+        });
+      }
+      if (CURRENT_RESULTS?.length) renderDashboard(CURRENT_RESULTS, AI_IMPACT_CACHE, AI_USAGE_CACHE);
+      return;
+    }
+    const createBtn = event.target.closest('[data-jira-create]');
+    if (createBtn && window.IssueBridge) {
+      const f = FAILURE_INDEX[createBtn.getAttribute('data-jira-create')];
+      if (f) {
+        window.IssueBridge.setState(f, 'investigating', { source: 'manual' });
+        window.open(window.IssueBridge.createIssueUrl(f), '_blank', 'noopener');
+      }
+      if (CURRENT_RESULTS?.length) renderDashboard(CURRENT_RESULTS, AI_IMPACT_CACHE, AI_USAGE_CACHE);
+      return;
+    }
+    const searchBtn = event.target.closest('[data-jira-search]');
+    if (searchBtn && window.IssueBridge) {
+      const f = FAILURE_INDEX[searchBtn.getAttribute('data-jira-search')];
+      const query = window.IssueBridge.friendlyTitle(f || {}) || (f?.name || '');
+      setActiveTab('jira');
+      if (window.JiraTracker) {
+        window.JiraTracker.filters = window.JiraTracker.filters || {};
+        window.JiraTracker.filters.searchQuery = query;
+        window.JiraTracker.init();
+      }
+    }
   });
 
   wireTabs();

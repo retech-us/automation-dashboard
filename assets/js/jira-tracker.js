@@ -523,6 +523,7 @@
       let summary = {};
       let jiraUrl = '';
       let projectKey = '';
+      let projectName = '';
       let status = 'live';
       let lastUpdated = '';
       let lastError = '';
@@ -535,10 +536,20 @@
         summary = this.data.summary || {};
         jiraUrl = this.data.jiraUrl || '';
         projectKey = this.data.projectKey || '';
+        projectName = this.data.projectName || '';
         status = this.data.status || 'live';
         lastUpdated = this.data.lastUpdated || '';
         lastError = this.data.lastError || '';
       }
+
+      if (!projectName) {
+        const fromIssue = issues.find((i) => i && i.project)?.project;
+        const fromFilter = (filterOptions.projects || [])[0];
+        projectName = fromIssue || fromFilter || '';
+      }
+      const projectLabel = projectName && projectKey && projectName !== projectKey
+        ? `${projectName} (${projectKey})`
+        : (projectName || projectKey || 'Jira');
 
       if (!this.data || (!Array.isArray(this.data) && (!this.data.issues || this.data.issues.length === 0) && (!this.data.summary || !this.data.summary.totalDefects))) {
         if (issues.length === 0 && !status) {
@@ -826,11 +837,11 @@
       // Update status pill
       if (statusPill) {
         if (isLive) {
-          statusPill.innerHTML = `<span style="color:#10b981;">●</span> Live Jira (${this.escapeHtml(projectKey || 'Connected')})`;
+          statusPill.innerHTML = `<span style="color:#10b981;">●</span> Live Jira — ${this.escapeHtml(projectLabel)}`;
         } else if (isError) {
           statusPill.innerHTML = `<span style="color:#f59e0b;">⏳</span> Pending CI Jira Sync`;
         } else {
-          statusPill.innerHTML = `<span>ℹ️</span> Sample Dataset`;
+          statusPill.innerHTML = `<span>ℹ️</span> Sample Dataset (not live)`;
         }
         statusPill.title = isError && lastError ? `Sync info: ${lastError}` : `Last synchronized: ${lastUpdated ? new Date(lastUpdated).toLocaleString() : 'N/A'}`;
       }
@@ -845,8 +856,8 @@
             <span>📥 Export CSV</span>
           </button>
           ${jiraUrl ? `
-            <a href="${jiraUrl}" target="_blank" rel="noopener noreferrer" class="btn btn--ghost" style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">
-              <span>Open Jira (${this.escapeHtml(projectKey || 'Jira')})</span> ↗
+            <a href="${this.escapeHtml(projectKey ? `${jiraUrl.replace(/\/$/, '')}/jira/software/c/projects/${encodeURIComponent(projectKey)}` : jiraUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn--ghost" style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">
+              <span>Open ${this.escapeHtml(projectLabel)} ↗</span>
             </a>
           ` : ''}
         `;
@@ -1167,7 +1178,7 @@
                 ${issues.length === 0 
                   ? (isError 
                       ? 'Live tickets from your Jira Project will appear here once the GitHub Actions workflow runs with your configured secrets.' 
-                      : `No active tickets returned for Jira Project <strong>${this.escapeHtml(projectKey || '')}</strong>.`)
+                      : `No active tickets returned for Jira Project <strong>${this.escapeHtml(projectLabel || projectKey || '')}</strong>.`)
                   : 'No Jira tickets match the selected filters or search criteria.'}
               </p>
               ${activeFilterCount > 0 ? `<button type="button" class="btn btn--ghost" id="jira-empty-reset">Reset All Filters</button>` : ''}
