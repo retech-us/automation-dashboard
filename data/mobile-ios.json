@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-10-07T04:34:49Z",
-  "durationMs": 17342311,
+  "finishedAt": "2026-10-08T04:23:09Z",
+  "durationMs": 16629620,
   "summary": {
     "total": 25,
-    "passed": 15,
+    "passed": 5,
     "failed": 0,
-    "broken": 10,
+    "broken": 20,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/37547693001",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/37703398244",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -61,62 +61,61 @@
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from planogram level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from section level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen section rejection",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
-      "status": "failed",
-      "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': No aisle titles are visible after applying the sort. expected [false] but found [true]",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': No selectable reason option found within 40s",
       "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
-    "locator": 2,
-    "timeout": 2,
-    "assertion": 1,
-    "unknown": 22
+    "locator": 3,
+    "timeout": 1,
+    "unknown": 28
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 15,
-    "review": 10,
+    "passed": 5,
+    "review": 20,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 60.0,
+      "passPct": 20.0,
       "total": 25,
-      "failed": 10
+      "failed": 20
     }
   ],
   "platform": "iOS",
@@ -132,7 +131,7 @@
       "status": "failure"
     }
   ],
-  "runId": "37547693001",
-  "runNumber": 320,
+  "runId": "37703398244",
+  "runNumber": 321,
   "environment": "CI"
 }
