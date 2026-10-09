@@ -1237,12 +1237,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Task ID</label>
+                    <label class="form-label" for="cfg-task-id-direct">Task ID</label>
                     <input type="number" id="cfg-task-id-direct" class="form-control" value="" placeholder="e.g. 27315169" oninput="onTaskIdInput(this.value)" style="font-weight: 800; font-size: 13px; color: #1E3A8A; height: 32px; background: #EFF6FF; border-color: #BFDBFE;">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Instance URL</label>
+                    <label class="form-label" for="cfg-base-url">Instance URL</label>
                     <input type="text" id="cfg-base-url" class="form-control" value="" placeholder="e.g. https://harr.rebotics.net" oninput="onBaseUrlInput(this.value)" style="font-weight: 600;">
                 </div>
 
@@ -1251,19 +1251,39 @@
                         <span style="font-size: 9.5px; font-weight: 800; color: #1E3A8A; text-transform: uppercase; letter-spacing: 0.04em;">Sign in</span>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
-                        <input type="text" id="cfg-username" class="form-control" placeholder="Username" style="height: 26px; font-size: 10.5px;" oninput="onExistingCredsInput()">
-                        <input type="password" id="cfg-password" class="form-control" placeholder="Password" style="height: 26px; font-size: 10.5px;" oninput="onExistingCredsInput()">
+                        <label style="display:block;"><input type="text" id="cfg-username" class="form-control" placeholder="Username" aria-label="Username" style="height: 26px; font-size: 10.5px;" oninput="onExistingCredsInput()"></label>
+                        <label style="display:block;"><input type="password" id="cfg-password" class="form-control" placeholder="Password" aria-label="Password" style="height: 26px; font-size: 10.5px;" oninput="onExistingCredsInput()"></label>
                     </div>
                     <input type="text" id="cfg-token" class="form-control studio-advanced-only" placeholder="Or paste auth token (optional)" style="height: 26px; font-size: 10.5px; font-family: 'JetBrains Mono', monospace;" oninput="onExistingCredsInput()">
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
                     <button type="button" id="btn-fast-load" class="btn btn-primary btn-block" style="padding: 9px; font-size: 12px; font-weight: 800;" onclick="loadTaskById()">
                         Load task
+                    </button>
+                    <button type="button" id="btn-start-existing-test" class="btn btn-success btn-block" style="padding: 9px; font-size: 12px; font-weight: 800;" onclick="startExistingTaskTest()" disabled aria-describedby="existing-task-status">
+                        Start test
                     </button>
                     <button type="button" id="btn-historical-audit" class="btn btn-teal btn-block" style="padding: 8px; font-size: 11px;" onclick="runHistoricalTaskAudit()">
                         Run full check
                     </button>
+                </div>
+                <div id="existing-task-status" tabindex="-1" role="status" aria-live="polite" style="margin-top: 8px; padding: 8px 10px; border: 1px solid #CBD5E1; border-radius: 7px; background: #F8FAFC; color: #475569; font-size: 10.5px; line-height: 1.4;">
+                    Enter an instance and Task ID, then load live actions.
+                </div>
+                <div id="existing-task-findings" style="display:none; margin-top:6px;"></div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #DBEAFE;">
+                    <div class="panel-title" style="color: #1D4ED8; margin-bottom: 8px;">
+                        <span>Investigate a problem</span>
+                    </div>
+                    <label class="form-label" for="cfg-investigate-problem">What looks wrong</label>
+                    <textarea id="cfg-investigate-problem" class="form-control" rows="3" placeholder="Example: post photo still asks to set aside products that are already in the correct slot" style="font-size: 11px; line-height: 1.4; margin-bottom: 6px;"></textarea>
+                    <label class="form-label" for="cfg-investigate-url">Scan URL</label>
+                    <input type="text" id="cfg-investigate-url" class="form-control" placeholder="https://krcs.rebotics.net/reporting/scans/..." style="margin-bottom: 6px;">
+                    <button type="button" id="btn-investigate-issue" class="btn btn-primary btn-block" style="padding: 8px; font-size: 11px; font-weight: 800;" onclick="investigateScanProblem()">
+                        Investigate
+                    </button>
+                    <div id="investigate-issue-result" role="status" aria-live="polite" style="display:none; margin-top: 8px; font-size: 10.5px; line-height: 1.45;"></div>
                 </div>
             </div>
 
@@ -1709,7 +1729,7 @@
 
                             <!-- Movement Coordinates -->
                             <div class="movement-box" id="mob-movement">
-                                📍 Movement: Click [Load Actions &amp; Start Test]
+                                📍 Movement: Load and validate live actions first
                             </div>
 
                             <!-- Why User Performs This Action Box -->
@@ -1754,17 +1774,9 @@
 
                         <!-- Touch Buttons on Mobile -->
                         <div id="mob-touch-actions-container" style="display: flex; flex-direction: column; gap: 6px;">
-                            <button id="btn-complete-mobile-action" class="btn btn-success btn-block" style="padding: 9px; font-size: 11.5px; font-weight: 800;" onclick="executeCurrentMobileAction()">
-                                ✅ Complete Action (Run on Both Android &amp; iOS)
+                            <button class="btn btn-primary btn-block" style="padding: 9px; font-size: 11.5px; font-weight: 800;" disabled>
+                                Load a task first
                             </button>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                                <button class="btn btn-ghost" style="font-size: 10px; padding: 6px;" onclick="logNetwork('BARCODE_SCAN', 'Scanned barcode: ' + (currentStep ? currentStep.upc : 'N/A'))">
-                                    📷 Scan Barcode
-                                </button>
-                                <button class="btn btn-ghost" style="font-size: 10px; padding: 6px;" onclick="executeNextStep()">
-                                    ⏭️ Skip Step
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1976,11 +1988,100 @@
     let selectedBayFilter = 'all';
     let currentIndex = 0;
     let currentStep = null;
+    let existingTaskUi = { phase: 'idle', validation: null };
+    let existingTaskLoadController = null;
     let autoPlayTimer = null;
     let pipelinePollingTimer = null;
     let imageSourceMode = 'default';
     let customImagesMap = {};   // { 1: dataUrl, 2: dataUrl, ... }
     let customImageMeta = {};  // { 1: { name, size, type }, ... }
+
+    function studioEscape(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function setExistingTaskPhase(phase, message, validation = null) {
+        existingTaskUi = { phase, validation };
+        const status = document.getElementById('existing-task-status');
+        const findings = document.getElementById('existing-task-findings');
+        const start = document.getElementById('btn-start-existing-test');
+        const scorecard = document.getElementById('ir-live-scorecard');
+        const gate = document.getElementById('disp-quality-gate');
+        const canStart = phase === 'ready' || phase === 'ready_with_warnings';
+
+        if (status) {
+            status.textContent = message || '';
+            status.setAttribute('role', phase === 'blocked' || phase === 'error' ? 'alert' : 'status');
+            status.style.borderColor = phase === 'blocked' || phase === 'error' ? '#FCA5A5' : phase === 'ready' ? '#86EFAC' : '#CBD5E1';
+            status.style.background = phase === 'blocked' || phase === 'error' ? '#FEF2F2' : phase === 'ready' ? '#F0FDF4' : '#F8FAFC';
+            status.style.color = phase === 'blocked' || phase === 'error' ? '#991B1B' : phase === 'ready' ? '#166534' : '#475569';
+        }
+        if (start) {
+            start.disabled = !canStart;
+            start.textContent = phase === 'blocked' ? 'Start blocked' : 'Start test';
+        }
+        if (scorecard) scorecard.setAttribute('aria-busy', phase === 'loading' || phase === 'validating' ? 'true' : 'false');
+        if (gate) {
+            gate.textContent = phase === 'blocked' ? 'Blocked' :
+                phase === 'ready_with_warnings' ? 'Ready with warnings' :
+                phase === 'ready' ? 'Ready' :
+                phase === 'started' ? 'Running' :
+                phase === 'loading' || phase === 'validating' ? 'Checking' :
+                phase === 'error' ? 'Load failed' : 'Ready';
+        }
+
+        const items = validation && Array.isArray(validation.findings) ? validation.findings : [];
+        if (findings) {
+            findings.style.display = items.length ? 'block' : 'none';
+            findings.setAttribute('role', items.some(item => item.severity === 'critical') ? 'alert' : 'status');
+            findings.innerHTML = items.map(item => `
+                <div style="padding:7px 9px; margin-top:5px; border-radius:6px; border:1px solid ${item.severity === 'critical' ? '#FECACA' : '#FDE68A'}; background:${item.severity === 'critical' ? '#FEF2F2' : '#FFFBEB'}; color:${item.severity === 'critical' ? '#991B1B' : '#854D0E'}; font-size:10px;">
+                    <b>${studioEscape(item.title || item.code)}</b>
+                    <div>${studioEscape(item.message || '')}</div>
+                    ${(item.source || item.target) ? `<div style="margin-top:2px;font-family:monospace;">${studioEscape(item.source || '')} → ${studioEscape(item.target || '')}</div>` : ''}
+                </div>
+            `).join('');
+        }
+    }
+
+    function applyExistingTaskValidation(validation) {
+        const result = validation || { state: 'blocked', can_start: false, findings: [] };
+        const placement = result.placement || {};
+        const placementText = placement.status === 'ready'
+            ? ` Realogram versus planogram (${placement.stage || 'scan'}): ${placement.different_position} products are in a different position, ${placement.same_position} match, and ${placement.not_on_planogram} are not on the planogram.`
+            : '';
+        if (result.can_start) {
+            const phase = result.warning_count > 0 ? 'ready_with_warnings' : 'ready';
+            setExistingTaskPhase(
+                phase,
+                (result.warning_count > 0
+                    ? `Live actions validated with ${result.warning_count} warning(s). Start Test is available.`
+                    : `Live actions validated. ${result.checks_run || 0} checks passed; Start Test is available.`) + placementText,
+                result
+            );
+        } else {
+            setExistingTaskPhase(
+                'blocked',
+                (result.summary || 'Critical action-generation issues block Start Test.') + placementText,
+                result
+            );
+        }
+    }
+
+    function startExistingTaskTest() {
+        if (!existingTaskUi.validation || !existingTaskUi.validation.can_start) return;
+        currentIndex = 0;
+        setExistingTaskPhase('started', `Task #${runnerState.taskId} started. Complete actions in sequence.`, existingTaskUi.validation);
+        setElementText('disp-task-status', 'IN PROGRESS');
+        setElementText('disp-active-status-badge', 'STATUS: IN PROGRESS');
+        renderActionTable();
+        renderMobileScreen();
+    }
 
     let runnerState = {
         taskId: null,
@@ -3480,6 +3581,10 @@
         tbody.innerHTML = '';
 
         const searchVal = (document.getElementById('action-search').value || '').toLowerCase().trim();
+        if (!currentFilteredActions.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="padding:18px;text-align:center;color:#64748B;">No live actions loaded.</td></tr>';
+            return;
+        }
 
         currentFilteredActions.forEach((action, idx) => {
             if (searchVal) {
@@ -3488,14 +3593,22 @@
             }
 
             const tr = document.createElement('tr');
-            const isCompleted = idx < currentIndex;
-            const isActive = idx === currentIndex;
+            const hasStarted = existingTaskUi.phase === 'started';
+            const isCompleted = hasStarted && idx < currentIndex;
+            const isActive = hasStarted && idx === currentIndex;
+            const actionFindings = (existingTaskUi.validation?.findings || []).filter(item =>
+                (item.action_ids || []).some(id => String(id) === String(action.id))
+            );
 
             if (isActive) tr.className = 'active-row';
             else if (isCompleted) tr.className = 'completed-row';
+            else if (actionFindings.some(item => item.severity === 'critical')) tr.style.background = '#FEF2F2';
 
             const badgeColor = action.theme === 'red' ? 'badge-red' : action.theme === 'green' ? 'badge-green' : 'badge-orange';
-            const statusText = isCompleted ? '<span class="badge badge-green">DONE</span>' : isActive ? '<span class="badge badge-orange">ACTIVE</span>' : '<span class="badge" style="background:#F1F5F9; color:#64748B;">PENDING</span>';
+            const statusText = isCompleted ? '<span class="badge badge-green">DONE</span>' :
+                isActive ? '<span class="badge badge-orange">ACTIVE</span>' :
+                hasStarted ? '<span class="badge" style="background:#F1F5F9; color:#64748B;">PENDING</span>' :
+                '<span class="badge" style="background:#EFF6FF; color:#1D4ED8;">PREVIEW</span>';
 
             tr.innerHTML = `
                 <td style="text-align: center; font-weight: 700;">#${idx + 1}</td>
@@ -3529,7 +3642,10 @@
                 </td>
                 <td style="font-family: monospace; font-size: 10px; color: #1E40AF; font-weight: 600;">
                     ${action.movement_line_on_mobile || action.movement_line || ''}
+                    ${action.is_swap ? '<div style="margin-top:3px;"><span class="badge badge-purple">SWAP</span></div>' :
+                      action.slide_direction ? `<div style="margin-top:3px;"><span class="badge badge-blue">SLIDE ${studioEscape(action.slide_direction.toUpperCase())}</span></div>` : ''}
                     ${isRedundantSameSlotMove(action) ? `<div style="margin-top: 3px;"><span class="badge" style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-size: 8.5px; padding: 1px 5px; font-weight: 800;">⚠️ REDUNDANT SAME-SLOT MOVE</span></div>` : ''}
+                    ${actionFindings.map(item => `<div style="margin-top:3px;color:${item.severity === 'critical' ? '#B91C1C' : '#92400E'};font-size:8.5px;font-weight:700;">${studioEscape(item.title || item.code)}</div>`).join('')}
                 </td>
                 <td style="text-align: center;">
                     ${statusText}
@@ -3571,18 +3687,18 @@
             // Default empty/ready state
             document.getElementById('mob-banner').className = 'action-banner banner-orange';
             document.getElementById('mob-banner').style.background = '';
-            document.getElementById('mob-banner').textContent = '📱 READY TO START';
+            document.getElementById('mob-banner').textContent = '📱 LOAD A LIVE TASK';
             document.getElementById('mob-title').textContent = 'Store Intelligence Simulator';
-            document.getElementById('mob-upc').textContent = 'Select or Load a Task to View Cards';
-            document.getElementById('mob-movement').textContent = '📍 Movement: Click [Load Actions & Start Test]';
-            document.getElementById('mob-meaning').innerHTML = '💡 <b>Operational Context:</b> Select a demo task or enter a Task ID on the left to inspect step-by-step mobile cards.';
+            document.getElementById('mob-upc').textContent = 'Load a Task ID to view cards';
+            document.getElementById('mob-movement').textContent = '📍 Movement: waiting for live actions';
+            document.getElementById('mob-meaning').innerHTML = '💡 <b>Operational Context:</b> Enter an instance and Task ID, then load and validate its generated actions.';
             document.getElementById('mob-backend-desc').innerHTML = '⚙️ <b>Backend Mapping:</b> Ready for execution.';
             document.getElementById('mobile-step-pill').textContent = '0 / 0';
 
             if (container) {
                 container.innerHTML = `
-                    <button id="btn-complete-mobile-action" class="btn btn-primary btn-block" style="padding: 8px; font-size: 11.5px; font-weight: 800;" onclick="loadTaskById()">
-                        ⚡ Load Actions &amp; Start Test
+                    <button class="btn btn-primary btn-block" style="padding: 8px; font-size: 11.5px; font-weight: 800;" disabled>
+                        Load a task first
                     </button>
                 `;
             }
@@ -3590,8 +3706,16 @@
             return;
         }
 
-        // Restore normal action touch buttons if previously in processing or initial state
-        if (container && (!document.getElementById('btn-complete-mobile-action') || document.getElementById('btn-complete-mobile-action').textContent.includes('Load Actions'))) {
+        if (container && existingTaskUi.phase !== 'started') {
+            const canStart = existingTaskUi.phase === 'ready' || existingTaskUi.phase === 'ready_with_warnings';
+            const label = existingTaskUi.phase === 'blocked' ? 'Start blocked by critical findings' :
+                existingTaskUi.phase === 'validating' ? 'Checking action quality…' : 'Start test';
+            container.innerHTML = `
+                <button class="btn btn-primary btn-block" style="padding: 8px; font-size: 11.5px; font-weight: 800;" onclick="startExistingTaskTest()" ${canStart ? '' : 'disabled'}>
+                    ${label}
+                </button>
+            `;
+        } else if (container && !document.getElementById('btn-complete-mobile-action')) {
             container.innerHTML = `
                 <button id="btn-complete-mobile-action" class="btn btn-success btn-block" style="padding: 8px; font-size: 11.5px; font-weight: 800;" onclick="executeCurrentMobileAction()">
                     ✅ Complete Action (Run on Both Android &amp; iOS)
@@ -3695,13 +3819,19 @@
             taskId = runnerState.taskId || (document.getElementById('cfg-fresh-attach-task-id') || {}).value || '';
         }
         if (!taskId) {
+            if (taskIdInput) taskIdInput.setAttribute('aria-invalid', 'true');
+            setExistingTaskPhase('error', 'Task ID is required.');
             if (!silent) showNotification('Please enter a Task ID to load actions.', 'error');
             return;
         }
         if (!rawUrl || !rawUrl.trim()) {
+            document.getElementById('cfg-base-url')?.setAttribute('aria-invalid', 'true');
+            setExistingTaskPhase('error', 'Instance URL is required.');
             if (!silent) showNotification('Please enter a Backend Instance URL.', 'error');
             return;
         }
+        taskIdInput?.removeAttribute('aria-invalid');
+        document.getElementById('cfg-base-url')?.removeAttribute('aria-invalid');
         if (taskIdInput) taskIdInput.value = taskId;
 
         const tokenInput = document.getElementById('cfg-token');
@@ -3710,6 +3840,15 @@
         const baseUrl = normalizeBaseUrl(rawUrl);
         const btn = document.getElementById('btn-fast-load');
 
+        if (existingTaskLoadController) existingTaskLoadController.abort();
+        existingTaskLoadController = new AbortController();
+        allActions = [];
+        currentFilteredActions = [];
+        currentStep = null;
+        currentIndex = 0;
+        renderActionTable();
+        renderMobileScreen();
+        setExistingTaskPhase('loading', `Loading live actions for Task #${taskId} from ${baseUrl}…`);
         btn.textContent = '⏳ Loading...';
         btn.disabled = true;
         logNetwork('TASK_LOAD', `Loading actions for Task #${taskId} from ${baseUrl}...`, 200, 10);
@@ -3724,10 +3863,11 @@
                     username: username,
                     password: password,
                     token: token || undefined
-                })
+                }),
+                signal: existingTaskLoadController.signal
             });
             const data = await resp.json();
-            if (data.status === 'success') {
+            if (resp.ok && data.status === 'success' && data.is_from_cache === false && data.data_source === 'live') {
                 allActions = data.actions || [];
                 currentFilteredActions = [...allActions];
                 runnerState.taskId = data.task_id;
@@ -3735,8 +3875,8 @@
                 currentStep = null;
 
                 setElementText('disp-task-id', '#' + data.task_id);
-                setElementText('disp-task-status', 'IN PROGRESS');
-                setElementText('disp-active-status-badge', 'STATUS: IN PROGRESS');
+                setElementText('disp-task-status', 'LOADED');
+                setElementText('disp-active-status-badge', 'STATUS: CHECKING');
                 const instName = data.instance_slug || baseUrl.replace('https://', '').split('.')[0];
                 updateHeaderInstanceAndVersion(instName, data.backend_version);
 
@@ -3754,29 +3894,114 @@
                 renderMobileScreen();
 
                 logNetwork('LOAD_COMPLETE', `Loaded ${allActions.length} live actions across ${data.bays_count || 1} bay(s) for Task #${data.task_id} (${data.latency_ms || 40}ms).`, 200, data.latency_ms || 40);
-                const redMoves = allActions.filter(isRedundantSameSlotMove);
-                if (redMoves.length > 0) {
-                    logNetwork('INVARIANT_ALERT', `⚠️ Invariant Rule 9: ${redMoves.length} redundant same-slot move(s) detected in Task #${data.task_id} (already in-place).`, 409, 20);
-                }
+                setExistingTaskPhase('validating', `Validating ${allActions.length} generated mobile actions…`);
+                applyExistingTaskValidation(data.validation);
+                setElementText('disp-active-status-badge', data.validation?.can_start ? 'STATUS: READY' : 'STATUS: BLOCKED');
+                renderActionTable();
+                renderMobileScreen();
             } else {
+                allActions = [];
+                currentFilteredActions = [];
+                currentStep = null;
+                updateActionCounts();
+                renderActionTable();
+                renderMobileScreen();
+                const message = data.message || data.error || 'The selected instance did not return live actions.';
+                setExistingTaskPhase('error', `Live load failed. Cached actions were not used. ${message}`);
                 if (!silent) {
-                    showNotification('Failed to load task: ' + (data.message || data.error), 'error');
+                    showNotification('Failed to load task: ' + message, 'error');
                 }
-                logNetwork('LOAD_ERROR', data.message || data.error, 400, 10);
+                logNetwork('LOAD_ERROR', message, resp.status || 400, 10);
+                document.getElementById('existing-task-status')?.focus();
             }
         } catch (e) {
+            if (e.name === 'AbortError') return;
+            allActions = [];
+            currentFilteredActions = [];
+            currentStep = null;
+            updateActionCounts();
+            renderActionTable();
+            renderMobileScreen();
+            setExistingTaskPhase('error', `Live load failed. Cached actions were not used. ${e}`);
             if (!silent) {
                 showNotification('Network error while loading task: ' + e, 'error');
             }
             logNetwork('LOAD_ERROR', '' + e, 500, 10);
+            document.getElementById('existing-task-status')?.focus();
         } finally {
-            btn.textContent = '🚀 Load Actions & Start Test';
+            btn.textContent = 'Load task';
             btn.disabled = false;
         }
     }
 
+    async function investigateScanProblem() {
+        const problem = (document.getElementById('cfg-investigate-problem') || {}).value || '';
+        const scanUrl = (document.getElementById('cfg-investigate-url') || {}).value || '';
+        const baseUrl = (document.getElementById('cfg-base-url') || {}).value || '';
+        const token = (document.getElementById('cfg-token') || {}).value || '';
+        const result = document.getElementById('investigate-issue-result');
+        const button = document.getElementById('btn-investigate-issue');
+        if (!problem.trim() || !scanUrl.trim()) {
+            result.style.display = 'block';
+            result.innerHTML = '<span style="color:#B91C1C;">Describe the problem and paste the scan URL.</span>';
+            return;
+        }
+        button.disabled = true;
+        button.textContent = 'Investigating…';
+        result.style.display = 'block';
+        result.innerHTML = 'Checking this scan and the other sections from the same visit. This can take about a minute.';
+        try {
+            const response = await fetch('/api/runner/investigate_issue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    problem: problem.trim(),
+                    scan_url: scanUrl.trim(),
+                    base_url: normalizeBaseUrl(baseUrl),
+                    token: token.trim() || undefined
+                })
+            });
+            const payload = await response.json();
+            if (payload.status !== 'success') {
+                result.innerHTML = `<span style="color:#B91C1C;">${escapeInvestigationText(payload.error || 'Investigation failed')}</span>`;
+                return;
+            }
+            result.innerHTML = renderInvestigation(payload);
+        } catch (error) {
+            result.innerHTML = `<span style="color:#B91C1C;">${escapeInvestigationText(error)}</span>`;
+        } finally {
+            button.disabled = false;
+            button.textContent = 'Investigate';
+        }
+    }
+
+    function escapeInvestigationText(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[char]));
+    }
+
+    function renderInvestigation(report) {
+        const scan = report.scan || {};
+        const findings = (report.findings || []).map((row) =>
+            `<li style="margin-bottom:4px;"><strong>${escapeInvestigationText(row.section)} ${escapeInvestigationText(row.slot)}</strong> ${escapeInvestigationText(row.upc)} — ${escapeInvestigationText(row.detail)}</li>`
+        ).join('');
+        const steps = (report.how_to_solve || '').split(/(?=\d+\. )/).filter(Boolean).map((step) =>
+            `<li style="margin-bottom:3px;">${escapeInvestigationText(step.trim())}</li>`
+        ).join('');
+        return `
+            <div style="font-weight:800; color:#1E3A8A; margin-bottom:6px;">Scan ${escapeInvestigationText(scan.id)} · section ${escapeInvestigationText(scan.section)} · ${escapeInvestigationText(scan.stage)}</div>
+            <div style="margin-bottom:6px;"><strong>What happened.</strong> ${escapeInvestigationText(report.what_happened)}</div>
+            <div style="margin-bottom:6px;"><strong>Problem.</strong> ${escapeInvestigationText(report.problem)}</div>
+            <div style="margin-bottom:6px;"><strong>Root cause.</strong> ${escapeInvestigationText(report.root_cause)}</div>
+            <div style="margin-bottom:4px;"><strong>How to solve it.</strong></div>
+            <ol style="margin:0 0 6px 16px; padding:0;">${steps}</ol>
+            ${findings ? `<div style="font-weight:700; margin-bottom:3px;">Evidence</div><ul style="margin:0; padding-left:16px;">${findings}</ul>` : ''}
+        `;
+    }
+
     async function executeCurrentMobileAction() {
-        if (!currentStep) return;
+        if (!currentStep || existingTaskUi.phase !== 'started') return;
 
         const baseUrl = document.getElementById('cfg-base-url').value;
         const username = document.getElementById('cfg-username').value;
@@ -3835,17 +4060,20 @@
             taskId = runnerState.taskId;
         }
         if (!taskId) {
-            alert('Please enter a Task ID to audit.');
+            setExistingTaskPhase('error', 'Task ID is required to run the full check.');
+            document.getElementById('existing-task-status')?.focus();
             return;
         }
         const rawUrl = document.getElementById('cfg-base-url').value;
         if (!rawUrl || !rawUrl.trim()) {
-            alert('Please enter a Backend Instance URL.');
+            setExistingTaskPhase('error', 'Instance URL is required to run the full check.');
+            document.getElementById('existing-task-status')?.focus();
             return;
         }
         const baseUrl = normalizeBaseUrl(rawUrl);
         const username = document.getElementById('cfg-username').value;
         const password = document.getElementById('cfg-password').value;
+        const token = (document.getElementById('cfg-token') || {}).value || '';
 
         const btn = document.getElementById('btn-historical-audit');
         if (btn) {
@@ -3854,6 +4082,7 @@
         }
 
         logNetwork('AUDIT_START', `Running historical audit for Task #${taskId}...`, 200, 10);
+        setExistingTaskPhase('validating', `Re-running full validation for Task #${taskId}…`, existingTaskUi.validation);
 
         try {
             const resp = await fetch('/api/runner/audit_task', {
@@ -3863,30 +4092,29 @@
                     task_id: parseInt(taskId),
                     base_url: baseUrl,
                     username: username,
-                    password: password
+                    password: password,
+                    token: token.trim() || undefined
                 })
             });
             const data = await resp.json();
-            if (data.status === 'success') {
+            if (resp.ok && data.status === 'success') {
                 logNetwork('AUDIT_COMPLETE', `Audit complete: ${data.total_raw_db_detections} DB detections ➔ ${data.total_generated_mobile_cards} cards (${data.compliance_score_pct}% compliance, 0 drops).`, 200, 25);
                 updateReportBadgesForActiveTask(taskId);
-                const redMoves = (data.discrepancies || []).filter(d => d.includes('REDUNDANT_SAME_SLOT_MOVE'));
-                const redNote = redMoves.length > 0 ? `\n• ⚠️ Invariant Violations: ${redMoves.length} Redundant Same-Slot Move(s) flagged!` : '';
-                const openReport = confirm(`✅ Task #${taskId} Audit Complete!\n\n• Raw DB Detections: ${data.total_raw_db_detections}\n• Generated Mobile Cards: ${data.total_generated_mobile_cards}\n• Performed Actions: ${data.total_performed_actions}\n• Dropped Actions: ${data.total_dropped_actions}\n• Compliance Score: ${data.compliance_score_pct}%${redNote}\n\nOpen the interactive E2E Audit & Trace Report now?`);
-                if (openReport) {
-                    openReportInRunner(
-                        data.report_url || `/api/runner/e2e_audit_report?task_id=${taskId}&t=${Date.now()}`,
-                        `E2E Audit Report — Task #${taskId}`
-                    );
-                }
+                applyExistingTaskValidation(data.validation);
+                renderActionTable();
+                renderMobileScreen();
+                showNotification(`Full check complete for Task #${taskId}. Use the Evidence report link to inspect details.`, 'success');
             } else {
-                alert('Failed to audit task: ' + (data.message || data.error));
+                const message = data.message || data.error || 'Full check failed.';
+                setExistingTaskPhase('error', message, existingTaskUi.validation);
+                showNotification('Failed to audit task: ' + message, 'error');
             }
         } catch (e) {
-            alert('Audit error: ' + e);
+            setExistingTaskPhase('error', 'Full check failed: ' + e, existingTaskUi.validation);
+            showNotification('Audit error: ' + e, 'error');
         } finally {
             if (btn) {
-                btn.textContent = '📊 Run Historical Post-Mortem Audit';
+                btn.textContent = 'Run full check';
                 btn.disabled = false;
             }
         }
@@ -3950,6 +4178,12 @@
         setElementText('disp-task-id', 'Not Loaded');
         setElementText('disp-task-status', 'IDLE');
         setElementText('disp-active-status-badge', 'STATUS: IDLE');
+        setExistingTaskPhase('idle', 'Enter an instance and Task ID, then load live actions.');
+        setElementText('ir-live-summary', 'Load a Task ID to see quality checks explained in plain language.');
+        setElementText('ir-live-gate', 'Not checked');
+        setElementText('ir-live-finished', 'Not checked');
+        setElementText('ir-live-alignment', 'Not checked');
+        setElementText('ir-live-post', 'Not checked');
         updateReportBadgesForActiveTask(null);
         updateActionCounts();
         renderActionTable();

@@ -21,6 +21,7 @@ import uuid
 import base64
 import urllib.request
 import urllib.error
+import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -41,7 +42,9 @@ SESSION_TOKEN_FILE = WORKSPACE_DIR / "data" / "session-tokens.json"
 sys.path.insert(0, str(WORKSPACE_DIR / "mobile-backend-integration-tests"))
 from core.action_list_domain_mapper import transform_action_list_to_domain, ActionTypeByName
 from core.action_list_ui_mapper import partition_ui_models_by_bay, BayUiSummary, map_domain_to_ui_model
-from core.invariants_validator import validate_all_invariants
+from core.invariants_validator import validate_all_invariants, InvariantCheckResult
+from core.action_generation_validator import validate_action_generation
+from core.scan_issue_investigator import investigate_scan_problem, parse_scan_url, placement_for_task_scans
 from core.html_report_generator import generate_html_validation_report
 from core.e2e_audit_engine import audit_task_execution, derive_why_user_performs_action
 from core.e2e_audit_report_generator import generate_e2e_audit_html_report
@@ -473,6 +476,24 @@ def generate_and_save_current_task_report(
         domain_models = transform_action_list_to_domain(raw_items, include_completed=True)
         bay_summaries = partition_ui_models_by_bay(domain_models, available_bays=discovered_bays)
         inv_results, pairings = validate_all_invariants(raw_items, domain_models, bay_summaries)
+        action_validation = validate_action_generation(raw_items, actions_list)
+        if action_validation["findings"]:
+            inv_results.extend(
+                InvariantCheckResult(
+                    name=f"Action Generation: {finding['title']}",
+                    passed=False,
+                    details=finding["message"],
+                    metric_a=len(finding.get("action_ids") or []),
+                )
+                for finding in action_validation["findings"]
+            )
+        else:
+            inv_results.append(InvariantCheckResult(
+                name="Action Generation Spatial Safety",
+                passed=True,
+                details=action_validation["summary"],
+                metric_a=len(actions_list),
+            ))
 
         # Run live unit tests to get real-time dynamic test pass counts
         passed_tests, total_tests = run_live_unit_tests()
@@ -559,6 +580,30 @@ def generate_and_save_current_task_report(
     except Exception as e:
         print(f"⚠️ Report generation error for task #{task_id}: {e}")
         return ""
+
+
+def attach_action_validation_to_audit(
+    audit_summary: Any,
+    raw_items: List[Dict[str, Any]],
+    task_id: int,
+    pog_id: int = 0,
+) -> Dict[str, Any]:
+    """Merge canonical action-generation findings into an E2E audit."""
+    actions = parse_raw_action_items(raw_items, task_id, pog_id)
+    validation = validate_action_generation(raw_items, actions)
+    existing_codes = {
+        str(item.get("code") or item.get("type") or "")
+        for item in audit_summary.discrepancies
+        if isinstance(item, dict)
+    }
+    audit_summary.discrepancies.extend(
+        finding
+        for finding in validation["findings"]
+        if finding["code"] not in existing_codes
+    )
+    return validation
+
+
 def get_clean_reset_report_html() -> str:
     """
     Returns a clean, zero-data HTML page representing a reset session awaiting live test execution.
@@ -1160,6 +1205,32 @@ def parse_raw_action_items(raw_items: List[Dict[str, Any]], task_id: int, pog_id
             "cur_pos_num": ui_model.source_position or 1,
             "exp_shelf": ui_model.target_shelf or 1,
             "exp_pos_num": ui_model.target_position or 1,
+            "source_bay": ui_model.source_bay,
+            "source_shelf": ui_model.source_shelf,
+            "source_position": ui_model.source_position,
+            "target_bay": ui_model.target_bay,
+            "target_shelf": ui_model.target_shelf,
+            "target_position": ui_model.target_position,
+            "step_subtype": ui_model.step_subtype,
+            "slide_direction": (
+                "right"
+                if (
+                    u_type == "FIX_IN_BAY"
+                    and ui_model.source_shelf == ui_model.target_shelf
+                    and str(ui_model.source_position).isdigit()
+                    and str(ui_model.target_position).isdigit()
+                    and int(ui_model.target_position) > int(ui_model.source_position)
+                )
+                else "left"
+                if (
+                    u_type == "FIX_IN_BAY"
+                    and ui_model.source_shelf == ui_model.target_shelf
+                    and str(ui_model.source_position).isdigit()
+                    and str(ui_model.target_position).isdigit()
+                    and int(ui_model.target_position) < int(ui_model.source_position)
+                )
+                else None
+            ),
             "meaning": ui_model.user_action_meaning,
             "state": "STATE_ACCEPTED" if dm.action_resolved else "STATE_IDLE",
             "reason": dm.reason,
@@ -1167,6 +1238,64 @@ def parse_raw_action_items(raw_items: List[Dict[str, Any]], task_id: int, pog_id
 
     # Sort actions by strict store associate execution sequence
     return sort_action_sequence(actions_list)
+
+
+def fetch_live_task_actions(
+    base_url: str,
+    task_id: int,
+    token: str,
+    timeout: int = 12,
+) -> Tuple[List[Dict[str, Any]], str]:
+    """Fetch every live action page for a task; never substitute local files."""
+    if not token:
+        raise ValueError(f"Authentication required for {base_url}.")
+
+    headers = {
+        "Authorization": f"Token {token}",
+        "Accept": "application/json",
+        "Cache-Control": "no-cache",
+    }
+    cache_buster = int(time.time() * 1000)
+    candidates = [
+        f"{base_url}/api/v1/tasks/{task_id}/action-list/retailer/?limit=1000&_t={cache_buster}",
+        f"{base_url}/api/v1/tasks/{task_id}/actions/?limit=1000&_t={cache_buster}",
+        f"{base_url}/api/v4/tasks/{task_id}/action-list/retailer/?limit=1000&_t={cache_buster}",
+        f"{base_url}/api/v1/tasks/{task_id}/action-list/?limit=1000&_t={cache_buster}",
+    ]
+    errors: List[str] = []
+
+    for first_url in candidates:
+        items: List[Dict[str, Any]] = []
+        next_url: Optional[str] = first_url
+        seen_urls = set()
+        try:
+            while next_url and next_url not in seen_urls:
+                seen_urls.add(next_url)
+                req = urllib.request.Request(next_url, headers=headers)
+                with urllib.request.urlopen(req, context=ssl_ctx, timeout=timeout) as resp:
+                    payload = json.loads(resp.read().decode("utf-8"))
+                if isinstance(payload, list):
+                    page_items = payload
+                    next_url = None
+                elif isinstance(payload, dict):
+                    page_items = payload.get("results") or payload.get("data") or payload.get("actions") or []
+                    next_value = payload.get("next")
+                    next_url = urllib.parse.urljoin(base_url + "/", next_value) if next_value else None
+                else:
+                    page_items = []
+                    next_url = None
+                if not isinstance(page_items, list):
+                    raise ValueError("Action-list response did not contain an array.")
+                items.extend(row for row in page_items if isinstance(row, dict))
+            if items:
+                return items, first_url
+        except urllib.error.HTTPError as exc:
+            errors.append(f"{first_url}: HTTP {exc.code}")
+        except Exception as exc:
+            errors.append(f"{first_url}: {exc}")
+
+    detail = "; ".join(errors[-2:]) if errors else "all live endpoints returned an empty list"
+    raise ValueError(f"No live actions found for Task #{task_id} on {base_url}. {detail}")
 
 
 def sort_action_sequence(actions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -1216,7 +1345,18 @@ def sort_action_sequence(actions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         else:
             sub_prio = 5
 
-        return (3, bay_num, sub_prio, cur_sh or exp_sh, cur_p or exp_p)
+        shelf = cur_sh or exp_sh
+        position = cur_p or exp_p
+        if a_type == "FIX_IN_BAY" and cur_sh == exp_sh:
+            try:
+                source_pos = int(cur_p)
+                target_pos = int(exp_p)
+                # Walk toward the vacancy: rightward chains move from right to
+                # left; leftward chains move from left to right.
+                position = -source_pos if target_pos > source_pos else source_pos
+            except (TypeError, ValueError):
+                pass
+        return (3, bay_num, sub_prio, shelf, position)
 
     sorted_list = sorted(actions, key=action_sort_key)
     
@@ -3990,9 +4130,13 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 post_stage_loaded=post_stage_loaded,
                 action_list_growth_after_post=scan_action_list_growth(scan_results),
             )
+            action_validation = attach_action_validation_to_audit(
+                audit_summary, raw_items, target_task_id, pog_id
+            )
             from dataclasses import asdict
             EXECUTION_STATE["active_task_id"] = target_task_id
             EXECUTION_STATE["latest_audit"] = asdict(audit_summary)
+            EXECUTION_STATE["latest_action_validation"] = action_validation
             persist_ir_state(instance_slug_from_url(report_base_url))
 
             out_file = WORKSPACE_DIR / f"IR_Task_{target_task_id}_E2E_Audit_And_Trace_Report.html"
@@ -4128,6 +4272,26 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
         super().do_GET()
 
+    def _handle_investigate_issue(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Answer a described scan problem with the finding, root cause, and fix."""
+        base_url = normalize_backend_url(payload.get("base_url") or "")
+        scan_url = str(payload.get("scan_url") or payload.get("scan_id") or "").strip()
+        problem = str(payload.get("problem") or "").strip()
+        if not scan_url:
+            return {"status": "error", "error": "Enter a scan URL"}
+        if not problem:
+            return {"status": "error", "error": "Describe the problem to investigate"}
+        scan_host = parse_scan_url(scan_url).get("base_url") or ""
+        host = scan_host or base_url
+        token = str(payload.get("token") or "").strip() or INSTANCE_TOKENS.get(host) or INSTANCE_TOKENS.get(base_url) or TOKEN
+        if not token:
+            return {"status": "error", "error": "Sign in to this instance before investigating"}
+        try:
+            report = investigate_scan_problem(host, token, problem, scan_url)
+        except Exception as exc:
+            return {"status": "error", "error": str(exc)}
+        return {"status": "success", **report}
+
     def do_POST(self):
         content_length = int(self.headers.get("Content-Length", 0))
         post_data = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"
@@ -4201,6 +4365,10 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         elif self.path.startswith("/api/runner/execute_step"):
             resp_data = self._handle_execute_step(payload)
             self._send_json(resp_data)
+            return
+
+        elif self.path.startswith("/api/runner/investigate_issue"):
+            self._send_json(self._handle_investigate_issue(payload))
             return
 
         elif self.path.startswith("/api/runner/audit_task"):
@@ -4911,15 +5079,18 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         override_token = payload.get("token") or None
 
         start_t = time.time()
-        cached_file = WORKSPACE_DIR / f"raw_backend_actions_task_{task_id}.json"
-
         token = None
         try:
             token = get_auth_token(base_url=base_url, username=username, password=password, override_token=override_token)
-        except Exception:
-            token = None
+        except Exception as exc:
+            return {
+                "status": "error",
+                "error_code": "AUTH_REQUIRED",
+                "base_url": base_url,
+                "message": str(exc),
+            }
 
-        if not token and not cached_file.exists():
+        if not token:
             return {
                 "status": "error",
                 "error_code": "AUTH_REQUIRED",
@@ -5036,41 +5207,11 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                             EXECUTION_STATE["logs"].append(f"✅ Active shelf scans ({', '.join(active_scan_ids)}) have completed CV processing!")
                             break
 
-                # 2. Fetch Live Action List in real-time with cache-busting timestamp
-                ts_cache_buster = int(time.time() * 1000)
-                action_endpoints = [
-                    f"{base_url}/api/v1/tasks/{task_id}/action-list/retailer/?limit=1000&_t={ts_cache_buster}",
-                    f"{base_url}/api/v1/tasks/{task_id}/actions/?limit=1000&_t={ts_cache_buster}",
-                    f"{base_url}/api/v4/tasks/{task_id}/action-list/retailer/?limit=1000&_t={ts_cache_buster}",
-                    f"{base_url}/api/v1/tasks/{task_id}/action-list/?limit=1000&_t={ts_cache_buster}",
-                ]
-                for act_ep in action_endpoints:
-                    try:
-                        req = urllib.request.Request(act_ep, headers=headers)
-                        with urllib.request.urlopen(req, context=ssl_ctx, timeout=10) as resp:
-                            raw_data = json.loads(resp.read().decode("utf-8"))
-                            if isinstance(raw_data, dict):
-                                raw_items = raw_data.get("results") or raw_data.get("data") or raw_data.get("actions") or []
-                            elif isinstance(raw_data, list):
-                                raw_items = raw_data
-                            if raw_items:
-                                break
-                    except Exception:
-                        pass
-
-            # Fall back to local benchmark actions if live returned 0 or unauthenticated
-            if not raw_items and cached_file.exists():
-                try:
-                    raw_items = json.loads(cached_file.read_text(encoding="utf-8"))
-                    if not isinstance(raw_items, list):
-                        raw_items = []
-                    is_from_cache = True
-                except Exception:
-                    pass
+                # 2. Fetch the complete live action list. Local benchmark files
+                # are never accepted for the Existing Task workflow.
+                raw_items, _ = fetch_live_task_actions(base_url, task_id, token)
 
             if not raw_items:
-                if not token:
-                    return {"status": "error", "message": f"Authentication required for {base_url}. Please provide Username & Password or Auth Token."}
                 return {"status": "error", "message": f"No action items found for Task #{task_id} on {base_url}. (Live backend returned 0 items)"}
 
             if raw_items and isinstance(raw_items, list) and raw_items[0]:
@@ -5098,6 +5239,37 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     store_id = st_val
 
             actions_list = parse_raw_action_items(raw_items, task_id, pog_id, scan_map=latest_scan_map if latest_scan_map else None)
+            action_validation = validate_action_generation(raw_items, actions_list)
+            placement = {"status": "unavailable", "error": "No linked scans were available for planogram comparison"}
+            if token and scan_results:
+                try:
+                    placement = placement_for_task_scans(base_url, token, scan_results, str(pog_id or ""))
+                except Exception as exc:
+                    placement = {"status": "unavailable", "error": str(exc)}
+            action_validation["placement"] = placement
+            if placement.get("status") == "ready":
+                action_validation["findings"].insert(0, {
+                    "code": "REALOGRAM_POSITION_MISMATCH",
+                    "severity": "warning",
+                    "title": "Realogram versus planogram",
+                    "message": (
+                        f"{placement['different_position']} detected products are in a different position "
+                        f"from the planogram. {placement['same_position']} match their planogram slot. "
+                        f"{placement['not_on_planogram']} are not on this planogram."
+                    ),
+                    "action_ids": [],
+                    "upc": "",
+                    "product": "",
+                    "source": placement.get("stage") or "",
+                    "target": placement.get("planogram") or "",
+                })
+                action_validation["warning_count"] = int(action_validation.get("warning_count") or 0) + 1
+                if action_validation.get("state") == "pass":
+                    action_validation["state"] = "warning"
+                action_validation["summary"] = (
+                    f"{placement['different_position']} products are in a different realogram position. "
+                    + action_validation.get("summary", "")
+                )
 
             # Calculate live cart balance based on accepted/idle status
             foreign_done = sum(1 for a in actions_list if a.get("state") == "STATE_ACCEPTED" and a.get("type") == "REMOVE")
@@ -5150,6 +5322,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             EXECUTION_STATE["step_telemetry"] = []
             EXECUTION_STATE["latest_audit"] = None
             EXECUTION_STATE["raw_results"] = raw_items
+            EXECUTION_STATE["latest_action_validation"] = action_validation
             EXECUTION_STATE["task_info"] = t_info
             EXECUTION_STATE["scan_results"] = scan_results
             EXECUTION_STATE["cart"] = current_cart
@@ -5163,7 +5336,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             )
             
             now_str = time.strftime("%H:%M:%S", time.localtime())
-            source_tag = "Cached Benchmark" if is_from_cache else f"Live {base_url}"
+            source_tag = f"Live {base_url}"
             EXECUTION_STATE["logs"].append(
                 f"[{now_str}] ⚡ Loaded Task #{task_id} ({source_tag}) (Store #{store_id}, POG #{pog_id} '{pog_name}', {len(actions_list)} actions)."
             )
@@ -5205,7 +5378,9 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "instance_slug": instance_slug,
                 "raw_generated_count": raw_generated_count,
                 "displayed_mobile_count": displayed_mobile_count,
-                "is_from_cache": is_from_cache,
+                "validation": action_validation,
+                "is_from_cache": False,
+                "data_source": "live",
                 "message": f"Successfully loaded {len(actions_list)} actions ({source_tag}) ({dur}ms)",
             }
         except Exception as e:
@@ -5422,33 +5597,39 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             return {"status": "error", "message": "Backend Instance URL is required for audit"}
         base_url = normalize_backend_url(req_base_url)
 
-        username = payload.get("username")
-        password = payload.get("password")
-        token = payload.get("token") or INSTANCE_TOKENS.get(base_url) or TOKEN
+        username = str(payload.get("username") or "").strip()
+        password = str(payload.get("password") or "").strip()
+        override_token = payload.get("token") or None
+        try:
+            token = get_auth_token(
+                base_url=base_url,
+                username=username,
+                password=password,
+                override_token=override_token,
+            )
+        except Exception as exc:
+            return {
+                "status": "error",
+                "error_code": "AUTH_REQUIRED",
+                "message": str(exc),
+            }
 
-        # Retrieve raw actions for task
-        raw_file = WORKSPACE_DIR / f"raw_backend_actions_task_{task_id}.json"
-        raw_items = []
-        if raw_file.exists():
-            try:
-                raw_items = json.loads(raw_file.read_text(encoding="utf-8"))
-            except Exception:
-                pass
-        
+        # Audit exactly the selected live instance. Reuse the in-memory result
+        # only when it came from the same task and normalized instance.
+        same_active_task = (
+            task_id == EXECUTION_STATE.get("active_task_id")
+            and base_url == normalize_backend_url(EXECUTION_STATE.get("base_url") or "")
+        )
+        raw_items = list(EXECUTION_STATE.get("raw_results", [])) if same_active_task else []
         if not raw_items:
             try:
-                if username and password and not payload.get("token"):
-                    token = get_auth_token(base_url=base_url, username=username, password=password)
-                headers = {"Authorization": f"Token {token}", "Accept": "application/json"}
-                req = urllib.request.Request(f"{base_url}/api/v1/tasks/{task_id}/action-list/retailer/", headers=headers)
-                with urllib.request.urlopen(req, context=ssl_ctx, timeout=12) as resp:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    raw_items = data.get("results") or data if isinstance(data, list) else []
-            except Exception:
-                pass
-
-        if not raw_items and task_id == EXECUTION_STATE.get("active_task_id"):
-            raw_items = EXECUTION_STATE.get("raw_results", [])
+                raw_items, _ = fetch_live_task_actions(base_url, task_id, token)
+            except Exception as exc:
+                return {
+                    "status": "error",
+                    "error_code": "LIVE_ACTIONS_UNAVAILABLE",
+                    "message": str(exc),
+                }
 
         store_id = int(payload.get("store_id") or EXECUTION_STATE.get("store_id") or (raw_items[0].get("store_id") if raw_items and isinstance(raw_items, list) and raw_items[0].get("store_id") else 0))
         pog_id = int(payload.get("pog_id") or EXECUTION_STATE.get("pog_id") or (raw_items[0].get("pog_id") if raw_items and isinstance(raw_items, list) and raw_items[0].get("pog_id") else 0))
@@ -5462,18 +5643,11 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             if p_info.get("id"):
                 pog_id = p_info["id"]
 
-        if username and password and not token:
-            token = get_auth_token(
-                base_url=base_url,
-                username=username,
-                password=password,
-            )
         digital_items, digital_loaded, digital_error, unavailable_scan_ids = load_digital_report_actions(
             base_url,
             token,
             raw_items,
         )
-        same_active_task = task_id == EXECUTION_STATE.get("active_task_id")
         task_info = EXECUTION_STATE.get("task_info", {}) if same_active_task else {}
         scan_results = EXECUTION_STATE.get("scan_results", []) if same_active_task else []
         timeline = build_task_scan_timeline(task_info, scan_results)
@@ -5515,6 +5689,9 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             post_stage_loaded=post_stage_loaded,
             action_list_growth_after_post=scan_action_list_growth(scan_results),
         )
+        action_validation = attach_action_validation_to_audit(
+            audit_summary, raw_items, task_id, pog_id
+        )
 
         out_file = WORKSPACE_DIR / f"IR_Task_{task_id}_E2E_Audit_And_Trace_Report.html"
         category_id = resolve_report_category_id(
@@ -5540,6 +5717,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         EXECUTION_STATE["base_url"] = base_url
         EXECUTION_STATE["instance_slug"] = instance_slug
         EXECUTION_STATE["latest_audit"] = asdict(audit_summary)
+        EXECUTION_STATE["latest_action_validation"] = action_validation
         persist_ir_state()
 
         return {
@@ -5566,6 +5744,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             "cart": audit_summary.cart_final_balance,
             "action_counts": audit_summary.action_counts_by_type,
             "discrepancies": audit_summary.discrepancies,
+            "validation": action_validation,
             "report_file": out_file.name,
             "report_url": f"/api/runner/e2e_audit_report?task_id={task_id}"
         }
