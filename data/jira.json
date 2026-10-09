@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-10-09T13:24:33.055537+00:00",
+  "lastUpdated": "2026-10-09T13:39:56.938525+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "projectName": "Rebotics 3",
@@ -23,9 +23,9 @@
   },
   "byComponent": {
     "ANDR": 270,
+    "BE REBM": 151,
     "General": 204,
     "BE CORE": 19,
-    "BE REBM": 151,
     "IOS": 275,
     "DE": 13,
     "HAWKEYE": 14,
@@ -42,14 +42,14 @@
     "CVAT": 2
   },
   "byStatus": {
-    "In Progress": 24,
+    "Code Review": 22,
+    "Staging": 8,
     "To  Do": 148,
     "UAT": 103,
-    "Staging": 8,
     "Done": 479,
     "QA": 60,
-    "Code Review": 21,
     "PRODUCTION READY": 29,
+    "In Progress": 23,
     "Waiting for clarification": 56,
     "Invalid": 61,
     "Dev Complete": 11
@@ -232,7 +232,7 @@
       "releaseStatus": "Unreleased",
       "type": "Bug",
       "epic": "None",
-      "status": "In Progress",
+      "status": "Code Review",
       "statusCategory": "indeterminate",
       "priority": "Medium",
       "component": "ANDR",
@@ -241,7 +241,7 @@
       "tester": "Ayushi Maheshwari",
       "reporter": "Ayushi Maheshwari",
       "created": "2026-10-09T00:31:06.190-0700",
-      "updated": "2026-10-09T06:20:09.271-0700",
+      "updated": "2026-10-09T06:34:21.956-0700",
       "ageDays": 0,
       "staleDays": 0,
       "labels": [
@@ -249,6 +249,35 @@
         "PRGM"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20922"
+    },
+    {
+      "key": "REB3-20653",
+      "summary": "[MJHD] Store 1391 after photo task not showing today",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.39 BE release for MJHD",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Staging",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "BE REBM",
+      "assignee": "Artem Kanarev",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
+      "tester": "Aakash Oswal",
+      "reporter": "Aakash Oswal",
+      "created": "2026-09-11T09:21:32.889-0700",
+      "updated": "2026-10-09T06:27:21.697-0700",
+      "ageDays": 27,
+      "staleDays": 0,
+      "labels": [
+        "AD-HOC",
+        "Customer",
+        "MJHD"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20653"
     },
     {
       "key": "REB3-20936",
@@ -302,35 +331,6 @@
         "Customer"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-19910"
-    },
-    {
-      "key": "REB3-20653",
-      "summary": "[MJHD] Store 1391 after photo task not showing today",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.39 BE release for MJHD",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Staging",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "BE REBM",
-      "assignee": "Artem Kanarev",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5bb43cb251d4557be258afa1/1523e370-d0f3-41f2-b485-18e437236dc2/48",
-      "tester": "Aakash Oswal",
-      "reporter": "Aakash Oswal",
-      "created": "2026-09-11T09:21:32.889-0700",
-      "updated": "2026-10-09T06:13:55.323-0700",
-      "ageDays": 27,
-      "staleDays": 0,
-      "labels": [
-        "AD-HOC",
-        "Customer",
-        "MJHD"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20653"
     },
     {
       "key": "REB3-20502",
@@ -845,7 +845,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-10-07T06:37:15.635-0700",
       "updated": "2026-10-09T02:42:05.711-0700",
-      "ageDays": 1,
+      "ageDays": 2,
       "staleDays": 0,
       "labels": [
         "AD-HOC",
@@ -2518,7 +2518,7 @@
       "reporter": "Swati Goel",
       "created": "2026-09-30T06:39:33.560-0700",
       "updated": "2026-10-08T23:15:06.642-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 0,
       "labels": [
         "ANDR"
@@ -3613,7 +3613,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-28T06:26:21.406-0700",
       "updated": "2026-10-08T23:08:31.972-0700",
-      "ageDays": 10,
+      "ageDays": 11,
       "staleDays": 0,
       "labels": [
         "IOS",
@@ -4411,7 +4411,7 @@
       "reporter": "Swati Goel",
       "created": "2026-09-26T06:29:22.824-0700",
       "updated": "2026-10-08T22:56:19.966-0700",
-      "ageDays": 12,
+      "ageDays": 13,
       "staleDays": 0,
       "labels": [
         "IOS"
@@ -6444,8 +6444,8 @@
       "reporter": "Rohan Patil",
       "created": "2026-10-08T06:26:02.993-0700",
       "updated": "2026-10-08T06:27:57.437-0700",
-      "ageDays": 0,
-      "staleDays": 0,
+      "ageDays": 1,
+      "staleDays": 1,
       "labels": [
         "ANDR"
       ],
@@ -9872,7 +9872,7 @@
       "created": "2026-08-05T08:16:17.577-0700",
       "updated": "2026-09-28T06:26:22.650-0700",
       "ageDays": 64,
-      "staleDays": 10,
+      "staleDays": 11,
       "labels": [
         "IOS",
         "PRGM"
@@ -9900,7 +9900,7 @@
       "created": "2026-07-08T01:34:37.680-0700",
       "updated": "2026-09-28T06:25:51.041-0700",
       "ageDays": 93,
-      "staleDays": 10,
+      "staleDays": 11,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20083"
     },
@@ -12768,7 +12768,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-21T06:30:24.333-0700",
       "updated": "2026-09-20T21:57:49.658-0700",
-      "ageDays": 48,
+      "ageDays": 49,
       "staleDays": 18,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20446"
@@ -19507,7 +19507,7 @@
       "created": "2026-07-02T03:53:25.324-0700",
       "updated": "2026-09-07T06:32:57.948-0700",
       "ageDays": 99,
-      "staleDays": 31,
+      "staleDays": 32,
       "labels": [
         "Backend",
         "SHIELD"
@@ -25756,7 +25756,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-06-18T06:37:14.049-0700",
       "updated": "2026-08-21T04:42:06.483-0700",
-      "ageDays": 112,
+      "ageDays": 113,
       "staleDays": 49,
       "labels": [
         "ANDR",
@@ -25977,7 +25977,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-04-14T06:24:59.885-0700",
       "updated": "2026-08-21T04:42:05.163-0700",
-      "ageDays": 177,
+      "ageDays": 178,
       "staleDays": 49,
       "labels": [
         "Customer"
@@ -26454,7 +26454,7 @@
       "reporter": "Dev Singh Rathore",
       "created": "2026-01-06T05:38:26.491-0800",
       "updated": "2026-08-21T04:42:02.925-0700",
-      "ageDays": 275,
+      "ageDays": 276,
       "staleDays": 49,
       "labels": [
         "AD-HOC",
@@ -26563,7 +26563,7 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-06-01T06:36:15.886-0700",
       "updated": "2026-08-21T04:42:01.863-0700",
-      "ageDays": 129,
+      "ageDays": 130,
       "staleDays": 49,
       "labels": [
         "ALBT",
