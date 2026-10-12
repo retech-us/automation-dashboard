@@ -1,15 +1,15 @@
 {
   "status": "live",
-  "lastUpdated": "2026-10-12T13:26:28.030955+00:00",
+  "lastUpdated": "2026-10-12T14:00:20.319036+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "projectName": "Rebotics 3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 202,
+    "openDefects": 201,
     "blockers": 125,
-    "inProgress": 203,
+    "inProgress": 204,
     "inQa": 54,
     "resolvedThisWeek": 172,
     "resolvedTotal": 541
@@ -22,6 +22,7 @@
     "Lowest": 0
   },
   "byComponent": {
+    "HAWKEYE": 15,
     "General": 207,
     "IOS": 271,
     "BE REBM": 147,
@@ -29,7 +30,6 @@
     "FE Hawkeye": 14,
     "QA": 4,
     "PARENT-WORK-ITEM": 27,
-    "HAWKEYE": 15,
     "BE CORE": 18,
     "FE REBM": 1,
     "DE": 13,
@@ -42,13 +42,13 @@
     "CVAT": 1
   },
   "byStatus": {
-    "UAT": 96,
-    "Dev Complete": 19,
-    "To  Do": 160,
+    "UAT": 98,
+    "QA": 54,
     "Code Review": 22,
     "Waiting for clarification": 42,
-    "QA": 54,
     "In Progress": 30,
+    "To  Do": 159,
+    "Dev Complete": 18,
     "Done": 477,
     "Staging": 10,
     "Invalid": 64,
@@ -224,6 +224,86 @@
   },
   "issues": [
     {
+      "key": "REB3-20683",
+      "summary": "[QKTP] Hawkeye - Filter options Api for Hawkeye Dashboard",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "HAWKEYE",
+      "assignee": "Shrey Jain",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/83d880286f8d109b470282b1040efbc9?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSJ-4.png",
+      "tester": "Irbaz Khan",
+      "reporter": "Irbaz Khan",
+      "created": "2026-09-17T00:26:11.995-0700",
+      "updated": "2026-10-12T06:56:30.642-0700",
+      "ageDays": 25,
+      "staleDays": 0,
+      "labels": [
+        "QKTP"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20683"
+    },
+    {
+      "key": "REB3-20692",
+      "summary": "[QKTP][Hawkeye-FE] Enable add/edit fixture actions at the individual camera level",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-19637 - [QKTP] Hawkeye Dashboard V3.2",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "Ajay Katke",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AK-1.png",
+      "tester": "Ajay Katke",
+      "reporter": "Ajay Katke",
+      "created": "2026-09-18T05:03:00.432-0700",
+      "updated": "2026-10-12T06:30:28.246-0700",
+      "ageDays": 24,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20692"
+    },
+    {
+      "key": "REB3-20951",
+      "summary": "[iOS] User Able to Start Online Survey While Offline Survey Is In Progress",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.4",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "anton.mitrofanov",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-10-12T00:42:00.554-0700",
+      "updated": "2026-10-12T06:30:25.101-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20951"
+    },
+    {
       "key": "REB3-20726",
       "summary": "[QKTP][Hawkeye-FE] Apply dashboard filters across the full camera dataset regardless of pagination",
       "project": "Rebotics 3",
@@ -247,59 +327,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20726"
-    },
-    {
-      "key": "REB3-20951",
-      "summary": "[iOS] User Able to Start Online Survey While Offline Survey Is In Progress",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "anton.mitrofanov",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-10-12T00:42:00.554-0700",
-      "updated": "2026-10-12T06:14:40.536-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "IOS",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20951"
-    },
-    {
-      "key": "REB3-20692",
-      "summary": "[QKTP][Hawkeye-FE] Enable add/edit fixture actions at the individual camera level",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-19637 - [QKTP] Hawkeye Dashboard V3.2",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "Ajay Katke",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AK-1.png",
-      "tester": "Ajay Katke",
-      "reporter": "Ajay Katke",
-      "created": "2026-09-18T05:03:00.432-0700",
-      "updated": "2026-10-12T06:26:07.097-0700",
-      "ageDays": 24,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20692"
     },
     {
       "key": "REB3-20887",
@@ -3246,7 +3273,7 @@
       "created": "2026-09-11T09:21:32.889-0700",
       "updated": "2026-10-09T06:27:21.697-0700",
       "ageDays": 30,
-      "staleDays": 2,
+      "staleDays": 3,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -3417,7 +3444,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-08-13T06:48:50.865-0700",
       "updated": "2026-10-09T04:16:16.848-0700",
-      "ageDays": 59,
+      "ageDays": 60,
       "staleDays": 3,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20386"
@@ -3470,7 +3497,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-08-12T06:59:42.580-0700",
       "updated": "2026-10-09T02:47:37.363-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 3,
       "labels": [
         "ANDR",
@@ -3526,7 +3553,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-10-07T06:37:15.635-0700",
       "updated": "2026-10-09T02:42:05.711-0700",
-      "ageDays": 4,
+      "ageDays": 5,
       "staleDays": 3,
       "labels": [
         "AD-HOC",
@@ -4680,7 +4707,7 @@
       "reporter": "Swati Goel",
       "created": "2026-09-30T06:39:33.560-0700",
       "updated": "2026-10-08T23:15:06.642-0700",
-      "ageDays": 11,
+      "ageDays": 12,
       "staleDays": 3,
       "labels": [
         "ANDR"
@@ -5136,7 +5163,7 @@
       "reporter": "Nitish Kumar",
       "created": "2026-10-05T06:53:17.686-0700",
       "updated": "2026-10-08T23:14:34.671-0700",
-      "ageDays": 6,
+      "ageDays": 7,
       "staleDays": 3,
       "labels": [
         "iOS"
@@ -5855,7 +5882,7 @@
       "reporter": "Gaurav Jain",
       "created": "2025-10-30T06:54:26.702-0700",
       "updated": "2026-10-08T23:05:44.528-0700",
-      "ageDays": 346,
+      "ageDays": 347,
       "staleDays": 3,
       "labels": [
         "PILOT",
@@ -6492,7 +6519,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-09-26T06:54:01.299-0700",
       "updated": "2026-10-08T22:56:20.581-0700",
-      "ageDays": 15,
+      "ageDays": 16,
       "staleDays": 3,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20804"
@@ -6517,7 +6544,7 @@
       "reporter": "Swati Goel",
       "created": "2026-09-26T06:29:22.824-0700",
       "updated": "2026-10-08T22:56:19.966-0700",
-      "ageDays": 15,
+      "ageDays": 16,
       "staleDays": 3,
       "labels": [
         "IOS"
@@ -8326,7 +8353,7 @@
       "created": "2026-10-08T06:26:02.993-0700",
       "updated": "2026-10-08T06:27:57.437-0700",
       "ageDays": 4,
-      "staleDays": 3,
+      "staleDays": 4,
       "labels": [
         "ANDR"
       ],
@@ -9302,7 +9329,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-09-26T06:46:57.192-0700",
       "updated": "2026-10-07T00:46:22.347-0700",
-      "ageDays": 15,
+      "ageDays": 16,
       "staleDays": 5,
       "labels": [
         "ANDR"
@@ -10755,7 +10782,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-08-12T06:57:07.920-0700",
       "updated": "2026-10-01T09:39:27.551-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 10,
       "labels": [
         "ANDR",
@@ -11922,7 +11949,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-22T06:51:09.556-0700",
       "updated": "2026-09-25T00:54:57.629-0700",
-      "ageDays": 19,
+      "ageDays": 20,
       "staleDays": 17,
       "labels": [
         "IOS",
@@ -12399,33 +12426,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20723"
     },
     {
-      "key": "REB3-20683",
-      "summary": "[QKTP] Hawkeye - Filter options Api for Hawkeye Dashboard",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.4",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "HAWKEYE",
-      "assignee": "Shrey Jain",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/83d880286f8d109b470282b1040efbc9?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSJ-4.png",
-      "tester": "Irbaz Khan",
-      "reporter": "Irbaz Khan",
-      "created": "2026-09-17T00:26:11.995-0700",
-      "updated": "2026-09-23T04:19:06.832-0700",
-      "ageDays": 25,
-      "staleDays": 19,
-      "labels": [
-        "QKTP"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20683"
-    },
-    {
       "key": "REB3-20620",
       "summary": "[Andr]Offline survey template not working for the online task",
       "project": "Rebotics 3",
@@ -12693,7 +12693,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-07-13T06:57:31.646-0700",
       "updated": "2026-09-22T20:48:13.860-0700",
-      "ageDays": 90,
+      "ageDays": 91,
       "staleDays": 19,
       "labels": [
         "AD-HOC",
@@ -14091,7 +14091,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-21T06:30:24.333-0700",
       "updated": "2026-09-20T21:57:49.658-0700",
-      "ageDays": 51,
+      "ageDays": 52,
       "staleDays": 21,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20446"
@@ -14864,7 +14864,7 @@
       "reporter": "Stepan",
       "created": "2026-08-12T06:59:53.146-0700",
       "updated": "2026-09-16T05:12:56.094-0700",
-      "ageDays": 60,
+      "ageDays": 61,
       "staleDays": 26,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20361"
@@ -18963,7 +18963,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-06T06:47:52.607-0700",
       "updated": "2026-09-07T23:52:19.656-0700",
-      "ageDays": 66,
+      "ageDays": 67,
       "staleDays": 34,
       "labels": [
         "Android",
@@ -19917,7 +19917,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-07-20T06:40:33.021-0700",
       "updated": "2026-09-07T23:51:57.542-0700",
-      "ageDays": 83,
+      "ageDays": 84,
       "staleDays": 34,
       "labels": [
         "IOS",
@@ -20780,7 +20780,7 @@
       "created": "2026-07-02T03:53:25.324-0700",
       "updated": "2026-09-07T06:32:57.948-0700",
       "ageDays": 102,
-      "staleDays": 34,
+      "staleDays": 35,
       "labels": [
         "Backend",
         "SHIELD"
@@ -22407,7 +22407,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-10T06:43:49.143-0700",
       "updated": "2026-09-01T00:10:49.677-0700",
-      "ageDays": 62,
+      "ageDays": 63,
       "staleDays": 41,
       "labels": [
         "ALBT",
@@ -26686,7 +26686,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-06-18T06:37:14.049-0700",
       "updated": "2026-08-21T04:42:06.483-0700",
-      "ageDays": 115,
+      "ageDays": 116,
       "staleDays": 52,
       "labels": [
         "ANDR",
