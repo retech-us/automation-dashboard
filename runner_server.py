@@ -2443,6 +2443,65 @@ def build_intelligent_reset_task_catalog(active_instance_slug: str = "harr") -> 
     return catalog
 
 
+
+# ─── Sentry live usage for the dashboard's Sentry tab ───
+SENTRY_LIVE_TTL_SECONDS = 15 * 60
+_SENTRY_LIVE_CACHE: Dict[str, Any] = {"at": 0.0, "data": None}
+_SENTRY_LIVE_LOCK = threading.Lock()
+
+
+def _sentry_live_from_api() -> Optional[Dict[str, Any]]:
+    """Fetch directly from Sentry when this runner has SENTRY_AUTH_TOKEN."""
+    if not os.environ.get("SENTRY_AUTH_TOKEN", "").strip():
+        return None
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("fetch_sentry", WORKSPACE_DIR / "scripts" / "fetch-sentry.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    data = module.collect()
+    data["served_by"] = "runner (Sentry API)"
+    return data
+
+
+def _sentry_live_from_gh_pages() -> Optional[Dict[str, Any]]:
+    """Use the copy the Update Dashboard workflow published (no local token needed)."""
+    fetch = subprocess.run(
+        ["git", "-C", str(WORKSPACE_DIR), "fetch", "-q", "origin", "gh-pages"],
+        capture_output=True, text=True, timeout=30,
+    )
+    if fetch.returncode != 0:
+        return None
+    show = subprocess.run(
+        ["git", "-C", str(WORKSPACE_DIR), "show", "origin/gh-pages:data/sentry-live.json"],
+        capture_output=True, text=True, timeout=10,
+    )
+    if show.returncode != 0:
+        return None
+    data = json.loads(show.stdout)
+    data["served_by"] = "runner (published CI copy)"
+    return data
+
+
+def get_sentry_live(force: bool = False) -> Dict[str, Any]:
+    with _SENTRY_LIVE_LOCK:
+        cached = _SENTRY_LIVE_CACHE["data"]
+        if cached and not force and time.time() - _SENTRY_LIVE_CACHE["at"] < SENTRY_LIVE_TTL_SECONDS:
+            return cached
+        errors: List[str] = []
+        data = None
+        for source in (_sentry_live_from_api, _sentry_live_from_gh_pages):
+            try:
+                data = source()
+            except Exception as exc:
+                errors.append(f"{source.__name__}: {exc}")
+            if data and data.get("source") == "sentry-api":
+                break
+        if not data:
+            data = {"source": "unavailable", "errors": errors or ["no SENTRY_AUTH_TOKEN and no published copy"]}
+        _SENTRY_LIVE_CACHE.update(at=time.time(), data=data)
+        return data
+
+
 class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WORKSPACE_DIR), **kwargs)
@@ -3949,6 +4008,11 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     "app_version": app_versions["ios"],
                 },
             })
+            return
+
+        elif self.path.startswith("/api/sentry/live"):
+            force = "refresh=1" in self.path
+            self._send_json(get_sentry_live(force=force))
             return
 
         elif self.path == "/favicon.ico":

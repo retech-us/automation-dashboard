@@ -49,6 +49,8 @@ USAGE_CATEGORIES = {
 }
 # Profile durations are reported in milliseconds.
 MS_PER_HOUR = 3_600_000
+BYTE_CATEGORIES = {"attachment", "log_byte"}
+BYTES_PER_GB = 1_000_000_000
 QUOTA_REASON = "span_usage_exceeded"
 STATS_PERIOD = "90d"  # stats_v2 retention
 TOP_PROJECTS_FOR_OPS = 2
@@ -107,7 +109,8 @@ def reserved_quotas(customer):
     for key, info in categories.items():
         cat = plural.get(key)
         if cat and isinstance(info, dict) and info.get("reserved") is not None:
-            out[cat] = info["reserved"]
+            # Reserved byte volumes are reported in GB; usage from stats_v2 is in bytes.
+            out[cat] = info["reserved"] * BYTES_PER_GB if cat in BYTE_CATEGORIES else info["reserved"]
     return out
 
 
