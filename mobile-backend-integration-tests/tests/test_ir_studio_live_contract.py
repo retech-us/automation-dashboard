@@ -143,22 +143,24 @@ class IrStudioLiveContractTests(unittest.TestCase):
             {item["code"] for item in result["findings"]},
         )
 
-    def test_ir_studio_has_separate_load_validate_start_states(self):
+    def test_ir_studio_loads_and_validates_without_a_separate_start_button(self):
         html = (ROOT / "test_runner.html").read_text(encoding="utf-8")
         self.assertIn('id="btn-fast-load"', html)
-        self.assertIn('id="btn-start-existing-test"', html)
+        self.assertIn("Run complete task validation", html)
+        self.assertNotIn('id="btn-historical-audit"', html)
+        self.assertNotIn('id="btn-start-existing-test"', html)
+        self.assertNotIn("function startExistingTaskTest", html)
         self.assertIn('id="existing-task-status"', html)
         self.assertIn('id="existing-task-findings"', html)
         self.assertIn("function setExistingTaskPhase", html)
         self.assertIn("function applyExistingTaskValidation", html)
-        self.assertIn("function startExistingTaskTest", html)
         self.assertIn("Cached actions were not used", html)
         self.assertNotIn("Load Actions &amp; Start Test", html)
         self.assertNotIn("Load Actions & Start Test", html)
 
     def test_full_check_sends_token_and_avoids_blocking_dialogs(self):
         html = (ROOT / "test_runner.html").read_text(encoding="utf-8")
-        audit = html.split("async function runHistoricalTaskAudit()", 1)[1].split(
+        audit = html.split("async function runHistoricalTaskAudit(options = {})", 1)[1].split(
             "function executeNextStep", 1
         )[0]
         self.assertIn("token: token.trim() || undefined", audit)

@@ -70,6 +70,32 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
         self.assertEqual(f_custom["task_id"], 99999999)
         self.assertTrue(len(f_custom["events"]) > 0)
 
+    def test_live_duration_evidence_is_preserved_without_fallback(self):
+        actions = [{
+            "id": 1,
+            "action": "ACTION_MOVE",
+            "displayed_upc": "123",
+            "current_position": {"shelf": 1, "position": "2", "section_info": {"name": "1"}},
+            "expected_position": {"shelf": 2, "position": "3", "section_info": {"name": "2"}},
+        }]
+        flow = synthesize_task_flow_from_raw_actions(
+            1234,
+            actions,
+            metadata_override={
+                "wall_duration_min": None,
+                "duration_source": None,
+                "duration_started_at": None,
+                "duration_completed_at": None,
+            },
+        )
+
+        self.assertIsNone(flow["metadata"]["wall_duration_min"])
+        self.assertIsNone(flow["metadata"]["duration_source"])
+        self.assertIn("not recorded", flow["events"][-1]["detail"])
+        item = next(iter(flow["action_batches"].values()))["items"][0]
+        self.assertEqual(item["from_bay"], "Bay 1")
+        self.assertEqual(item["to_bay"], "Bay 2")
+
 
 if __name__ == "__main__":
     unittest.main()

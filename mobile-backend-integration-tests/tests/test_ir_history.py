@@ -11,7 +11,9 @@ from core.ir_history import (
     cache_store,
     entry_from_snapshot,
     filter_entries,
+    intelligent_reset_type_id,
     load_history,
+    signed_in_backend,
     merge_entries,
     normalize_instance_tasks,
     normalize_status,
@@ -609,6 +611,32 @@ class PersistIrStateTests(unittest.TestCase):
                 self.assertEqual(entries, [])
 
 
+class InstanceLookupTests(unittest.TestCase):
+    def test_known_instances_have_an_intelligent_reset_type(self):
+        self.assertEqual(intelligent_reset_type_id("harr"), "26")
+        self.assertEqual(intelligent_reset_type_id("stgsams"), "31")
+        self.assertEqual(intelligent_reset_type_id("https://albtqa.rebotics.net"), "35")
+        self.assertIsNone(intelligent_reset_type_id("schn"))
+
+    def test_albertsons_uses_the_signed_in_qa_host(self):
+        host, token = signed_in_backend(
+            "https://albt.rebotics.net",
+            {"https://albtqa.rebotics.net": "saved"},
+        )
+        self.assertEqual(host, "https://albtqa.rebotics.net")
+        self.assertEqual(token, "saved")
+
+    def test_exact_host_wins_over_an_alias(self):
+        host, token = signed_in_backend(
+            "https://albt.rebotics.net",
+            {
+                "https://albt.rebotics.net": "prod",
+                "https://albtqa.rebotics.net": "qa",
+            },
+        )
+        self.assertEqual((host, token), ("https://albt.rebotics.net", "prod"))
+
+
 class HistoryUiContractTests(unittest.TestCase):
     root = Path(__file__).resolve().parents[2]
 
@@ -662,6 +690,45 @@ class HistoryUiContractTests(unittest.TestCase):
         self.assertIn('id="ir-history-password"', index_html)
         self.assertIn('type="password"', index_html)
         self.assertIn("/api/runner/auth_ping", script)
+
+    def test_main_ir_view_loads_recent_tasks_and_execution_outcomes(self):
+        index_html = (self.root / "index.html").read_text(encoding="utf-8")
+        script = (self.root / "assets/js/ir-flow.js").read_text(encoding="utf-8")
+        server = (self.root / "runner_server.py").read_text(encoding="utf-8")
+
+        self.assertIn('id="ir-task-dropdown"', index_html)
+        self.assertIn('id="ir-task-search"', index_html)
+        self.assertIn("paintTaskDropdown", script)
+        self.assertIn('id="ir-overview-generated"', index_html)
+        self.assertIn('id="ir-overview-performed"', index_html)
+        self.assertIn('id="ir-overview-duration"', index_html)
+        self.assertIn('id="ir-challenge-list"', index_html)
+        self.assertIn('id="ir-insight-dialog"', index_html)
+        self.assertIn('id="ir-duration-detail-button"', index_html)
+        self.assertIn("/api/runner/ir_history", script)
+        self.assertIn("status=in_progress,completed,incomplete", script)
+        self.assertIn("!type || type.includes('intelligent reset')", script)
+        self.assertIn('value="albtqa"', index_html)
+        self.assertIn("intelligent_reset_type_id", server)
+        self.assertIn("signed_in_backend", server)
+        self.assertIn("openInsightDialog", script)
+        self.assertIn("formatActionLocation", script)
+        self.assertIn("data.performed_actions || []", script)
+        self.assertIn("data.performed_actions_loaded === true", script)
+        self.assertIn('"performed_actions_loaded"', server)
+        self.assertIn('"performed_actions"', server)
+        self.assertIn('"duration_source"', server)
+        self.assertIn('"performed_evidence"', server)
+        self.assertIn("data.performed_evidence", script)
+        self.assertIn("Backroom / not on shelf yet", script)
+        self.assertIn("describePerformedEvidence", script)
+        self.assertIn("digital_rows_ok_no_action", script)
+        self.assertIn("summarize_digital_shelf_rows", server)
+        self.assertNotIn("the action list was never updated from idle", script)
+        self.assertIn('"rog_position"', server)
+        self.assertIn('"pog_position"', server)
+        self.assertIn("load_digital_report_actions(", server)
+        self.assertNotIn("const DEFAULT_INSTANCE_TASKS", script)
 
 
 if __name__ == "__main__":

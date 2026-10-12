@@ -185,6 +185,54 @@ _STATUS_ALIASES = {
     "paused": "on_hold",
 }
 
+# Retailer task-type ids for Intelligent Reset. Querying without one scans the
+# whole task table and times out on the larger instances.
+INTELLIGENT_RESET_TYPE_IDS = {
+    "harr": "26",
+    "harris": "26",
+    "krcs": "31",
+    "krog": "31",
+    "kroger": "31",
+    "krsc": "31",
+    "stgsams": "31",
+    "sams": "31",
+    "albt": "35",
+    "albtqa": "35",
+    "albertsons": "35",
+}
+
+
+def intelligent_reset_type_id(instance: Optional[str]) -> Optional[str]:
+    """Return the Intelligent Reset task-type id for a known instance slug."""
+    slug = (instance or "").strip().lower()
+    slug = slug.replace("https://", "").replace("http://", "").split(".")[0].split("/")[0]
+    return INTELLIGENT_RESET_TYPE_IDS.get(slug)
+
+
+def signed_in_backend(requested_url: str, tokens: Dict[str, str]) -> Tuple[str, Optional[str]]:
+    """Use the requested host when it has a token, otherwise the one signed-in alias.
+
+    Albertsons is often signed in as albtqa while the picker says albt. A single
+    longer slug that starts with the requested slug is that alias.
+    """
+    requested = (requested_url or "").rstrip("/")
+    saved = tokens.get(requested)
+    if saved:
+        return requested, saved
+    requested_slug = requested.replace("https://", "").replace("http://", "").split(".")[0]
+    if len(requested_slug) < 3:
+        return requested, None
+    matches = []
+    for host, token in tokens.items():
+        host_slug = str(host).replace("https://", "").replace("http://", "").split(".")[0]
+        same_family = host_slug == requested_slug or host_slug.startswith(requested_slug) or requested_slug.startswith(host_slug)
+        if token and same_family and len(host_slug) >= 3:
+            matches.append((str(host).rstrip("/"), token))
+    if len(matches) == 1:
+        return matches[0]
+    return requested, None
+
+
 _STATUS_LABELS = {
     "not_started": "Not started",
     "in_progress": "In progress",

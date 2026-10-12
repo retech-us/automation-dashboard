@@ -195,3 +195,38 @@ def fetch_section_product_reports_for_scans(
         requested_urls=requested_urls,
         raw_payloads=raw_payloads,
     )
+
+
+def _blank_action_taken(value: Any) -> bool:
+    """“-” is the retailer's way of saying the associate recorded no action."""
+    return _normalize_action_taken(value) == "-"
+
+
+def summarize_digital_shelf_rows(items: List[DigitalReportItem]) -> Dict[str, Any]:
+    """Split Digital Shelf rows into actions taken, OK products, and unconfirmed work.
+
+    Action Type “ok” with Action Taken “-” means the product is already correct
+    and no associate action was generated. A dash on any other action type means
+    that product needed an action which was not confirmed.
+    """
+    ok_no_action = 0
+    unconfirmed = 0
+    with_action = 0
+    unconfirmed_types: Dict[str, int] = {}
+    for item in items:
+        action_type = str(item.action_type or "").strip()
+        if not _blank_action_taken(item.action_taken):
+            with_action += 1
+        elif action_type.casefold() == "ok":
+            ok_no_action += 1
+        else:
+            unconfirmed += 1
+            label = action_type or "unknown"
+            unconfirmed_types[label] = unconfirmed_types.get(label, 0) + 1
+    return {
+        "digital_rows_checked": len(items),
+        "digital_rows_with_action": with_action,
+        "digital_rows_ok_no_action": ok_no_action,
+        "digital_rows_unconfirmed": unconfirmed,
+        "unconfirmed_action_types": unconfirmed_types,
+    }

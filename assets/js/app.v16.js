@@ -12,7 +12,9 @@ const REPO_DISPLAY = {
   api: { icon: '🔌', label: 'API', color: '#f59e0b' },
 };
 
-const DASHBOARD_TABS = ['overview', 'attention', 'trends', 'ai', 'suites', 'jira', 'ir', 'live', 'rules', 'ir-studio', 'shelf-mobile'];
+const DASHBOARD_TABS = ['overview', 'attention', 'trends', 'suites', 'jira', 'ir', 'sentry', 'ir-studio', 'shelf-mobile'];
+// Old tab ids kept working for bookmarks and saved state.
+const LEGACY_TAB_ALIASES = { ai: 'trends' };
 let CURRENT_RESULTS = [];
 let ACTIVE_TAB = 'overview';
 let TREND_RANGE = 'weekly';
@@ -3129,6 +3131,7 @@ function resolveInitialTab() {
 }
 
 function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
+  tab = LEGACY_TAB_ALIASES[tab] || tab;
   if (!DASHBOARD_TABS.includes(tab)) tab = 'overview';
   ACTIVE_TAB = tab;
 
@@ -3145,10 +3148,6 @@ function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
   if (tab === 'jira' && window.JiraTracker) {
     window.JiraTracker.init();
   }
-  if (tab === 'live' && window.LiveTracker) {
-    window.LiveTracker.renderLiveBanner();
-    window.LiveTracker.checkAll();
-  }
   if (tab === 'ir' && window.IrLiveDashboard) {
     window.IrLiveDashboard.init();
   }
@@ -3158,8 +3157,8 @@ function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
   if (tab === 'ir' && window.IrTaskFlow && typeof window.IrTaskFlow.init === 'function') {
     window.IrTaskFlow.init();
   }
-  if (tab === 'rules') {
-    loadAndRenderShelfResetRules();
+  if (tab === 'sentry' && window.SentryUsage) {
+    window.SentryUsage.render();
   }
   if (tab === 'shelf-mobile') {
     const frame = document.getElementById('iframe-shelf-mobile');
@@ -3191,109 +3190,6 @@ function wireTabs() {
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => setActiveTab(btn.getAttribute('data-tab')));
   });
-}
-
-let SHELF_RULES_CACHE = "";
-async function loadAndRenderShelfResetRules(force = false) {
-  const container = document.getElementById("shelf-rules-dashboard-container");
-  if (!container) return;
-  if (!force && SHELF_RULES_CACHE) {
-    container.innerHTML = parseRulesMarkdownHtml(SHELF_RULES_CACHE);
-    return;
-  }
-  container.innerHTML = '<p style="color:var(--text-dim); padding:20px; text-align:center;">Loading sequencing rules from engine...</p>';
-  try {
-    const res = await fetch("/api/runner/shelf_reset/rules");
-    const contentType = res.headers.get("content-type") || "";
-    if (res.ok && contentType.includes("json")) {
-      const data = await res.json();
-      if (data && data.rules_markdown) {
-        SHELF_RULES_CACHE = data.rules_markdown;
-        container.innerHTML = parseRulesMarkdownHtml(SHELF_RULES_CACHE);
-        return;
-      }
-    }
-    // Fallback: fetch markdown file directly from static server
-    const fallbackRes = await fetch("/SHELF_RESET_SEQUENCING_RULES.md");
-    if (fallbackRes.ok) {
-      SHELF_RULES_CACHE = await fallbackRes.text();
-      container.innerHTML = parseRulesMarkdownHtml(SHELF_RULES_CACHE);
-      return;
-    }
-    container.innerHTML = '<p style="color:#fda4af;">Failed to load rules markdown.</p>';
-  } catch (err) {
-    try {
-      const fallbackRes = await fetch("/SHELF_RESET_SEQUENCING_RULES.md");
-      if (fallbackRes.ok) {
-        SHELF_RULES_CACHE = await fallbackRes.text();
-        container.innerHTML = parseRulesMarkdownHtml(SHELF_RULES_CACHE);
-        return;
-      }
-    } catch (_) {}
-    container.innerHTML = `<p style="color:#fda4af;">Error loading rules: ${err.message}</p>`;
-  }
-}
-
-function parseRulesMarkdownHtml(md) {
-  if (!md) return '<p>No rules available.</p>';
-  const lines = md.split('\n');
-  const html = ['<div class="rules-doc-content">'];
-  let inTable = false;
-  let inList = false;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-
-    if (line.startsWith('|')) {
-      if (!inTable) {
-        inTable = true;
-        html.push('<div class="rules-table-box"><table class="rules-table">');
-      }
-      if (line.includes('---')) continue;
-      const cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
-      const tag = (html.filter(h => h.includes('<tr')).length === 0) ? 'th' : 'td';
-      html.push('<tr>' + cells.map(c => `<${tag}>${formatRulesInline(c)}</${tag}>`).join('') + '</tr>');
-      continue;
-    } else if (inTable) {
-      inTable = false;
-      html.push('</table></div>');
-    }
-
-    if (line.startsWith('- ') || line.startsWith('* ')) {
-      if (!inList) {
-        inList = true;
-        html.push('<ul class="rules-list">');
-      }
-      html.push(`<li>${formatRulesInline(line.substring(2))}</li>`);
-      continue;
-    } else if (inList) {
-      inList = false;
-      html.push('</ul>');
-    }
-
-    if (line.startsWith('# ')) {
-      html.push(`<h1>${formatRulesInline(line.substring(2))}</h1>`);
-    } else if (line.startsWith('## ')) {
-      html.push(`<h2>${formatRulesInline(line.substring(3))}</h2>`);
-    } else if (line.startsWith('### ')) {
-      html.push(`<h3>${formatRulesInline(line.substring(4))}</h3>`);
-    } else if (line.startsWith('> ')) {
-      html.push(`<div class="rules-callout">${formatRulesInline(line.substring(2))}</div>`);
-    } else if (line.length > 0) {
-      html.push(`<p>${formatRulesInline(line)}</p>`);
-    }
-  }
-  if (inTable) html.push('</table></div>');
-  if (inList) html.push('</ul>');
-  html.push('</div>');
-  return html.join('\n');
-}
-
-function formatRulesInline(text) {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`([^`]+)`/g, '<code class="rules-code">$1</code>')
-    .replace(/\$([^\$]+)\$/g, '<span class="rules-math">$1</span>');
 }
 
 function renderSmartUISection(summaries) {
@@ -3631,8 +3527,8 @@ function routeChatIntent(question) {
     return 'attention';
   }
   if (/ai impact|self-?heal|quarantine/.test(q)) {
-    setActiveTab('ai');
-    return 'ai';
+    setActiveTab('trends');
+    return 'trends';
   }
   if (/suite detail|allure|ci run|repo card/.test(q)) {
     setActiveTab('suites');

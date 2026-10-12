@@ -9,19 +9,13 @@
 
   let currentFlowData = null;
   let currentSubView = 'summary'; // 'summary' | 'story' | 'history'
+  let catalogTasks = [];
+  let catalogStatusNote = '';
+  let selectedCatalogTaskId = '';
 
   function byId(id) {
     return document.getElementById(id);
   }
-
-  const DEFAULT_INSTANCE_TASKS = {
-    harr: 8648127,
-    krcs: 42484849,
-    albt: 60535562,
-    stgsams: 27277459,
-    schn: 8648127,
-    wake: 8648127,
-  };
 
   function normalizeInstanceUrl(inst) {
     if (!inst) return 'https://harr.rebotics.net';
@@ -31,6 +25,7 @@
     if (clean === 'stgsams' || clean === 'sams') return 'https://stgsams.rebotics.net';
     if (clean === 'harr' || clean === 'harris') return 'https://harr.rebotics.net';
     if (clean === 'albt' || clean === 'albe' || clean === 'albertsons') return 'https://albt.rebotics.net';
+    if (clean === 'albtqa') return 'https://albtqa.rebotics.net';
     if (clean === 'schn') return 'https://schn.rebotics.net';
     if (clean === 'wake') return 'https://wake.rebotics.net';
     return `https://${clean}.rebotics.net`;
@@ -261,9 +256,9 @@
     return picker ? (picker.value || 'harr') : 'harr';
   }
 
-  function quickSelect(instance, taskId) {
+  async function quickSelect(instance, taskId) {
     const inst = instance || 'harr';
-    const tid = taskId || DEFAULT_INSTANCE_TASKS[inst] || 'latest';
+    const tid = taskId || '';
 
     // Highlight chip
     document.querySelectorAll('[data-instance-chip]').forEach((chip) => {
@@ -304,59 +299,251 @@
     }
 
     checkAuthStatus(inst);
-    loadTaskCatalog(inst);
-    loadTask(tid, inst);
+    await loadTaskCatalog(inst, tid);
   }
 
-  async function loadTaskCatalog(instance) {
+  function taskOptionLabel(task) {
+    const store = task.store_name || task.store_custom_id || `Store ${task.store_id || 'unknown'}`;
+    const title = task.title && task.title !== store ? task.title : '';
+    return [
+      `#${task.task_id}`,
+      task.task_date || 'Unknown date',
+      store,
+      title,
+      task.status_label || task.status || 'Unknown',
+    ].filter(Boolean).join(' · ');
+  }
+
+  function taskSearchText(task) {
+    return [
+      task.task_id,
+      task.task_date,
+      task.store_name,
+      task.store_custom_id,
+      task.store_id,
+      task.title,
+      task.status_label,
+      task.status,
+    ].join(' ').toLowerCase();
+  }
+
+  function setTaskListOpen(open) {
+    const list = byId('ir-task-dropdown');
+    const field = byId('ir-task-search');
+    if (!list || !field) return;
+    list.hidden = !open;
+    field.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (!open) field.removeAttribute('aria-activedescendant');
+  }
+
+  function setTaskFieldState(placeholder, enabled) {
+    const field = byId('ir-task-search');
+    if (!field) return;
+    field.placeholder = placeholder;
+    field.disabled = !enabled;
+  }
+
+  function paintTaskDropdown() {
+    const list = byId('ir-task-dropdown');
+    const field = byId('ir-task-search');
+    if (!list || !field) return;
+    const selectedTask = catalogTasks.find((task) => String(task.task_id) === selectedCatalogTaskId);
+    const typed = field.value.trim();
+    const showingSelection = selectedTask && typed === taskOptionLabel(selectedTask);
+    const needle = showingSelection ? '' : typed.toLowerCase();
+    const words = needle.split(/\s+/).filter(Boolean);
+    const matches = words.length
+      ? catalogTasks.filter((task) => {
+        const haystack = taskSearchText(task);
+        return words.every((word) => haystack.includes(word));
+      })
+      : catalogTasks;
+
+    list.replaceChildren();
+    if (!matches.length) {
+      const empty = document.createElement('li');
+      empty.className = 'ir-task-option ir-task-option--empty';
+      empty.textContent = catalogTasks.length ? `No tasks match “${typed}”` : 'No recent Intelligent Reset tasks found';
+      list.appendChild(empty);
+    }
+    matches.forEach((task, index) => {
+      const item = document.createElement('li');
+      item.id = `ir-task-option-${task.task_id}`;
+      item.className = 'ir-task-option';
+      item.setAttribute('role', 'option');
+      item.dataset.taskId = task.task_id;
+      item.setAttribute('aria-selected', String(task.task_id) === selectedCatalogTaskId ? 'true' : 'false');
+      item.textContent = taskOptionLabel(task);
+      if (index === 0 && needle) {
+        item.classList.add('is-active');
+        field.setAttribute('aria-activedescendant', item.id);
+      }
+      list.appendChild(item);
+    });
+
+    setText(
+      'ir-recent-task-status',
+      needle
+        ? (matches.length ? `${matches.length} of ${catalogTasks.length} tasks match.` : `No tasks match “${typed}”.`)
+        : catalogStatusNote,
+    );
+  }
+
+  function moveActiveTaskOption(step) {
+    const list = byId('ir-task-dropdown');
+    const field = byId('ir-task-search');
+    if (!list || !field) return;
+    const options = Array.from(list.querySelectorAll('[role="option"]'));
+    if (!options.length) return;
+    const current = options.findIndex((option) => option.classList.contains('is-active'));
+    const next = current < 0 ? (step > 0 ? 0 : options.length - 1) : (current + step + options.length) % options.length;
+    options.forEach((option) => option.classList.remove('is-active'));
+    options[next].classList.add('is-active');
+    options[next].scrollIntoView({ block: 'nearest' });
+    field.setAttribute('aria-activedescendant', options[next].id);
+  }
+
+  function chooseCatalogTask(taskId) {
+    const task = catalogTasks.find((entry) => String(entry.task_id) === String(taskId));
+    const field = byId('ir-task-search');
+    if (!task) return;
+    selectedCatalogTaskId = String(task.task_id);
+    if (field) field.value = taskOptionLabel(task);
+    setTaskListOpen(false);
+    setText('ir-recent-task-status', catalogStatusNote);
+    const input = byId('ir-simple-task-input');
+    if (input) input.value = task.task_id;
+    loadCurrentInputs();
+  }
+
+  function restoreSelectedTaskLabel() {
+    const field = byId('ir-task-search');
+    const task = catalogTasks.find((entry) => String(entry.task_id) === selectedCatalogTaskId);
+    if (field) field.value = task ? taskOptionLabel(task) : '';
+    setText('ir-recent-task-status', catalogStatusNote);
+  }
+
+  function wireTaskCombobox() {
+    const field = byId('ir-task-search');
+    const list = byId('ir-task-dropdown');
+    if (!field || !list) return;
+
+    const open = () => {
+      if (field.disabled) return;
+      paintTaskDropdown();
+      setTaskListOpen(true);
+    };
+
+    field.addEventListener('focus', () => {
+      field.select();
+      open();
+    });
+    field.addEventListener('click', open);
+    field.addEventListener('input', open);
+    field.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (list.hidden) open();
+        moveActiveTaskOption(e.key === 'ArrowDown' ? 1 : -1);
+      } else if (e.key === 'Enter') {
+        const active = list.querySelector('.ir-task-option.is-active');
+        if (!list.hidden && active) {
+          e.preventDefault();
+          chooseCatalogTask(active.dataset.taskId);
+        }
+      } else if (e.key === 'Escape') {
+        setTaskListOpen(false);
+        restoreSelectedTaskLabel();
+      }
+    });
+    field.addEventListener('blur', () => {
+      setTimeout(() => {
+        setTaskListOpen(false);
+        restoreSelectedTaskLabel();
+      }, 120);
+    });
+    list.addEventListener('mousedown', (e) => {
+      const option = e.target.closest('[role="option"]');
+      if (!option) return;
+      e.preventDefault();
+      chooseCatalogTask(option.dataset.taskId);
+    });
+  }
+
+  async function loadTaskCatalog(instance, preferredTaskId) {
     const inst = instance || getSelectedInstance();
     const dropdown = byId('ir-task-dropdown');
     const datalist = byId('ir-task-catalog-list');
     if (!dropdown && !datalist) return;
 
+    catalogTasks = [];
+    catalogStatusNote = '';
+    selectedCatalogTaskId = '';
+    const search = byId('ir-task-search');
+    if (search) search.value = '';
+    setTaskListOpen(false);
+    setTaskFieldState('Loading recent Intelligent Reset tasks…', false);
+    setText('ir-recent-task-status', 'Loading tasks performed in the last 7 days…');
+
     try {
-      const res = await fetch(`/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`);
-      if (!res.ok) return;
+      const historyUrl = `/api/runner/ir_history?instance=${encodeURIComponent(inst)}&range=7d&status=in_progress,completed,incomplete`;
+      const res = await fetch(historyUrl, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      if (!data.tasks || !Array.isArray(data.tasks)) return;
+      if (data.status !== 'success') throw new Error(data.message || 'Task list unavailable');
+      const tasks = (Array.isArray(data.tasks) ? data.tasks : [])
+        .filter((task) => {
+          const type = String(task.task_type || '').toLowerCase();
+          // Audited tasks keep a blank type after the retailer session expires.
+          return !type || type.includes('intelligent reset');
+        })
+        .sort((a, b) => String(b.task_date || '').localeCompare(String(a.task_date || '')) || Number(b.task_id || 0) - Number(a.task_id || 0));
 
-      if (dropdown) {
-        dropdown.innerHTML = '<option value="">⚡ Select Task...</option>';
-        const groups = {};
-        data.tasks.forEach((t) => {
-          const grp = t.group || 'Other Tasks';
-          if (!groups[grp]) groups[grp] = [];
-          groups[grp].push(t);
-        });
-        Object.entries(groups).forEach(([grpName, tasks]) => {
-          const optGroup = document.createElement('optgroup');
-          optGroup.label = grpName;
-          tasks.forEach((t) => {
-            const opt = document.createElement('option');
-            opt.value = t.id;
-            opt.textContent = t.label;
-            optGroup.appendChild(opt);
-          });
-          dropdown.appendChild(optGroup);
-        });
-
-        const curTid = (byId('ir-simple-task-input') || {}).value;
-        if (curTid && [...dropdown.options].some((o) => o.value === curTid)) {
-          dropdown.value = curTid;
-        }
-      }
+      catalogTasks = tasks;
+      setTaskFieldState(
+        tasks.length
+          ? 'Type to search by task ID, store, date, title, or status'
+          : (data.remote_error ? 'Recent tasks unavailable' : 'No recent Intelligent Reset tasks found'),
+        tasks.length > 0,
+      );
 
       if (datalist) {
         datalist.innerHTML = '';
-        data.tasks.forEach((t) => {
+        tasks.forEach((task) => {
           const opt = document.createElement('option');
-          opt.value = t.id;
-          opt.label = t.label;
+          opt.value = task.task_id;
+          opt.label = task.title || `Task #${task.task_id}`;
           datalist.appendChild(opt);
         });
       }
+
+      const wanted = String(preferredTaskId || '');
+      const selected = tasks.find((task) => String(task.task_id) === wanted) || tasks[0];
+      catalogStatusNote = [
+        data.host_note,
+        tasks.length
+          ? `${tasks.length} recent Intelligent Reset task${tasks.length === 1 ? '' : 's'} found.`
+          : (data.remote_error || 'No recently performed Intelligent Reset tasks were found.'),
+        tasks.length ? data.remote_error : '',
+      ].filter(Boolean).join(' ');
+      setText('ir-recent-task-status', catalogStatusNote);
+      if (selected) {
+        selectedCatalogTaskId = String(selected.task_id);
+        if (search) search.value = taskOptionLabel(selected);
+        const input = byId('ir-simple-task-input');
+        if (input) input.value = selected.task_id;
+        await loadTask(selected.task_id, inst);
+      } else {
+        renderNoSelectedTask(data.remote_error || 'No recently performed Intelligent Reset tasks were found for this instance.');
+      }
+      if (data.remote_error) showAuthAlertBanner(inst, data.remote_error);
     } catch (e) {
       console.warn('Could not load task catalog', e);
+      catalogTasks = [];
+      setTaskFieldState('Could not load recent tasks', false);
+      setText('ir-recent-task-status', 'Recent tasks could not be loaded. Check the instance sign-in.');
+      renderNoSelectedTask('Sign in to load recently performed Intelligent Reset tasks for this instance.');
+      showAuthAlertBanner(inst, `Sign in to ${inst.toUpperCase()} to load recent Intelligent Reset tasks.`);
     }
   }
 
@@ -400,6 +587,8 @@
       });
     });
 
+    wireTaskCombobox();
+
     const taskInput = byId('ir-simple-task-input');
     if (taskInput) {
       taskInput.addEventListener('keydown', (e) => {
@@ -415,7 +604,7 @@
     const initialInstance = urlParams.get('instance') || 'harr';
     const inputEl = byId('ir-simple-task-input');
     const inputVal = inputEl ? inputEl.value.trim() : null;
-    const initialTaskId = urlParams.get('task_id') || inputVal || DEFAULT_INSTANCE_TASKS[initialInstance] || '8648127';
+    const initialTaskId = urlParams.get('task_id') || inputVal || '';
     
     const picker = byId('ir-instance-picker');
     if (picker && initialInstance) {
@@ -442,8 +631,7 @@
       }
     });
 
-    loadTaskCatalog(initialInstance);
-    loadTask(initialTaskId, initialInstance);
+    loadTaskCatalog(initialInstance, initialTaskId);
 
     // Deep-linking support for subview and compare params
     const subviewParam = urlParams.get('subview') || urlParams.get('tab');
@@ -578,6 +766,388 @@
     }
   }
 
+  function formatActionLocation(item, prefix) {
+    const bay = item[`${prefix}_bay`];
+    const shelf = item[`${prefix}_shelf`];
+    const position = item[`${prefix}_pos`];
+    const parts = [];
+    if (bay) parts.push(String(bay));
+    if (shelf !== null && shelf !== undefined && shelf !== '') parts.push(`Shelf ${shelf}`);
+    if (position !== null && position !== undefined && position !== '') parts.push(`Position ${position}`);
+    if (shelf !== null && shelf !== undefined && shelf !== '') return parts.join(' · ');
+    const action = String(item.action_type || '').toUpperCase();
+    if (prefix === 'from' && action.includes('ADD')) return 'Backroom / not on shelf yet';
+    if (prefix === 'to' && action.includes('REMOVE')) return 'Taken off the shelf';
+    if (prefix === 'to' && action.includes('IDENTIFY')) return 'Stays in place (identify only)';
+    return parts.join(' · ') || 'Not recorded';
+  }
+
+  const ACTION_STATE_LABELS = {
+    STATE_IDLE: 'Not confirmed (idle)',
+    STATE_ACCEPTED: 'Accepted',
+    STATE_REJECTED: 'Rejected',
+    STATE_COMPLETED: 'Completed',
+  };
+
+  function formatActionStatus(item) {
+    const state = item.state ? (ACTION_STATE_LABELS[item.state] || item.state) : '';
+    return [state, item.reason].filter(Boolean).join(' · ') || 'Not recorded';
+  }
+
+  function openInsightDialog({ title, subtitle, summary = [], items = [] }) {
+    const dialog = byId('ir-insight-dialog');
+    const body = byId('ir-insight-dialog-body');
+    const summaryEl = byId('ir-insight-dialog-summary');
+    const tableWrap = byId('ir-insight-dialog-table-wrap');
+    if (!dialog || !body || !summaryEl || !tableWrap) return;
+
+    setText('ir-insight-dialog-title', title);
+    setText('ir-insight-dialog-subtitle', subtitle);
+    summaryEl.replaceChildren();
+    if (summary.length) {
+      const list = document.createElement('dl');
+      summary.forEach(([label, value]) => {
+        const term = document.createElement('dt');
+        term.textContent = label;
+        const description = document.createElement('dd');
+        description.textContent = value || 'Not recorded';
+        list.append(term, description);
+      });
+      summaryEl.appendChild(list);
+    }
+
+    body.replaceChildren();
+    tableWrap.hidden = items.length === 0;
+    items.forEach((item) => {
+      const row = document.createElement('tr');
+      const productCell = document.createElement('td');
+      productCell.className = 'ir-insight-product';
+      const product = document.createElement('strong');
+      product.textContent = item.product_name || 'Product name unavailable';
+      const upc = document.createElement('span');
+      upc.textContent = item.upc ? `UPC ${item.upc}` : 'UPC unavailable';
+      productCell.append(product, upc);
+
+      [
+        item.action_type || 'Action unavailable',
+        formatActionLocation(item, 'from'),
+        formatActionLocation(item, 'to'),
+        formatActionStatus(item),
+      ].forEach((value) => {
+        const cell = document.createElement('td');
+        cell.textContent = value;
+        row.appendChild(cell);
+      });
+      row.prepend(productCell);
+      body.appendChild(row);
+    });
+
+    byId('ir-insight-dialog-close').onclick = () => dialog.close();
+    dialog.onclick = (event) => {
+      if (event.target === dialog) dialog.close();
+    };
+    if (!dialog.open) dialog.showModal();
+  }
+
+  function describePerformedEvidence(evidence, error) {
+    if (error) return [['Why nothing is shown', error]];
+    if (!evidence) return [['Why nothing is shown', 'Performed-action evidence was not returned for this task.']];
+    const states = Object.entries(evidence.action_list_states || {})
+      .map(([state, count]) => `${count} × ${ACTION_STATE_LABELS[state] || state}`)
+      .join(', ');
+    const okNoAction = Number(evidence.digital_rows_ok_no_action || 0);
+    const unconfirmed = Number(evidence.digital_rows_unconfirmed || 0);
+    const withAction = Number(evidence.digital_rows_with_action || 0);
+    const unconfirmedTypes = Object.entries(evidence.unconfirmed_action_types || {})
+      .map(([type, count]) => `${count} ${type}`)
+      .join(', ');
+    let meaning = 'Digital Shelf did not return an action-type split for these rows.';
+    if (unconfirmed === 0 && withAction === 0 && okNoAction > 0) {
+      meaning = `${okNoAction} products are marked OK with Action Taken “-”. That is expected: the product is already correct, so no associate action was required.`;
+    } else if (unconfirmed === 0) {
+      meaning = okNoAction
+        ? `${okNoAction} products are OK with Action Taken “-” and needed no associate action. ${withAction} other rows record an action the associate took.`
+        : `${withAction} rows record an action the associate took.`;
+    } else {
+      meaning = `${okNoAction} products are OK with Action Taken “-” and needed no action. ${unconfirmed} other rows are not OK${unconfirmedTypes ? ` (${unconfirmedTypes})` : ''} and Action Taken is still “-”, so those needed actions were not confirmed.`;
+    }
+    return [
+      ['Digital Shelf scans checked', (evidence.scan_ids || []).join(', ') || 'None'],
+      ['Product rows checked', String(evidence.digital_rows_checked ?? 0)],
+      ['Products already OK, no action needed', String(okNoAction)],
+      ['Rows with an associate action', String(withAction)],
+      ['Rows that needed an action but were not confirmed', String(unconfirmed)],
+      ['Action list states', states || 'Not returned'],
+      ['What this means', meaning],
+    ];
+  }
+
+  function renderTaskInsights(meta, batches, initialScore, finalScore, performedEvidence, performedLoaded, evidenceInfo = {}) {
+    const generated = [];
+    let performed = [];
+    const challenges = [];
+    const rejectedGroups = new Map();
+    const rawStatus = String(meta.status || '').toLowerCase();
+
+    Object.values(batches || {}).forEach((batch) => {
+      const items = Array.isArray(batch.items) ? batch.items : [];
+      const count = items.length || Number(batch.item_count || 0) || 1;
+      const type = String(batch.action_type || batch.action || 'Action').replaceAll('_', ' ');
+      const state = String(batch.state || '').toUpperCase();
+      const reason = String(batch.reason || '').trim();
+      const example = items[0] || {};
+      const detail = example.product_name || example.product_title || example.title || example.upc || reason || 'Product details unavailable';
+      const detailItems = items.map((item) => ({
+        ...item,
+        action_type: type,
+        from_bay: item.from_bay || batch.bay,
+        to_bay: item.to_bay || batch.bay,
+        reason: item.reason || reason,
+        state: item.state || state,
+      }));
+      const row = { type, count, detail, state, items: detailItems };
+      generated.push(row);
+
+      if (!performedLoaded && (state.includes('ACCEPT') || state.includes('COMPLET') || state.includes('DONE') || state.includes('PERFORM'))) {
+        performed.push(row);
+      }
+      if (state.includes('REJECT') || reason.toLowerCase().includes('unable') || reason.toLowerCase().includes('not ideal')) {
+        const key = `${type}|${reason}`;
+        const group = rejectedGroups.get(key) || { type, reason, count: 0, items: [] };
+        group.count += count;
+        group.items.push(...detailItems);
+        rejectedGroups.set(key, group);
+      }
+    });
+    rejectedGroups.forEach(({ type, reason, count, items }) => {
+      const label = type.replace(/^ACTION\s+/i, '').toLowerCase();
+      challenges.push({
+        text: `${count} ${label} action${count === 1 ? ' was' : 's were'} rejected or could not be completed${reason ? `: ${reason}` : '.'}`,
+        items,
+        source: 'Generated action state and reason',
+      });
+    });
+
+    const generatedCount = generated.reduce((sum, row) => sum + row.count, 0);
+    if (performedLoaded) {
+      performed = (performedEvidence || []).map((item) => ({
+        type: item.action_taken || item.action_type || 'Performed action',
+        count: 1,
+        detail: item.product_name || item.upc || `Section ${item.section || 'unknown'}`,
+        state: 'PERFORMED',
+        items: [{
+          product_name: item.product_name,
+          upc: item.upc,
+          action_type: item.action_taken || item.action_type,
+          from_bay: item.section,
+          from_pos: item.rog_position,
+          to_bay: item.section,
+          to_pos: item.pog_position,
+          state: 'Recorded in Digital Shelf',
+          reason: item.action_taken,
+        }],
+      }));
+    }
+    const performedCount = performed.reduce((sum, row) => sum + row.count, 0);
+    function groupRows(rows) {
+      const grouped = new Map();
+      rows.forEach((row) => {
+        const key = row.type.toLowerCase();
+        const existing = grouped.get(key);
+        if (existing) {
+          existing.count += row.count;
+          existing.items.push(...(row.items || []));
+        } else {
+          grouped.set(key, { ...row, items: [...(row.items || [])] });
+        }
+      });
+      return [...grouped.values()].sort((a, b) => b.count - a.count);
+    }
+    const generatedSummary = groupRows(generated);
+    const performedSummary = groupRows(performed);
+    if (['incomplete', 'failed', 'cancelled'].includes(rawStatus)) {
+      challenges.push({
+        text: `The task finished with status “${meta.status}”.`,
+        items: generated.flatMap((row) => row.items),
+        source: 'Task status',
+      });
+    }
+    const shelfEvidence = evidenceInfo.evidence || {};
+    const shelfSplitKnown = Object.prototype.hasOwnProperty.call(shelfEvidence, 'digital_rows_ok_no_action')
+      || Object.prototype.hasOwnProperty.call(shelfEvidence, 'digital_rows_unconfirmed');
+    const okNoAction = Number(shelfEvidence.digital_rows_ok_no_action || 0);
+    const unconfirmedShelf = Number(shelfEvidence.digital_rows_unconfirmed || 0);
+    const taskStillOpen = ['in_progress', 'started', 'active'].includes(rawStatus);
+    if (performedLoaded && !taskStillOpen && shelfSplitKnown && unconfirmedShelf > 0) {
+      const unconfirmedTypes = Object.entries(shelfEvidence.unconfirmed_action_types || {})
+        .map(([type, count]) => `${count} ${type}`)
+        .join(', ');
+      challenges.push({
+        text: `${unconfirmedShelf} products needed an action${unconfirmedTypes ? ` (${unconfirmedTypes})` : ''} but Action Taken is still “-”. ${okNoAction} products marked OK with “-” needed no action.`,
+        items: generated.flatMap((row) => row.items),
+        source: 'Digital Shelf action type and Action Taken',
+        summary: describePerformedEvidence(shelfEvidence, evidenceInfo.error),
+      });
+    } else if (performedLoaded && generatedCount && performedCount < generatedCount && !taskStillOpen && !shelfSplitKnown) {
+      const missing = generatedCount - performedCount;
+      const scoreNote = typeof finalScore === 'number' ? ` The final shelf still scored ${finalScore}% compliance.` : '';
+      challenges.push({
+        text: `No completion record for ${missing} of ${generatedCount} requested actions — the associate app did not log what was done.${scoreNote}`,
+        items: generated.flatMap((row) => row.items),
+        source: 'Generated action list compared with Digital Shelf “Action Taken”',
+        summary: describePerformedEvidence(shelfEvidence, evidenceInfo.error),
+      });
+    }
+    if (typeof finalScore === 'number' && finalScore < 95) {
+      challenges.push({
+        text: `Final shelf compliance was ${finalScore}%, below the 95% target.`,
+        items: [],
+        source: 'Post-reset compliance report',
+      });
+    }
+    if (typeof finalScore !== 'number' && !['in_progress', 'started', 'active'].includes(rawStatus)) {
+      challenges.push({
+        text: 'Final post-reset shelf verification is unavailable.',
+        items: [],
+        source: 'Post-reset compliance report',
+      });
+    }
+
+    setText('ir-overview-generated', generatedCount);
+    setText('ir-overview-performed', performedCount);
+    setText('ir-generated-action-total', generatedCount);
+    setText('ir-performed-action-total', performedCount);
+    setText('ir-overview-duration', typeof meta.wall_duration_min === 'number' ? `${meta.wall_duration_min} min` : 'Not recorded');
+    setText(
+      'ir-overview-duration-help',
+      typeof meta.wall_duration_min === 'number'
+        ? (meta.duration_source === 'task.logged_duration'
+          ? 'From retailer logged duration'
+          : 'From recorded task start and completion')
+        : 'The instance did not return reliable timing',
+    );
+    setText('ir-overview-challenges', challenges.length);
+    setText('ir-challenge-total', challenges.length);
+    const challengeCard = byId('ir-overview-challenge-card');
+    if (challengeCard) challengeCard.dataset.state = challenges.length ? 'warning' : 'clear';
+    const durationButton = byId('ir-duration-detail-button');
+    if (durationButton) {
+      durationButton.onclick = () => openInsightDialog({
+        title: 'Reset duration calculation',
+        subtitle: `Task #${meta.task_id || 'unknown'} timing evidence`,
+        summary: typeof meta.wall_duration_min === 'number'
+          ? [
+            ['Calculated duration', `${meta.wall_duration_min} minutes`],
+            ['Data source', meta.duration_source || 'Retailer task timing fields'],
+            ['Started at', meta.duration_started_at],
+            ['Completed at', meta.duration_completed_at],
+            ['Method', meta.duration_source === 'task.logged_duration'
+              ? 'The retailer-provided logged duration was converted to minutes.'
+              : 'Completion timestamp minus start timestamp. No estimated or default duration is used.'],
+          ]
+          : [
+            ['Calculated duration', 'Not recorded'],
+            ['Reason', 'The retailer instance did not return a valid logged duration or both task timestamps.'],
+            ['Method', 'No estimated or default duration is displayed.'],
+          ],
+      });
+    }
+
+    function renderRows(id, rows, emptyMessage) {
+      const target = byId(id);
+      if (!target) return;
+      target.replaceChildren();
+      if (!rows.length) {
+        const empty = document.createElement('p');
+        empty.className = 'data-note';
+        empty.textContent = emptyMessage;
+        target.appendChild(empty);
+        return;
+      }
+      rows.forEach((row) => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'ir-review-row';
+        item.setAttribute('aria-label', `View ${row.count} ${row.type} action details`);
+        const title = document.createElement('strong');
+        title.textContent = row.type;
+        const detail = document.createElement('span');
+        detail.textContent = row.detail;
+        detail.title = row.detail;
+        const count = document.createElement('em');
+        count.textContent = `${row.count} item${row.count === 1 ? '' : 's'}`;
+        item.append(title, detail, count);
+        item.onclick = () => openInsightDialog({
+          title: row.type,
+          subtitle: `${row.count} action${row.count === 1 ? '' : 's'} · Task #${meta.task_id || 'unknown'}`,
+          summary: [
+            ['Evidence source', id === 'ir-performed-action-list' ? 'Digital Shelf report' : 'Generated task action list'],
+            ['Items shown', String(row.items.length)],
+          ],
+          items: row.items,
+        });
+        target.appendChild(item);
+      });
+    }
+
+    renderRows('ir-generated-action-list', generatedSummary, 'No generated actions were returned for this task.');
+    renderRows(
+      'ir-performed-action-list',
+      performedSummary,
+      performedLoaded
+        ? (unconfirmedShelf
+          ? `${unconfirmedShelf} products needed an action but were not confirmed. Products marked OK with Action Taken “-” needed no action.`
+          : okNoAction
+            ? 'No associate action was required. Products marked OK with Action Taken “-” are already correct.'
+            : 'No completion records: the associate app did not log any of the requested actions as done.')
+        : 'Performed-action evidence is unavailable for this task.',
+    );
+    const performedList = byId('ir-performed-action-list');
+    if (performedList && !performedSummary.length) {
+      const evidenceButton = document.createElement('button');
+      evidenceButton.type = 'button';
+      evidenceButton.className = 'btn btn--outline btn--sm ir-evidence-button';
+      evidenceButton.textContent = 'See what was checked';
+      evidenceButton.onclick = () => openInsightDialog({
+        title: 'Why no performed actions are shown',
+        subtitle: `Task #${meta.task_id || 'unknown'} · associate completion evidence`,
+        summary: describePerformedEvidence(evidenceInfo.evidence, evidenceInfo.error),
+      });
+      performedList.appendChild(evidenceButton);
+    }
+
+    const challengeList = byId('ir-challenge-list');
+    if (challengeList) {
+      challengeList.replaceChildren();
+      const rows = challenges.length ? challenges : [{
+        text: 'No execution challenges were found in the available task evidence.',
+        items: [],
+        source: 'Task execution evidence',
+      }];
+      rows.forEach((challenge) => {
+        const item = document.createElement(challenges.length ? 'button' : 'div');
+        if (challenges.length) item.type = 'button';
+        item.className = `ir-challenge-item${challenges.length ? '' : ' ir-challenge-item--clear'}`;
+        if (challenges.length) item.classList.add('ir-challenge-item--button');
+        item.textContent = challenge.text;
+        if (challenges.length) {
+          item.setAttribute('aria-label', `View challenge details: ${challenge.text}`);
+          item.onclick = () => openInsightDialog({
+            title: 'Challenge details',
+            subtitle: challenge.text,
+            summary: [
+              ['Evidence source', challenge.source],
+              ['Affected action rows', String(challenge.items.length)],
+              ...(challenge.summary || []),
+            ],
+            items: challenge.items,
+          });
+        }
+        challengeList.appendChild(item);
+      });
+    }
+  }
+
   function renderSimplifiedView(data) {
     if (!data || !data.metadata) return;
     const meta = data.metadata;
@@ -642,6 +1212,15 @@
     const isInProgress = rawStatus === 'in_progress' || rawStatus === 'started' || rawStatus === 'not_started' || rawStatus === 'active';
     const isCompleted = !isIncomplete && !isInProgress;
     const isPassed = isCompleted && (finalScore !== null && finalScore >= 95);
+    renderTaskInsights(
+      meta,
+      batches,
+      initialScore,
+      finalScore,
+      data.performed_actions || [],
+      data.performed_actions_loaded === true,
+      { evidence: data.performed_evidence, error: data.performed_actions_error },
+    );
 
     // 2. Render Big Executive Verdict Banner
     const verdictCard = byId('ir-exec-verdict-card');
@@ -752,6 +1331,37 @@
   function setText(id, val) {
     const el = byId(id);
     if (el) el.textContent = val;
+  }
+
+  function renderNoSelectedTask(message) {
+    setText('ir-header-status-pill', 'Choose a task');
+    const verdictCard = byId('ir-exec-verdict-card');
+    if (verdictCard) verdictCard.className = 'ir-exec-verdict ir-exec-verdict--review';
+    setText('ir-exec-verdict-icon', '—');
+    setText('ir-exec-verdict-title', 'No task selected');
+    setText('ir-exec-verdict-desc', message || 'Choose a recent Intelligent Reset task above to review its execution.');
+    setText('ir-exec-meta-store', '—');
+    setText('ir-exec-meta-planogram', '—');
+    setText('ir-exec-meta-associate', '—');
+    setText('ir-exec-meta-date', '—');
+    setText('ir-exec-meta-time', '—');
+    setText('ir-overview-generated', '—');
+    setText('ir-overview-performed', '—');
+    setText('ir-overview-duration', '—');
+    setText('ir-overview-duration-help', 'Recorded task timing');
+    setText('ir-overview-challenges', '—');
+    setText('ir-generated-action-total', '0');
+    setText('ir-performed-action-total', '0');
+    setText('ir-challenge-total', '0');
+    const emptyStates = {
+      'ir-generated-action-list': 'Choose a recent task to see the work requested by the system.',
+      'ir-performed-action-list': 'Choose a recent task to see the associate activity recorded in Digital Shelf.',
+      'ir-challenge-list': 'Choose a recent task to evaluate execution challenges.',
+    };
+    Object.entries(emptyStates).forEach(([id, text]) => {
+      const el = byId(id);
+      if (el) el.innerHTML = `<p class="data-note">${text}</p>`;
+    });
   }
 
   function wireCardClick(buttonId, title, items, fallbackType) {

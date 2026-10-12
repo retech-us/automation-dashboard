@@ -48,7 +48,8 @@ from core.scan_issue_investigator import investigate_scan_problem, parse_scan_ur
 from core.html_report_generator import generate_html_validation_report
 from core.e2e_audit_engine import audit_task_execution, derive_why_user_performs_action
 from core.e2e_audit_report_generator import generate_e2e_audit_html_report
-from core.digital_report_client import fetch_section_product_reports_for_scans
+from core.digital_report_client import fetch_section_product_reports_for_scans, summarize_digital_shelf_rows
+from core.dashboard_agents import TAB_LABELS, answer_question, enhance_with_model, list_agents, model_is_configured, run_agent
 from core.ir_live_snapshot import build_ir_live_snapshot, load_ir_snapshot, save_ir_snapshot
 from core.ir_task_flow_builder import get_task_flow, synthesize_task_flow_from_raw_actions
 from core.session_store import load_tokens, save_tokens
@@ -58,8 +59,10 @@ from core.ir_history import (
     cache_store,
     entry_from_snapshot,
     filter_entries,
+    intelligent_reset_type_id,
     load_history,
     normalize_instance_tasks,
+    signed_in_backend,
     record_entry,
     resolve_range,
     save_history,
@@ -2474,29 +2477,30 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         instance: str,
         range_info: Dict[str, str],
         task_type: Optional[str] = None,
-    ) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+    ) -> Tuple[List[Dict[str, Any]], Optional[str], Optional[str]]:
         """Read instance tasks covering a date window, or explain why we cannot."""
-        token = INSTANCE_TOKENS.get(base_url) or TOKEN
+        resolved_url, token = signed_in_backend(base_url, INSTANCE_TOKENS)
+        host_note = None
+        if resolved_url != base_url and token:
+            host_note = f"Signed in on {resolved_url}, so recent tasks are loaded from there."
+            base_url = resolved_url
         if not token:
             return [], (
-                f"Not signed in to {instance}, so only tasks already audited on this "
-                f"machine are shown. Enter your {instance} username and password above "
-                "to include every task from the instance."
-            )
+                f"Not signed in to {instance}. Enter your {instance} username and password "
+                "to load recently performed Intelligent Reset tasks."
+            ), host_note
 
-        # Determine effective task type to prevent massive unindexed full table scans on cloud instances
-        effective_type = task_type
+        # A missing type id makes the retailer scan every task and time out.
+        effective_type = task_type or intelligent_reset_type_id(instance) or intelligent_reset_type_id(base_url)
         if not effective_type:
-            clean_inst = instance.lower()
-            if clean_inst in ("krcs", "krog", "kroger"):
-                effective_type = "31"
-            elif clean_inst in ("harr", "harris"):
-                effective_type = "26"
+            return [], (
+                f"{instance} has no known Intelligent Reset task type, so recent tasks cannot be listed."
+            ), host_note
 
-        cache_key = (instance, range_info["from"], range_info["to"], effective_type)
+        cache_key = (instance, range_info["from"], range_info["to"], effective_type, base_url)
         cached = cache_lookup(TASK_LIST_CACHE, cache_key, time.time(), TASK_CACHE_TTL_SECONDS)
         if cached is not None:
-            return cached, None
+            return cached, None, host_note
 
         headers = {"Authorization": f"Token {token}", "Accept": "application/json"}
 
@@ -2557,14 +2561,14 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             return collected, (
                 f"Your saved sign-in for {instance} has expired. "
                 "Enter your username and password again to reload."
-            )
+            ), host_note
         if first_error:
             if not collected:
-                return [], f"Could not read tasks from {instance}: {first_error}"
+                return [], f"Could not read tasks from {instance}: {first_error}", host_note
             return collected, (
                 f"{instance} stopped responding partway through, so this list may be incomplete "
                 f"({scanned} tasks read). Try Load again. Details: {first_error}"
-            )
+            ), host_note
 
         note = None
         if not reached_start_of_range:
@@ -2573,7 +2577,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "tasks in this range may be missing. Narrow the date range for a complete list."
             )
         cache_store(TASK_LIST_CACHE, cache_key, time.time(), collected)
-        return collected, note
+        return collected, note, host_note
 
     def _handle_ir_history(self, query: Dict[str, List[str]]) -> Dict[str, Any]:
         def first(name: str, default: Optional[str] = None) -> Optional[str]:
@@ -2613,10 +2617,12 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             return filter_entries(entries, instance, range_info["from"], range_info["to"])
 
         stored = load_history(IR_HISTORY_FILE)
-        remote, remote_error = self._fetch_instance_tasks(base_url, instance, range_info, task_type=task_type)
+        remote, remote_error, host_note = self._fetch_instance_tasks(base_url, instance, range_info, task_type=task_type)
+        _, signed_token = signed_in_backend(base_url, INSTANCE_TOKENS)
         return {
             "status": "success",
-            "signed_in": bool(INSTANCE_TOKENS.get(base_url) or TOKEN),
+            "signed_in": bool(signed_token),
+            "host_note": host_note,
             "filters": {"type": task_type, "statuses": statuses, "title": title},
             **build_history_view(
                 apply_filters(stored),
@@ -2687,8 +2693,11 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             else:
                 final_comp = None
 
-            # Duration
-            duration_val = 28.0
+            # Duration: use recorded evidence only. Never substitute a demo duration.
+            duration_val = None
+            duration_source = None
+            duration_started_at = None
+            duration_completed_at = None
             logged_dur = task_obj.get("logged_duration")
             if logged_dur and isinstance(logged_dur, str):
                 import re
@@ -2701,6 +2710,31 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     total_min += int(m_m.group(1))
                 if 0 < total_min < 300:
                     duration_val = float(total_min)
+                    duration_source = "task.logged_duration"
+            if duration_val is None:
+                started = (
+                    task_obj.get("started_at")
+                    or task_obj.get("start_at")
+                    or task_obj.get("start")
+                )
+                completed = (
+                    task_obj.get("completed_at")
+                    or task_obj.get("finished_at")
+                    or task_obj.get("end_at")
+                    or task_obj.get("end")
+                )
+                if started and completed:
+                    try:
+                        started_dt = datetime.datetime.fromisoformat(str(started).replace("Z", "+00:00"))
+                        completed_dt = datetime.datetime.fromisoformat(str(completed).replace("Z", "+00:00"))
+                        elapsed = (completed_dt - started_dt).total_seconds() / 60.0
+                        if 0 < elapsed < 24 * 60:
+                            duration_val = round(elapsed, 1)
+                            duration_source = "task start and completion timestamps"
+                            duration_started_at = str(started)
+                            duration_completed_at = str(completed)
+                    except (TypeError, ValueError):
+                        pass
 
             meta_override = {
                 "retailer": "Harris Teeter" if "harr" in instance.lower() else "Kroger",
@@ -2716,9 +2750,57 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "final_compliance": final_comp,
                 "initial_compliance": 35.0 if (final_comp is not None and final_comp >= 90) else 25.0,
                 "wall_duration_min": duration_val,
+                "duration_source": duration_source,
+                "duration_started_at": duration_started_at,
+                "duration_completed_at": duration_completed_at,
             }
 
-            return synthesize_task_flow_from_raw_actions(task_id, raw_actions, metadata_override=meta_override)
+            flow = synthesize_task_flow_from_raw_actions(
+                task_id,
+                raw_actions,
+                metadata_override=meta_override,
+            )
+            digital_items, digital_loaded, digital_error, _ = load_digital_report_actions(
+                base_url,
+                token,
+                raw_actions,
+            )
+            evidence_scan_ids = sorted({
+                int(scan_id)
+                for item in raw_actions
+                for holder in ((item.get("current_position") or {}), (item.get("expected_position") or {}))
+                for scan_id in [holder.get("scan_id")]
+                if str(scan_id or "").isdigit()
+            })
+            state_counts: Dict[str, int] = {}
+            for item in raw_actions:
+                state_key = str(item.get("state") or "UNKNOWN")
+                state_counts[state_key] = state_counts.get(state_key, 0) + 1
+            shelf_summary = summarize_digital_shelf_rows(digital_items)
+            flow["performed_evidence"] = {
+                "scan_ids": evidence_scan_ids,
+                **shelf_summary,
+                "action_list_states": state_counts,
+            }
+            flow["performed_actions_loaded"] = digital_loaded and bool(evidence_scan_ids)
+            flow["performed_actions_error"] = digital_error or (
+                None if evidence_scan_ids else "The action list did not reference any scan, so Digital Shelf could not be checked."
+            )
+            flow["performed_actions"] = [
+                {
+                    "scan_id": item.scan_id,
+                    "upc": item.upc,
+                    "product_name": item.product_name,
+                    "section": item.section,
+                    "rog_position": item.rog_position,
+                    "pog_position": item.pog_position,
+                    "action_type": item.action_type,
+                    "action_taken": item.action_taken,
+                }
+                for item in digital_items
+                if item.action_taken and item.action_taken != "-"
+            ]
+            return flow
         except Exception as e:
             print(f"[task_flow] Could not fetch live data for task {task_id}: {e}")
             return None
@@ -3723,6 +3805,129 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             "rows": [{key: describe(row.get(key)) for key in sorted(row)} for row in rows],
         }
 
+    def _agent_dashboard_context(self, agent_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Collect only the evidence needed by one read-only dashboard agent."""
+        if agent_id == "ir-investigator":
+            instance = str(payload.get("instance") or EXECUTION_STATE.get("instance_slug") or "harr")
+            task_id = str(payload.get("task_id") or EXECUTION_STATE.get("active_task_id") or "").strip()
+            if not task_id.isdigit():
+                return {"_error": "Select an Intelligent Reset task before running this agent."}
+            task_flow = self._handle_task_flow({"instance": [instance], "task_id": [task_id]})
+            return {"instance": instance, "task_id": int(task_id), "task_flow": task_flow}
+
+        suites: List[Dict[str, Any]] = []
+        failures: List[Dict[str, Any]] = []
+        for suite_name in ("web", "mobile-ios", "mobile-android", "api"):
+            path = WORKSPACE_DIR / "data" / f"{suite_name}.json"
+            try:
+                suite = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if not isinstance(suite, dict):
+                continue
+            suites.append(suite)
+            for failure in suite.get("topFailures") or []:
+                if isinstance(failure, dict):
+                    failures.append({"repo": suite_name, **failure})
+
+        context: Dict[str, Any] = {"suites": suites, "failures": failures}
+        if agent_id == "release-risk":
+            try:
+                context["jira"] = json.loads((WORKSPACE_DIR / "data" / "jira.json").read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                context["jira"] = {}
+        if agent_id == "test-execution":
+            context["scope"] = str(payload.get("scope") or "risk-based regression")
+        return context
+
+    def _suite_agent_context(self, include_jira: bool, scope: str = "") -> Dict[str, Any]:
+        suites: List[Dict[str, Any]] = []
+        failures: List[Dict[str, Any]] = []
+        for suite_name in ("web", "mobile-ios", "mobile-android", "api"):
+            path = WORKSPACE_DIR / "data" / f"{suite_name}.json"
+            try:
+                suite = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if not isinstance(suite, dict):
+                continue
+            suites.append(suite)
+            for failure in suite.get("topFailures") or []:
+                if isinstance(failure, dict):
+                    failures.append({"repo": suite_name, **failure})
+        context: Dict[str, Any] = {"suites": suites, "failures": failures}
+        if include_jira:
+            try:
+                context["jira"] = json.loads((WORKSPACE_DIR / "data" / "jira.json").read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                context["jira"] = {}
+        if scope:
+            context["scope"] = scope
+        return context
+
+    def _handle_agent_question(self, payload: Dict[str, Any], question: str) -> Dict[str, Any]:
+        question = question.strip()[:500]
+        active_tab = str(payload.get("active_tab") or "overview").strip().lower()
+        if active_tab not in TAB_LABELS:
+            active_tab = "overview"
+        evidence: Dict[str, Any] = {"active_tab": active_tab}
+
+        def read_dashboard_json(relative_path: str) -> Dict[str, Any]:
+            try:
+                value = json.loads((WORKSPACE_DIR / relative_path).read_text(encoding="utf-8"))
+                return value if isinstance(value, dict) else {}
+            except (OSError, ValueError):
+                return {}
+
+        if active_tab in {"ir", "ir-studio", "shelf-mobile"}:
+            instance = str(payload.get("instance") or EXECUTION_STATE.get("instance_slug") or "harr")
+            task_id = str(payload.get("task_id") or EXECUTION_STATE.get("active_task_id") or "").strip()
+            if not task_id.isdigit():
+                return {
+                    "status": "error",
+                    "error": {
+                        "code": "MISSING_EVIDENCE",
+                        "message": "Select an Intelligent Reset task before asking about it.",
+                    },
+                }
+            task_flow = self._handle_task_flow({"instance": [instance], "task_id": [task_id]})
+            if task_flow.get("status") == "error":
+                return {
+                    "status": "error",
+                    "error": {
+                        "code": "MISSING_EVIDENCE",
+                        "message": task_flow.get("message") or task_flow.get("error") or "Could not read the selected task.",
+                    },
+                }
+            evidence["task_flow"] = task_flow
+        elif active_tab in {"overview", "attention", "suites"}:
+            evidence.update(self._suite_agent_context(
+                include_jira=active_tab == "overview",
+                scope=question,
+            ))
+        elif active_tab == "jira":
+            evidence["jira"] = read_dashboard_json("data/jira.json")
+        elif active_tab == "sentry":
+            evidence["sentry_config"] = read_dashboard_json("data/sentry-config.json")
+            evidence["sentry_live"] = read_dashboard_json("data/sentry-live.json")
+        elif active_tab == "trends":
+            evidence["trend"] = read_dashboard_json("data/history/automation-trend.json")
+            evidence["ai_usage"] = read_dashboard_json("data/ai-usage.json")
+        return enhance_with_model(answer_question(question, evidence))
+
+    def _handle_agent_run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        question = str(payload.get("question") or "").strip()
+        if question:
+            return self._handle_agent_question(payload, question)
+        agent_id = str(payload.get("agent_id") or "").strip()
+        context = self._agent_dashboard_context(agent_id, payload)
+        if context.get("_error"):
+            return {
+                "status": "error",
+                "error": {"code": "MISSING_EVIDENCE", "message": context["_error"]},
+            }
+        return enhance_with_model(run_agent(agent_id, context))
+
     def do_GET(self):
         if self.path.startswith("/api/repos/branches"):
             android_branches = get_git_branches(ANDROID_REPO)
@@ -3754,6 +3959,19 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             self.send_header("Cache-Control", "public, max-age=86400")
             self.end_headers()
             self.wfile.write(svg_favicon)
+            return
+
+        elif self.path.startswith("/api/runner/agents"):
+            self._send_json({
+                "status": "success",
+                "agents": list_agents(),
+                "contract": {
+                    "run": "POST /api/runner/agents/run",
+                    "access": "read-only",
+                    "mode": "grounded-rules-v1",
+                    "model_configured": model_is_configured(),
+                },
+            })
             return
 
         elif self.path.startswith("/api/runner/actions"):
@@ -4299,6 +4517,10 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             payload = json.loads(post_data)
         except Exception:
             payload = {}
+
+        if self.path.startswith("/api/runner/agents/run"):
+            self._send_json(self._handle_agent_run(payload))
+            return
 
         if self.path.startswith("/api/runner/start"):
             if not EXECUTION_STATE["pipeline"]["is_running"]:
