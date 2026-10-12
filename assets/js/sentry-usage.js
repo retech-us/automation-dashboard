@@ -3,6 +3,7 @@
  * (refreshed by the Update Dashboard workflow). Plan caps and the action log: data/sentry-config.json.
  * Per-day rates are used so partial months and weeks compare fairly. */
 (function () {
+  const LIVE_API_URL = '/api/sentry/live';
   const LIVE_URL = 'data/sentry-live.json';
   const CONFIG_URL = 'data/sentry-config.json';
   let LIVE = null;
@@ -43,12 +44,21 @@
     return window.DASHBOARD_SNAPSHOTS?.snapshots?.[snapshotKey] || null;
   }
 
+  // The local runner serves fresh data at /api/sentry/live; static hosting falls back to the file.
+  async function loadLive() {
+    try {
+      const res = await fetch(`${LIVE_API_URL}?_=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.source === 'sentry-api') return data;
+      }
+    } catch { /* no runner */ }
+    return getJson(LIVE_URL, 'sentry-live');
+  }
+
   async function loadData() {
     if (LOADED) return;
-    [LIVE, CONFIG] = await Promise.all([
-      getJson(LIVE_URL, 'sentry-live'),
-      getJson(CONFIG_URL, 'sentry-config'),
-    ]);
+    [LIVE, CONFIG] = await Promise.all([loadLive(), getJson(CONFIG_URL, 'sentry-config')]);
     LOADED = true;
   }
 
@@ -137,7 +147,7 @@
     const partial = LIVE.errors?.length
       ? ` <span class="sentry-flag">Partial: ${esc(LIVE.errors.join('; '))}</span>`
       : '';
-    return `<p class="sentry-note"><span class="sentry-status sentry-status--done">Live</span> From the Sentry API (${esc(LIVE.org)}), updated ${esc(timeAgo(LIVE.generated_at))} (${esc(new Date(LIVE.generated_at).toLocaleString())}). Refreshes every 15 minutes.${partial}</p>`;
+    return `<p class="sentry-note"><span class="sentry-status sentry-status--done">Live</span> From the Sentry API (${esc(LIVE.org)}${LIVE.served_by ? `, via ${esc(LIVE.served_by)}` : ''}), updated ${esc(timeAgo(LIVE.generated_at))} (${esc(new Date(LIVE.generated_at).toLocaleString())}). Refreshes every 15 minutes.${partial}</p>`;
   }
 
   function renderPlan() {
