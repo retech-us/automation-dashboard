@@ -1,6 +1,8 @@
 (function (window, document) {
   'use strict';
 
+  let lastResult = null;
+
   const TAB_CONTEXTS = {
     overview: {
       label: 'Overview',
@@ -117,6 +119,7 @@
   function renderResult(result) {
     const target = byId('agent-center-result');
     if (!target) return;
+    lastResult = result;
     target.replaceChildren();
 
     const header = document.createElement('div');
@@ -158,8 +161,56 @@
       target.appendChild(list);
     }
 
+    addText(target, 'h4', '', 'Leadership export');
+    const exportActions = document.createElement('div');
+    exportActions.className = 'agent-export-actions';
+    [
+      ['docx', 'Download leadership report'],
+      ['pptx', 'Download leadership PowerPoint'],
+    ].forEach(([format, label]) => {
+      const button = addText(exportActions, 'button', 'btn btn--ghost', label);
+      button.type = 'button';
+      button.addEventListener('click', () => exportResult(format, button));
+    });
+    target.appendChild(exportActions);
+    addText(target, 'p', 'agent-export-note', 'SymphonyAI retail format, generated from this analysis and its cited evidence.');
+
     addText(target, 'p', 'agent-result-sources', `Sources: ${(result.sources || []).join(' · ') || 'No sources returned'}`);
     addText(target, 'p', 'agent-result-run-id', `Run ${result.run_id} · ${new Date(result.generated_at).toLocaleString()}`);
+  }
+
+  async function exportResult(format, button) {
+    if (!lastResult) {
+      renderError('Run an analysis before generating a leadership report.');
+      return;
+    }
+    const originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = format === 'pptx' ? 'Building PowerPoint…' : 'Building report…';
+    try {
+      const response = await fetch('/api/runner/agents/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format, run_id: lastResult.run_id }),
+      });
+      const data = await response.json();
+      if (!response.ok || data.status !== 'success') {
+        throw new Error(data.error?.message || `Export failed (${response.status})`);
+      }
+      const link = document.createElement('a');
+      link.href = data.download_url;
+      link.download = data.filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      button.textContent = 'Downloaded';
+      window.setTimeout(() => { button.textContent = originalLabel; }, 1800);
+    } catch (error) {
+      button.textContent = originalLabel;
+      renderError(error.message || 'The leadership export could not be generated.');
+    } finally {
+      button.disabled = false;
+    }
   }
 
   async function askQuestion(questionText) {
