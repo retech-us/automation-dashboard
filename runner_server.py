@@ -50,6 +50,7 @@ from core.e2e_audit_engine import audit_task_execution, derive_why_user_performs
 from core.e2e_audit_report_generator import generate_e2e_audit_html_report
 from core.digital_report_client import fetch_section_product_reports_for_scans, summarize_digital_shelf_rows
 from core.dashboard_agents import TAB_LABELS, answer_question, enhance_with_model, list_agents, model_is_configured, run_agent
+from core.leadership_reports import generate_leadership_report
 from core.ir_live_snapshot import build_ir_live_snapshot, load_ir_snapshot, save_ir_snapshot
 from core.ir_task_flow_builder import get_task_flow, synthesize_task_flow_from_raw_actions
 from core.session_store import load_tokens, save_tokens
@@ -122,6 +123,8 @@ EXECUTION_STATE = {
         "report_file": None,
     }
 }
+AGENT_RUN_RESULTS: Dict[str, Dict[str, Any]] = {}
+AGENT_RUN_RESULTS_LOCK = threading.Lock()
 
 
 def load_digital_report_actions(
@@ -3977,15 +3980,58 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
     def _handle_agent_run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         question = str(payload.get("question") or "").strip()
         if question:
-            return self._handle_agent_question(payload, question)
-        agent_id = str(payload.get("agent_id") or "").strip()
-        context = self._agent_dashboard_context(agent_id, payload)
-        if context.get("_error"):
+            result = self._handle_agent_question(payload, question)
+        else:
+            agent_id = str(payload.get("agent_id") or "").strip()
+            context = self._agent_dashboard_context(agent_id, payload)
+            if context.get("_error"):
+                return {
+                    "status": "error",
+                    "error": {"code": "MISSING_EVIDENCE", "message": context["_error"]},
+                }
+            result = enhance_with_model(run_agent(agent_id, context))
+        run_id = str(result.get("run_id") or "")
+        if result.get("status") == "success" and run_id:
+            with AGENT_RUN_RESULTS_LOCK:
+                AGENT_RUN_RESULTS[run_id] = result
+                while len(AGENT_RUN_RESULTS) > 100:
+                    AGENT_RUN_RESULTS.pop(next(iter(AGENT_RUN_RESULTS)))
+        return result
+
+    def _handle_agent_export(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        export_format = str(payload.get("format") or "").strip().lower()
+        run_id = str(payload.get("run_id") or "").strip()
+        with AGENT_RUN_RESULTS_LOCK:
+            analysis = AGENT_RUN_RESULTS.get(run_id)
+        if not analysis:
             return {
                 "status": "error",
-                "error": {"code": "MISSING_EVIDENCE", "message": context["_error"]},
+                "error": {
+                    "code": "UNKNOWN_AGENT_RUN",
+                    "message": "Run the analysis again before generating a leadership export.",
+                },
             }
-        return enhance_with_model(run_agent(agent_id, context))
+        try:
+            output_path = generate_leadership_report(
+                analysis,
+                export_format,
+                WORKSPACE_DIR / "generated-reports",
+                WORKSPACE_DIR,
+            )
+        except (ValueError, RuntimeError, OSError, subprocess.SubprocessError) as error:
+            return {
+                "status": "error",
+                "error": {
+                    "code": "REPORT_GENERATION_FAILED",
+                    "message": str(error),
+                },
+            }
+        return {
+            "status": "success",
+            "format": export_format,
+            "filename": output_path.name,
+            "download_url": f"/generated-reports/{urllib.parse.quote(output_path.name)}",
+        }
 
     def do_GET(self):
         if self.path.startswith("/api/repos/branches"):
@@ -4031,6 +4077,8 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "agents": list_agents(),
                 "contract": {
                     "run": "POST /api/runner/agents/run",
+                    "export": "POST /api/runner/agents/export",
+                    "export_formats": ["docx", "pptx"],
                     "access": "read-only",
                     "mode": "grounded-rules-v1",
                     "model_configured": model_is_configured(),
@@ -4581,6 +4629,10 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             payload = json.loads(post_data)
         except Exception:
             payload = {}
+
+        if self.path.startswith("/api/runner/agents/export"):
+            self._send_json(self._handle_agent_export(payload))
+            return
 
         if self.path.startswith("/api/runner/agents/run"):
             self._send_json(self._handle_agent_run(payload))

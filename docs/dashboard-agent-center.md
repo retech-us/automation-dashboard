@@ -64,6 +64,24 @@ Examples:
 A question returns only the evidence that answers it. An unrelated question is
 reported as not covered instead of a generic task report.
 
+## Leadership reports and presentations
+
+After an analysis finishes, Agent Center offers two editable downloads:
+
+- **Download leadership report** creates a `.docx` briefing in the SymphonyAI
+  retail format: Arial, sentence case, primary blue headings, and the executive
+  summary, verdict, confidence, key metrics, findings, recommendations, sources,
+  and agent run ID.
+- **Download leadership PowerPoint** starts from the SymphonyAI 2026 template.
+  It keeps the template layouts, logo, and footer, and fills a retail leadership
+  narrative: question, decision, evidence, metrics, recommended actions, sources,
+  and the template thank-you slide.
+
+The export is generated from the completed grounded analysis. It does not make a
+second unrelated analysis, invent metrics, upload data, or expose credentials and
+signed URL query values. Generated files are written under `generated-reports/`,
+which is excluded from source control.
+
 All agents are read-only. They cannot update retailer tasks, create Jira issues,
 start CI, modify source code, or approve a release.
 
@@ -108,6 +126,7 @@ safe version it does not start CI automatically.
 
 - Catalog: `GET /api/runner/agents`
 - Run: `POST /api/runner/agents/run`
+- Export: `POST /api/runner/agents/export`
 
 Example:
 
@@ -122,6 +141,18 @@ Example:
 
 `agent_id` is still accepted for the original specialist reports. A `question`
 takes precedence and returns `agent_id: "question"`.
+
+Export example:
+
+```json
+{
+  "format": "pptx",
+  "run_id": "the run_id from /api/runner/agents/run"
+}
+```
+
+The server resolves that run ID to the original grounded result. Client-supplied
+analysis content is not accepted for exports.
 
 The server collects evidence directly from the connected dashboard sources.
 Tokens, passwords, and signed URLs are never included in agent results.
