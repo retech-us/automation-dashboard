@@ -37,6 +37,7 @@ class FlowItem:
     from_pos: Optional[str] = None
     to_shelf: Optional[int] = None
     to_pos: Optional[str] = None
+    from_bay: Optional[str] = None
     to_bay: Optional[str] = None
     actor: Optional[str] = None
     state: str = "STATE_ACCEPTED"
@@ -1411,6 +1412,8 @@ def synthesize_task_flow_from_raw_actions(
                     name = item.get("product_title") or item.get("product_name") or f"PRODUCT {upc}"
                     curr_pos = item.get("current_position") or {}
                     exp_pos = item.get("expected_position") or {}
+                    curr_section = (curr_pos.get("section_info") or {}).get("name")
+                    exp_section = (exp_pos.get("section_info") or {}).get("name")
                     raw_id = item.get("id") or (25000000 + idx * 7)
 
                     flow_items.append(FlowItem(
@@ -1423,7 +1426,16 @@ def synthesize_task_flow_from_raw_actions(
                         from_pos=str(curr_pos.get("position") or ""),
                         to_shelf=exp_pos.get("shelf"),
                         to_pos=str(exp_pos.get("position") or ""),
-                        to_bay=bay,
+                        from_bay=(
+                            f"Bay {curr_section}"
+                            if curr_section and not str(curr_section).lower().startswith("bay")
+                            else curr_section
+                        ),
+                        to_bay=(
+                            f"Bay {exp_section}"
+                            if exp_section and not str(exp_section).lower().startswith("bay")
+                            else exp_section or bay
+                        ),
                         actor=performer,
                         state=state,
                         reason=reason,
@@ -1533,21 +1545,26 @@ def synthesize_task_flow_from_raw_actions(
     ))
 
     # Closed
-    wall_min = meta.get("wall_duration_min") or round((current_time - base_time).total_seconds() / 60.0, 1)
+    wall_min = (
+        meta.get("wall_duration_min")
+        if "wall_duration_min" in meta
+        else round((current_time - base_time).total_seconds() / 60.0, 1)
+    )
+    wall_label = f"{wall_min} min" if wall_min is not None else "not recorded"
     if is_incomplete:
-        close_detail = f"marked incomplete (Wall Time: {wall_min} min · Reset not verified ❌)"
+        close_detail = f"marked incomplete (Wall Time: {wall_label} · Reset not verified ❌)"
         close_badge = "warning"
         close_event_type = "closed"
     elif is_in_progress:
-        close_detail = f"in progress (Active Session · Elapsed: {wall_min} min ⏳)"
+        close_detail = f"in progress (Active Session · Elapsed: {wall_label} ⏳)"
         close_badge = "info"
         close_event_type = "in_progress"
     elif final_comp is not None and final_comp >= 95.0:
-        close_detail = f"completed (Wall Time: {wall_min} min, Quality Gate {int(final_comp)}% Passed ✅)"
+        close_detail = f"completed (Wall Time: {wall_label}, Quality Gate {int(final_comp)}% Passed ✅)"
         close_badge = "success"
         close_event_type = "closed"
     else:
-        close_detail = f"completed (Wall Time: {wall_min} min, Quality Gate Attention Needed ⚠️)"
+        close_detail = f"completed (Wall Time: {wall_label}, Quality Gate Attention Needed ⚠️)"
         close_badge = "warning"
         close_event_type = "closed"
 
@@ -1585,6 +1602,9 @@ def synthesize_task_flow_from_raw_actions(
             "start_time": base_time.strftime("%H:%M:%S"),
             "end_time": current_time.strftime("%H:%M:%S"),
             "wall_duration_min": wall_min,
+            "duration_source": meta.get("duration_source"),
+            "duration_started_at": meta.get("duration_started_at"),
+            "duration_completed_at": meta.get("duration_completed_at"),
             "status": meta.get("status") or "completed",
             "status_reason": meta.get("status_reason") or ("Stopped before completion" if is_incomplete else ""),
             "quality_gate": gate_status,

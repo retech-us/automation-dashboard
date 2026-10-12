@@ -40,6 +40,13 @@ jobs:
         run: |
           python3 scripts/fetch-jira.py
 
+      - name: Fetch live Sentry span usage
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: retech-labs
+        run: |
+          python3 scripts/fetch-sentry.py
+
       - name: Generate static bootstrap snapshot bundle
         run: |
           python3 scripts/generate-bootstrap.py

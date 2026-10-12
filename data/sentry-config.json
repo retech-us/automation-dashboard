@@ -1,0 +1,30 @@
+{
+  "org": "retech-labs",
+  "plan": {
+    "name": "Current Sentry plan",
+    "billing_period": { "start": "2026-10-01", "end": "2026-10-31" },
+    "extra_spend_as_of": "2026-10-12",
+    "features": [
+      { "feature": "Errors", "category": "error", "included": 1000000, "unit": "events", "extra_spend_usd": 395.00 },
+      { "feature": "Logs", "category": "log_byte", "included": 5000000000, "unit": "bytes", "extra_spend_usd": 0 },
+      { "feature": "Replays", "category": "replay", "included": 300000, "unit": "replays", "extra_spend_usd": 799.00 },
+      { "feature": "Spans", "category": "span", "included": 5000000, "unit": "spans", "extra_spend_usd": 997.39 },
+      { "feature": "Cron Monitors", "category": "monitor_seat", "included": 1, "unit": "monitors", "extra_spend_usd": 0 },
+      { "feature": "Uptime Monitors", "category": "uptime", "included": 1, "unit": "monitors", "extra_spend_usd": 0 },
+      { "feature": "Attachments", "category": "attachment", "included": 1000000000, "unit": "bytes", "extra_spend_usd": 0 },
+      { "feature": "Continuous Profile Hours", "category": "profile_duration", "included": null, "unit": "hours", "extra_spend_usd": 0 },
+      { "feature": "UI Profile Hours", "category": "profile_duration_ui", "included": null, "unit": "hours", "extra_spend_usd": 2.61 }
+    ]
+  },
+  "changes": [
+    { "date": "2026-10-12", "project": "rebm", "change": "Breakdown: rebm stores ~276M of the 271.5M billed spans; krcs alone 180M", "status": "observed" },
+    { "date": "2026-10-12", "project": "org", "change": "Audit and plan review: spans 271.5M billed vs 5M included", "status": "done" },
+    { "date": "2026-09-29", "project": "org", "change": "Last accepted span bucket. Quota exhausted after this point", "status": "observed" }
+  ],
+  "actions": [
+    { "id": "1", "action": "rebm: sampler at 0.1% that ignores the inherited sampled header", "project": "rebm", "status": "open" },
+    { "id": "2", "action": "hawkeye: epsilon and stgalbt tracing from 100% to 1%", "project": "hawkeye", "status": "open" },
+    { "id": "3", "action": "Android production trace sampling 50% to 10%", "project": "android", "status": "open" },
+    { "id": "4", "action": "Lower frontend and iOS trace sampling", "project": "rebotics-frontend, ios", "status": "open" }
+  ]
+}

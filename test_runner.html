@@ -134,7 +134,7 @@
         }
 
         /* Focus Ring Standard (Accessibility WCAG AA) */
-        button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+        button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible {
             outline: 2px solid var(--brand-navy-600) !important;
             outline-offset: 1.5px !important;
         }
@@ -293,9 +293,14 @@
             flex: 1;
             min-height: 0;
             display: grid;
-            grid-template-columns: 340px 390px 1fr;
+            grid-template-columns: minmax(390px, 440px) minmax(340px, 390px) minmax(520px, 1fr);
             gap: 10px;
             align-items: stretch;
+            overflow-x: auto;
+        }
+
+        .workspace-layout > * {
+            min-width: 0;
         }
 
         .scrollable-col {
@@ -337,6 +342,360 @@
             align-items: center;
             justify-content: space-between;
             letter-spacing: -0.01em;
+        }
+
+        /* Everyday IR Studio workflow */
+        .ir-workbench {
+            padding: 0;
+            overflow: hidden;
+            border-color: #BFDBFE;
+            box-shadow: var(--shadow-sm);
+            flex-shrink: 0;
+        }
+
+        .ir-workflow-pair {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            align-items: stretch;
+        }
+
+        .ir-workbench-header {
+            padding: 18px 18px 14px;
+            background: #F8FAFC;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .ir-workbench-kicker {
+            color: #1D4ED8;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .ir-workbench-title {
+            margin-top: 4px;
+            color: var(--text-primary);
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -.03em;
+            line-height: 1.2;
+        }
+
+        .ir-workbench-intro {
+            margin-top: 6px;
+            max-width: 48ch;
+            color: var(--text-muted);
+            font-size: 11.5px;
+            line-height: 1.55;
+        }
+
+        .ir-workflow-section {
+            display: flex;
+            flex-direction: column;
+            padding: 16px 18px 18px;
+        }
+
+        .ir-workflow-pair .ir-workflow-section + .ir-workflow-section {
+            border-top: 0;
+            border-left: 1px solid var(--border-light);
+            background: #FCFDFE;
+        }
+
+        .ir-section-heading {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .ir-step-number {
+            width: 25px;
+            height: 25px;
+            flex: 0 0 25px;
+            display: grid;
+            place-items: center;
+            border-radius: var(--radius-sm);
+            background: #1D4ED8;
+            color: #FFFFFF;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .ir-section-heading h2 {
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+
+        .ir-section-heading p,
+        .ir-field-help {
+            margin-top: 3px;
+            color: var(--text-muted);
+            font-size: 10.5px;
+            line-height: 1.45;
+        }
+
+        .ir-field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .ir-field-grid .ir-field-wide {
+            grid-column: 1 / -1;
+        }
+
+        .ir-workbench .form-label {
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        .ir-workbench .form-control {
+            min-height: 38px;
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .ir-workbench textarea.form-control {
+            min-height: 92px;
+            resize: vertical;
+        }
+
+        .ir-auth-box {
+            margin-top: 12px;
+            padding: 11px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            background: #F8FAFC;
+        }
+
+        .ir-auth-title {
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 10.5px;
+            font-weight: 800;
+        }
+
+        .ir-action-row {
+            display: grid;
+            grid-template-columns: 1.25fr 1fr;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .ir-action-row .btn {
+            min-height: 39px;
+            font-size: 11.5px;
+            font-weight: 800;
+        }
+
+        .ir-action-row .ir-action-wide {
+            grid-column: 1 / -1;
+        }
+
+        .ir-section-actions {
+            margin-top: auto;
+            padding-top: 16px;
+        }
+
+        .ir-results-panel {
+            flex: 0 0 auto;
+            padding: 0;
+            overflow: hidden;
+            border-color: #CBD5E1;
+        }
+
+        .ir-results-header {
+            padding: 14px 16px 12px;
+            border-bottom: 1px solid var(--border-light);
+            background: #F8FAFC;
+        }
+
+        .ir-results-header h2 {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .ir-results-header p {
+            margin-top: 3px;
+            color: var(--text-muted);
+            font-size: 10.5px;
+        }
+
+        .ir-results-body {
+            padding: 14px 16px 16px;
+        }
+
+        .ir-results-empty {
+            padding: 22px 12px;
+            text-align: center;
+        }
+
+        .ir-results-empty strong {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .ir-results-empty p {
+            max-width: 46ch;
+            margin: 4px auto 0;
+            color: var(--text-muted);
+            font-size: 11.5px;
+            line-height: 1.5;
+        }
+
+        #existing-task-status {
+            padding: 11px 12px;
+            border: 1px solid #CBD5E1;
+            border-radius: var(--radius-md);
+            background: #F8FAFC;
+            color: #475569;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        #existing-task-findings {
+            max-height: 220px;
+            overflow-y: auto;
+            margin-top: 8px;
+        }
+
+        #investigate-issue-result {
+            max-height: 48vh;
+            overflow-y: auto;
+            margin-top: 10px;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        /* Everyday view uses the full width. The phone preview stays out of this layout. */
+        html:has(body:not(.studio-show-advanced)),
+        body:not(.studio-show-advanced) {
+            height: auto;
+            max-height: none;
+            overflow: auto;
+        }
+
+        body:not(.studio-show-advanced) .container {
+            height: auto;
+            min-height: 100%;
+        }
+
+        body:not(.studio-show-advanced) #ir-live-scorecard {
+            display: none;
+        }
+
+        body.studio-task-loaded #ir-live-scorecard {
+            display: grid;
+        }
+
+        body:not(.studio-show-advanced) .workspace-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            grid-template-areas:
+                "inputs"
+                "results"
+                "actions";
+            overflow: visible;
+            align-items: stretch;
+        }
+
+        .studio-output {
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body:not(.studio-show-advanced) .studio-inputs,
+        body:not(.studio-show-advanced) .studio-output {
+            height: auto;
+            overflow: visible;
+        }
+
+        body:not(.studio-show-advanced) .studio-inputs { grid-area: inputs; }
+        body:not(.studio-show-advanced) .studio-output { display: contents; }
+        body:not(.studio-show-advanced) .mobile-simulator-col { display: none; }
+        body:not(.studio-show-advanced) .studio-run-tools { display: none; }
+        body:not(.studio-show-advanced) .ir-results-panel { grid-area: results; margin-bottom: 0; }
+        body:not(.studio-show-advanced) .action-sequence-panel {
+            grid-area: actions;
+            min-height: 360px;
+            margin-bottom: 0;
+        }
+
+        body.studio-show-advanced .ir-workflow-pair {
+            display: block;
+        }
+
+        body.studio-show-advanced .ir-workflow-pair .ir-workflow-section + .ir-workflow-section {
+            border-left: 0;
+            border-top: 1px solid var(--border-light);
+        }
+
+        @media (max-width: 1500px) {
+            body.studio-show-advanced .workspace-layout {
+                grid-template-columns: minmax(370px, 420px) minmax(320px, 360px) minmax(500px, 1fr);
+            }
+        }
+
+        @media (max-width: 1100px) {
+            html, body {
+                height: auto;
+                max-height: none;
+                overflow: auto;
+            }
+
+            .ir-workflow-pair,
+            body:not(.studio-show-advanced) .workspace-layout {
+                grid-template-columns: 1fr;
+            }
+
+            body:not(.studio-show-advanced) .workspace-layout {
+                grid-template-areas:
+                    "inputs"
+                    "results"
+                    "actions";
+            }
+
+            .ir-workflow-pair .ir-workflow-section + .ir-workflow-section {
+                border-left: 0;
+                border-top: 1px solid var(--border-light);
+            }
+
+            .mobile-simulator-col {
+                display: none;
+            }
+
+            .scrollable-col {
+                height: auto;
+                overflow: visible;
+            }
+        }
+
+        @media (max-width: 780px) {
+            body {
+                padding: 6px;
+            }
+
+            .workspace-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .ir-field-grid,
+            .ir-action-row {
+                grid-template-columns: 1fr;
+            }
+
+            .ir-field-grid .ir-field-wide,
+            .ir-action-row .ir-action-wide {
+                grid-column: auto;
+            }
         }
 
         /* Mode Switch Tabs */
@@ -1138,8 +1497,8 @@
             <div class="header-pill">Instance: <b id="header-env">None</b></div>
             <div class="header-pill studio-advanced-only">Android: <b id="disp-andr-branch">—</b></div>
             <div class="header-pill studio-advanced-only">iOS: <b id="disp-ios-branch">—</b></div>
-            <div id="header-quality-gate" class="header-pill" style="background: rgba(16, 185, 129, 0.2); color: #6EE7B7; border-color: rgba(52, 211, 153, 0.4);">
-                Status: <b id="disp-quality-gate">Ready</b>
+            <div id="header-quality-gate" class="header-pill" style="background: rgba(148, 163, 184, 0.2); color: #E2E8F0; border-color: rgba(203, 213, 225, 0.4);">
+                Status: <b id="disp-quality-gate">Not checked</b>
             </div>
         </div>
     </div>
@@ -1195,7 +1554,7 @@
     <div class="workspace-layout">
 
         <!-- Column 1: Task Controller & Status -->
-        <div class="scrollable-col">
+        <div class="scrollable-col studio-inputs">
             
             <!-- Execution Mode Switcher Tabs (Advanced) -->
             <div class="mode-tabs studio-advanced-only">
@@ -1230,60 +1589,87 @@
                 <input type="hidden" id="cfg-platform" value="both">
             </div>
 
-            <!-- Primary: Load Existing Task -->
-            <div id="tab-content-existing" class="panel" style="border: 1px solid #BFDBFE; box-shadow: var(--shadow-sm); background: #FFFFFF;">
-                <div class="panel-title" style="color: #1D4ED8; margin-bottom: 10px;">
-                    <span>Load existing task</span>
-                </div>
+            <!-- Primary: Existing Task Validation and Scan Investigation -->
+            <div id="tab-content-existing" class="panel ir-workbench">
+                <header class="ir-workbench-header">
+                    <div class="ir-workbench-kicker">IR Studio workspace</div>
+                    <h2 class="ir-workbench-title">Check a task or investigate a scan</h2>
+                    <p class="ir-workbench-intro">Enter the task or scan details here. The outcome appears in Validation results below.</p>
+                </header>
 
-                <div class="form-group">
-                    <label class="form-label" for="cfg-task-id-direct">Task ID</label>
-                    <input type="number" id="cfg-task-id-direct" class="form-control" value="" placeholder="e.g. 27315169" oninput="onTaskIdInput(this.value)" style="font-weight: 800; font-size: 13px; color: #1E3A8A; height: 32px; background: #EFF6FF; border-color: #BFDBFE;">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="cfg-base-url">Instance URL</label>
-                    <input type="text" id="cfg-base-url" class="form-control" value="" placeholder="e.g. https://harr.rebotics.net" oninput="onBaseUrlInput(this.value)" style="font-weight: 600;">
-                </div>
-
-                <div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 8px 10px; margin-bottom: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="font-size: 9.5px; font-weight: 800; color: #1E3A8A; text-transform: uppercase; letter-spacing: 0.04em;">Sign in</span>
+                <div class="ir-workflow-pair">
+                <section class="ir-workflow-section" aria-labelledby="task-validation-heading">
+                    <div class="ir-section-heading">
+                        <span class="ir-step-number" aria-hidden="true">1</span>
+                        <div>
+                            <h2 id="task-validation-heading">Validate an existing task</h2>
+                            <p>Loads the live actions, checks their positions, and compares the task history, Digital Shelf report, and post photo.</p>
+                        </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
-                        <label style="display:block;"><input type="text" id="cfg-username" class="form-control" placeholder="Username" aria-label="Username" style="height: 26px; font-size: 10.5px;" oninput="onExistingCredsInput()"></label>
-                        <label style="display:block;"><input type="password" id="cfg-password" class="form-control" placeholder="Password" aria-label="Password" style="height: 26px; font-size: 10.5px;" oninput="onExistingCredsInput()"></label>
-                    </div>
-                    <input type="text" id="cfg-token" class="form-control studio-advanced-only" placeholder="Or paste auth token (optional)" style="height: 26px; font-size: 10.5px; font-family: 'JetBrains Mono', monospace;" oninput="onExistingCredsInput()">
-                </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
-                    <button type="button" id="btn-fast-load" class="btn btn-primary btn-block" style="padding: 9px; font-size: 12px; font-weight: 800;" onclick="loadTaskById()">
-                        Load task
-                    </button>
-                    <button type="button" id="btn-start-existing-test" class="btn btn-success btn-block" style="padding: 9px; font-size: 12px; font-weight: 800;" onclick="startExistingTaskTest()" disabled aria-describedby="existing-task-status">
-                        Start test
-                    </button>
-                    <button type="button" id="btn-historical-audit" class="btn btn-teal btn-block" style="padding: 8px; font-size: 11px;" onclick="runHistoricalTaskAudit()">
-                        Run full check
-                    </button>
-                </div>
-                <div id="existing-task-status" tabindex="-1" role="status" aria-live="polite" style="margin-top: 8px; padding: 8px 10px; border: 1px solid #CBD5E1; border-radius: 7px; background: #F8FAFC; color: #475569; font-size: 10.5px; line-height: 1.4;">
-                    Enter an instance and Task ID, then load live actions.
-                </div>
-                <div id="existing-task-findings" style="display:none; margin-top:6px;"></div>
-                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #DBEAFE;">
-                    <div class="panel-title" style="color: #1D4ED8; margin-bottom: 8px;">
-                        <span>Investigate a problem</span>
+                    <div class="ir-field-grid">
+                        <div>
+                            <label class="form-label" for="cfg-task-id-direct">Task ID</label>
+                            <input type="number" id="cfg-task-id-direct" class="form-control" value="" placeholder="Example: 27315169" oninput="onTaskIdInput(this.value)" style="font-weight: 800; color: #1E3A8A; background: #EFF6FF; border-color: #BFDBFE;" aria-describedby="task-id-help">
+                            <div id="task-id-help" class="ir-field-help">The numeric ID shown on the Rebotics task.</div>
+                        </div>
+                        <div>
+                            <label class="form-label" for="cfg-base-url">Instance URL</label>
+                            <input type="url" id="cfg-base-url" class="form-control" value="" placeholder="https://krcs.rebotics.net" oninput="onBaseUrlInput(this.value)" style="font-weight: 600;" aria-describedby="instance-url-help">
+                            <div id="instance-url-help" class="ir-field-help">Use the same host where the task was created.</div>
+                        </div>
                     </div>
-                    <label class="form-label" for="cfg-investigate-problem">What looks wrong</label>
-                    <textarea id="cfg-investigate-problem" class="form-control" rows="3" placeholder="Example: post photo still asks to set aside products that are already in the correct slot" style="font-size: 11px; line-height: 1.4; margin-bottom: 6px;"></textarea>
-                    <label class="form-label" for="cfg-investigate-url">Scan URL</label>
-                    <input type="text" id="cfg-investigate-url" class="form-control" placeholder="https://krcs.rebotics.net/reporting/scans/..." style="margin-bottom: 6px;">
-                    <button type="button" id="btn-investigate-issue" class="btn btn-primary btn-block" style="padding: 8px; font-size: 11px; font-weight: 800;" onclick="investigateScanProblem()">
-                        Investigate
-                    </button>
-                    <div id="investigate-issue-result" role="status" aria-live="polite" style="display:none; margin-top: 8px; font-size: 10.5px; line-height: 1.45;"></div>
+
+                    <div class="ir-auth-box">
+                        <div class="ir-auth-title">Sign in to the selected instance</div>
+                        <div class="ir-field-grid">
+                            <div>
+                                <label class="form-label" for="cfg-username">Username</label>
+                                <input type="text" id="cfg-username" class="form-control" autocomplete="username" placeholder="Your username" oninput="onExistingCredsInput()">
+                            </div>
+                            <div>
+                                <label class="form-label" for="cfg-password">Password</label>
+                                <input type="password" id="cfg-password" class="form-control" autocomplete="current-password" placeholder="Your password" oninput="onExistingCredsInput()">
+                            </div>
+                            <div class="ir-field-wide studio-advanced-only">
+                                <label class="form-label" for="cfg-token">Authentication token</label>
+                                <input type="text" id="cfg-token" class="form-control" placeholder="Optional token" style="font-family: 'JetBrains Mono', monospace;" oninput="onExistingCredsInput()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ir-section-actions">
+                        <button type="button" id="btn-fast-load" class="btn btn-primary btn-block" onclick="loadTaskById()">
+                            Run complete task validation
+                        </button>
+                    </div>
+                </section>
+
+                <section class="ir-workflow-section" aria-labelledby="scan-investigation-heading">
+                    <div class="ir-section-heading">
+                        <span class="ir-step-number" aria-hidden="true">2</span>
+                        <div>
+                            <h2 id="scan-investigation-heading">Investigate a scan problem</h2>
+                            <p>Describe what appears wrong. The investigator checks all related sections and explains the evidence and likely cause.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="cfg-investigate-url">Scan report URL</label>
+                        <input type="url" id="cfg-investigate-url" class="form-control" placeholder="https://krcs.rebotics.net/reporting/scans/17773117?..." aria-describedby="scan-url-help">
+                        <div id="scan-url-help" class="ir-field-help">Paste the full reporting URL, including store, planogram, and date when available.</div>
+                    </div>
+                    <div class="form-group" style="margin-top: 12px;">
+                        <label class="form-label" for="cfg-investigate-problem">What should the investigator explain?</label>
+                        <textarea id="cfg-investigate-problem" class="form-control" rows="4" placeholder="Example: Why does the post photo ask associates to set aside products that are already in the correct slot?" aria-describedby="problem-help"></textarea>
+                        <div id="problem-help" class="ir-field-help">Mention the action, product, slot, or post-photo behavior that looks incorrect.</div>
+                    </div>
+                    <div class="ir-section-actions">
+                        <button type="button" id="btn-investigate-issue" class="btn btn-primary btn-block" style="min-height: 39px; font-size: 11.5px; font-weight: 800;" onclick="investigateScanProblem()">
+                            Investigate scan and explain findings
+                        </button>
+                    </div>
+                </section>
                 </div>
             </div>
 
@@ -1614,7 +2000,7 @@
             </div>
 
             <!-- Card 3: Progress & Execution Health -->
-            <div class="panel" style="box-shadow: var(--shadow-xs);">
+            <div class="panel studio-run-tools" style="box-shadow: var(--shadow-xs);">
                 <div class="panel-title">
                     <span style="display: flex; align-items: center; gap: 6px;">⚡ Live Execution &amp; Cart State</span>
                     <span id="active-pog-pill" class="badge badge-gray">No Active Task</span>
@@ -1671,7 +2057,7 @@
             </div>
 
             <!-- Card 4: Advanced Engine Settings -->
-            <div class="accordion">
+            <div class="accordion studio-run-tools">
                 <div class="accordion-header" onclick="toggleAccordion('adv-settings')">
                     <span>⚙️ Advanced Settings &amp; Compatibility</span>
                     <span id="adv-arrow">▼</span>
@@ -1693,7 +2079,7 @@
         </div>
 
         <!-- Column 2: Interactive Mobile Device Simulator -->
-        <div class="scrollable-col">
+        <div class="scrollable-col mobile-simulator-col">
             <div class="mobile-frame">
                 <div class="mobile-screen">
                     <div class="mobile-header-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
@@ -1784,8 +2170,23 @@
         </div>
 
         <!-- Column 3: Action Queue & Live Telemetry -->
-        <div style="height: 100%; min-height: 0; display: flex; flex-direction: column;">
-            <div class="panel" style="flex: 1; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0;">
+        <div class="studio-output">
+            <section class="panel ir-results-panel" aria-labelledby="validation-results-heading">
+                <header class="ir-results-header">
+                    <h2 id="validation-results-heading">Validation results</h2>
+                    <p>Output only. Findings from the check above are shown here.</p>
+                </header>
+                <div class="ir-results-body">
+                    <div id="validation-results-empty" class="ir-results-empty">
+                        <strong>No results yet</strong>
+                        <p>This area stays empty until a task check or scan investigation finishes.</p>
+                    </div>
+                    <div id="existing-task-status" tabindex="-1" role="status" aria-live="polite" hidden></div>
+                    <div id="existing-task-findings" style="display:none;"></div>
+                    <div id="investigate-issue-result" role="status" aria-live="polite" style="display:none;"></div>
+                </div>
+            </section>
+            <div class="panel action-sequence-panel" style="flex: 1; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0;">
                 <div class="panel-title" style="flex-shrink: 0;">
                     <span id="header-queue-title">📋 Action Sequence (<span id="count-total-actions">0</span> Actions)</span>
                     <div style="display: flex; gap: 4px;">
@@ -2009,21 +2410,26 @@
         existingTaskUi = { phase, validation };
         const status = document.getElementById('existing-task-status');
         const findings = document.getElementById('existing-task-findings');
-        const start = document.getElementById('btn-start-existing-test');
+        const empty = document.getElementById('validation-results-empty');
         const scorecard = document.getElementById('ir-live-scorecard');
         const gate = document.getElementById('disp-quality-gate');
-        const canStart = phase === 'ready' || phase === 'ready_with_warnings';
+        const showEmpty = phase === 'idle';
 
+        if (empty) empty.hidden = !showEmpty;
+        if (showEmpty) {
+            const investigation = document.getElementById('investigate-issue-result');
+            if (investigation) {
+                investigation.style.display = 'none';
+                investigation.innerHTML = '';
+            }
+        }
         if (status) {
-            status.textContent = message || '';
+            status.hidden = showEmpty;
+            if (!showEmpty) status.textContent = message || '';
             status.setAttribute('role', phase === 'blocked' || phase === 'error' ? 'alert' : 'status');
             status.style.borderColor = phase === 'blocked' || phase === 'error' ? '#FCA5A5' : phase === 'ready' ? '#86EFAC' : '#CBD5E1';
             status.style.background = phase === 'blocked' || phase === 'error' ? '#FEF2F2' : phase === 'ready' ? '#F0FDF4' : '#F8FAFC';
             status.style.color = phase === 'blocked' || phase === 'error' ? '#991B1B' : phase === 'ready' ? '#166534' : '#475569';
-        }
-        if (start) {
-            start.disabled = !canStart;
-            start.textContent = phase === 'blocked' ? 'Start blocked' : 'Start test';
         }
         if (scorecard) scorecard.setAttribute('aria-busy', phase === 'loading' || phase === 'validating' ? 'true' : 'false');
         if (gate) {
@@ -2032,7 +2438,7 @@
                 phase === 'ready' ? 'Ready' :
                 phase === 'started' ? 'Running' :
                 phase === 'loading' || phase === 'validating' ? 'Checking' :
-                phase === 'error' ? 'Load failed' : 'Ready';
+                phase === 'error' ? 'Load failed' : 'Not checked';
         }
 
         const items = validation && Array.isArray(validation.findings) ? validation.findings : [];
@@ -2060,27 +2466,17 @@
             setExistingTaskPhase(
                 phase,
                 (result.warning_count > 0
-                    ? `Live actions validated with ${result.warning_count} warning(s). Start Test is available.`
-                    : `Live actions validated. ${result.checks_run || 0} checks passed; Start Test is available.`) + placementText,
+                    ? `Live actions validated with ${result.warning_count} warning(s).`
+                    : `Live actions validated. ${result.checks_run || 0} checks passed.`) + placementText,
                 result
             );
         } else {
             setExistingTaskPhase(
                 'blocked',
-                (result.summary || 'Critical action-generation issues block Start Test.') + placementText,
+                (result.summary || 'Critical action-generation issues were found.') + placementText,
                 result
             );
         }
-    }
-
-    function startExistingTaskTest() {
-        if (!existingTaskUi.validation || !existingTaskUi.validation.can_start) return;
-        currentIndex = 0;
-        setExistingTaskPhase('started', `Task #${runnerState.taskId} started. Complete actions in sequence.`, existingTaskUi.validation);
-        setElementText('disp-task-status', 'IN PROGRESS');
-        setElementText('disp-active-status-badge', 'STATUS: IN PROGRESS');
-        renderActionTable();
-        renderMobileScreen();
     }
 
     let runnerState = {
@@ -3691,7 +4087,7 @@
             document.getElementById('mob-title').textContent = 'Store Intelligence Simulator';
             document.getElementById('mob-upc').textContent = 'Load a Task ID to view cards';
             document.getElementById('mob-movement').textContent = '📍 Movement: waiting for live actions';
-            document.getElementById('mob-meaning').innerHTML = '💡 <b>Operational Context:</b> Enter an instance and Task ID, then load and validate its generated actions.';
+            document.getElementById('mob-meaning').innerHTML = '💡 <b>Operational Context:</b> Action cards appear here after a task is loaded from the form.';
             document.getElementById('mob-backend-desc').innerHTML = '⚙️ <b>Backend Mapping:</b> Ready for execution.';
             document.getElementById('mobile-step-pill').textContent = '0 / 0';
 
@@ -3706,15 +4102,12 @@
             return;
         }
 
-        if (container && existingTaskUi.phase !== 'started') {
-            const canStart = existingTaskUi.phase === 'ready' || existingTaskUi.phase === 'ready_with_warnings';
-            const label = existingTaskUi.phase === 'blocked' ? 'Start blocked by critical findings' :
-                existingTaskUi.phase === 'validating' ? 'Checking action quality…' : 'Start test';
-            container.innerHTML = `
-                <button class="btn btn-primary btn-block" style="padding: 8px; font-size: 11.5px; font-weight: 800;" onclick="startExistingTaskTest()" ${canStart ? '' : 'disabled'}>
-                    ${label}
-                </button>
-            `;
+        const canWalk = existingTaskUi.phase === 'ready' || existingTaskUi.phase === 'ready_with_warnings' || existingTaskUi.phase === 'started';
+        if (container && !canWalk) {
+            const label = existingTaskUi.phase === 'blocked'
+                ? 'Critical findings are listed in Validation results.'
+                : 'Checking action quality…';
+            container.innerHTML = `<div role="status" style="padding: 8px; font-size: 11px; line-height: 1.4; color: #475569;">${label}</div>`;
         } else if (container && !document.getElementById('btn-complete-mobile-action')) {
             container.innerHTML = `
                 <button id="btn-complete-mobile-action" class="btn btn-success btn-block" style="padding: 8px; font-size: 11.5px; font-weight: 800;" onclick="executeCurrentMobileAction()">
@@ -3871,6 +4264,8 @@
                 allActions = data.actions || [];
                 currentFilteredActions = [...allActions];
                 runnerState.taskId = data.task_id;
+                document.body.classList.add('studio-task-loaded');
+                setElementText('ir-live-summary', `Task #${data.task_id} is loaded. Quality figures update from the live check.`);
                 currentIndex = 0;
                 currentStep = null;
 
@@ -3894,11 +4289,21 @@
                 renderMobileScreen();
 
                 logNetwork('LOAD_COMPLETE', `Loaded ${allActions.length} live actions across ${data.bays_count || 1} bay(s) for Task #${data.task_id} (${data.latency_ms || 40}ms).`, 200, data.latency_ms || 40);
-                setExistingTaskPhase('validating', `Validating ${allActions.length} generated mobile actions…`);
-                applyExistingTaskValidation(data.validation);
-                setElementText('disp-active-status-badge', data.validation?.can_start ? 'STATUS: READY' : 'STATUS: BLOCKED');
+                setExistingTaskPhase('validating', `Checking action cards, shelf positions, Digital Shelf history, and the post photo for Task #${data.task_id}…`, data.validation);
+                btn.textContent = 'Checking history…';
+                const audit = await runHistoricalTaskAudit({ embedded: true });
+                const validation = mergeTaskValidation(data.validation, audit && audit.validation);
+                applyExistingTaskValidation(validation);
+                setElementText('disp-active-status-badge', validation?.can_start ? 'STATUS: READY' : 'STATUS: BLOCKED');
                 renderActionTable();
                 renderMobileScreen();
+                if (!audit || audit.status !== 'success') {
+                    const auditMessage = (audit && (audit.message || audit.error)) || 'Historical evidence check failed.';
+                    setExistingTaskPhase('error', `Action cards were checked. ${auditMessage}`, validation);
+                    if (!silent) showNotification(auditMessage, 'error');
+                } else if (!silent) {
+                    showNotification(`Task #${data.task_id} checked. Open the Evidence report for the full history.`, 'success');
+                }
             } else {
                 allActions = [];
                 currentFilteredActions = [];
@@ -3929,7 +4334,7 @@
             logNetwork('LOAD_ERROR', '' + e, 500, 10);
             document.getElementById('existing-task-status')?.focus();
         } finally {
-            btn.textContent = 'Load task';
+            btn.textContent = 'Run complete task validation';
             btn.disabled = false;
         }
     }
@@ -3941,9 +4346,11 @@
         const token = (document.getElementById('cfg-token') || {}).value || '';
         const result = document.getElementById('investigate-issue-result');
         const button = document.getElementById('btn-investigate-issue');
+        const empty = document.getElementById('validation-results-empty');
+        if (empty) empty.hidden = true;
         if (!problem.trim() || !scanUrl.trim()) {
             result.style.display = 'block';
-            result.innerHTML = '<span style="color:#B91C1C;">Describe the problem and paste the scan URL.</span>';
+            result.innerHTML = '<span style="color:#B91C1C;">Add the scan URL and the question in the form above.</span>';
             return;
         }
         button.disabled = true;
@@ -4054,7 +4461,29 @@
         renderMobileScreen();
     }
 
-    async function runHistoricalTaskAudit() {
+    function mergeTaskValidation(liveValidation, auditValidation) {
+        const live = liveValidation || {};
+        const audit = auditValidation || {};
+        const merged = Object.assign({}, live, audit);
+        merged.placement = audit.placement || live.placement;
+        const findings = [];
+        const seen = new Set();
+        for (const item of [...(live.findings || []), ...(audit.findings || [])]) {
+            const key = `${item.code || ''}|${item.message || ''}|${item.upc || ''}|${item.source || ''}|${item.target || ''}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            findings.push(item);
+        }
+        merged.findings = findings;
+        merged.warning_count = findings.filter(item => item.severity === 'warning').length;
+        merged.critical_count = findings.filter(item => item.severity === 'critical').length;
+        merged.can_start = merged.critical_count === 0;
+        merged.state = merged.critical_count ? 'blocked' : (merged.warning_count ? 'warning' : 'pass');
+        return merged;
+    }
+
+    async function runHistoricalTaskAudit(options = {}) {
+        const embedded = options.embedded === true;
         let taskId = document.getElementById('cfg-task-id-direct').value;
         if (!taskId || !taskId.trim()) {
             taskId = runnerState.taskId;
@@ -4075,14 +4504,10 @@
         const password = document.getElementById('cfg-password').value;
         const token = (document.getElementById('cfg-token') || {}).value || '';
 
-        const btn = document.getElementById('btn-historical-audit');
-        if (btn) {
-            btn.textContent = '⏳ Auditing...';
-            btn.disabled = true;
-        }
-
         logNetwork('AUDIT_START', `Running historical audit for Task #${taskId}...`, 200, 10);
-        setExistingTaskPhase('validating', `Re-running full validation for Task #${taskId}…`, existingTaskUi.validation);
+        if (!embedded) {
+            setExistingTaskPhase('validating', `Checking Digital Shelf history and the post photo for Task #${taskId}…`, existingTaskUi.validation);
+        }
 
         try {
             const resp = await fetch('/api/runner/audit_task', {
@@ -4100,23 +4525,26 @@
             if (resp.ok && data.status === 'success') {
                 logNetwork('AUDIT_COMPLETE', `Audit complete: ${data.total_raw_db_detections} DB detections ➔ ${data.total_generated_mobile_cards} cards (${data.compliance_score_pct}% compliance, 0 drops).`, 200, 25);
                 updateReportBadgesForActiveTask(taskId);
-                applyExistingTaskValidation(data.validation);
-                renderActionTable();
-                renderMobileScreen();
-                showNotification(`Full check complete for Task #${taskId}. Use the Evidence report link to inspect details.`, 'success');
-            } else {
-                const message = data.message || data.error || 'Full check failed.';
+                if (!embedded) {
+                    applyExistingTaskValidation(data.validation);
+                    renderActionTable();
+                    renderMobileScreen();
+                    showNotification(`Task #${taskId} checked. Open the Evidence report for the full history.`, 'success');
+                }
+                return data;
+            }
+            const message = data.message || data.error || 'Full check failed.';
+            if (!embedded) {
                 setExistingTaskPhase('error', message, existingTaskUi.validation);
                 showNotification('Failed to audit task: ' + message, 'error');
             }
+            return data;
         } catch (e) {
-            setExistingTaskPhase('error', 'Full check failed: ' + e, existingTaskUi.validation);
-            showNotification('Audit error: ' + e, 'error');
-        } finally {
-            if (btn) {
-                btn.textContent = 'Run full check';
-                btn.disabled = false;
+            if (!embedded) {
+                setExistingTaskPhase('error', 'Full check failed: ' + e, existingTaskUi.validation);
+                showNotification('Audit error: ' + e, 'error');
             }
+            return { status: 'error', message: String(e) };
         }
     }
 
@@ -4178,7 +4606,8 @@
         setElementText('disp-task-id', 'Not Loaded');
         setElementText('disp-task-status', 'IDLE');
         setElementText('disp-active-status-badge', 'STATUS: IDLE');
-        setExistingTaskPhase('idle', 'Enter an instance and Task ID, then load live actions.');
+        document.body.classList.remove('studio-task-loaded');
+        setExistingTaskPhase('idle', '');
         setElementText('ir-live-summary', 'Load a Task ID to see quality checks explained in plain language.');
         setElementText('ir-live-gate', 'Not checked');
         setElementText('ir-live-finished', 'Not checked');
@@ -4271,7 +4700,7 @@
     }
 
     function renderIrLiveSnapshot(snapshot) {
-        if (!snapshot) return;
+        if (!snapshot || !runnerState.taskId || String(snapshot.task_id || '') !== String(runnerState.taskId)) return;
         const metrics = snapshot.metrics || {};
         const gate = snapshot.quality_gate || {};
         const post = snapshot.post_photo || {};

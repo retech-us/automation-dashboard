@@ -4,9 +4,11 @@ import urllib.error
 from pathlib import Path
 
 from core.digital_report_client import (
+    DigitalReportItem,
     fetch_section_product_reports,
     fetch_section_product_reports_for_scans,
     normalize_section_product_reports,
+    summarize_digital_shelf_rows,
 )
 
 
@@ -183,6 +185,23 @@ class TestDigitalReportClient(unittest.TestCase):
         self.assertEqual([item.scan_id for item in result.items], [7])
         self.assertIn("scan_id 8", result.error)
         self.assertEqual(result.failed_scan_ids, [8])
+
+    def test_ok_products_with_no_action_taken_are_not_unconfirmed(self):
+        def row(action_type, action_taken):
+            return DigitalReportItem(1, "1", "Product", "Bay 1", "1", "1", action_type, action_taken)
+
+        summary = summarize_digital_shelf_rows([
+            row("ok", "-"),
+            row("OK", "-"),
+            row("oos", "-"),
+            row("invader", "-"),
+            row("oos", "Restocked Item"),
+        ])
+
+        self.assertEqual(summary["digital_rows_ok_no_action"], 2)
+        self.assertEqual(summary["digital_rows_unconfirmed"], 2)
+        self.assertEqual(summary["digital_rows_with_action"], 1)
+        self.assertEqual(summary["unconfirmed_action_types"], {"oos": 1, "invader": 1})
 
 
 if __name__ == "__main__":

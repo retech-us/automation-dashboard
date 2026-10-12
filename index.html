@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261007e" />
+  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261012a" />
   <script>
     (function() {
       try {
@@ -98,15 +98,11 @@
     <div class="tab-nav__inner" role="tablist">
       <button type="button" class="tab-btn" role="tab" id="tab-overview" data-tab="overview" aria-controls="panel-overview" aria-selected="true">Overview</button>
       <button type="button" class="tab-btn" role="tab" id="tab-attention" data-tab="attention" aria-controls="panel-attention" aria-selected="false">Needs attention</button>
-      <button type="button" class="tab-btn" role="tab" id="tab-trends" data-tab="trends" aria-controls="panel-trends" aria-selected="false">Trends</button>
-      <button type="button" class="tab-btn" role="tab" id="tab-ai" data-tab="ai" aria-controls="panel-ai" aria-selected="false">AI usage</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-trends" data-tab="trends" aria-controls="panel-trends" aria-selected="false">Trends &amp; AI usage</button>
       <button type="button" class="tab-btn" role="tab" id="tab-suites" data-tab="suites" aria-controls="panel-suites" aria-selected="false">Suite details</button>
       <button type="button" class="tab-btn" role="tab" id="tab-jira" data-tab="jira" aria-controls="panel-jira" aria-selected="false">🎯 Jira Quality &amp; Delivery</button>
       <button type="button" class="tab-btn" role="tab" id="tab-ir" data-tab="ir" aria-controls="panel-ir" aria-selected="false">🛒 Intelligent Reset</button>
-      <button type="button" class="tab-btn" role="tab" id="tab-live" data-tab="live" aria-controls="panel-live" aria-selected="false">
-        <span class="live-pulse-dot" id="live-tab-dot" hidden></span> Live Run
-      </button>
-      <button type="button" class="tab-btn" role="tab" id="tab-rules" data-tab="rules" aria-controls="panel-rules" aria-selected="false">📋 Reset Rules</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-sentry" data-tab="sentry" aria-controls="panel-sentry" aria-selected="false">🔭 Sentry</button>
       <button type="button" class="tab-btn tab-btn--runner-tab" role="tab" id="tab-ir-studio" data-tab="ir-studio" aria-controls="panel-ir-studio" aria-selected="false" title="Open Intelligent Reset Studio">
         🏬 IR Studio
       </button>
@@ -198,9 +194,6 @@
 
     <div id="panel-trends" class="tab-panel" role="tabpanel" aria-labelledby="tab-trends" hidden>
       <section class="panel panel--trends" id="trends-panel" aria-label="Automation trends"></section>
-    </div>
-
-    <div id="panel-ai" class="tab-panel" role="tabpanel" aria-labelledby="tab-ai" hidden>
       <section class="panel panel--ai" id="ai-impact" aria-label="AI impact"></section>
     </div>
 
@@ -226,75 +219,53 @@
 
     <div id="panel-ir" class="tab-panel" role="tabpanel" aria-labelledby="tab-ir" hidden>
       
-      <!-- Top Assistant Header & Task Switcher Bar -->
-      <header class="panel ir-simple-header">
-        <div class="ir-header-top-row">
-          <div class="ir-title-wrap">
-            <div class="ir-title-row">
-              <span class="ir-badge-tag">Retail Operations Assistant</span>
-              <span id="ir-header-status-pill" class="meta-pill">Active Task Loaded</span>
-            </div>
-            <h2 style="font-size:1.4rem; font-weight:800; margin:4px 0 2px 0;">🛒 Intelligent Reset Overview</h2>
-            <p style="color:var(--text-muted); font-size:12px; margin:0;">
-              Executive summary, shelf compliance lift, and associate action breakdown for store resets
-            </p>
-          </div>
-
-          <!-- Quick Store & Task Picker -->
-          <div class="ir-header-quick-picker" style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
-            <span style="font-size:11px; font-weight:700; color:var(--text-muted);">Quick Select:</span>
-            <button type="button" class="filter-chip active" data-instance-chip="harr" onclick="window.IrTaskFlow.quickSelect('harr')">
-              🎯 Harris Teeter
-            </button>
-            <button type="button" class="filter-chip" data-instance-chip="krcs" onclick="window.IrTaskFlow.quickSelect('krcs')">
-              🎯 Kroger
-            </button>
-            <button type="button" class="filter-chip" data-instance-chip="albt" onclick="window.IrTaskFlow.quickSelect('albt')">
-              🎯 Albertsons
-            </button>
-            <button type="button" class="filter-chip" data-instance-chip="stgsams" onclick="window.IrTaskFlow.quickSelect('stgsams')">
-              🎯 Sam's Club
-            </button>
-            <div style="display:flex; align-items:center; gap:4px;">
-              <select id="ir-instance-picker" class="ir-flow-input" style="width:130px; font-size:11px; padding:4px 6px; font-weight:600;" onchange="window.IrTaskFlow.onInstanceChange(this.value)" title="Choose Cloud Backend Instance">
-                <option value="harr" selected>🎯 Harris Teeter (harr)</option>
-                <option value="krcs">🎯 Kroger (krcs)</option>
-                <option value="albt">🎯 Albertsons (albt)</option>
-                <option value="stgsams">🎯 Sam's Club (stgsams)</option>
-                <option value="schn">🎯 Schnucks (schn)</option>
-                <option value="wake">🎯 Wakefern (wake)</option>
-                <option value="custom">🌐 Custom Instance…</option>
-              </select>
-              <select id="ir-task-dropdown" class="ir-flow-input" style="max-width:220px; font-size:11px; padding:4px 6px; font-weight:600;" onchange="if(this.value){document.getElementById('ir-simple-task-input').value=this.value; window.IrTaskFlow.loadCurrentInputs();}" title="Select an Intelligent Reset Task from available catalog">
-                <option value="">⚡ Select Task...</option>
-              </select>
-              <input type="number" id="ir-simple-task-input" list="ir-task-catalog-list" class="ir-flow-input" style="width:105px;" value="8648127" placeholder="Task ID" title="Enter any occurrence Task ID or pick from dropdown" />
-              <datalist id="ir-task-catalog-list"></datalist>
-              <button type="button" class="btn btn--primary btn--sm" onclick="window.IrTaskFlow.loadCurrentInputs()" title="Fetch live task flow for selected instance">
-                Load
-              </button>
-              <button type="button" id="btn-ir-credentials" class="btn btn--outline btn--sm" onclick="window.IrTaskFlow.openCredentialsModal()" style="display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:4px 8px; font-weight:700;" title="Provide Username, Password, or Auth Token for selected instance">
-                🔑 <span>Credentials</span>
-                <span id="ir-auth-status-dot" style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#94A3B8;" title="No active session token"></span>
-              </button>
-            </div>
-          </div>
+      <!-- Instance-first Intelligent Reset task browser -->
+      <header class="panel ir-control-center">
+        <div class="ir-control-copy">
+          <span class="ir-control-eyebrow">Intelligent Reset</span>
+          <h2>Review recent store resets</h2>
+          <p>Select an instance. Recent performed Intelligent Reset tasks load automatically; choose one to review the requested work, associate activity, elapsed time, and challenges.</p>
         </div>
 
-        <!-- Clean Sub-Navigation Tabs -->
-        <nav class="ir-subnav-bar" role="tablist" aria-label="Intelligent Reset Views">
-          <button type="button" class="ir-subnav-btn active" role="tab" data-subview="summary" aria-selected="true">
-            📊 1. Task Summary
+        <div class="ir-task-browser" aria-label="Recent Intelligent Reset task selector">
+          <div class="ir-browser-field">
+            <label for="ir-instance-picker">1. Instance</label>
+            <select id="ir-instance-picker" class="ir-flow-input" onchange="window.IrTaskFlow.onInstanceChange(this.value)">
+              <option value="harr" selected>Harris Teeter (harr)</option>
+              <option value="krcs">Kroger (krcs)</option>
+              <option value="albt">Albertsons (albt)</option>
+              <option value="albtqa">Albertsons QA (albtqa)</option>
+              <option value="stgsams">Sam's Club (stgsams)</option>
+              <option value="schn">Schnucks (schn)</option>
+              <option value="wake">Wakefern (wake)</option>
+              <option value="custom">Custom instance…</option>
+            </select>
+          </div>
+          <div class="ir-browser-field ir-browser-field--task">
+            <label for="ir-task-search">2. Recent performed task</label>
+            <div class="ir-task-combobox">
+              <input id="ir-task-search" class="ir-flow-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ir-task-dropdown" placeholder="Select an instance to load tasks…" autocomplete="off" disabled />
+              <ul id="ir-task-dropdown" class="ir-task-listbox" role="listbox" aria-label="Recent performed tasks" hidden></ul>
+            </div>
+            <span id="ir-recent-task-status" class="ir-browser-help">Tasks performed in the last 7 days appear here.</span>
+          </div>
+          <button type="button" id="btn-ir-credentials" class="btn btn--outline btn--sm ir-sign-in-button" onclick="window.IrTaskFlow.openCredentialsModal()" title="Sign in to the selected instance">
+            <span id="ir-auth-status-dot" class="ir-auth-dot" title="No active session token"></span>
+            Sign in
           </button>
-          <button type="button" class="ir-subnav-btn" role="tab" data-subview="story" aria-selected="false">
-            ⏱️ 2. Step-by-Step Story
-          </button>
-          <button type="button" class="ir-subnav-btn" role="tab" data-subview="history" aria-selected="false">
-            📋 3. Browse Past Resets
-          </button>
-          <button type="button" class="ir-subnav-btn" role="tab" data-subview="compare" aria-selected="false">
-            ⚖️ 4. Compare Actions
-          </button>
+          <input type="hidden" id="ir-simple-task-input" value="" />
+          <datalist id="ir-task-catalog-list"></datalist>
+        </div>
+
+        <div class="ir-selection-status">
+          <span id="ir-header-status-pill" class="meta-pill">Choose a task</span>
+        </div>
+
+        <nav class="ir-subnav-bar" role="tablist" aria-label="Intelligent Reset views">
+          <button type="button" class="ir-subnav-btn active" role="tab" data-subview="summary" aria-selected="true">Task overview</button>
+          <button type="button" class="ir-subnav-btn" role="tab" data-subview="story" aria-selected="false">Action timeline</button>
+          <button type="button" class="ir-subnav-btn" role="tab" data-subview="history" aria-selected="false">Recent tasks</button>
+          <button type="button" class="ir-subnav-btn" role="tab" data-subview="compare" aria-selected="false">Compare</button>
         </nav>
 
         <!-- Dynamic Inline Auth Required Alert Banner -->
@@ -355,8 +326,101 @@
           </div>
         </div>
 
+        <section class="ir-task-insights" aria-label="Selected task performance">
+          <div class="ir-insight-metrics">
+            <article class="ir-insight-metric">
+              <span>Actions generated</span>
+              <strong id="ir-overview-generated">—</strong>
+              <small>Work requested by the system</small>
+            </article>
+            <article class="ir-insight-metric">
+              <span>Actions performed</span>
+              <strong id="ir-overview-performed">—</strong>
+              <small>Accepted or completed by the associate</small>
+            </article>
+            <button type="button" class="ir-insight-metric ir-insight-metric--button" id="ir-duration-detail-button">
+              <span>Reset duration</span>
+              <strong id="ir-overview-duration">—</strong>
+              <small id="ir-overview-duration-help">Recorded task timing</small>
+              <small class="ir-insight-open-label">View calculation →</small>
+            </button>
+            <article class="ir-insight-metric" id="ir-overview-challenge-card">
+              <span>Challenges</span>
+              <strong id="ir-overview-challenges">—</strong>
+              <small>Rejected, incomplete, or quality issues</small>
+            </article>
+          </div>
+
+          <div class="ir-action-review-grid">
+            <article class="ir-action-review">
+              <header>
+                <div>
+                  <span class="ir-review-kicker">System request</span>
+                  <h3>Generated user actions</h3>
+                </div>
+                <span id="ir-generated-action-total" class="meta-pill">0</span>
+              </header>
+              <div id="ir-generated-action-list" class="ir-review-list">
+                <p class="data-note">Select a task to see generated actions.</p>
+              </div>
+            </article>
+
+            <article class="ir-action-review">
+              <header>
+                <div>
+                  <span class="ir-review-kicker">Associate execution</span>
+                  <h3>Actions performed</h3>
+                </div>
+                <span id="ir-performed-action-total" class="meta-pill">0</span>
+              </header>
+              <div id="ir-performed-action-list" class="ir-review-list">
+                <p class="data-note">Select a task to see performed actions.</p>
+              </div>
+            </article>
+
+            <article class="ir-action-review ir-action-review--challenges">
+              <header>
+                <div>
+                  <span class="ir-review-kicker">Execution health</span>
+                  <h3>Challenges faced</h3>
+                </div>
+                <span id="ir-challenge-total" class="meta-pill">0</span>
+              </header>
+              <div id="ir-challenge-list" class="ir-review-list">
+                <p class="data-note">Select a task to evaluate challenges.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <dialog id="ir-insight-dialog" class="ir-insight-dialog" aria-labelledby="ir-insight-dialog-title">
+          <div class="ir-insight-dialog__header">
+            <div>
+              <span class="ir-review-kicker">Task evidence</span>
+              <h2 id="ir-insight-dialog-title">Action details</h2>
+              <p id="ir-insight-dialog-subtitle"></p>
+            </div>
+            <button type="button" id="ir-insight-dialog-close" class="btn btn--ghost btn--sm" aria-label="Close action details">✕ Close</button>
+          </div>
+          <div id="ir-insight-dialog-summary" class="ir-insight-dialog__summary"></div>
+          <div id="ir-insight-dialog-table-wrap" class="ir-insight-dialog__table-wrap">
+            <table class="ir-insight-detail-table">
+              <thead>
+                <tr>
+                  <th>Product / UPC</th>
+                  <th>Action</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Status / reason</th>
+                </tr>
+              </thead>
+              <tbody id="ir-insight-dialog-body"></tbody>
+            </table>
+          </div>
+        </dialog>
+
         <!-- Live quality findings from the runner snapshot (was previously rendered but hidden) -->
-        <section class="panel ir-quality-panel" aria-label="Intelligent Reset quality findings">
+        <section class="panel ir-quality-panel ir-summary-secondary" aria-label="Intelligent Reset quality findings">
           <div class="panel__header">
             <h2>Quality findings</h2>
             <p>Checks from the loaded task — what failed, with evidence you can put in Jira</p>
@@ -560,6 +624,7 @@
                 <option value="harr" selected>Harris Teeter (harr)</option>
                 <option value="krcs">Kroger (krcs)</option>
                 <option value="albt">Albertsons (albt)</option>
+                <option value="albtqa">Albertsons QA (albtqa)</option>
                 <option value="stgsams">Sam's Club (stgsams)</option>
                 <option value="schn">Schnucks (schn)</option>
                 <option value="wake">Wakefern (wake)</option>
@@ -1187,41 +1252,13 @@
 
     </div>
 
-    <div id="panel-live" class="tab-panel" role="tabpanel" aria-labelledby="tab-live" hidden>
-      <section class="panel" id="live-panel-wrapper">
+    <div id="panel-sentry" class="tab-panel" role="tabpanel" aria-labelledby="tab-sentry" hidden>
+      <section class="panel sentry-panel" id="sentry-panel" aria-label="Sentry span usage">
         <div class="panel__header">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <h2>⚡ Live Automation Pipeline Execution</h2>
-              <span id="live-status-pill" class="meta-pill">Checking CI…</span>
-            </div>
-          </div>
-          <p>Real-time test-by-test execution progress streamed from GitHub Actions</p>
+          <h2>🔭 Sentry span usage</h2>
+          <p>Span reduction tracking against the baseline. Compare any two months or periods.</p>
         </div>
-        <div id="live-runs-content" style="padding:24px;"></div>
-      </section>
-    </div>
-
-    <!-- Shelf-Reset Sequencing Rules Tab Panel -->
-    <div id="panel-rules" class="tab-panel" role="tabpanel" aria-labelledby="tab-rules" hidden>
-      <section class="panel" id="rules-panel-wrapper">
-        <div class="panel__header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-          <div>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <h2>📋 Shelf-Reset Sequencing Engine: Mathematical Rules &amp; Architecture</h2>
-              <span class="meta-pill" style="border-color:rgba(56,189,248,0.3); color:#38bdf8;">Graph Sequencer v2.1</span>
-            </div>
-            <p>Formal Mathematical Model, 9 Invariants, Physical Touch Reduction &amp; Mobile UI Specifications</p>
-          </div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <button type="button" onclick="setActiveTab('shelf-mobile')" class="btn btn--primary" style="display:inline-flex; align-items:center; gap:6px;">
-              <span>📱</span> Open Shelf Reset Mobile Simulator
-            </button>
-          </div>
-        </div>
-        <div id="shelf-rules-dashboard-container" class="rules-doc-wrapper">
-          <p style="color:var(--muted); text-align:center; padding:24px;">Loading sequencing rules documentation from engine...</p>
-        </div>
+        <div id="sentry-body" class="sentry-body"></div>
       </section>
     </div>
 
@@ -1271,6 +1308,30 @@
   <footer class="footer">
     <p>Store Intell QA · Built with AI-assisted automation · <a href="https://retech-us.github.io/automation-dashboard/" style="color:#93c5fd">automation-dashboard</a></p>
   </footer>
+
+  <button id="agent-center-toggle" class="agent-center-toggle" type="button" aria-expanded="false" aria-controls="agent-center-panel">
+    Agent Center
+  </button>
+  <aside id="agent-center-panel" class="agent-center-panel" hidden aria-label="Dashboard Agent Center">
+    <header class="agent-center-panel__header">
+      <div>
+        <p class="chat-kicker">Grounded QA analyst</p>
+        <h2>Agent Center</h2>
+        <p id="agent-center-context">Using the active tab’s evidence.</p>
+      </div>
+      <button id="agent-center-close" class="btn btn--ghost" type="button">Close</button>
+    </header>
+    <form id="agent-center-form" class="agent-center-controls">
+      <label for="agent-center-question">Ask a question</label>
+      <textarea id="agent-center-question" class="ir-flow-input agent-center-question" rows="3" placeholder="Example: Why is Action Taken “-” on this task?"></textarea>
+      <div id="agent-center-chips" class="agent-center-chips"></div>
+      <button id="agent-center-run" class="btn btn--primary" type="submit">Analyze</button>
+      <p class="agent-center-guardrail">Read-only: the analyst cannot change retailer tasks, Jira, CI, or source code.</p>
+    </form>
+    <div id="agent-center-result" class="agent-center-result" aria-live="polite">
+      <p class="data-note">Ask about the selected Intelligent Reset task, or about release, failures, coverage, and flaky tests.</p>
+    </div>
+  </aside>
 
   <button id="chat-toggle" class="chat-toggle" type="button" aria-expanded="false" aria-controls="chat-panel">
     Ask dashboard
@@ -1364,7 +1425,9 @@
   <script src="assets/js/issue-bridge.js?v=20261007e"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20261007a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261006d"></script>
-  <script src="assets/js/app.v16.js?v=20261007e"></script>
+  <script src="assets/js/ir-flow.js?v=20261012n"></script>
+  <script src="assets/js/agent-center.js?v=20261012d"></script>
+  <script src="assets/js/sentry-usage.js?v=20261012b"></script>
+  <script src="assets/js/app.v16.js?v=20261012a"></script>
 </body>
 </html>
