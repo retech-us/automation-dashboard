@@ -214,6 +214,7 @@ def investigate_issue(
         "same_slot_actions": len(same_slot),
         "post_photo_repeats": len(post_repeat),
     }
+    findings = _group_evidence(_selected(focus, wrong_slot, same_slot, post_repeat))
     return {
         "focus": focus,
         "what_happened": _what_happened(scans, counts),
@@ -221,8 +222,142 @@ def investigate_issue(
         "root_cause": _root_cause(focus),
         "how_to_solve": _how_to_solve(focus),
         "counts": counts,
-        "findings": _selected(focus, wrong_slot, same_slot, post_repeat)[:40],
+        "findings": findings[:60],
+        "actions": _scan_actions(scans, slots, wrong_slot + same_slot + post_repeat),
     }
+
+
+ISSUE_LABELS = {
+    "OK_ON_WRONG_SLOT": "Marked OK in the wrong slot",
+    "SAME_SLOT_ACTION": "Move to the same slot",
+    "POST_PHOTO_REPEATS_SAME_SLOT": "Post-photo repeats the same-slot move",
+}
+
+ISSUE_PRIORITY = ("POST_PHOTO_REPEATS_SAME_SLOT", "OK_ON_WRONG_SLOT", "SAME_SLOT_ACTION")
+
+STAGE_LABELS = {"pre_photo": "pre-photo", "post_photo": "post-photo"}
+
+
+def _stage_label(stage: Any) -> str:
+    text = str(stage or "")
+    return STAGE_LABELS.get(text, text.replace("_", " ") or "scan")
+
+
+def _issue_detail(row: Dict[str, Any]) -> str:
+    code = row.get("code")
+    if code == "OK_ON_WRONG_SLOT":
+        expected = row.get("expected_product") or "another product"
+        detail = (
+            f"Marked OK, but the planogram expects {expected} ({row.get('expected_upc')}) in slot {row.get('slot')}."
+        )
+        if row.get("belongs_at"):
+            detail += f" This product belongs at slot {row['belongs_at']}."
+        return detail
+    reason = f" with reason {row['reason']}" if row.get("reason") else ""
+    if code == "POST_PHOTO_REPEATS_SAME_SLOT":
+        return (
+            f"The post-photo asks again to move it {row.get('move')}{reason}. "
+            "It was already in its planogram slot on the pre-photo."
+        )
+    return (
+        f"Asked to move it {row.get('move')}{reason}, "
+        "but it is already in its planogram slot, so the associate picks it up and puts it back."
+    )
+
+
+def _group_evidence(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Merge rows for one product slot so repeats show each problem and stage."""
+    grouped: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
+    for row in rows:
+        key = (str(row.get("section") or ""), str(row.get("slot") or ""), str(row.get("upc") or ""))
+        group = grouped.get(key)
+        if group is None:
+            group = {
+                "code": row.get("code"),
+                "section": key[0],
+                "slot": key[1],
+                "upc": key[2],
+                "product": row.get("product") or "",
+                "expected_upc": row.get("expected_upc") or key[2],
+                "expected_product": row.get("expected_product") or row.get("product") or "",
+                "belongs_at": row.get("belongs_at") or "",
+                "issues": [],
+            }
+            grouped[key] = group
+        issue = {
+            "code": row.get("code"),
+            "label": ISSUE_LABELS.get(row.get("code"), row.get("code")),
+            "stage": _stage_label(row.get("stage")),
+            "scan_id": row.get("scan_id"),
+            "move": row.get("move") or "",
+            "reason": row.get("reason") or "",
+            "detail": _issue_detail(row),
+        }
+        if not any(
+            existing["code"] == issue["code"] and existing["scan_id"] == issue["scan_id"]
+            for existing in group["issues"]
+        ):
+            group["issues"].append(issue)
+    for group in grouped.values():
+        repeated_scans = {
+            issue["scan_id"] for issue in group["issues"] if issue["code"] == "POST_PHOTO_REPEATS_SAME_SLOT"
+        }
+        group["issues"] = [
+            issue for issue in group["issues"]
+            if not (issue["code"] == "SAME_SLOT_ACTION" and issue["scan_id"] in repeated_scans)
+        ]
+        codes = [issue["code"] for issue in group["issues"]]
+        group["code"] = next((code for code in ISSUE_PRIORITY if code in codes), codes[0])
+        group["detail"] = " ".join(dict.fromkeys(issue["detail"] for issue in group["issues"]))
+        group["issue_labels"] = list(dict.fromkeys(issue["label"] for issue in group["issues"]))
+        group["stages"] = list(dict.fromkeys(issue["stage"] for issue in group["issues"]))
+    return list(grouped.values())
+
+
+def _scan_actions(
+    scans: List[Dict[str, Any]],
+    slots: Dict[SlotKey, Dict[str, str]],
+    flagged_rows: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """List every report action from the scans, marking the ones tied to a finding."""
+    names = {
+        (section, expected.get("upc")): expected.get("name") or ""
+        for (section, _slot), expected in slots.items()
+        if expected.get("upc")
+    }
+    flags: Dict[Tuple[str, str, str, str], List[str]] = defaultdict(list)
+    for row in flagged_rows:
+        key = (str(row.get("section") or ""), str(row.get("stage") or ""), str(row.get("upc") or ""), str(row.get("slot") or ""))
+        label = ISSUE_LABELS.get(row.get("code"), row.get("code"))
+        if label not in flags[key]:
+            flags[key].append(label)
+
+    actions = []
+    for scan in scans:
+        section = str(scan.get("section") or "")
+        stage = str(scan.get("stage") or "")
+        labels = {
+            str(item.get("upc")): item.get("label") or ""
+            for item in scan.get("items") or []
+            if item.get("upc")
+        }
+        for action in scan.get("actions") or []:
+            upc = str(action.get("upc") or "")
+            source = str(action.get("from") or "")
+            actions.append({
+                "scan_id": scan.get("id"),
+                "section": section,
+                "stage": _stage_label(stage),
+                "upc": upc,
+                "product": labels.get(upc) or names.get((section, upc)) or "",
+                "action": action.get("action") or "",
+                "reason": action.get("reason") or "",
+                "from": source,
+                "to": str(action.get("to") or ""),
+                "state": action.get("state") or "",
+                "issues": list(flags.get((section, stage, upc, source), [])),
+            })
+    return actions[:400]
 
 
 def _what_happened(scans: List[Dict[str, Any]], counts: Dict[str, int]) -> str:

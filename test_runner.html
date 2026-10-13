@@ -464,6 +464,73 @@
             resize: vertical;
         }
 
+        .ir-shared-signin {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-light);
+            background: #F8FAFC;
+        }
+
+        .ir-shared-signin-heading {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .ir-shared-signin-heading h2 {
+            font-size: 12.5px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .ir-shared-signin-heading p {
+            font-size: 10.5px;
+            color: var(--text-muted);
+        }
+
+        .ir-shared-signin-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 10px;
+        }
+
+        .ir-shared-signin-grid .ir-field-wide {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 900px) {
+            .ir-shared-signin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ir-evidence-group {
+            margin-top: 10px;
+        }
+
+        .ir-evidence-group h3 {
+            font-size: 11.5px;
+            font-weight: 800;
+            color: #1E3A8A;
+            margin-bottom: 4px;
+        }
+
+        .ir-evidence-row {
+            padding: 7px 9px;
+            margin-bottom: 5px;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            background: #FFFFFF;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .ir-evidence-row .ir-evidence-meta {
+            color: var(--text-muted);
+            font-size: 10px;
+            margin-top: 2px;
+        }
+
         .ir-auth-box {
             margin-top: 12px;
             padding: 11px;
@@ -1594,8 +1661,30 @@
                 <header class="ir-workbench-header">
                     <div class="ir-workbench-kicker">IR Studio workspace</div>
                     <h2 class="ir-workbench-title">Check a task or investigate a scan</h2>
-                    <p class="ir-workbench-intro">Enter the task or scan details here. The outcome appears in Validation results below.</p>
+                    <p class="ir-workbench-intro">Sign in once, then validate a task or investigate a scan. The outcome appears in Validation results below.</p>
                 </header>
+
+                <section class="ir-shared-signin" aria-labelledby="shared-signin-heading">
+                    <div class="ir-shared-signin-heading">
+                        <h2 id="shared-signin-heading">Sign in</h2>
+                        <p>Used by both task validation and scan investigation.</p>
+                    </div>
+                    <div class="ir-shared-signin-grid">
+                        <div>
+                            <label class="form-label" for="cfg-username">Username</label>
+                            <input type="text" id="cfg-username" class="form-control" autocomplete="username" placeholder="Your username" oninput="onExistingCredsInput()">
+                        </div>
+                        <div>
+                            <label class="form-label" for="cfg-password">Password</label>
+                            <input type="password" id="cfg-password" class="form-control" autocomplete="current-password" placeholder="Your password" oninput="onExistingCredsInput()">
+                        </div>
+                        <div class="ir-field-wide studio-advanced-only">
+                            <label class="form-label" for="cfg-token">Authentication token</label>
+                            <input type="text" id="cfg-token" class="form-control" placeholder="Optional token" style="font-family: 'JetBrains Mono', monospace;" oninput="onExistingCredsInput()">
+                        </div>
+                    </div>
+                    <div id="shared-signin-status" class="ir-field-help" role="status" aria-live="polite"></div>
+                </section>
 
                 <div class="ir-workflow-pair">
                 <section class="ir-workflow-section" aria-labelledby="task-validation-heading">
@@ -1616,25 +1705,7 @@
                         <div>
                             <label class="form-label" for="cfg-base-url">Instance URL</label>
                             <input type="url" id="cfg-base-url" class="form-control" value="" placeholder="https://krcs.rebotics.net" oninput="onBaseUrlInput(this.value)" style="font-weight: 600;" aria-describedby="instance-url-help">
-                            <div id="instance-url-help" class="ir-field-help">Use the same host where the task was created.</div>
-                        </div>
-                    </div>
-
-                    <div class="ir-auth-box">
-                        <div class="ir-auth-title">Sign in to the selected instance</div>
-                        <div class="ir-field-grid">
-                            <div>
-                                <label class="form-label" for="cfg-username">Username</label>
-                                <input type="text" id="cfg-username" class="form-control" autocomplete="username" placeholder="Your username" oninput="onExistingCredsInput()">
-                            </div>
-                            <div>
-                                <label class="form-label" for="cfg-password">Password</label>
-                                <input type="password" id="cfg-password" class="form-control" autocomplete="current-password" placeholder="Your password" oninput="onExistingCredsInput()">
-                            </div>
-                            <div class="ir-field-wide studio-advanced-only">
-                                <label class="form-label" for="cfg-token">Authentication token</label>
-                                <input type="text" id="cfg-token" class="form-control" placeholder="Optional token" style="font-family: 'JetBrains Mono', monospace;" oninput="onExistingCredsInput()">
-                            </div>
+                            <div id="instance-url-help" class="ir-field-help">The host where the task was created.</div>
                         </div>
                     </div>
 
@@ -2390,6 +2461,7 @@
     let currentIndex = 0;
     let currentStep = null;
     let existingTaskUi = { phase: 'idle', validation: null };
+    let actionTableEmptyMessage = 'No live actions loaded.';
     let existingTaskLoadController = null;
     let autoPlayTimer = null;
     let pipelinePollingTimer = null;
@@ -2855,12 +2927,11 @@
     function saveAuthToLocalStorage() {
         try {
             const user = (document.getElementById('cfg-fresh-username') || document.getElementById('cfg-username') || {}).value || '';
-            const pass = (document.getElementById('cfg-fresh-password') || document.getElementById('cfg-password') || {}).value || '';
             const token = (document.getElementById('cfg-fresh-token') || document.getElementById('cfg-token') || {}).value || '';
             const baseUrl = (document.getElementById('cfg-fresh-base-url') || document.getElementById('cfg-base-url') || {}).value || '';
             const store = (document.getElementById('cfg-store') || {}).value || '';
             const pog = (document.getElementById('cfg-pog') || {}).value || '';
-            localStorage.setItem('ir_runner_auth', JSON.stringify({ user, pass, token, baseUrl, store, pog }));
+            localStorage.setItem('ir_runner_auth', JSON.stringify({ user, token, baseUrl, store, pog }));
         } catch (e) {}
     }
 
@@ -2876,10 +2947,7 @@
                 if (u2) u2.value = data.user;
             }
             if (data.pass) {
-                const p1 = document.getElementById('cfg-password');
-                const p2 = document.getElementById('cfg-fresh-password');
-                if (p1) p1.value = data.pass;
-                if (p2) p2.value = data.pass;
+                saveAuthToLocalStorage();
             }
             if (data.token) {
                 const t1 = document.getElementById('cfg-token');
@@ -3978,7 +4046,7 @@
 
         const searchVal = (document.getElementById('action-search').value || '').toLowerCase().trim();
         if (!currentFilteredActions.length) {
-            tbody.innerHTML = '<tr><td colspan="7" style="padding:18px;text-align:center;color:#64748B;">No live actions loaded.</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="7" style="padding:18px;text-align:center;color:#64748B;">${studioEscape(actionTableEmptyMessage)}</td></tr>`;
             return;
         }
 
@@ -3998,7 +4066,7 @@
 
             if (isActive) tr.className = 'active-row';
             else if (isCompleted) tr.className = 'completed-row';
-            else if (actionFindings.some(item => item.severity === 'critical')) tr.style.background = '#FEF2F2';
+            else if (actionFindings.some(item => item.severity === 'critical') || (action.investigation_issues || []).length) tr.style.background = '#FEF2F2';
 
             const badgeColor = action.theme === 'red' ? 'badge-red' : action.theme === 'green' ? 'badge-green' : 'badge-orange';
             const statusText = isCompleted ? '<span class="badge badge-green">DONE</span>' :
@@ -4042,6 +4110,7 @@
                       action.slide_direction ? `<div style="margin-top:3px;"><span class="badge badge-blue">SLIDE ${studioEscape(action.slide_direction.toUpperCase())}</span></div>` : ''}
                     ${isRedundantSameSlotMove(action) ? `<div style="margin-top: 3px;"><span class="badge" style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-size: 8.5px; padding: 1px 5px; font-weight: 800;">⚠️ REDUNDANT SAME-SLOT MOVE</span></div>` : ''}
                     ${actionFindings.map(item => `<div style="margin-top:3px;color:${item.severity === 'critical' ? '#B91C1C' : '#92400E'};font-size:8.5px;font-weight:700;">${studioEscape(item.title || item.code)}</div>`).join('')}
+                    ${(action.investigation_issues || []).map(label => `<div style="margin-top:3px;color:#B91C1C;font-size:8.5px;font-weight:700;">${studioEscape(label)}</div>`).join('')}
                 </td>
                 <td style="text-align: center;">
                     ${statusText}
@@ -4106,7 +4175,9 @@
         if (container && !canWalk) {
             const label = existingTaskUi.phase === 'blocked'
                 ? 'Critical findings are listed in Validation results.'
-                : 'Checking action quality…';
+                : existingTaskUi.phase === 'investigation'
+                    ? 'Read-only scan investigation. Actions are listed for review.'
+                    : 'Checking action quality…';
             container.innerHTML = `<div role="status" style="padding: 8px; font-size: 11px; line-height: 1.4; color: #475569;">${label}</div>`;
         } else if (container && !document.getElementById('btn-complete-mobile-action')) {
             container.innerHTML = `
@@ -4239,6 +4310,9 @@
         currentFilteredActions = [];
         currentStep = null;
         currentIndex = 0;
+        actionTableEmptyMessage = 'No live actions loaded.';
+        const queueTitle = document.getElementById('header-queue-title');
+        if (queueTitle) queueTitle.innerHTML = '📋 Action Sequence (<span id="count-total-actions">0</span> Actions)';
         renderActionTable();
         renderMobileScreen();
         setExistingTaskPhase('loading', `Loading live actions for Task #${taskId} from ${baseUrl}…`);
@@ -4255,7 +4329,7 @@
                     base_url: baseUrl,
                     username: username,
                     password: password,
-                    token: token || undefined
+                    token: username && password ? undefined : (token || undefined)
                 }),
                 signal: existingTaskLoadController.signal
             });
@@ -4312,7 +4386,14 @@
                 renderActionTable();
                 renderMobileScreen();
                 const message = data.message || data.error || 'The selected instance did not return live actions.';
-                setExistingTaskPhase('error', `Live load failed. Cached actions were not used. ${message}`);
+                if (data.error_code === 'AUTH_REQUIRED') {
+                    ['cfg-token', 'cfg-fresh-token'].forEach((id) => {
+                        const field = document.getElementById(id);
+                        if (field) field.value = '';
+                    });
+                    saveAuthToLocalStorage();
+                }
+                setExistingTaskPhase('error', message);
                 if (!silent) {
                     showNotification('Failed to load task: ' + message, 'error');
                 }
@@ -4327,7 +4408,7 @@
             updateActionCounts();
             renderActionTable();
             renderMobileScreen();
-            setExistingTaskPhase('error', `Live load failed. Cached actions were not used. ${e}`);
+            setExistingTaskPhase('error', `Could not reach the dashboard server. ${e}`);
             if (!silent) {
                 showNotification('Network error while loading task: ' + e, 'error');
             }
@@ -4342,8 +4423,9 @@
     async function investigateScanProblem() {
         const problem = (document.getElementById('cfg-investigate-problem') || {}).value || '';
         const scanUrl = (document.getElementById('cfg-investigate-url') || {}).value || '';
-        const baseUrl = (document.getElementById('cfg-base-url') || {}).value || '';
-        const token = (document.getElementById('cfg-token') || {}).value || '';
+        const username = ((document.getElementById('cfg-username') || {}).value || '').trim();
+        const password = (document.getElementById('cfg-password') || {}).value || '';
+        const token = ((document.getElementById('cfg-token') || {}).value || '').trim();
         const result = document.getElementById('investigate-issue-result');
         const button = document.getElementById('btn-investigate-issue');
         const empty = document.getElementById('validation-results-empty');
@@ -4353,6 +4435,19 @@
             result.innerHTML = '<span style="color:#B91C1C;">Add the scan URL and the question in the form above.</span>';
             return;
         }
+        const scanHost = hostFromUrl(scanUrl);
+        if (!scanHost) {
+            result.style.display = 'block';
+            result.innerHTML = '<span style="color:#B91C1C;">The scan URL is not a valid web address.</span>';
+            return;
+        }
+        if (!token && (!username || !password)) {
+            result.style.display = 'block';
+            result.innerHTML = '<span style="color:#B91C1C;">Enter the username and password under Sign in, then investigate again.</span>';
+            document.getElementById(username ? 'cfg-password' : 'cfg-username')?.focus();
+            return;
+        }
+        setElementText('shared-signin-status', `Signing in to ${scanHost} for this scan.`);
         button.disabled = true;
         button.textContent = 'Investigating…';
         result.style.display = 'block';
@@ -4364,16 +4459,26 @@
                 body: JSON.stringify({
                     problem: problem.trim(),
                     scan_url: scanUrl.trim(),
-                    base_url: normalizeBaseUrl(baseUrl),
-                    token: token.trim() || undefined
+                    base_url: `https://${scanHost}`,
+                    username: username || undefined,
+                    password: password || undefined,
+                    token: username && password ? undefined : (token || undefined)
                 })
             });
             const payload = await response.json();
             if (payload.status !== 'success') {
+                if (/saved sign-in|rejected the username/i.test(payload.error || '')) {
+                    ['cfg-token', 'cfg-fresh-token'].forEach((id) => {
+                        const field = document.getElementById(id);
+                        if (field) field.value = '';
+                    });
+                    saveAuthToLocalStorage();
+                }
                 result.innerHTML = `<span style="color:#B91C1C;">${escapeInvestigationText(payload.error || 'Investigation failed')}</span>`;
                 return;
             }
             result.innerHTML = renderInvestigation(payload);
+            showInvestigationActions(payload);
         } catch (error) {
             result.innerHTML = `<span style="color:#B91C1C;">${escapeInvestigationText(error)}</span>`;
         } finally {
@@ -4388,13 +4493,115 @@
         }[char]));
     }
 
+    function hostFromUrl(value) {
+        try {
+            const text = String(value || '').trim();
+            if (!text) return '';
+            return new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`).host.toLowerCase();
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function renderInvestigationEvidence(findings) {
+        if (!findings.length) return '';
+        const order = [
+            'Marked OK in the wrong slot',
+            'Move to the same slot',
+            'Post-photo repeats the same-slot move',
+        ];
+        const groups = new Map();
+        findings.forEach((row) => {
+            const lead = (row.issues || []).find((issue) => issue.code === row.code);
+            const label = (lead && lead.label) || (row.issue_labels && row.issue_labels[0]) || row.code || 'Finding';
+            if (!groups.has(label)) groups.set(label, []);
+            groups.get(label).push(row);
+        });
+        const labels = [...groups.keys()].sort((a, b) => {
+            const ia = order.indexOf(a);
+            const ib = order.indexOf(b);
+            return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+        });
+        const esc = escapeInvestigationText;
+        return `
+            <div style="font-weight:700; margin-top:8px;">Evidence (${findings.length} product slot${findings.length === 1 ? '' : 's'})</div>
+            ${labels.map((label) => `
+                <div class="ir-evidence-group">
+                    <h3>${esc(label)} · ${groups.get(label).length}</h3>
+                    ${groups.get(label).map((row) => {
+                        const issues = row.issues || [];
+                        const seenIn = issues.map((issue) =>
+                            `${esc(issue.label)} on the ${esc(issue.stage)} (scan ${esc(issue.scan_id)})`
+                        ).join('; ');
+                        const expected = row.expected_upc && row.expected_upc !== row.upc
+                            ? `<div class="ir-evidence-meta">Planogram expects: ${esc(row.expected_product || 'unknown product')} · ${esc(row.expected_upc)}</div>`
+                            : '';
+                        const home = row.belongs_at
+                            ? `<div class="ir-evidence-meta">Belongs at slot ${esc(row.belongs_at)}</div>`
+                            : '';
+                        return `
+                            <div class="ir-evidence-row">
+                                <div><strong>Section ${esc(row.section)} · slot ${esc(row.slot)}</strong> · ${esc(row.product || 'Unnamed product')} · <span style="font-family:monospace;">${esc(row.upc)}</span></div>
+                                <div>${esc(row.detail)}</div>
+                                ${expected}
+                                ${home}
+                                ${seenIn ? `<div class="ir-evidence-meta">Seen as: ${seenIn}</div>` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `).join('')}
+        `;
+    }
+
+    function showInvestigationActions(report) {
+        const rows = report.actions || [];
+        allActions = rows.map((row, index) => {
+            const [fromShelf, fromPos] = String(row.from || '').split(':');
+            const [toShelf, toPos] = String(row.to || '').split(':');
+            const flagged = (row.issues || []).length > 0;
+            return {
+                id: `scan-${row.scan_id}-${index}`,
+                title: row.product || 'Unnamed product',
+                upc: row.upc,
+                scan_id: row.scan_id,
+                bay: row.section,
+                type: row.action,
+                backend_action_type: row.action,
+                backend_description: [row.reason, row.state].filter(Boolean).join(' · '),
+                banner_text: row.reason || row.action,
+                meaning: `Section ${row.section}, ${row.stage}`,
+                movement_line: `Section ${row.section}: ${row.from || '—'} → ${row.to || '—'}`,
+                source_bay: row.section,
+                target_bay: row.section,
+                source_shelf: fromShelf,
+                source_position: fromPos,
+                target_shelf: toShelf,
+                target_position: toPos,
+                theme: flagged ? 'red' : 'orange',
+                investigation_issues: row.issues || [],
+            };
+        });
+        currentFilteredActions = [...allActions];
+        selectedBayFilter = 'all';
+        currentStep = null;
+        currentIndex = 0;
+        existingTaskUi = { phase: 'investigation', validation: null };
+        actionTableEmptyMessage = 'This scan has no report actions.';
+        const title = document.getElementById('header-queue-title');
+        if (title) {
+            title.innerHTML = `📋 Scan actions (<span id="count-total-actions">${allActions.length}</span> Actions)`;
+        }
+        updateActionCounts();
+        renderActionTable();
+        renderMobileScreen();
+    }
+
     function renderInvestigation(report) {
         const scan = report.scan || {};
-        const findings = (report.findings || []).map((row) =>
-            `<li style="margin-bottom:4px;"><strong>${escapeInvestigationText(row.section)} ${escapeInvestigationText(row.slot)}</strong> ${escapeInvestigationText(row.upc)} — ${escapeInvestigationText(row.detail)}</li>`
-        ).join('');
+        const findings = renderInvestigationEvidence(report.findings || []);
         const steps = (report.how_to_solve || '').split(/(?=\d+\. )/).filter(Boolean).map((step) =>
-            `<li style="margin-bottom:3px;">${escapeInvestigationText(step.trim())}</li>`
+            `<li style="margin-bottom:3px;">${escapeInvestigationText(step.trim().replace(/^\d+\.\s*/, ''))}</li>`
         ).join('');
         return `
             <div style="font-weight:800; color:#1E3A8A; margin-bottom:6px;">Scan ${escapeInvestigationText(scan.id)} · section ${escapeInvestigationText(scan.section)} · ${escapeInvestigationText(scan.stage)}</div>
@@ -4403,7 +4610,8 @@
             <div style="margin-bottom:6px;"><strong>Root cause.</strong> ${escapeInvestigationText(report.root_cause)}</div>
             <div style="margin-bottom:4px;"><strong>How to solve it.</strong></div>
             <ol style="margin:0 0 6px 16px; padding:0;">${steps}</ol>
-            ${findings ? `<div style="font-weight:700; margin-bottom:3px;">Evidence</div><ul style="margin:0; padding-left:16px;">${findings}</ul>` : ''}
+            ${findings || '<div style="margin-top:6px;">No product slots matched these problems.</div>'}
+            <div class="ir-evidence-meta" style="margin-top:6px;">${(report.actions || []).length} scan actions are listed in the action table below. Highlighted rows are tied to a finding.</div>
         `;
     }
 
@@ -4942,9 +5150,6 @@
                         if (typeof onTaskIdInput === 'function') onTaskIdInput(taskId);
                         const dispTid = document.getElementById('disp-task-id');
                         if (dispTid) dispTid.textContent = '#' + taskId;
-                        if (typeof loadTaskById === 'function') {
-                            loadTaskById(true);
-                        }
                     }
                 }
             } else if (event.data && event.data.type === 'IR_CREDENTIALS_SYNC') {
@@ -4974,6 +5179,21 @@
     });
 
     window.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+            const id = event.target && event.target.id;
+            const scanField = id === 'cfg-investigate-url' || (id === 'cfg-investigate-problem' && (event.metaKey || event.ctrlKey));
+            const taskField = id === 'cfg-task-id-direct' || id === 'cfg-base-url';
+            const signInField = id === 'cfg-username' || id === 'cfg-password' || id === 'cfg-token';
+            if (scanField) {
+                event.preventDefault();
+                investigateScanProblem();
+            } else if (taskField) {
+                event.preventDefault();
+                loadTaskById();
+            } else if (signInField) {
+                event.preventDefault();
+            }
+        }
         if (event.key === 'Escape') {
             const viewer = document.getElementById('report-viewer');
             if (viewer && viewer.style.display !== 'none') closeReportViewer();
