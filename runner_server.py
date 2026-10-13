@@ -1114,6 +1114,100 @@ def get_auth_token(base_url: str = None, username: str = None, password: str = N
     raise ValueError(f"Authentication required for {target_url}. Please provide Username & Password or Auth Token.")
 
 
+def forget_instance_token(base_url: str, token: str = "") -> None:
+    """Drop a sign-in the instance has rejected so it cannot be reused."""
+    global TOKEN
+    target = normalize_backend_url(base_url) if str(base_url or "").strip() else ""
+    remembered = INSTANCE_TOKENS.get(target, "")
+    rejected = str(token or remembered or "")
+    if target and (not token or remembered == token):
+        INSTANCE_TOKENS.pop(target, None)
+    if rejected and TOKEN == rejected:
+        TOKEN = ""
+    remember_instance_tokens()
+
+
+def investigation_access(
+    host: str,
+    base_url: str,
+    username: str,
+    password: str,
+    supplied_token: str,
+) -> Tuple[str, str]:
+    """Sign in with the entered password before reusing any saved token."""
+    if username and password:
+        token = get_auth_token(base_url=host, username=username, password=password)
+        return token, "credentials"
+    token = supplied_token or INSTANCE_TOKENS.get(host) or INSTANCE_TOKENS.get(base_url) or TOKEN
+    if not token:
+        raise ValueError("Sign in to this instance before investigating")
+    return str(token), "saved"
+
+
+def run_scan_investigation(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Investigate a scan with the account the user entered for that instance."""
+    base_url = normalize_backend_url(payload.get("base_url") or "")
+    scan_url = str(payload.get("scan_url") or payload.get("scan_id") or "").strip()
+    problem = str(payload.get("problem") or "").strip()
+    if not scan_url:
+        return {"status": "error", "error": "Enter a scan URL"}
+    if not problem:
+        return {"status": "error", "error": "Describe the problem to investigate"}
+
+    username = str(payload.get("username") or "").strip()
+    password = str(payload.get("password") or "")
+    supplied_token = str(payload.get("token") or "").strip()
+    host = parse_scan_url(scan_url).get("base_url") or base_url
+    if not host:
+        return {"status": "error", "error": "Enter the instance URL"}
+
+    def sign_in(use_saved_token: bool) -> Tuple[str, str]:
+        return investigation_access(
+            host,
+            base_url,
+            username,
+            password,
+            supplied_token if use_saved_token else "",
+        )
+
+    def rejected_message(source: str) -> str:
+        if source == "credentials":
+            return (
+                "This instance rejected the username and password. "
+                "Check the account for this instance and try again."
+            )
+        return (
+            "The saved sign-in for this instance expired. "
+            "Enter the username and password for this instance, then investigate again."
+        )
+
+    try:
+        token, source = sign_in(True)
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+    attempts = 0
+    while attempts < 2:
+        attempts += 1
+        try:
+            report = investigate_scan_problem(host, token, problem, scan_url)
+            return {"status": "success", **report}
+        except urllib.error.HTTPError as exc:
+            if exc.code != 401:
+                return {"status": "error", "error": f"HTTP Error {exc.code}: {exc.reason}"}
+            forget_instance_token(host, token)
+            if attempts == 1 and username and password and source == "saved":
+                try:
+                    token, source = sign_in(False)
+                except Exception as auth_error:
+                    return {"status": "error", "error": str(auth_error)}
+                continue
+            return {"status": "error", "error": rejected_message(source)}
+        except Exception as exc:
+            return {"status": "error", "error": str(exc)}
+    return {"status": "error", "error": rejected_message("credentials")}
+
+
 def parse_raw_action_items(raw_items: List[Dict[str, Any]], task_id: int, pog_id: Optional[int] = None, scan_map: Dict[str, int] = None) -> List[Dict[str, Any]]:
     """
     Transforms backend retailer action list results into rich associate action cards with Scan IDs.
@@ -1246,6 +1340,20 @@ def parse_raw_action_items(raw_items: List[Dict[str, Any]], task_id: int, pog_id
     return sort_action_sequence(actions_list)
 
 
+def empty_action_list_message(task_id: int, base_url: str, scan_status: str = "") -> str:
+    """Explain an empty task action list from the task's own scan status."""
+    if str(scan_status or "").upper() == "NO_CAPTURE":
+        return (
+            f"Task #{task_id} on {base_url} has no shelf capture yet, "
+            "so there is no scan and no action list."
+        )
+    return f"Task #{task_id} on {base_url} loaded, and its action list is empty."
+
+
+class LiveActionsAuthError(ValueError):
+    """The instance rejected the sign-in used for the action list."""
+
+
 def fetch_live_task_actions(
     base_url: str,
     task_id: int,
@@ -1269,6 +1377,7 @@ def fetch_live_task_actions(
         f"{base_url}/api/v1/tasks/{task_id}/action-list/?limit=1000&_t={cache_buster}",
     ]
     errors: List[str] = []
+    answered = False
 
     for first_url in candidates:
         items: List[Dict[str, Any]] = []
@@ -1279,7 +1388,12 @@ def fetch_live_task_actions(
                 seen_urls.add(next_url)
                 req = urllib.request.Request(next_url, headers=headers)
                 with urllib.request.urlopen(req, context=ssl_ctx, timeout=timeout) as resp:
-                    payload = json.loads(resp.read().decode("utf-8"))
+                    content_type = str((getattr(resp, "headers", None) or {}).get("Content-Type", ""))
+                    body = resp.read().decode("utf-8")
+                if "json" not in content_type.lower() and not body.lstrip().startswith(("{", "[")):
+                    raise _EndpointMissing()
+                payload = json.loads(body)
+                answered = True
                 if isinstance(payload, list):
                     page_items = payload
                     next_url = None
@@ -1295,13 +1409,30 @@ def fetch_live_task_actions(
                 items.extend(row for row in page_items if isinstance(row, dict))
             if items:
                 return items, first_url
+        except _EndpointMissing:
+            continue
         except urllib.error.HTTPError as exc:
-            errors.append(f"{first_url}: HTTP {exc.code}")
+            if exc.code in (401, 403):
+                raise LiveActionsAuthError(
+                    f"{base_url} rejected the sign-in (HTTP {exc.code}). "
+                    "Enter the username and password for this instance, then run the validation again."
+                ) from exc
+            if exc.code == 404:
+                errors.append(f"Task #{task_id} was not found on {base_url}")
+            else:
+                errors.append(f"{first_url.split('?')[0]}: HTTP {exc.code}")
         except Exception as exc:
-            errors.append(f"{first_url}: {exc}")
+            errors.append(f"{first_url.split('?')[0]}: {exc}")
 
-    detail = "; ".join(errors[-2:]) if errors else "all live endpoints returned an empty list"
-    raise ValueError(f"No live actions found for Task #{task_id} on {base_url}. {detail}")
+    if errors:
+        raise ValueError(f"No live actions for Task #{task_id} on {base_url}. {errors[0]}.")
+    if answered:
+        raise ValueError(f"Task #{task_id} on {base_url} has no actions yet.")
+    raise ValueError(f"{base_url} does not provide a task action list.")
+
+
+class _EndpointMissing(Exception):
+    """The URL served the web app page instead of API data."""
 
 
 def sort_action_sequence(actions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -4604,23 +4735,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
     def _handle_investigate_issue(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Answer a described scan problem with the finding, root cause, and fix."""
-        base_url = normalize_backend_url(payload.get("base_url") or "")
-        scan_url = str(payload.get("scan_url") or payload.get("scan_id") or "").strip()
-        problem = str(payload.get("problem") or "").strip()
-        if not scan_url:
-            return {"status": "error", "error": "Enter a scan URL"}
-        if not problem:
-            return {"status": "error", "error": "Describe the problem to investigate"}
-        scan_host = parse_scan_url(scan_url).get("base_url") or ""
-        host = scan_host or base_url
-        token = str(payload.get("token") or "").strip() or INSTANCE_TOKENS.get(host) or INSTANCE_TOKENS.get(base_url) or TOKEN
-        if not token:
-            return {"status": "error", "error": "Sign in to this instance before investigating"}
-        try:
-            report = investigate_scan_problem(host, token, problem, scan_url)
-        except Exception as exc:
-            return {"status": "error", "error": str(exc)}
-        return {"status": "success", **report}
+        return run_scan_investigation(payload)
 
     def do_POST(self):
         content_length = int(self.headers.get("Content-Length", 0))
@@ -5414,7 +5529,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
         username = str(payload.get("username") or "").strip()
         password = str(payload.get("password") or "").strip()
-        override_token = payload.get("token") or None
+        override_token = None if username and password else (payload.get("token") or None)
 
         start_t = time.time()
         token = None
@@ -5721,8 +5836,16 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "data_source": "live",
                 "message": f"Successfully loaded {len(actions_list)} actions ({source_tag}) ({dur}ms)",
             }
+        except LiveActionsAuthError as e:
+            forget_instance_token(base_url, token)
+            return {"status": "error", "error_code": "AUTH_REQUIRED", "base_url": base_url, "message": str(e)}
+        except ValueError as e:
+            scan_status = t_info.get("scan_status") if isinstance(t_info, dict) else ""
+            if "has no actions yet" in str(e):
+                return {"status": "error", "message": empty_action_list_message(task_id, base_url, scan_status)}
+            return {"status": "error", "message": f"Could not load Task #{task_id} from {base_url}. {e}"}
         except Exception as e:
-            return {"status": "error", "message": f"Failed to load Task #{task_id} from {base_url}: {e}"}
+            return {"status": "error", "message": f"Could not load Task #{task_id} from {base_url}. {e}"}
 
     def _handle_step_patch(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         task_id = payload.get("task_id", EXECUTION_STATE["active_task_id"])
@@ -5937,7 +6060,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
         username = str(payload.get("username") or "").strip()
         password = str(payload.get("password") or "").strip()
-        override_token = payload.get("token") or None
+        override_token = None if username and password else (payload.get("token") or None)
         try:
             token = get_auth_token(
                 base_url=base_url,
@@ -5962,6 +6085,9 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         if not raw_items:
             try:
                 raw_items, _ = fetch_live_task_actions(base_url, task_id, token)
+            except LiveActionsAuthError as exc:
+                forget_instance_token(base_url, token)
+                return {"status": "error", "error_code": "AUTH_REQUIRED", "message": str(exc)}
             except Exception as exc:
                 return {
                     "status": "error",

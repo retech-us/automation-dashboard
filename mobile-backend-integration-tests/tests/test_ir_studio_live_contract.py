@@ -154,7 +154,7 @@ class IrStudioLiveContractTests(unittest.TestCase):
         self.assertIn('id="existing-task-findings"', html)
         self.assertIn("function setExistingTaskPhase", html)
         self.assertIn("function applyExistingTaskValidation", html)
-        self.assertIn("Cached actions were not used", html)
+        self.assertNotIn("Cached actions were not used", html)
         self.assertNotIn("Load Actions &amp; Start Test", html)
         self.assertNotIn("Load Actions & Start Test", html)
 
