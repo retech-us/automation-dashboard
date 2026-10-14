@@ -7926,6 +7926,25 @@ code {
   margin-top: 16px;
 }
 
+.ir-work-result {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.5;
+  box-shadow: inset 3px 0 0 var(--border, #334155);
+}
+
+.ir-work-result[data-state="clear"] {
+  box-shadow: inset 3px 0 0 #34d399;
+}
+
+.ir-work-result[data-state="warning"] {
+  box-shadow: inset 3px 0 0 #f59e0b;
+}
+
 .ir-insight-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
