@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Intelligent Shelf-Reset Assistant &amp; Planogram Engine</title>
+  <title>Shelf Reset Mobile</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -172,7 +172,7 @@
     /* 3 Horizontal Cards Layout - Permanent Side-by-Side in Full Screen */
     .dashboard-grid {
       display: grid;
-      grid-template-columns: 320px 1.15fr 1.25fr;
+      grid-template-columns: minmax(300px, 360px) minmax(0, 1fr) minmax(480px, 1.45fr);
       gap: 10px;
       width: 100%;
       align-items: start;
@@ -188,6 +188,7 @@
       flex-direction: column;
       gap: 8px;
       position: relative;
+      min-width: 0;
     }
 
     .panel-card-header {
@@ -306,8 +307,9 @@
 
     .step-top-row {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
+      gap: 8px;
     }
 
     .type-pill {
@@ -319,7 +321,21 @@
       font-size: 10px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.4px;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      line-height: 1.3;
+    }
+
+    .backend-action-name {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: break-word;
+      text-transform: none;
+      letter-spacing: 0;
     }
 
     .type-pill.fix_in_bay { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.35); }
@@ -1118,6 +1134,7 @@
       font-weight: 800 !important;
       color: #ffffff !important;
       line-height: 1.3 !important;
+      overflow-wrap: anywhere;
     }
 
     .action-command-subtitle {
@@ -1145,6 +1162,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .loc-card.loc-from {
@@ -1194,6 +1212,7 @@
       align-items: center;
       gap: 4px;
       justify-content: flex-end;
+      flex-wrap: wrap;
     }
 
     .loc-chip {
@@ -1528,7 +1547,7 @@
     }
 
     .spec-item-label { color: var(--text-dim); }
-    .spec-item-val { font-weight: 700; color: #ffffff; }
+    .spec-item-val { font-weight: 700; color: #ffffff; overflow-wrap: anywhere; }
 
     /* Slot Clearance & Collision-Safety Verification Box */
     .slot-clearance-box {
@@ -1545,6 +1564,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
       font-size: 10px;
       font-weight: 800;
       text-transform: uppercase;
@@ -1716,8 +1737,8 @@
     }
 
     .trace-table-box {
-      max-height: 240px;
-      overflow-y: auto;
+      max-height: 320px;
+      overflow: auto;
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       background: #080d19;
@@ -1728,6 +1749,17 @@
       border-collapse: collapse;
       font-size: 11px;
       text-align: left;
+      table-layout: fixed;
+    }
+
+    .trace-loc,
+    .trace-state {
+      white-space: nowrap;
+    }
+
+    .trace-loc {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
     }
 
     .trace-table th {
@@ -1765,26 +1797,25 @@
       <div class="brand-logo">🛒</div>
       <div class="brand-text">
         <h1>
-          Shelf-Reset Sequencing Assistant
-          <span class="engine-badge">Graph Engine v2.1</span>
+          Shelf Reset Mobile
+          <span class="engine-badge">Backend actions</span>
         </h1>
-        <p id="brand-subtitle">Connected: Retailer Task Action API • Live Dynamic Optimization</p>
+        <p id="brand-subtitle">Choose an instance to load its Intelligent Reset tasks.</p>
       </div>
     </div>
 
-    <!-- Live Executive Summary Badges -->
     <div class="header-kpis">
-      <div class="kpi-chip success">
-        <span>⚡ Effort Saved:</span>
-        <strong id="kpi-saved-pct">53%</strong>
-      </div>
-      <div class="kpi-chip success">
-        <span>🛒 Same-Bay Cart Stops:</span>
-        <strong id="kpi-cart-stops">0 (Direct Fix)</strong>
+      <div class="kpi-chip">
+        <span>Backend actions:</span>
+        <strong id="kpi-saved-pct">—</strong>
       </div>
       <div class="kpi-chip">
-        <span>✋ Max In-Hands:</span>
-        <strong>1 Item</strong>
+        <span>Validation:</span>
+        <strong id="kpi-cart-stops">—</strong>
+      </div>
+      <div class="kpi-chip">
+        <span>Order:</span>
+        <strong>Backend list</strong>
       </div>
     </div>
 
@@ -1798,18 +1829,17 @@
         <option value="stgsams">🎯 Sam's Club (stgsams)</option>
         <option value="custom">🌐 Custom Instance...</option>
       </select>
+      <input id="shelf-username" autocomplete="username" placeholder="Username" style="width:110px; padding:4px 6px; font-size:11px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px;" />
+      <input id="shelf-password" type="password" autocomplete="current-password" placeholder="Password" style="width:110px; padding:4px 6px; font-size:11px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px;" />
+      <button type="button" id="btn-shelf-signin" class="btn btn-secondary" style="padding:4px 8px; font-size:11px; font-weight:700;">Sign in</button>
+      <span id="shelf-auth-status" style="font-size:11px; color:var(--text-muted); max-width:220px;"></span>
       <select id="dataset-selector" class="task-select" style="max-width:320px; font-weight:700;">
-        <optgroup label="Harris Teeter (HARR) — Intelligent Reset">
-          <option value="8788767" selected>Task #8788767 (Pedigree Pet Care • 4 Bays • 218 Actions)</option>
-          <option value="8668473">Task #8668473 (Cult Wmn Reset • 3 Bays • 244 Actions)</option>
-          <option value="8648129">Task #8648129 (Cult Wmn Multi-Bay • 3 Bays • 189 Actions)</option>
-          <option value="8648127">Task #8648127 (Beauty / Diffusers • 1 Bay • 89 Actions)</option>
-        </optgroup>
+        <option value="">Select an instance to load tasks</option>
       </select>
       <div id="custom-task-box" style="display:inline-flex; align-items:center; gap:3px;">
-        <input type="text" id="custom-task-input" placeholder="Task #" style="width:70px; padding:4px 6px; font-size:11px; font-weight:700; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px;" title="Enter any occurrence Task ID for this instance" />
-        <button type="button" id="btn-load-custom-task" class="btn btn-secondary" style="padding:4px 8px; font-size:11px; font-weight:700;" title="Load and sequence this task from selected instance">
-          ⚡ Load
+        <input type="text" id="custom-task-input" placeholder="Task #" style="width:70px; padding:4px 6px; font-size:11px; font-weight:700; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px;" title="Enter a task id for this instance" />
+        <button type="button" id="btn-load-custom-task" class="btn btn-secondary" style="padding:4px 8px; font-size:11px; font-weight:700;" title="Load this task's backend actions">
+          Load
         </button>
       </div>
       <button id="btn-top-reset" class="btn btn-secondary" style="padding:5px 10px; font-size:11.5px;">
@@ -1826,7 +1856,7 @@
     <button id="view-tab-simulator" class="view-tab-btn active" onclick="switchViewMode('simulator')">
       <span>📱</span> 3-Card Interactive Simulator
     </button>
-    <button id="view-tab-rules" class="view-tab-btn" onclick="switchViewMode('rules')">
+    <button id="view-tab-rules" class="view-tab-btn" onclick="switchViewMode('rules')" hidden style="display:none;">
       <span>📋</span> Reset Rules &amp; Architecture Spec
     </button>
   </div>
@@ -1910,6 +1940,7 @@
               <div id="card-action-subtitle" class="action-command-subtitle">
                 Bay 1 • Shelf 3, Pos 1 ➔ Shelf 5, Pos 2 (Zero Cart Trips)
               </div>
+              <div id="card-raw-action" style="display:none; margin-top:3px; font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; overflow-wrap:anywhere;"></div>
             </div>
 
             <!-- 5-Phase Hierarchy & Ergonomic Direction Badges -->
@@ -1929,7 +1960,7 @@
               <div class="loc-card loc-from">
                 <div class="loc-card-header">
                   <span class="loc-step-num">1</span>
-                  <span class="loc-card-title">PICK FROM SHELF</span>
+                  <span id="loc-from-title" class="loc-card-title">Current position</span>
                 </div>
                 <div class="loc-chips-row">
                   <div class="loc-chip"><span class="loc-chip-label">BAY</span> <strong id="lbl-from-bay">1</strong></div>
@@ -1941,7 +1972,7 @@
               <!-- Route Direction Indicator Arrow -->
               <div class="route-arrow-connector" id="loc-arrow-row">
                 <div class="arrow-line"></div>
-                <span class="arrow-text">⬇ MOVE DIRECTLY ON SHELF ⬇</span>
+                <span id="loc-arrow-text" class="arrow-text">expected position</span>
                 <div class="arrow-line"></div>
               </div>
 
@@ -1949,7 +1980,7 @@
               <div class="loc-card loc-to" id="loc-to-row">
                 <div class="loc-card-header">
                   <span class="loc-step-num">2</span>
-                  <span class="loc-card-title">PLACE ONTO SHELF</span>
+                  <span id="loc-to-title" class="loc-card-title">Expected position</span>
                 </div>
                 <div class="loc-chips-row">
                   <div class="loc-chip"><span class="loc-chip-label">BAY</span> <strong id="lbl-to-bay">1</strong></div>
@@ -1979,8 +2010,8 @@
               <button id="btn-undo" class="btn btn-secondary" type="button" disabled title="Undo previous step">
                 <span>↩</span> Undo
               </button>
-              <button id="btn-next" class="btn btn-emerald" type="button" title="Confirm barcode scan & step completed">
-                Complete Action <span>➔</span>
+              <button id="btn-next" class="btn btn-emerald" type="button" title="Show the next backend action">
+                Next <span>➔</span>
               </button>
             </div>
 
@@ -1997,9 +2028,9 @@
           <!-- Completed State Screen -->
           <div id="completed-card" class="completed-state-view">
             <div style="font-size:38px;">🏆</div>
-            <h3 style="font-size:16px; font-weight:800; color:#fff;">Shelf Reset Complete!</h3>
+            <h3 style="font-size:16px; font-weight:800; color:#fff;">End of the backend list</h3>
             <p style="font-size:12px; color:var(--text-muted); line-height:1.45;">
-              100% Planogram compliance achieved with zero aisle cart clutter remaining.
+              Every returned action has been shown. This walkthrough does not complete actions on the retailer.
             </p>
             <button id="btn-reset-mobile" class="btn btn-emerald" style="margin-top:6px;">
               <span>🔄</span> Run Again
@@ -2059,9 +2090,9 @@
       <div class="panel-card-header">
         <div>
           <div class="panel-title">
-            <span>📊</span> Action Details &amp; Sequencing Rationale
+            <span>📊</span> Action Details
           </div>
-          <div class="panel-subtitle">Algorithmic Justification • Store Ops Impact</div>
+          <div class="panel-subtitle">Backend action, reason, and validation</div>
         </div>
         <span id="details-step-badge" class="engine-badge">STEP 1</span>
       </div>
@@ -2081,7 +2112,7 @@
         <!-- Plain language rationale -->
         <div id="plain-rationale-box" class="non-tech-reasoning-quote fix-mode">
           <div style="font-size:9.5px; font-weight:800; text-transform:uppercase; color:#34d399; margin-bottom:2px;">
-            🧠 Why this action right now?
+            Backend reason
           </div>
           <p id="plain-rationale-text">
             Destination slot is verified empty. The associate shifts this product directly across shelves within Bay 1, avoiding putting the item into a staging cart and saving 2 physical touches!
@@ -2092,7 +2123,7 @@
         <div id="slot-clearance-box" class="slot-clearance-box">
           <div class="clearance-header">
             <span style="color:#cbd5e1; display:flex; align-items:center; gap:5px;">
-              <span>🛡️</span> Destination Position Clearance Verification
+              <span id="clearance-heading">This action</span>
             </span>
             <span id="clearance-status-pill" class="clearance-status-pill vacant">
               ✅ 100% Vacant &amp; Collision-Free
@@ -2101,14 +2132,14 @@
 
           <div class="clearance-qa-grid">
             <div class="clearance-qa-card">
-              <span class="clearance-qa-label">📍 Was Target Position Occupied?</span>
+              <span id="qa-label-state" class="clearance-qa-label">State</span>
               <div id="qa-init-occupied" class="clearance-qa-val">
                 <!-- Populated dynamically -->
               </div>
             </div>
 
             <div class="clearance-qa-card">
-              <span class="clearance-qa-label">🔄 Was that product taken out before placing?</span>
+              <span id="qa-label-finding" class="clearance-qa-label">Validation</span>
               <div id="qa-cleared-before" class="clearance-qa-val">
                 <!-- Populated dynamically -->
               </div>
@@ -2123,11 +2154,11 @@
         <!-- Clean Specs Table -->
         <div class="clean-spec-grid">
           <div>
-            <span class="spec-item-label">Origin Location:</span>
+            <span class="spec-item-label">Current position:</span>
             <div id="spec-full-from" class="spec-item-val">Bay 1 • Shelf 3 • Pos 1</div>
           </div>
           <div>
-            <span class="spec-item-label">Destination Location:</span>
+            <span class="spec-item-label">Expected position:</span>
             <div id="spec-full-to" class="spec-item-val">Bay 1 • Shelf 5 • Pos 2</div>
           </div>
           <div>
@@ -2144,21 +2175,19 @@
       <!-- 3.2 Why This Approach Is Better (Side-by-Side Comparison) -->
       <div class="comparison-strip">
         <div class="comp-panel naive">
-          <h4>❌ Naive Retailer Approach</h4>
+          <h4>Backend list</h4>
           <ul>
             <li id="comp-naive-cart">• Puts same-bay items in cart (<code>set_aside</code>)</li>
             <li id="comp-naive-touches">• Double handling (250+ touches)</li>
             <li id="comp-naive-aisles">• Staging carts block customer aisles</li>
-            <li>• High risk of slot collision & displaced stock</li>
           </ul>
         </div>
         <div class="comp-panel optimized">
-          <h4>✅ Our Graph Sequencer</h4>
+          <h4>Validation</h4>
           <ul>
             <li id="comp-opt-shifts">• Direct shelf shifts (<code>fix_in_bay</code>) — 0 cart trips</li>
             <li id="comp-opt-saved">• 53%+ touches eliminated</li>
             <li id="comp-opt-aisles">• Aisles stay 100% clutter-free</li>
-            <li>• Backward walk guarantees empty slots</li>
           </ul>
         </div>
       </div>
@@ -2167,10 +2196,12 @@
       <div class="trace-wrapper">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
           <div style="font-size:12px; font-weight:700; color:#fff;">
-            Complete Action Trace (<span id="trace-step-count">0</span> Steps)
+            Backend actions (<span id="trace-step-count">0</span>)
+            <div style="font-size:10px; font-weight:500; color:var(--text-dim);">Identify and remove cover every bay first. Then each bay: set aside, fix in bay, add to shelf, restock.</div>
           </div>
           <div class="trace-filter-bar" id="trace-filter-chips">
             <button class="t-filter-chip active" data-type="ALL">All</button>
+            <button class="t-filter-chip" data-type="RULE_BREAK" style="color:#f87171;">🚩 Rule breaks</button>
             <button class="t-filter-chip" data-type="pull">📤 Pull (Remove)</button>
             <button class="t-filter-chip" data-type="set_aside">📦 Set-Aside (Cart)</button>
             <button class="t-filter-chip" data-type="move">⚡ Move / Fix-in-Bay</button>
@@ -2184,12 +2215,12 @@
           <table class="trace-table">
             <thead>
               <tr>
-                <th style="width: 28px;">#</th>
-                <th style="width: 70px;">Type</th>
-                <th>From (Bay • Shelf • Pos)</th>
-                <th>To (Bay • Shelf • Pos)</th>
+                <th style="width: 32px;">#</th>
+                <th style="width: 34%;">Action</th>
+                <th style="width: 64px;">From</th>
+                <th style="width: 64px;">To</th>
                 <th>Product</th>
-                <th style="width: 130px;">Clearance Safety</th>
+                <th style="width: 96px;">Target</th>
               </tr>
             </thead>
             <tbody id="trace-table-body">
@@ -2220,7 +2251,143 @@
       activeBayFilter: "ALL",
       activeTraceFilter: "ALL",
       planogramQuery: "",
+      backendMode: true,
+      validation: null,
     };
+
+    function setShelfStatus(message) {
+      const status = document.getElementById("shelf-auth-status");
+      if (status) status.textContent = message || "";
+    }
+
+    function shelfCredentials() {
+      return {
+        username: (document.getElementById("shelf-username") || {}).value || "",
+        password: (document.getElementById("shelf-password") || {}).value || "",
+      };
+    }
+
+    function showBackendLoadError(message) {
+      state.backendMode = true;
+      state.steps = [];
+      state.slots = [];
+      state.stepIndex = 0;
+      state.validation = { state: "blocked", findings: [], summary: message };
+      const subTitle = document.getElementById("brand-subtitle");
+      if (subTitle) subTitle.textContent = message;
+      setShelfStatus(message);
+      render();
+    }
+
+    function instanceSlug(value) {
+      return String(value || "").trim().toLowerCase().replace(/^https?:\/\//, "").split(".")[0].split("/")[0];
+    }
+
+    function clearInstanceTasks(message) {
+      const sel = document.getElementById("dataset-selector");
+      if (sel) {
+        sel.innerHTML = "";
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Sign in to load tasks";
+        sel.appendChild(opt);
+      }
+      state.dataset = "";
+      state.steps = [];
+      state.slots = [];
+      state.stepIndex = 0;
+      state.validation = null;
+      const subTitle = document.getElementById("brand-subtitle");
+      if (subTitle) subTitle.textContent = message;
+      setShelfStatus(message);
+      render();
+    }
+
+    async function ensureInstanceSignIn(instance, submitCredentials) {
+      const creds = shelfCredentials();
+      if (submitCredentials) {
+        if (!creds.username.trim() || !creds.password) {
+          return { ok: false, message: `Enter the username and password for ${instance}.` };
+        }
+        const res = await fetch(`${getApiBase()}/api/runner/auth_ping`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            base_url: instance,
+            username: creds.username.trim(),
+            password: creds.password,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data || data.status !== "success" || !data.connected) {
+          return { ok: false, message: (data && data.message) || `Sign in to ${instance} before loading tasks.` };
+        }
+        state.signedInInstance = instanceSlug(data.base_url || instance);
+        return { ok: true };
+      }
+      const statusRes = await fetch(`${getApiBase()}/api/runner/auth_status?instance=${encodeURIComponent(instance)}`, { cache: "no-store" });
+      const status = await statusRes.json();
+      if (status && status.has_saved_token && instanceSlug(status.base_url || instance) === instanceSlug(instance)) {
+        state.signedInInstance = instanceSlug(instance);
+        return { ok: true };
+      }
+      return { ok: false, message: `Enter the username and password for ${instance}.` };
+    }
+
+    let taskLoadGeneration = 0;
+
+    async function loadTasksForInstance(instance, selectedTask, options) {
+      const inst = instance || state.instance || "harr";
+      const generation = ++taskLoadGeneration;
+      const submitCredentials = Boolean(options && options.submitCredentials);
+      state.instance = inst;
+      clearInstanceTasks(submitCredentials ? `Signing in to ${inst}…` : `Checking the sign-in for ${inst}…`);
+      let session;
+      try {
+        session = await ensureInstanceSignIn(inst, submitCredentials);
+      } catch (err) {
+        if (generation === taskLoadGeneration) clearInstanceTasks(`Enter the username and password for ${inst}.`);
+        return;
+      }
+      if (generation !== taskLoadGeneration) return;
+      if (!session.ok) {
+        clearInstanceTasks(session.message);
+        return;
+      }
+      setShelfStatus(`Loading Intelligent Reset tasks for ${inst}…`);
+      try {
+        const res = await fetch(`${getApiBase()}/api/runner/ir_history?instance=${encodeURIComponent(inst)}&range=7d&status=in_progress,completed,incomplete`, { cache: "no-store" });
+        const data = await res.json();
+        if (generation !== taskLoadGeneration) return;
+        if (!data || data.signed_in !== true) {
+          clearInstanceTasks((data && data.remote_error) || `Enter the username and password for ${inst}.`);
+          return;
+        }
+        const wanted = instanceSlug(data.instance || inst);
+        const tasks = (Array.isArray(data.tasks) ? data.tasks : []).filter((task) => {
+          const type = String(task.task_type || "").toLowerCase();
+          const taskInstance = instanceSlug(task.instance || wanted);
+          return taskInstance === wanted && (!type || type.includes("intelligent reset"));
+        });
+        if (!tasks.length) {
+          clearInstanceTasks(data.remote_error || data.plain_language_summary || `No Intelligent Reset tasks were found for ${inst}.`);
+          return;
+        }
+        populateTaskOptions(tasks.map((task) => ({
+          id: task.task_id,
+          instance: wanted,
+          group: "Intelligent Reset",
+          label: `Task #${task.task_id} • ${task.title || task.category || "Intelligent Reset"} • ${task.status_label || task.status || ""}`,
+        })), selectedTask, wanted);
+        setShelfStatus("");
+        const chosen = selectedTask && tasks.some((task) => String(task.task_id) === String(selectedTask))
+          ? selectedTask
+          : tasks[0].task_id;
+        await loadDataset(chosen, inst);
+      } catch (err) {
+        clearInstanceTasks(`Intelligent Reset tasks could not be loaded for ${inst}.`);
+      }
+    }
 
     // Helper: Normalize any bay representation to clean numeric retail bays ("1", "2", "3"...)
     function normalizeBay(bayVal) {
@@ -2348,47 +2515,7 @@
     }
 
     async function fetchTaskCatalog(selectedVal, instanceFilter) {
-      const inst = instanceFilter || state.instance || (document.getElementById("instance-selector") || {}).value || "harr";
-      const apiBase = getApiBase();
-      const candidateUrls = [
-        `${apiBase}/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`,
-        `/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`,
-        `http://127.0.0.1:8085/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`,
-        `http://localhost:8085/api/runner/shelf_reset/tasks?instance=${encodeURIComponent(inst)}`
-      ];
-
-      for (const url of candidateUrls) {
-        try {
-          const res = await fetch(url);
-          if (res && res.ok) {
-            const data = await res.json();
-            if (data && data.tasks && data.tasks.length) {
-              populateTaskOptions(data.tasks, selectedVal || state.dataset, inst);
-              return;
-            }
-          }
-        } catch (e) {}
-      }
-
-      // Check local ir_tasks index
-      const staticIndexUrls = [
-        "data/ir_tasks/index.json",
-        `${apiBase}/data/ir_tasks/index.json`,
-        "/data/ir_tasks/index.json",
-        "http://127.0.0.1:8085/data/ir_tasks/index.json"
-      ];
-      for (const idxUrl of staticIndexUrls) {
-        try {
-          const staticIndexRes = await fetch(idxUrl);
-          if (staticIndexRes && staticIndexRes.ok) {
-            const idxData = await staticIndexRes.json();
-            if (idxData && idxData.tasks && idxData.tasks.length) {
-              populateTaskOptions(idxData.tasks, selectedVal || state.dataset, inst);
-              return;
-            }
-          }
-        } catch (staticErr) {}
-      }
+      await loadTasksForInstance(instanceFilter || state.instance, selectedVal);
     }
 
     function applyLoadedData(data, datasetName) {
@@ -2432,121 +2559,61 @@
         populateTaskOptions(data.available_tasks, state.dataset, state.instance);
       }
 
-      const fixCount = state.steps.filter(s => s.type === "fix_in_bay").length;
+      state.backendMode = true;
+      state.validation = data.validation || null;
       const instBadge = (state.instance || "HARR").toUpperCase();
+      const validationState = state.validation ? state.validation.state : "pending";
       const subTitle = document.getElementById("brand-subtitle");
       if (subTitle) {
-        subTitle.textContent = 
-          `[${instBadge}] ${state.source} • ${state.slots.length} Slots • ${state.steps.length} Steps (${fixCount} Fix-in-Bay Shifts)`;
+        subTitle.textContent = data.message || `[${instBadge}] Task #${state.dataset} • ${state.steps.length} backend actions • Validation ${validationState}`;
       }
 
       saveSession();
       render();
     }
 
-    // Load dataset from backend API or static IR fixture fallback
-    async function loadDataset(datasetName = "8788767", instance = null) {
-      if (!datasetName || datasetName === "current") {
-        datasetName = (state.instance === "krcs" ? "42484849" : (state.instance === "albt" ? "60535563" : (state.instance === "stgsams" ? "27277459" : "8788767")));
+    async function loadDataset(datasetName, instance) {
+      const taskId = String(datasetName || "").trim();
+      if (!/^\d+$/.test(taskId)) {
+        showBackendLoadError("Enter a numeric task id.");
+        return;
       }
-      state.dataset = String(datasetName);
-      if (instance) {
-        state.instance = instance;
-      } else if (!state.instance) {
-        state.instance = (document.getElementById("instance-selector") || {}).value || "harr";
-      }
+      if (instance) state.instance = instance;
+      state.dataset = taskId;
+      state.backendMode = true;
       state.stepIndex = 0;
       state.history = [];
       state.heldItem = null;
-      state.activeBayFilter = "ALL";
-
-      const apiBase = getApiBase();
-      const serverBases = [
-        apiBase,
-        "",
-        "http://127.0.0.1:8085",
-        "http://localhost:8085"
-      ].filter((v, i, a) => v !== undefined && a.indexOf(v) === i);
-
-      // 1. Try Runner Server sequence API via POST
-      for (const sBase of serverBases) {
-        try {
-          const res = await fetch(`${sBase}/api/runner/shelf_reset/sequence`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              task_id: state.dataset,
-              instance: state.instance
-            })
-          });
-          if (res && res.ok) {
-            const data = await res.json();
-            if (data && data.status !== "error" && data.slots && data.slots.length) {
-              applyLoadedData(data, state.dataset);
-              return;
-            }
-          }
-        } catch (err) {}
-      }
-
-      // 1b. Try Runner Server sequence API via GET
-      for (const sBase of serverBases) {
-        try {
-          const res = await fetch(`${sBase}/api/runner/shelf_reset/sequence?task_id=${encodeURIComponent(state.dataset)}&instance=${encodeURIComponent(state.instance)}`);
-          if (res && res.ok) {
-            const data = await res.json();
-            if (data && data.status !== "error" && data.slots && data.slots.length) {
-              applyLoadedData(data, state.dataset);
-              return;
-            }
-          }
-        } catch (err) {}
-      }
-
-      // 2. Direct static fixture fetch for selected IR task
-      const staticCandidateUrls = [];
-      for (const sBase of serverBases) {
-        if (sBase) staticCandidateUrls.push(`${sBase}/data/ir_tasks/${state.dataset}.json`);
-      }
-      staticCandidateUrls.push(`data/ir_tasks/${state.dataset}.json`);
-      staticCandidateUrls.push(`/data/ir_tasks/${state.dataset}.json`);
-
-      for (const sUrl of staticCandidateUrls) {
-        try {
-          const staticRes = await fetch(sUrl);
-          if (staticRes && staticRes.ok) {
-            const staticData = await staticRes.json();
-            if (staticData && staticData.slots && staticData.slots.length) {
-              applyLoadedData(staticData, state.dataset);
-              return;
-            }
-          }
-        } catch (staticErr) {}
-      }
-
-      // 3. Fallback to instance primary task fixture if different
-      const primaryTaskForInst = state.instance === "krcs" ? "42484849" : (state.instance === "albt" ? "60535563" : (state.instance === "stgsams" ? "27277459" : "8788767"));
-      if (primaryTaskForInst !== state.dataset) {
-        for (const sBase of serverBases) {
-          try {
-            const fbUrl = sBase ? `${sBase}/data/ir_tasks/${primaryTaskForInst}.json` : `data/ir_tasks/${primaryTaskForInst}.json`;
-            const fbRes = await fetch(fbUrl);
-            if (fbRes && fbRes.ok) {
-              const fbData = await fbRes.json();
-              if (fbData && fbData.slots && fbData.slots.length) {
-                applyLoadedData(fbData, primaryTaskForInst);
-                return;
-              }
-            }
-          } catch (e) {}
+      const creds = shelfCredentials();
+      setShelfStatus(`Loading backend actions for Task #${taskId}…`);
+      try {
+        const res = await fetch(`${getApiBase()}/api/runner/shelf_reset/backend_actions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            task_id: taskId,
+            instance: state.instance,
+            username: creds.username.trim(),
+            password: creds.password,
+          }),
+        });
+        const data = await res.json();
+        if (instanceSlug(state.instance) !== instanceSlug(instance || state.instance)) return;
+        if (!res.ok || !data || data.status === "error") {
+          showBackendLoadError((data && data.message) || "The backend action list could not be loaded.");
+          return;
         }
+        applyLoadedData(data, taskId);
+        setShelfStatus(data.message || "");
+      } catch (err) {
+        showBackendLoadError("The backend action list could not be loaded.");
       }
-
-      loadLocalFallback(state.dataset, state.instance);
     }
 
-    function loadLocalFallback(taskId = "8788767", instance = "harr") {
-      const tid = String(taskId || "8788767");
+    function loadLocalFallback() {
+      showBackendLoadError("Cached and generated shelf actions are not shown.");
+      return;
+      const tid = String("8788767");
       let fallbackSlots = [];
       let sourceName = `Task #${tid}`;
 
@@ -2776,6 +2843,12 @@
     // Step Execution & Physical State Transformation
     function executeStep() {
       if (state.stepIndex >= state.steps.length) return;
+      if (state.backendMode) {
+        state.history.push({ stepIndex: state.stepIndex });
+        state.stepIndex++;
+        render();
+        return;
+      }
       const step = state.steps[state.stepIndex];
 
       state.history.push({
@@ -2835,14 +2908,22 @@
       if (!state.history.length) return;
       const prev = state.history.pop();
       state.stepIndex = prev.stepIndex;
-      state.slots = prev.slots;
-      state.heldItem = prev.heldItem;
+      if (!state.backendMode) {
+        state.slots = prev.slots;
+        state.heldItem = prev.heldItem;
+      }
       saveSession();
       render();
     }
 
     function jumpToStep(targetIndex) {
       if (targetIndex < 0 || targetIndex >= state.steps.length) return;
+      if (state.backendMode) {
+        state.stepIndex = targetIndex;
+        state.history = [];
+        render();
+        return;
+      }
       state.stepIndex = 0;
       state.history = [];
       state.heldItem = null;
@@ -2871,6 +2952,35 @@
     }
 
     function updateExecutiveKPIsAndComparison() {
+      if (state.backendMode) {
+        const validation = state.validation || {};
+        const countEl = document.getElementById("kpi-saved-pct");
+        if (countEl) countEl.textContent = String(state.steps.length);
+        const validationEl = document.getElementById("kpi-cart-stops");
+        if (validationEl) validationEl.textContent = validation.state || "—";
+        const summary = validation.summary || "Validation reports problems and leaves the backend list unchanged.";
+        const listNote = `• ${state.steps.length} step${state.steps.length === 1 ? "" : "s"}: identify, remove, then each bay`;
+        const findingNote = `• ${summary}`;
+        const naiveCart = document.getElementById("comp-naive-cart");
+        if (naiveCart) naiveCart.textContent = listNote;
+        const rules = validation.rule_check || {};
+        const sameBaySetAside = rules.same_bay_set_aside || 0;
+        const notFixInBay = (rules.same_bay_move_not_fix_in_bay || 0) + (rules.fix_in_bay_across_bays || 0);
+        const naiveTouches = document.getElementById("comp-naive-touches");
+        if (naiveTouches) {
+          naiveTouches.textContent = `• ${sameBaySetAside ? "🚩" : "✅"} Same-bay set aside: ${sameBaySetAside} · ${notFixInBay ? "🚩" : "✅"} Same-bay moves outside fix in bay: ${notFixInBay}`;
+          naiveTouches.style.color = sameBaySetAside || notFixInBay ? "#f87171" : "";
+        }
+        const naiveAisles = document.getElementById("comp-naive-aisles");
+        if (naiveAisles) naiveAisles.textContent = `• Swap and slide come only from the backend: ${rules.backend_swap_actions || 0} swap, ${rules.backend_slide_actions || 0} slide`;
+        const optShifts = document.getElementById("comp-opt-shifts");
+        if (optShifts) optShifts.textContent = findingNote;
+        const optSaved = document.getElementById("comp-opt-saved");
+        if (optSaved) optSaved.textContent = `• ${validation.critical_count || 0} critical, ${validation.warning_count || 0} warning`;
+        const optAisles = document.getElementById("comp-opt-aisles");
+        if (optAisles) optAisles.textContent = "• Findings do not reorder or remove actions";
+        return;
+      }
       const mismatchedTotal = state.slots.filter(s => s.current !== s.target).length;
       const naiveTouches = mismatchedTotal * 2;
       const actualTouches = state.steps.reduce((acc, s) => {
@@ -2932,7 +3042,56 @@
     }
 
     // Render Mobile Card (Card 1)
+    function readableAction(name) {
+      return String(name || "").replaceAll("_", "_" + String.fromCharCode(0x200b));
+    }
+
+    const OCCUPANCY_STYLE = {
+      vacant: { icon: "🟢", color: "#34d399", short: "Empty" },
+      occupied_cleared_later: { icon: "🟠", color: "#fbbf24", short: "Occupied now" },
+      occupied: { icon: "🔴", color: "#f87171", short: "Occupied" },
+    };
+
+    function occupancyStyle(occupancy) {
+      return (occupancy && OCCUPANCY_STYLE[occupancy.status]) || { icon: "⚪", color: "#94a3b8", short: "No target" };
+    }
+
+    const MOVEMENT_STYLE = {
+      same_bay: { icon: "↔", color: "#60a5fa" },
+      change_bay: { icon: "↪️", color: "#f472b6" },
+      backend_swap: { icon: "⇄", color: "#c084fc" },
+      backend_slide: { icon: "⇆", color: "#c084fc" },
+    };
+
+    function movementBadge(movement) {
+      if (!movement || !movement.short || !MOVEMENT_STYLE[movement.kind]) return "";
+      const look = MOVEMENT_STYLE[movement.kind];
+      return `<div style="font-size:10px; color:${look.color}; font-weight:800;">${look.icon} ${movement.short}</div>`;
+    }
+
+    function ruleFlagsHtml(step, compact) {
+      const flags = (step && step.rule_flags) || [];
+      if (!flags.length) return "";
+      if (compact) {
+        return flags.map((flag) => `<div title="${flag.message.replace(/"/g, '&quot;')}" style="font-size:9.5px; color:#f87171; font-weight:800;">🚩 ${flag.title}</div>`).join("");
+      }
+      return flags.map((flag) => `<div style="margin-top:4px; padding:4px 6px; border-radius:6px; background:rgba(248,113,113,0.14); border:1px solid rgba(248,113,113,0.5); color:#fecaca; font-size:10px; font-weight:700; white-space:normal;">🚩 Backend rule break: ${flag.title}<div style="font-weight:500;">${flag.message}</div></div>`).join("");
+    }
+
+    function compactSlot(location) {
+      if (!location || location.bay == null || location.bay === "") return "—";
+      const shelf = location.shelf != null && location.shelf !== "" ? location.shelf : "—";
+      const position = location.position != null && location.position !== "" ? location.position : "—";
+      return `${location.bay}·${shelf}·${position}`;
+    }
+
     function formatHumanFriendlyAction(step, prodTitle, fromLoc, toLoc) {
+      if (step.backend_action) {
+        return {
+          title: step.action_label || readableAction(step.backend_action),
+          subtitle: (step.movement && step.movement.text) || `${compactSlot(fromLoc)} → ${compactSlot(toLoc)}`,
+        };
+      }
       const shortTitle = prodTitle ? (prodTitle.length > 26 ? prodTitle.substring(0, 24) + '...' : prodTitle) : 'Item';
       switch (step.type) {
         case 'fix_in_bay':
@@ -3167,11 +3326,53 @@
 
         const sweepContainer = document.getElementById("card-sweep-container");
         const sweepPill = document.getElementById("card-sweep-pill");
+        if (step.backend_action) {
+          sweepContainer.style.display = "none";
+          if (phasePill) {
+            phasePill.style.display = "";
+            phasePill.textContent = step.sequence_label || step.action_label || "Backend action";
+          }
+          pill.textContent = step.action_label || step.state || "Backend";
+          pill.className = "type-pill";
+          const source = step.fromLocation;
+          const dest = step.toLocation;
+          document.getElementById("lbl-from-bay").textContent = source && source.bay ? source.bay : "—";
+          document.getElementById("lbl-from-shelf").textContent = source && source.shelf != null ? source.shelf : "—";
+          document.getElementById("lbl-from-pos").textContent = source && source.position != null ? source.position : "—";
+          if (dest) {
+            toRow.style.display = "flex";
+            arrowRow.style.display = "flex";
+            document.getElementById("lbl-to-bay").textContent = dest.bay || "—";
+            document.getElementById("lbl-to-shelf").textContent = dest.shelf != null ? dest.shelf : "—";
+            document.getElementById("lbl-to-pos").textContent = dest.position != null ? dest.position : "—";
+          } else {
+            toRow.style.display = "none";
+            arrowRow.style.display = "none";
+          }
+          const occ = step.target_occupancy;
+          if (clStrip) {
+            if (occ) {
+              const look = occupancyStyle(occ);
+              clStrip.style.display = "flex";
+              clIcon.textContent = look.icon;
+              clTxt.textContent = `Target: ${occ.title}. ${occ.text}`;
+              clTxt.style.color = look.color;
+            } else {
+              clStrip.style.display = "none";
+            }
+          }
+          const rawName = document.getElementById("card-raw-action");
+          if (rawName) {
+            rawName.style.display = "block";
+            rawName.innerHTML = `${movementBadge(step.movement)}<div>Backend action: ${step.backend_action}${step.upc ? ` · UPC ${step.upc}` : ""}</div>${ruleFlagsHtml(step, false)}`;
+          }
+        } else {
         const shelfNum = parseInt(fromLoc.shelf || (toLoc ? toLoc.shelf : '1'), 10);
         const snakeDir = (shelfNum % 2 === 0) ? "Left ➔ Right" : "Right ➔ Left";
         sweepContainer.style.display = "block";
         const tierName = shelfNum >= 5 ? "Top Shelf" : (shelfNum <= 2 ? "Bottom Shelf" : "Middle Shelf");
         sweepPill.innerHTML = `📍 Shelf ${fromLoc.shelf || (toLoc ? toLoc.shelf : '1')} (${tierName}) • Direction: ${snakeDir}`;
+        }
 
         // Product info
         const prodTitle = step.productTitle || step.item || "Unknown SKU";
@@ -3181,7 +3382,9 @@
         document.getElementById("product-upc-text").textContent = `${upcVal} ${brandVal}`;
 
         // Format Human-Friendly Action Title and Subtitle
-        const friendlyAction = formatHumanFriendlyAction(step, prodTitle, fromLoc, toLoc);
+        const friendlyFrom = step.backend_action ? step.fromLocation : fromLoc;
+        const friendlyTo = step.backend_action ? step.toLocation : toLoc;
+        const friendlyAction = formatHumanFriendlyAction(step, prodTitle, friendlyFrom, friendlyTo);
         document.getElementById("card-action-title").textContent = friendlyAction.title;
         const subElem = document.getElementById("card-action-subtitle");
         if (subElem) {
@@ -3370,13 +3573,82 @@
 
       if (!step) {
         document.getElementById("details-step-badge").textContent = "RESET COMPLETED";
-        document.getElementById("plain-rationale-text").textContent = 
-          "All items have reached their exact planogram positions. Zero collisions were produced and zero cart staging footprint was wasted.";
+        document.getElementById("plain-rationale-text").textContent =
+          state.steps.length
+            ? "The end of the backend list has been reached."
+            : ((state.validation && state.validation.summary) || "No backend actions are loaded.");
         renderTraceTable();
         return;
       }
 
       document.getElementById("details-step-badge").textContent = `STEP ${state.stepIndex + 1}`;
+
+      if (step.backend_action) {
+        const typePill = document.getElementById("deep-dive-type-pill");
+        typePill.className = "type-pill";
+        typePill.textContent = step.action_label || readableAction(step.backend_action);
+        const cartTag = document.getElementById("deep-dive-cart-tag");
+        if (cartTag) {
+          cartTag.style.display = "inline-flex";
+          const flagged = (step.rule_flags || []).length;
+          cartTag.textContent = flagged ? `🚩 ${readableAction(step.backend_action)} · rule break` : readableAction(step.backend_action);
+          cartTag.title = flagged ? step.rule_flags.map((flag) => flag.message).join(" ") : "Action sent by the backend";
+          cartTag.style.color = flagged ? "#f87171" : "";
+        }
+        const findings = ((state.validation && state.validation.findings) || []).filter((finding) =>
+          (finding.action_ids || []).map(String).includes(String(step.id))
+        );
+        const reason = step.reason ? `Backend reason: ${step.reason}.` : "The backend did not include a reason.";
+        const meaning = step.action_meaning ? `${step.action_meaning} ` : "";
+        const movementText = step.movement && step.movement.text ? ` Move: ${step.movement.text}.` : "";
+        const sequenceText = step.sequence_label ? `${step.sequence_label}. ` : "";
+        document.getElementById("plain-rationale-text").textContent = `${sequenceText}${meaning}${reason}${movementText}`;
+        const fromLoc = step.fromLocation;
+        const toLoc = step.toLocation;
+        document.getElementById("spec-full-from").textContent = fromLoc
+          ? `Bay ${fromLoc.bay} • Shelf ${fromLoc.shelf} • Pos ${fromLoc.position}`
+          : "No source position";
+        document.getElementById("spec-full-to").textContent = toLoc
+          ? `Bay ${toLoc.bay} • Shelf ${toLoc.shelf} • Pos ${toLoc.position}`
+          : "No expected position";
+        document.getElementById("spec-full-product").textContent = step.productTitle || step.item || "—";
+        document.getElementById("spec-full-upc").textContent = step.upc || "—";
+        const statusPill = document.getElementById("clearance-status-pill");
+        const provTextEl = document.getElementById("clearance-provenance-text");
+        const initOccupiedEl = document.getElementById("qa-init-occupied");
+        const clearedBeforeEl = document.getElementById("qa-cleared-before");
+        const occ = step.target_occupancy;
+        const look = occupancyStyle(occ);
+        const heading = document.getElementById("clearance-heading");
+        if (heading) heading.textContent = "Expected position";
+        if (statusPill) {
+          statusPill.className = "clearance-status-pill";
+          statusPill.textContent = `${look.icon} ${occ ? occ.title : "No target position"}`;
+          statusPill.style.color = look.color;
+        }
+        const stateLabel = document.getElementById("qa-label-state");
+        if (stateLabel) stateLabel.textContent = "Is it empty at this step?";
+        const findingLabel = document.getElementById("qa-label-finding");
+        if (findingLabel) findingLabel.textContent = "When does it become empty?";
+        if (initOccupiedEl) {
+          initOccupiedEl.textContent = !occ
+            ? "This action does not place a product."
+            : (occ.status === "vacant" ? `Yes. ${occ.text}` : `No. ${occ.text}`);
+        }
+        if (clearedBeforeEl) {
+          clearedBeforeEl.textContent = !occ
+            ? "—"
+            : (occ.status === "vacant"
+              ? (occ.cleared_at_step ? `Step ${occ.cleared_at_step}` : "Empty from the start of the list")
+              : (occ.cleared_at_step ? `Step ${occ.cleared_at_step}, after this step` : "No backend action empties it"));
+        }
+        if (provTextEl) {
+          const findingText = findings.length ? `Validation: ${findings.map((finding) => finding.message).join(" ")} ` : "";
+          provTextEl.textContent = `${findingText}State: ${step.state || "not provided"}. ${step.sequence_label || "Walk order"}. Worked out by replaying that walk.`;
+        }
+        renderTraceTable();
+        return;
+      }
 
       const typePill = document.getElementById("deep-dive-type-pill");
       typePill.className = `type-pill ${step.type}`;
@@ -3506,12 +3778,23 @@
     // Render Searchable Action Trace Table
     function renderTraceTable() {
       document.getElementById("trace-step-count").textContent = state.steps.length;
+      const ruleBreakCount = state.steps.filter((s) => (s.rule_flags || []).length).length;
+      document.querySelectorAll(".t-filter-chip").forEach((chip) => {
+        const type = chip.getAttribute("data-type");
+        if (type === "RULE_BREAK") {
+          chip.style.display = state.backendMode ? "" : "none";
+          chip.textContent = `🚩 Rule breaks (${ruleBreakCount})`;
+        } else if (state.backendMode && type !== "ALL") {
+          chip.style.display = "none";
+        }
+      });
       const tbody = document.getElementById("trace-table-body");
 
       const filterType = state.activeTraceFilter;
       const filteredSteps = state.steps.map((s, idx) => ({ ...s, origIndex: idx }))
         .filter(s => {
           if (filterType === "ALL") return true;
+          if (filterType === "RULE_BREAK") return (s.rule_flags || []).length > 0;
           if (filterType === "move" || filterType === "fix_in_bay") {
             return s.type === "move" || s.type === "fix_in_bay" || s.type === "slide";
           }
@@ -3522,23 +3805,46 @@
         });
 
       if (!filteredSteps.length) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:12px; color:var(--text-dim);">No steps matching '${filterType}' filter</td></tr>`;
+        tbody.innerHTML = filterType === "RULE_BREAK"
+          ? `<tr><td colspan="6" style="text-align:center; padding:12px; color:#34d399;">No backend rule breaks in this task.</td></tr>`
+          : `<tr><td colspan="6" style="text-align:center; padding:12px; color:var(--text-dim);">No steps matching '${filterType}' filter</td></tr>`;
         return;
       }
 
+      let lastSequence = "";
       tbody.innerHTML = filteredSteps.map(s => {
+        const band = state.backendMode && s.sequence_label && s.sequence_label !== lastSequence
+          ? `<tr><td colspan="6" style="padding:6px 8px; font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#93c5fd; background:rgba(59,130,246,0.08);">${s.sequence_label}</td></tr>`
+          : "";
+        if (s.sequence_label) lastSequence = s.sequence_label;
         const isCurrent = s.origIndex === state.stepIndex;
         const isDone = s.origIndex < state.stepIndex;
         const typePillClass = s.type === "fix_in_bay" ? "fix_in_bay" : s.type;
 
-        const fromLoc = s.fromLocation || parseLocation(state.slots.find(x => x.id === s.slotId), s.slotId);
-        const toLoc = s.toLocation || (s.toSlotId ? parseLocation(state.slots.find(x => x.id === s.toSlotId), s.toSlotId) : null);
+        const fromLoc = s.fromLocation || (s.backend_action ? null : parseLocation(state.slots.find(x => x.id === s.slotId), s.slotId));
+        const toLoc = s.toLocation || (!s.backend_action && s.toSlotId ? parseLocation(state.slots.find(x => x.id === s.toSlotId), s.toSlotId) : null);
 
-        const fromStr = `Bay ${fromLoc.bay} • S${fromLoc.shelf} P${fromLoc.position}`;
-        const toStr = toLoc ? `Bay ${toLoc.bay} • S${toLoc.shelf} P${toLoc.position}` : (s.type === 'pull' ? 'Return Bin' : '—');
+        const fromStr = s.backend_action ? compactSlot(fromLoc) : `Bay ${fromLoc.bay} • S${fromLoc.shelf} P${fromLoc.position}`;
+        const toStr = s.backend_action
+          ? compactSlot(toLoc)
+          : (toLoc ? `Bay ${toLoc.bay} • S${toLoc.shelf} P${toLoc.position}` : (s.type === 'pull' ? 'Return Bin' : '—'));
+        const fromTitle = fromLoc ? `Bay ${fromLoc.bay}, Shelf ${fromLoc.shelf}, Position ${fromLoc.position}` : "No source position";
+        const toTitle = toLoc ? `Bay ${toLoc.bay}, Shelf ${toLoc.shelf}, Position ${toLoc.position}` : "No expected position";
 
         let clearancePill = "";
+        if (state.backendMode) {
+          const flagged = ((state.validation && state.validation.findings) || []).some((finding) =>
+            (finding.action_ids || []).map(String).includes(String(s.id))
+          );
+          const look = occupancyStyle(s.target_occupancy);
+          const occTitle = s.target_occupancy ? s.target_occupancy.text : "This action does not place a product.";
+          const blocker = s.target_occupancy && s.target_occupancy.status !== "vacant" && s.target_occupancy.occupant_product
+            ? `<div title="${occTitle.replace(/"/g, '&quot;')}" style="max-width:120px; font-size:9px; color:${look.color}; white-space:normal; line-height:1.2;">${s.target_occupancy.occupant_product}${s.target_occupancy.occupant_upc ? `<br>UPC ${s.target_occupancy.occupant_upc}` : ""}</div>`
+            : "";
+          clearancePill = `<span title="${occTitle.replace(/"/g, '&quot;')}" style="font-size:10px; color:${look.color}; font-weight:700;">${look.icon} ${look.short}</span>${blocker}${flagged ? '<div style="font-size:9.5px; color:#f87171; font-weight:700;">review</div>' : ''}`;
+        }
         const cl = s.clearanceInfo || {};
+        if (!state.backendMode) {
         if (s.type === "hold") {
           clearancePill = `<span style="font-size:9.5px; color:#7dd3fc; font-weight:700;">✋ Buffer (Clears slot)</span>`;
         } else if (s.type === "pull") {
@@ -3559,29 +3865,34 @@
         } else {
           clearancePill = `<span style="font-size:9.5px; color:#94a3b8;">○ Empty at start</span>`;
         }
+        }
 
-        return `
-          <tr class="${isCurrent ? 'current-step' : (isDone ? 'done-step' : '')}" onclick="jumpToStep(${s.origIndex})" title="Click to jump to Step ${s.origIndex + 1}">
+        return band + `
+          <tr class="${isCurrent ? 'current-step' : (isDone ? 'done-step' : '')}" onclick="jumpToStep(${s.origIndex})" title="Click to jump to Step ${s.origIndex + 1}" style="${(s.rule_flags || []).length ? 'background:rgba(248,113,113,0.12); box-shadow:inset 3px 0 0 #f87171;' : ''}">
             <td style="font-family:'JetBrains Mono',monospace; color:${isCurrent ? 'var(--accent-blue)' : (isDone ? 'var(--accent-green)' : 'var(--text-dim)')};">
               ${isDone ? '✓' : (s.origIndex + 1)}
             </td>
             <td>
-              <span class="type-pill ${typePillClass}" style="padding:1px 5px; font-size:8.5px;">
-                ${s.type === 'fix_in_bay' ? '⚡ fix_in_bay' : (s.type === 'set_aside' ? '📦 set_aside' : (s.type === 'pull' ? '📤 pull' : s.type))}
+              <span class="${s.backend_action ? 'backend-action-name' : 'type-pill ' + typePillClass}" style="${s.backend_action ? '' : 'padding:1px 5px; font-size:8.5px;'}">
+                ${s.backend_action ? (s.action_label || readableAction(s.backend_action)) : (s.type === 'fix_in_bay' ? '⚡ fix_in_bay' : (s.type === 'set_aside' ? '📦 set_aside' : (s.type === 'pull' ? '📤 pull' : s.type)))}
               </span>
+              ${s.backend_action ? `<div style="font-size:9.5px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; overflow-wrap:anywhere;">${readableAction(s.backend_action)}</div>` : ''}
+              ${s.backend_action ? movementBadge(s.movement) : ''}
+              ${s.backend_action ? ruleFlagsHtml(s, true) : ''}
             </td>
-            <td style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:${isCurrent ? 'var(--accent-blue)' : '#e2e8f0'};">
+            <td class="trace-loc" title="${fromTitle}" style="color:${isCurrent ? 'var(--accent-blue)' : '#e2e8f0'};">
               ${fromStr}
             </td>
-            <td style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:${isCurrent ? '#c084fc' : '#cbd5e1'};">
+            <td class="trace-loc" title="${toTitle}" style="color:${isCurrent ? '#c084fc' : '#cbd5e1'};">
               ${toStr}
             </td>
             <td>
               <div style="font-weight:700; color:${isDone ? 'var(--text-muted)' : '#ffffff'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">
                 ${s.productTitle || s.item || ''}
               </div>
+              ${s.upc ? `<div style="font-size:9.5px; color:var(--text-dim); font-family:'JetBrains Mono',monospace;">UPC ${s.upc}</div>` : ''}
             </td>
-            <td>
+            <td class="trace-state">
               ${clearancePill}
             </td>
           </tr>
@@ -3594,6 +3905,7 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
           dataset: state.dataset,
           instance: state.instance,
+          backendMode: true,
           stepIndex: state.stepIndex,
           slots: state.slots,
           heldItem: state.heldItem,
@@ -3675,20 +3987,22 @@
             return;
           }
         }
-        const INSTANCE_PRIMARY_TASK = {
-          "harr": "8788767",
-          "krcs": "42484849",
-          "albt": "60535563",
-          "albtqa": "60535563",
-          "stgsams": "27277459",
-        };
-        const nextTask = INSTANCE_PRIMARY_TASK[val] || "8788767";
         state.instance = val;
-        state.dataset = nextTask;
-        const dsSel = document.getElementById("dataset-selector");
-        if (dsSel) dsSel.value = nextTask;
-        fetchTaskCatalog(nextTask, val);
-        loadDataset(nextTask, state.instance);
+        loadTasksForInstance(val);
+      });
+    }
+
+    const btnShelfSignIn = document.getElementById("btn-shelf-signin");
+    if (btnShelfSignIn) {
+      btnShelfSignIn.addEventListener("click", () => loadTasksForInstance(state.instance, "", { submitCredentials: true }));
+    }
+    const shelfPassword = document.getElementById("shelf-password");
+    if (shelfPassword) {
+      shelfPassword.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          loadTasksForInstance(state.instance, "", { submitCredentials: true });
+        }
       });
     }
 
@@ -3889,37 +4203,38 @@
 
     // Listen for parent dashboard task synchronization
     window.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'IR_SYNC_TASK') {
-        const { taskId, instance } = event.data;
-        if (taskId && (taskId !== state.dataset || (instance && instance !== state.instance))) {
-          if (instance) state.instance = instance;
-          state.dataset = String(taskId);
-          fetchTaskCatalog(state.dataset, state.instance);
-          loadDataset(state.dataset, state.instance);
+      if (!event.data) return;
+      if (event.data.type === 'IR_CREDENTIALS_SYNC') {
+        const user = document.getElementById('shelf-username');
+        const pass = document.getElementById('shelf-password');
+        if (user && event.data.username) user.value = event.data.username;
+        if (pass && event.data.password) pass.value = event.data.password;
+        const syncedInstance = instanceSlug(event.data.baseUrl || event.data.instance || state.instance);
+        if (syncedInstance) {
+          state.instance = syncedInstance;
+          const instSelect = document.getElementById('instance-selector');
+          if (instSelect) instSelect.value = syncedInstance;
         }
+        loadTasksForInstance(state.instance, "", { submitCredentials: true });
+        return;
+      }
+      if (event.data.type === 'IR_SYNC_TASK') {
+        const { taskId, instance } = event.data;
+        if (!taskId) return;
+        if (instance) state.instance = instance;
+        const instSelect = document.getElementById('instance-selector');
+        if (instSelect && instance) instSelect.value = instance;
+        loadTasksForInstance(state.instance, taskId);
       }
     });
 
-    // Initial boot with URL parameters support
     const urlParams = new URLSearchParams(window.location.search);
     const paramTask = urlParams.get('task_id') || urlParams.get('task');
     const paramInst = urlParams.get('instance') || urlParams.get('retailer');
-
-    if (paramTask) {
-      state.dataset = String(paramTask);
-      if (paramInst) state.instance = String(paramInst);
-      else if (!state.instance) state.instance = "harr";
-      fetchTaskCatalog(state.dataset, state.instance);
-      loadDataset(state.dataset, state.instance);
-    } else if (!restoreSession()) {
-      state.instance = "harr";
-      state.dataset = "8788767";
-      fetchTaskCatalog("8788767", "harr");
-      loadDataset("8788767", "harr");
-    } else {
-      fetchTaskCatalog(state.dataset, state.instance);
-      loadDataset(state.dataset, state.instance);
-    }
+    state.instance = paramInst || "harr";
+    const bootInstance = document.getElementById("instance-selector");
+    if (bootInstance) bootInstance.value = state.instance;
+    loadTasksForInstance(state.instance, paramTask || "");
   </script>
 </body>
 </html>

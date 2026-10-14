@@ -3163,7 +3163,7 @@ function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
   if (tab === 'shelf-mobile') {
     const frame = document.getElementById('iframe-shelf-mobile');
     if (frame && !frame.getAttribute('src')) {
-      frame.src = 'shelf_reset_mobile.html?v=20260923b';
+      frame.src = 'shelf_reset_mobile.html?v=20261014b';
     }
   }
   if (tab === 'ir-studio') {
