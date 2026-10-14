@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261014a" />
+  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261014g" />
   <script>
     (function() {
       try {
@@ -331,12 +331,12 @@
             <article class="ir-insight-metric">
               <span>Actions generated</span>
               <strong id="ir-overview-generated">—</strong>
-              <small>Work requested by the system</small>
+              <small id="ir-overview-generated-help">Work requested by the system</small>
             </article>
             <article class="ir-insight-metric">
               <span>Actions performed</span>
               <strong id="ir-overview-performed">—</strong>
-              <small>Accepted or completed by the associate</small>
+              <small id="ir-overview-performed-help">Accepted or completed by the associate</small>
             </article>
             <button type="button" class="ir-insight-metric ir-insight-metric--button" id="ir-duration-detail-button">
               <span>Reset duration</span>
@@ -350,6 +350,8 @@
               <small>Rejected, incomplete, or quality issues</small>
             </article>
           </div>
+
+          <p id="ir-work-result" class="ir-work-result" hidden></p>
 
           <div class="ir-action-review-grid">
             <article class="ir-action-review">
@@ -1392,7 +1394,7 @@
   <script src="assets/js/issue-bridge.js?v=20261007e"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20261007a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261014e"></script>
+  <script src="assets/js/ir-flow.js?v=20261014g"></script>
   <script src="assets/js/agent-center.js?v=20261012f"></script>
   <script src="assets/js/sentry-usage.js?v=20261012c"></script>
   <script src="assets/js/app.v16.js?v=20261012a"></script>

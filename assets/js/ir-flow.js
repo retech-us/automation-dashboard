@@ -1015,6 +1015,46 @@
 
     setText('ir-overview-generated', generatedCount);
     setText('ir-overview-performed', performedCount);
+    const generatedItems = generated.flatMap((row) => row.items || []);
+    const actionIds = new Set(generatedItems.map((item) => item.ledger_id).filter((id) => id != null && id !== ''));
+    const requiredCount = actionIds.size || generatedCount;
+    const duplicateCount = Math.max(0, generatedCount - requiredCount);
+    const unconfirmedTypes = Object.entries(shelfEvidence.unconfirmed_action_types || {})
+      .map(([type, count]) => `${count} ${type}`)
+      .join(', ');
+    const result = byId('ir-work-result');
+    if (result) {
+      let text = '';
+      let state = '';
+      if (performedLoaded && !taskStillOpen && shelfSplitKnown && unconfirmedShelf === 0) {
+        text = duplicateCount
+          ? `The associate performed all ${requiredCount} required actions. ${generatedCount} rows were generated because ${duplicateCount} repeat an action already on the list. Those repeats do not need another action on mobile.`
+          : `The associate performed all ${requiredCount} required actions.`;
+        state = 'clear';
+      } else if (performedLoaded && unconfirmedShelf > 0) {
+        text = `${unconfirmedShelf} product${unconfirmedShelf === 1 ? '' : 's'} ${unconfirmedShelf === 1 ? 'was' : 'were'} not performed${unconfirmedTypes ? ` (${unconfirmedTypes})` : ''}. Action Taken is still blank, so the associate did not record that work. ${okNoAction} products were already correct and needed no action.`;
+        state = 'warning';
+      } else if (taskStillOpen) {
+        text = 'This task is still open, so actions not recorded yet are not counted as missed.';
+      } else if (!performedLoaded) {
+        text = 'Performed actions could not be checked against Digital Shelf.';
+      }
+      result.hidden = !text;
+      result.dataset.state = state;
+      result.textContent = text;
+    }
+    setText(
+      'ir-overview-generated-help',
+      duplicateCount
+        ? `${requiredCount} to perform · ${duplicateCount} repeated rows, not extra work`
+        : 'Work requested by the system',
+    );
+    setText(
+      'ir-overview-performed-help',
+      performedLoaded && unconfirmedShelf === 0 && !taskStillOpen
+        ? 'All required actions were performed'
+        : (unconfirmedShelf > 0 ? `${unconfirmedShelf} not performed` : 'Recorded by the associate'),
+    );
     setText('ir-generated-action-total', generatedCount);
     setText('ir-performed-action-total', performedCount);
     setText('ir-overview-duration', typeof meta.wall_duration_min === 'number' ? `${meta.wall_duration_min} min` : 'Not recorded');
@@ -1107,46 +1147,38 @@
         .sort((a, b) => b.length - a.length || String(a[0].product_name || '').localeCompare(String(b[0].product_name || '')));
       if (!groups.length) return;
       const extraCount = groups.reduce((sum, group) => sum + group.length - 1, 0);
-      const facingName = (item) => {
-        const name = String(item.product_name || '');
-        const upc = String(item.upc || '');
-        if (name && name !== 'PRODUCT 000000000000' && name !== 'Product name unavailable') return name;
-        if (upc && upc !== '000000000000') return `UPC ${upc}`;
-        return `Unnamed product · action ${item.ledger_id}`;
-      };
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'ir-review-row';
-      button.setAttribute('aria-label', `View ${extraCount} extra facings across ${groups.length} actions`);
+      button.setAttribute('aria-label', `${extraCount} repeated rows. The action is already performed and no extra mobile action is required.`);
       const title = document.createElement('strong');
-      title.textContent = 'Extra facings';
+      title.textContent = 'Repeated rows';
       const detail = document.createElement('span');
       const facingCounts = (group) => {
         const expected = group[0].planogram_facings;
         const planogram = expected == null ? 'not on planogram' : `planogram ${expected}`;
         return `${planogram} · found ${group.length}`;
       };
-      detail.textContent = groups.map((group) => `${facingName(group[0])} (${facingCounts(group)})`).join(' · ');
+      detail.textContent = 'Same action, already performed. These rows do not need another action on mobile.';
       detail.title = detail.textContent;
       const count = document.createElement('em');
-      count.textContent = `${extraCount} extra`;
+      count.textContent = `${extraCount} not extra work`;
       button.append(title, detail, count);
       button.onclick = () => openInsightDialog({
-        title: 'Extra facings',
-        subtitle: `${groups.length} action ids · ${extraCount} extra rows · Task #${meta.task_id || 'unknown'}`,
+        title: 'Repeated rows are not extra work',
+        subtitle: `${extraCount} rows repeat an action the associate already has · Task #${meta.task_id || 'unknown'}`,
         summary: [
-          ['Action list rows', String(items.length)],
-          ['Action ids', String(byId.size)],
-          ['Ids with more than one facing', String(groups.length)],
-          ['Extra rows', String(extraCount)],
-          ['Why these rows repeat', 'Each group shares one action id and the same shelf position. The retailer sent a separate row for each facing.'],
-          ['Planogram facings', 'horizontal_facings on the action row: how many facings the planogram expects.'],
-          ['Found in realogram', 'Rows the scan detected for this action id, one per facing.'],
+          ['Result', 'The associate already has the action. These rows do not require another action on mobile.'],
+          ['Why the row exists', 'The scan found more than one facing, and the action list sent the same action again for each facing.'],
+          ['Required actions', String(byId.size)],
+          ['Repeated rows', String(extraCount)],
         ],
         items: groups.flatMap((group) => group.map((item, index) => ({
           ...item,
-          state: `${facingCounts(group)}`,
-          reason: `Facing ${index + 1} of ${group.length} · action id ${item.ledger_id}`,
+          state: index === 0 ? 'Action already listed' : 'Duplicate · no extra mobile action',
+          reason: index === 0
+            ? `This is the action to perform. ${facingCounts(group)}`
+            : `Same action, already covered. No additional action on mobile. ${facingCounts(group)}`,
         }))),
       });
       target.appendChild(button);
@@ -1408,7 +1440,15 @@
     setText('ir-exec-meta-date', '—');
     setText('ir-exec-meta-time', '—');
     setText('ir-overview-generated', '—');
+    setText('ir-overview-generated-help', 'Work requested by the system');
     setText('ir-overview-performed', '—');
+    setText('ir-overview-performed-help', 'Accepted or completed by the associate');
+    const workResult = byId('ir-work-result');
+    if (workResult) {
+      workResult.hidden = true;
+      workResult.textContent = '';
+      workResult.dataset.state = '';
+    }
     setText('ir-overview-duration', '—');
     setText('ir-overview-duration-help', 'Recorded task timing');
     setText('ir-overview-challenges', '—');
