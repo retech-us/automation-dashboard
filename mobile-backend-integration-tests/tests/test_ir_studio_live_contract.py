@@ -61,7 +61,47 @@ class IrStudioLiveContractTests(unittest.TestCase):
 
         self.assertEqual([row["id"] for row in rows], [1, 2])
         self.assertIn("/action-list/retailer/", source)
+        self.assertIn("version=2", source)
+        self.assertNotIn("setbay=", source)
+        requested = [call.args[0].full_url for call in mocked.call_args_list]
         self.assertEqual(mocked.call_count, 2)
+        self.assertTrue(all("version=2" in url and "type=set_bay" not in url for url in requested))
+
+    def test_set_bay_request_uses_the_current_section_name(self):
+        pages = [
+            _Response({"results": [{"id": 9, "current_position": {"section_info": {"name": "2"}}}], "next": "/page/2"}),
+            _Response({"results": [{"id": 10}], "next": None}),
+        ]
+        with patch("runner_server.urllib.request.urlopen", side_effect=pages) as mocked:
+            rows, source = runner_server.fetch_live_task_actions(
+                "https://example.rebotics.net", 42, "token", section="2"
+            )
+
+        self.assertEqual([row["id"] for row in rows], [9, 10])
+        requested = [call.args[0].full_url for call in mocked.call_args_list]
+        self.assertIn("type=set_bay", source)
+        self.assertIn("section=2", source)
+        self.assertTrue(all("version=2" in url and "type=set_bay" in url and "section=2" in url for url in requested))
+
+    def test_shelf_reset_requests_every_current_section_by_name(self):
+        calls = []
+
+        def fake(_base, _task, _token, timeout=12, section=None):
+            calls.append(section)
+            if section is None:
+                return [
+                    {"id": 1, "current_position": {"action": "identify", "section_info": {"name": "2"}}},
+                    {"id": 2, "current_position": {"section_info": {"name": "1"}}},
+                ], "base"
+            if section == "1":
+                return [{"id": 2}, {"id": 3, "loaded_section": section}], f"section-{section}"
+            return [{"id": 4, "loaded_section": section}], f"section-{section}"
+
+        with patch.object(runner_server, "fetch_live_task_actions", side_effect=fake):
+            rows, _url = runner_server.fetch_shelf_reset_actions("https://example.rebotics.net", 42, "token")
+
+        self.assertEqual(calls, [None, "1", "2"])
+        self.assertEqual([row["id"] for row in rows], [1, 2, 3, 4])
 
     def test_fetch_live_actions_requires_auth(self):
         with self.assertRaisesRegex(ValueError, "Authentication required"):

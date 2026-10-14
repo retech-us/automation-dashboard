@@ -44,6 +44,7 @@ from core.action_list_domain_mapper import transform_action_list_to_domain, Acti
 from core.action_list_ui_mapper import partition_ui_models_by_bay, BayUiSummary, map_domain_to_ui_model
 from core.invariants_validator import validate_all_invariants, InvariantCheckResult
 from core.action_generation_validator import validate_action_generation
+from core.backend_shelf_actions import present_backend_actions, shelf_slots_from_backend_actions, validate_backend_shelf_actions
 from core.scan_issue_investigator import investigate_scan_problem, parse_scan_url, placement_for_task_scans
 from core.html_report_generator import generate_html_validation_report
 from core.e2e_audit_engine import audit_task_execution, derive_why_user_performs_action
@@ -1340,6 +1341,111 @@ def parse_raw_action_items(raw_items: List[Dict[str, Any]], task_id: int, pog_id
     return sort_action_sequence(actions_list)
 
 
+def _shelf_task_scan_status(base_url: str, task_id: int, token: str) -> str:
+    """Read scan status for an empty action list. Failure leaves the status blank."""
+    try:
+        request = urllib.request.Request(
+            f"{base_url}/api/v1/tasks/{task_id}/",
+            headers={"Authorization": f"Token {token}", "Accept": "application/json"},
+        )
+        with urllib.request.urlopen(request, context=ssl_ctx, timeout=7) as response:
+            body = response.read().decode("utf-8")
+        if not body.lstrip().startswith("{"):
+            return ""
+        info = json.loads(body)
+        return str(info.get("scan_status") or "") if isinstance(info, dict) else ""
+    except Exception:
+        return ""
+
+
+def _backend_actions_payload(
+    base_url: str,
+    task_id: int,
+    raw_items: List[Dict[str, Any]],
+    message: str,
+) -> Dict[str, Any]:
+    """Return the retailer rows in store walk order, plus a read-only report."""
+    actions = present_backend_actions(raw_items)
+    instance = base_url.replace("https://", "").replace("http://", "").split(".")[0]
+    return {
+        "status": "success",
+        "source": "live",
+        "data_source": "live",
+        "task_id": task_id,
+        "instance": instance,
+        "base_url": base_url,
+        "action_count": len(actions),
+        "actions": actions,
+        "steps": actions,
+        "slots": shelf_slots_from_backend_actions(raw_items),
+        "validation": validate_backend_shelf_actions(raw_items),
+        "message": message,
+    }
+
+
+def run_shelf_reset_backend_actions(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Load one task's retailer action list without sequencing or local fixtures."""
+    payload = payload or {}
+    raw_instance = payload.get("base_url") or payload.get("instance") or ""
+    if not str(raw_instance).strip():
+        return {"status": "error", "message": "Choose an instance before loading backend actions."}
+    base_url = normalize_backend_url(str(raw_instance))
+    try:
+        task_id = int(payload.get("task_id") or 0)
+    except (TypeError, ValueError):
+        task_id = 0
+    if not task_id:
+        return {"status": "error", "message": "Enter a task id to load backend actions."}
+
+    username = str(payload.get("username") or "").strip()
+    password = str(payload.get("password") or "")
+    supplied_token = "" if username and password else str(payload.get("token") or "").strip()
+    try:
+        token, _source = investigation_access(base_url, base_url, username, password, supplied_token)
+    except Exception as exc:
+        message = str(exc) if username or password else f"Enter the username and password for {base_url}."
+        return {
+            "status": "error",
+            "error_code": "AUTH_REQUIRED",
+            "base_url": base_url,
+            "message": message,
+        }
+
+    try:
+        raw_items, _url = fetch_shelf_reset_actions(base_url, task_id, token)
+    except LiveActionsAuthError as exc:
+        forget_instance_token(base_url, token)
+        return {
+            "status": "error",
+            "error_code": "AUTH_REQUIRED",
+            "base_url": base_url,
+            "message": str(exc),
+        }
+    except ValueError as exc:
+        if "has no actions yet" in str(exc):
+            scan_status = _shelf_task_scan_status(base_url, task_id, token)
+            return _backend_actions_payload(
+                base_url,
+                task_id,
+                [],
+                empty_action_list_message(task_id, base_url, scan_status),
+            )
+        return {"status": "error", "base_url": base_url, "message": str(exc)}
+    except Exception as exc:
+        return {
+            "status": "error",
+            "base_url": base_url,
+            "message": f"Could not load Task #{task_id} from {base_url}. {exc}",
+        }
+
+    return _backend_actions_payload(
+        base_url,
+        task_id,
+        raw_items,
+        f"Loaded {len(raw_items)} backend actions for Task #{task_id}.",
+    )
+
+
 def empty_action_list_message(task_id: int, base_url: str, scan_status: str = "") -> str:
     """Explain an empty task action list from the task's own scan status."""
     if str(scan_status or "").upper() == "NO_CAPTURE":
@@ -1354,11 +1460,66 @@ class LiveActionsAuthError(ValueError):
     """The instance rejected the sign-in used for the action list."""
 
 
+def _with_action_list_query(url: str, section: Optional[str] = None) -> str:
+    """Ask for action-list version 2. A bay request names that bay's section."""
+    parts = urllib.parse.urlsplit(url)
+    query = [(key, value) for key, value in urllib.parse.parse_qsl(parts.query, keep_blank_values=True) if key != "setbay"]
+    keys = {key for key, _value in query}
+    if "version" not in keys:
+        query.append(("version", "2"))
+    if section not in (None, ""):
+        query = [(key, value) for key, value in query if key not in ("type", "section")]
+        query.extend((("type", "set_bay"), ("section", str(section))))
+    return urllib.parse.urlunsplit((
+        parts.scheme,
+        parts.netloc,
+        parts.path,
+        urllib.parse.urlencode(query),
+        parts.fragment,
+    ))
+
+
+def _section_names(rows: List[Dict[str, Any]]) -> List[str]:
+    """Section names in bay order, using the name the retailer sent."""
+    found = []
+    seen = set()
+    for row in rows:
+        for key in ("current_position", "expected_position"):
+            position = row.get(key) if isinstance(row.get(key), dict) else None
+            section = (position or {}).get("section_info") if isinstance((position or {}).get("section_info"), dict) else {}
+            name = section.get("name")
+            if name is None or str(name) == "" or str(name) in seen:
+                continue
+            seen.add(str(name))
+            found.append(str(name))
+
+    def sort_key(name: str) -> Tuple[int, str]:
+        digits = "".join(ch for ch in name if ch.isdigit())
+        return (int(digits) if digits else 10 ** 9, name)
+
+    return sorted(found, key=sort_key)
+
+
+def _merge_action_rows(base_rows: List[Dict[str, Any]], updates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Keep every returned facing, and add a set-bay row only when its id is new."""
+    merged = list(base_rows)
+    seen = {row.get("id") for row in merged if row.get("id") is not None}
+    for row in updates:
+        key = row.get("id")
+        if key is not None and key in seen:
+            continue
+        if key is not None:
+            seen.add(key)
+        merged.append(row)
+    return merged
+
+
 def fetch_live_task_actions(
     base_url: str,
     task_id: int,
     token: str,
     timeout: int = 12,
+    section: Optional[str] = None,
 ) -> Tuple[List[Dict[str, Any]], str]:
     """Fetch every live action page for a task; never substitute local files."""
     if not token:
@@ -1371,10 +1532,10 @@ def fetch_live_task_actions(
     }
     cache_buster = int(time.time() * 1000)
     candidates = [
-        f"{base_url}/api/v1/tasks/{task_id}/action-list/retailer/?limit=1000&_t={cache_buster}",
-        f"{base_url}/api/v1/tasks/{task_id}/actions/?limit=1000&_t={cache_buster}",
-        f"{base_url}/api/v4/tasks/{task_id}/action-list/retailer/?limit=1000&_t={cache_buster}",
-        f"{base_url}/api/v1/tasks/{task_id}/action-list/?limit=1000&_t={cache_buster}",
+        _with_action_list_query(f"{base_url}/api/v1/tasks/{task_id}/action-list/retailer/?limit=1000&_t={cache_buster}", section),
+        _with_action_list_query(f"{base_url}/api/v1/tasks/{task_id}/actions/?limit=1000&_t={cache_buster}", section),
+        _with_action_list_query(f"{base_url}/api/v4/tasks/{task_id}/action-list/retailer/?limit=1000&_t={cache_buster}", section),
+        _with_action_list_query(f"{base_url}/api/v1/tasks/{task_id}/action-list/?limit=1000&_t={cache_buster}", section),
     ]
     errors: List[str] = []
     answered = False
@@ -1400,7 +1561,7 @@ def fetch_live_task_actions(
                 elif isinstance(payload, dict):
                     page_items = payload.get("results") or payload.get("data") or payload.get("actions") or []
                     next_value = payload.get("next")
-                    next_url = urllib.parse.urljoin(base_url + "/", next_value) if next_value else None
+                    next_url = _with_action_list_query(urllib.parse.urljoin(base_url + "/", next_value), section) if next_value else None
                 else:
                     page_items = []
                     next_url = None
@@ -1429,6 +1590,26 @@ def fetch_live_task_actions(
     if answered:
         raise ValueError(f"Task #{task_id} on {base_url} has no actions yet.")
     raise ValueError(f"{base_url} does not provide a task action list.")
+
+
+def fetch_shelf_reset_actions(
+    base_url: str,
+    task_id: int,
+    token: str,
+    timeout: int = 12,
+) -> Tuple[List[Dict[str, Any]], str]:
+    """Load the full list, then each bay with its own section name."""
+    rows, url = fetch_live_task_actions(base_url, task_id, token, timeout=timeout)
+    for section in _section_names(rows):
+        section_rows, url = fetch_live_task_actions(
+            base_url,
+            task_id,
+            token,
+            timeout=timeout,
+            section=section,
+        )
+        rows = _merge_action_rows(rows, section_rows)
+    return rows, url
 
 
 class _EndpointMissing(Exception):
@@ -4354,6 +4535,16 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             })
             return
 
+        elif self.path.startswith("/api/runner/shelf_reset/backend_actions"):
+            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            res = run_shelf_reset_backend_actions({
+                "task_id": qs.get("task_id", [None])[0],
+                "instance": qs.get("instance", [None])[0],
+                "base_url": qs.get("base_url", [None])[0],
+            })
+            self._send_json(res)
+            return
+
         elif self.path.startswith("/api/runner/shelf_reset/sequence"):
             qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             task_id = qs.get("task_id", [None])[0] or "8648127"
@@ -4856,6 +5047,11 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
         elif self.path.startswith("/api/runner/testlab/check_firebase"):
             resp_data = self._handle_testlab_check_firebase(payload)
+            self._send_json(resp_data)
+            return
+
+        elif self.path.startswith("/api/runner/shelf_reset/backend_actions"):
+            resp_data = run_shelf_reset_backend_actions(payload)
             self._send_json(resp_data)
             return
 

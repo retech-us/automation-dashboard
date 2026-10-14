@@ -43,6 +43,7 @@ class FlowItem:
     state: str = "STATE_ACCEPTED"
     reason: str = ""
     image: Optional[str] = None
+    planogram_facings: Optional[int] = None
 
 
 @dataclass
@@ -1440,6 +1441,7 @@ def synthesize_task_flow_from_raw_actions(
                         state=state,
                         reason=reason,
                         image=item.get("image"),
+                        planogram_facings=item.get("horizontal_facings"),
                     ))
 
                 action_batches[batch_id] = ActionBatch(

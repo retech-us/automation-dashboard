@@ -1088,6 +1088,68 @@
         });
         target.appendChild(item);
       });
+      if (id === 'ir-generated-action-list') appendExtraFacings(target);
+    }
+
+    function appendExtraFacings(target) {
+      const items = generated.flatMap((row) => row.items || []);
+      const byId = new Map();
+      items.forEach((item) => {
+        const actionId = item.ledger_id;
+        if (actionId == null || actionId === '') return;
+        const key = String(actionId);
+        const group = byId.get(key) || [];
+        group.push(item);
+        byId.set(key, group);
+      });
+      const groups = [...byId.values()]
+        .filter((group) => group.length > 1)
+        .sort((a, b) => b.length - a.length || String(a[0].product_name || '').localeCompare(String(b[0].product_name || '')));
+      if (!groups.length) return;
+      const extraCount = groups.reduce((sum, group) => sum + group.length - 1, 0);
+      const facingName = (item) => {
+        const name = String(item.product_name || '');
+        const upc = String(item.upc || '');
+        if (name && name !== 'PRODUCT 000000000000' && name !== 'Product name unavailable') return name;
+        if (upc && upc !== '000000000000') return `UPC ${upc}`;
+        return `Unnamed product · action ${item.ledger_id}`;
+      };
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'ir-review-row';
+      button.setAttribute('aria-label', `View ${extraCount} extra facings across ${groups.length} actions`);
+      const title = document.createElement('strong');
+      title.textContent = 'Extra facings';
+      const detail = document.createElement('span');
+      const facingCounts = (group) => {
+        const expected = group[0].planogram_facings;
+        const planogram = expected == null ? 'not on planogram' : `planogram ${expected}`;
+        return `${planogram} · found ${group.length}`;
+      };
+      detail.textContent = groups.map((group) => `${facingName(group[0])} (${facingCounts(group)})`).join(' · ');
+      detail.title = detail.textContent;
+      const count = document.createElement('em');
+      count.textContent = `${extraCount} extra`;
+      button.append(title, detail, count);
+      button.onclick = () => openInsightDialog({
+        title: 'Extra facings',
+        subtitle: `${groups.length} action ids · ${extraCount} extra rows · Task #${meta.task_id || 'unknown'}`,
+        summary: [
+          ['Action list rows', String(items.length)],
+          ['Action ids', String(byId.size)],
+          ['Ids with more than one facing', String(groups.length)],
+          ['Extra rows', String(extraCount)],
+          ['Why these rows repeat', 'Each group shares one action id and the same shelf position. The retailer sent a separate row for each facing.'],
+          ['Planogram facings', 'horizontal_facings on the action row: how many facings the planogram expects.'],
+          ['Found in realogram', 'Rows the scan detected for this action id, one per facing.'],
+        ],
+        items: groups.flatMap((group) => group.map((item, index) => ({
+          ...item,
+          state: `${facingCounts(group)}`,
+          reason: `Facing ${index + 1} of ${group.length} · action id ${item.ledger_id}`,
+        }))),
+      });
+      target.appendChild(button);
     }
 
     renderRows('ir-generated-action-list', generatedSummary, 'No generated actions were returned for this task.');
