@@ -1,18 +1,18 @@
 {
   "status": "live",
-  "lastUpdated": "2026-10-16T03:46:28.766032+00:00",
+  "lastUpdated": "2026-10-16T04:05:14.477734+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "projectName": "Rebotics 3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 202,
+    "openDefects": 204,
     "blockers": 130,
     "inProgress": 136,
     "inQa": 58,
     "resolvedThisWeek": 233,
-    "resolvedTotal": 604
+    "resolvedTotal": 602
   },
   "byPriority": {
     "Highest": 130,
@@ -22,9 +22,9 @@
     "Lowest": 0
   },
   "byComponent": {
+    "IOS": 253,
     "General": 241,
-    "IOS": 251,
-    "BE REBM": 148,
+    "BE REBM": 146,
     "ANDR": 255,
     "HAWKEYE": 17,
     "DE": 14,
@@ -42,17 +42,17 @@
     "CVAT": 1
   },
   "byStatus": {
-    "To  Do": 170,
-    "UAT": 48,
+    "To  Do": 172,
+    "Staging": 6,
+    "UAT": 47,
     "QA": 58,
     "Code Review": 23,
     "In Progress": 29,
     "PRODUCTION READY": 19,
     "Invalid": 81,
-    "Done": 523,
+    "Done": 521,
     "Dev Complete": 12,
-    "Waiting for clarification": 32,
-    "Staging": 5
+    "Waiting for clarification": 32
   },
   "filterOptions": {
     "projects": [
@@ -226,8 +226,35 @@
   },
   "issues": [
     {
-      "key": "REB3-21015",
-      "summary": " [iOS]\u201cDone\u201d Displayed Instead of \u201cGo to Post Photo\u201d After All Bays Are Completed, Blocking Team Lead to perform post photo Actions and complete reset",
+      "key": "REB3-21016",
+      "summary": "[iOS]Additional bay with only Identify items: next step option not shown after all actions are completed",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "vikas yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
+      "tester": "Swati Goel",
+      "reporter": "Swati Goel",
+      "created": "2026-10-15T20:50:30.552-0700",
+      "updated": "2026-10-15T20:58:07.882-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21016"
+    },
+    {
+      "key": "REB3-21017",
+      "summary": " Task status message is not coming on dialogue when all users and Team Lead complete their actions",
       "project": "Rebotics 3",
       "projectKey": "REB3",
       "fixVersion": "Unversioned",
@@ -243,11 +270,63 @@
       "assigneeAvatar": null,
       "tester": "Swati Goel",
       "reporter": "Swati Goel",
-      "created": "2026-10-15T20:41:53.374-0700",
-      "updated": "2026-10-15T20:45:17.300-0700",
+      "created": "2026-10-15T20:56:48.712-0700",
+      "updated": "2026-10-15T20:58:03.560-0700",
       "ageDays": 0,
       "staleDays": 0,
       "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-21017"
+    },
+    {
+      "key": "REB3-20921",
+      "summary": "[BE PROD] finalPostPhotoRequired Returned as TRUE When Compliance Is Met and User Chooses to Complete Reset Without Taking Actions",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Staging",
+      "statusCategory": "indeterminate",
+      "priority": "Highest",
+      "component": "BE REBM",
+      "assignee": "Sourabh Yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/1992b54c65168d62b06676d8fba9defa?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSY-1.png",
+      "tester": "Swati Goel",
+      "reporter": "Swati Goel",
+      "created": "2026-10-09T00:01:23.526-0700",
+      "updated": "2026-10-15T20:47:46.060-0700",
+      "ageDays": 6,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20921"
+    },
+    {
+      "key": "REB3-21015",
+      "summary": " [iOS]\u201cDone\u201d Displayed Instead of \u201cGo to Post Photo\u201d After All Bays Are Completed, Blocking Team Lead to perform post photo Actions and complete reset",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "vikas yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
+      "tester": "Swati Goel",
+      "reporter": "Swati Goel",
+      "created": "2026-10-15T20:41:53.374-0700",
+      "updated": "2026-10-15T20:47:00.072-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
       "url": "https://retech.atlassian.net/browse/REB3-21015"
     },
     {
@@ -2454,31 +2533,6 @@
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19637"
-    },
-    {
-      "key": "REB3-20921",
-      "summary": "[BE PROD] finalPostPhotoRequired Returned as TRUE When Compliance Is Met and User Chooses to Complete Reset Without Taking Actions",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "UAT",
-      "statusCategory": "indeterminate",
-      "priority": "Highest",
-      "component": "BE REBM",
-      "assignee": "Sourabh Yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/1992b54c65168d62b06676d8fba9defa?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSY-1.png",
-      "tester": "Swati Goel",
-      "reporter": "Swati Goel",
-      "created": "2026-10-09T00:01:23.526-0700",
-      "updated": "2026-10-14T03:35:11.944-0700",
-      "ageDays": 6,
-      "staleDays": 1,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20921"
     },
     {
       "key": "REB3-20484",
@@ -12360,7 +12414,7 @@
       "reporter": "Akanksha Jangir",
       "created": "2026-07-21T20:48:41.734-0700",
       "updated": "2026-10-06T17:15:09.108-0700",
-      "ageDays": 85,
+      "ageDays": 86,
       "staleDays": 9,
       "labels": [
         "Customer",
@@ -13946,7 +14000,7 @@
       "reporter": "Mark Bieler",
       "created": "2026-03-05T19:56:18.932-0800",
       "updated": "2026-09-29T03:22:37.623-0700",
-      "ageDays": 223,
+      "ageDays": 224,
       "staleDays": 16,
       "labels": [
         "AD-HOC",
@@ -14837,7 +14891,7 @@
       "created": "2026-09-16T11:20:11.135-0700",
       "updated": "2026-09-22T20:48:21.149-0700",
       "ageDays": 29,
-      "staleDays": 22,
+      "staleDays": 23,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20682"
     },
@@ -14862,7 +14916,7 @@
       "created": "2026-07-13T06:57:31.646-0700",
       "updated": "2026-09-22T20:48:13.860-0700",
       "ageDays": 94,
-      "staleDays": 22,
+      "staleDays": 23,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -14891,7 +14945,7 @@
       "created": "2026-06-25T09:17:49.520-0700",
       "updated": "2026-09-22T20:48:07.600-0700",
       "ageDays": 112,
-      "staleDays": 22,
+      "staleDays": 23,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -14920,7 +14974,7 @@
       "created": "2026-06-23T12:14:25.076-0700",
       "updated": "2026-09-22T20:48:02.155-0700",
       "ageDays": 114,
-      "staleDays": 22,
+      "staleDays": 23,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -14949,7 +15003,7 @@
       "created": "2026-03-30T07:46:36.628-0700",
       "updated": "2026-09-22T20:47:57.020-0700",
       "ageDays": 199,
-      "staleDays": 22,
+      "staleDays": 23,
       "labels": [
         "Customer",
         "QKTP",
@@ -26977,63 +27031,6 @@
         "Customer"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20001"
-    },
-    {
-      "key": "REB3-19990",
-      "summary": "[BE] Support FEDEX Barcode scanning & validation in surveys",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.15 SPAR_MJHD - BE",
-      "isReleased": true,
-      "releaseStatus": "Released",
-      "type": "Task",
-      "epic": "None",
-      "status": "Done",
-      "statusCategory": "done",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Arihant Srivastava",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AS-3.png",
-      "tester": "Vishal Kohli",
-      "reporter": "Vishal Kohli",
-      "created": "2026-07-07T05:37:29.839-0700",
-      "updated": "2026-08-24T02:45:34.220-0700",
-      "ageDays": 100,
-      "staleDays": 52,
-      "labels": [
-        "AD-HOC",
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19990"
-    },
-    {
-      "key": "REB3-19967",
-      "summary": "[BE] Add survey-level \"No Validation\" barcode validator support",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.15 SPAR_MJHD - BE",
-      "isReleased": true,
-      "releaseStatus": "Released",
-      "type": "Task",
-      "epic": "None",
-      "status": "Done",
-      "statusCategory": "done",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Arihant Srivastava",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/initials/AS-3.png",
-      "tester": "Sourabh Yadav",
-      "reporter": "Sourabh Yadav",
-      "created": "2026-07-02T01:29:50.202-0700",
-      "updated": "2026-08-24T02:44:59.071-0700",
-      "ageDays": 105,
-      "staleDays": 52,
-      "labels": [
-        "AD-HOC",
-        "Customer",
-        "MJHD"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-19967"
     }
   ]
 }
