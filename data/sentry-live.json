@@ -1,10 +1,8 @@
 {
-  "generated_at": "2026-10-17T15:04:19+00:00",
+  "generated_at": "2026-10-17T15:21:03+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
-  "errors": [
-    "period_usage: IncompleteRead(0 bytes read, 883 more expected)"
-  ],
+  "errors": [],
   "billing_period": {
     "start": "2026-09-25",
     "end": "2026-10-24",
@@ -560,13 +558,13 @@
       "date": "2026-10-16",
       "accepted": 0,
       "quota_dropped": 111950405,
-      "dropped": 197203118
+      "dropped": 197203140
     },
     {
       "date": "2026-10-17",
       "accepted": 0,
-      "quota_dropped": 17793439,
-      "dropped": 32563323
+      "quota_dropped": 18525849,
+      "dropped": 33792036
     }
   ],
   "months": [
@@ -595,19 +593,19 @@
       "month": "2026-10",
       "days_covered": 17,
       "accepted_total": 0,
-      "quota_dropped": 1473157505,
-      "all_dropped": 2750190387
+      "quota_dropped": 1473889915,
+      "all_dropped": 2751419122
     }
   ],
   "span_drop_reasons_90d": {
-    "rate_limited/span_usage_exceeded": 4476695627,
-    "client_discard/ratelimit_backoff": 3214310674,
+    "rate_limited/span_usage_exceeded": 4477428037,
+    "client_discard/ratelimit_backoff": 3214666038,
     "invalid/too_large:transaction": 1173907651,
-    "client_discard/sample_rate": 1071114760,
+    "client_discard/sample_rate": 1071239668,
     "rate_limited/spike_protection": 199691433,
-    "client_discard/backpressure": 127357372,
+    "client_discard/backpressure": 127371071,
     "invalid/too_large:event": 13131410,
-    "client_discard/network_error": 7622044,
+    "client_discard/network_error": 7624398,
     "client_discard/before_send": 3811391,
     "filtered/web-crawlers": 1051121,
     "client_discard/send_error": 920986,
@@ -621,13 +619,24 @@
     "filtered/legacy-browsers": 1095,
     "invalid/internal": 2
   },
+  "period_usage": {
+    "error": 723195,
+    "log_byte": 5000451650,
+    "replay": 208968,
+    "span": 290330654,
+    "attachment": 36641878,
+    "profile_duration_ui": 11.06,
+    "profile_duration": 0.0,
+    "monitor_seat": 0,
+    "uptime": 0
+  },
   "error_outcomes_30d": {
     "invalid": 310,
     "rate_limited": 1115,
     "abuse": 3,
-    "accepted": 963545,
-    "client_discard": 3142703,
-    "filtered": 99
+    "accepted": 963588,
+    "filtered": 99,
+    "client_discard": 3142972
   },
   "projects_period": [
     {
