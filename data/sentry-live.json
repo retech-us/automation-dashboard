@@ -1,24 +1,17 @@
 {
-  "generated_at": "2026-10-20T01:43:15+00:00",
+  "generated_at": "2026-10-20T01:58:38+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
-  "errors": [],
+  "errors": [
+    "subscription: <urlopen error [Errno 104] Connection reset by peer> (needs org:billing; plan caps fall back to config)",
+    "period_usage: <urlopen error [Errno 104] Connection reset by peer>"
+  ],
   "billing_period": {
-    "start": "2026-09-25",
-    "end": "2026-10-24",
-    "source": "sentry-subscription"
+    "start": "2026-10-01",
+    "end": "2026-10-31",
+    "source": "config"
   },
-  "reserved": {
-    "monitor_seat": 1,
-    "uptime": 1,
-    "profile_duration": 0.0,
-    "profile_duration_ui": 0.0,
-    "span": 5000000,
-    "log_byte": 5000000000.0,
-    "attachment": 1000000000.0,
-    "replay": 300000,
-    "error": 1000000
-  },
+  "reserved": {},
   "daily": [
     {
       "date": "2026-07-22",
@@ -563,8 +556,8 @@
     {
       "date": "2026-10-20",
       "accepted": 0,
-      "quota_dropped": 3676120,
-      "dropped": 6152839
+      "quota_dropped": 4008381,
+      "dropped": 6659442
     }
   ],
   "months": [
@@ -593,19 +586,19 @@
       "month": "2026-10",
       "days_covered": 20,
       "accepted_total": 0,
-      "quota_dropped": 1621228048,
-      "all_dropped": 3038976398
+      "quota_dropped": 1621560309,
+      "all_dropped": 3039483001
     }
   ],
   "span_drop_reasons_90d": {
-    "rate_limited/span_usage_exceeded": 4527087652,
-    "client_discard/ratelimit_backoff": 3293785737,
+    "rate_limited/span_usage_exceeded": 4527419913,
+    "client_discard/ratelimit_backoff": 3293859630,
     "invalid/too_large:transaction": 1173907651,
-    "client_discard/sample_rate": 1068005062,
+    "client_discard/sample_rate": 1068102615,
     "rate_limited/spike_protection": 199691433,
-    "client_discard/backpressure": 128111381,
+    "client_discard/backpressure": 128114149,
     "invalid/too_large:event": 13131410,
-    "client_discard/network_error": 7615382,
+    "client_discard/network_error": 7615510,
     "client_discard/before_send": 3411297,
     "filtered/web-crawlers": 1051121,
     "client_discard/send_error": 921033,
@@ -619,55 +612,15 @@
     "filtered/legacy-browsers": 1095,
     "invalid/internal": 2
   },
-  "period_usage": {
-    "error": 764644,
-    "log_byte": 5000451650,
-    "replay": 222049,
-    "span": 290330654,
-    "attachment": 38046915,
-    "profile_duration_ui": 11.06,
-    "profile_duration": 0.0,
-    "monitor_seat": 0,
-    "uptime": 0
-  },
   "error_outcomes_30d": {
-    "rate_limited": 655,
-    "client_discard": 2953971,
     "filtered": 108,
-    "invalid": 306,
-    "accepted": 913901,
-    "abuse": 3
+    "client_discard": 2954175,
+    "rate_limited": 655,
+    "abuse": 3,
+    "accepted": 913915,
+    "invalid": 306
   },
-  "projects_period": [
-    {
-      "project": "rebm",
-      "accepted": 276292445
-    },
-    {
-      "project": "rebotics-frontend",
-      "accepted": 3667946
-    },
-    {
-      "project": "ios",
-      "accepted": 3585219
-    },
-    {
-      "project": "hawkeye",
-      "accepted": 3246470
-    },
-    {
-      "project": "android",
-      "accepted": 2981210
-    },
-    {
-      "project": "race-platform",
-      "accepted": 557325
-    },
-    {
-      "project": "fvm",
-      "accepted": 39
-    }
-  ],
+  "projects_period": [],
   "environments_30d": [
     {
       "project": "rebm",
