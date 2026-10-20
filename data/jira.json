@@ -1,15 +1,15 @@
 {
   "status": "live",
-  "lastUpdated": "2026-10-20T13:14:14.351093+00:00",
+  "lastUpdated": "2026-10-20T13:31:03.205589+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "projectName": "Rebotics 3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 203,
+    "openDefects": 202,
     "blockers": 131,
-    "inProgress": 176,
+    "inProgress": 177,
     "inQa": 48,
     "resolvedThisWeek": 55,
     "resolvedTotal": 573
@@ -23,8 +23,8 @@
   },
   "byComponent": {
     "IOS": 258,
-    "DE": 14,
     "General": 253,
+    "DE": 14,
     "FE REBM": 4,
     "BE REBM": 142,
     "ANDR": 245,
@@ -42,11 +42,11 @@
     "CVAT": 1
   },
   "byStatus": {
-    "Code Review": 32,
-    "QA": 48,
     "In Progress": 32,
+    "Code Review": 33,
+    "To  Do": 168,
+    "QA": 48,
     "PRODUCTION READY": 19,
-    "To  Do": 169,
     "Staging": 14,
     "Done": 491,
     "Invalid": 82,
@@ -224,6 +224,90 @@
   },
   "issues": [
     {
+      "key": "REB3-20702",
+      "summary": "[iOS] Single Offline Survey Sync Status Inconsistent Between iOS and Android",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "REB3: Mobile backlog",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "In Progress",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "anton.mitrofanov",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-09-21T04:12:31.265-0700",
+      "updated": "2026-10-20T06:28:05.261-0700",
+      "ageDays": 29,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM",
+        "offline-survey"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20702"
+    },
+    {
+      "key": "REB3-21028",
+      "summary": "[iOS] Complete Survey Button Behavior Is Inconsistent Between iOS and Android",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.42 PRGM",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "IOS",
+      "assignee": "anton.mitrofanov",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-10-16T02:32:21.930-0700",
+      "updated": "2026-10-20T06:27:57.841-0700",
+      "ageDays": 4,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21028"
+    },
+    {
+      "key": "REB3-21044",
+      "summary": "[ANDR] Unassigned User Can Access Started Task Without Assignment",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Highest",
+      "component": "General",
+      "assignee": "Rohit Mahajan",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/92bc2584e645a62df2a38c6e1f805a5d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FRM-3.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-10-18T22:37:37.950-0700",
+      "updated": "2026-10-20T06:18:33.941-0700",
+      "ageDays": 1,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21044"
+    },
+    {
       "key": "REB3-21037",
       "summary": "[iOS] Unable to start offline tasks due to an incorrect ongoing online survey warning",
       "project": "Rebotics 3",
@@ -303,34 +387,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20992"
-    },
-    {
-      "key": "REB3-21028",
-      "summary": "[iOS] Complete Survey Button Behavior Is Inconsistent Between iOS and Android",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.42 PRGM",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "In Progress",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "IOS",
-      "assignee": "anton.mitrofanov",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-10-16T02:32:21.930-0700",
-      "updated": "2026-10-20T04:48:21.628-0700",
-      "ageDays": 4,
-      "staleDays": 0,
-      "labels": [
-        "IOS",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-21028"
     },
     {
       "key": "REB3-20904",
@@ -1030,8 +1086,8 @@
       "reporter": "Akanksha Jangir",
       "created": "2026-10-19T06:24:08.771-0700",
       "updated": "2026-10-19T06:24:09.529-0700",
-      "ageDays": 0,
-      "staleDays": 0,
+      "ageDays": 1,
+      "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21050"
     },
@@ -1082,7 +1138,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-10-17T06:19:41.688-0700",
       "updated": "2026-10-19T05:48:16.071-0700",
-      "ageDays": 2,
+      "ageDays": 3,
       "staleDays": 1,
       "labels": [
         "BE"
@@ -1545,33 +1601,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20731"
     },
     {
-      "key": "REB3-21044",
-      "summary": "[ANDR] Unassigned User Can Access Started Task Without Assignment",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Highest",
-      "component": "General",
-      "assignee": "Rohit Mahajan",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/92bc2584e645a62df2a38c6e1f805a5d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FRM-3.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-10-18T22:37:37.950-0700",
-      "updated": "2026-10-19T00:47:13.596-0700",
-      "ageDays": 1,
-      "staleDays": 1,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-21044"
-    },
-    {
       "key": "REB3-20971",
       "summary": "[BE] Planner mode plumbing and the TRANSFER group type",
       "project": "Rebotics 3",
@@ -1956,7 +1985,7 @@
       "created": "2026-10-11T23:41:01.947-0700",
       "updated": "2026-10-17T06:18:01.091-0700",
       "ageDays": 8,
-      "staleDays": 2,
+      "staleDays": 3,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20946"
     },
@@ -1980,8 +2009,8 @@
       "reporter": "Rohan Patil",
       "created": "2026-10-17T06:14:19.707-0700",
       "updated": "2026-10-17T06:16:14.723-0700",
-      "ageDays": 2,
-      "staleDays": 2,
+      "ageDays": 3,
+      "staleDays": 3,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21042"
     },
@@ -2891,35 +2920,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-21007"
     },
     {
-      "key": "REB3-20702",
-      "summary": "[iOS] Single Offline Survey Sync Status Inconsistent Between iOS and Android",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "REB3: Mobile backlog",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "anton.mitrofanov",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-09-21T04:12:31.265-0700",
-      "updated": "2026-10-16T02:48:59.888-0700",
-      "ageDays": 29,
-      "staleDays": 4,
-      "labels": [
-        "IOS",
-        "PRGM",
-        "offline-survey"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20702"
-    },
-    {
       "key": "REB3-20958",
       "summary": "[iOS][IR] Implement Execution Mode Selection Dialog and API Integration",
       "project": "Rebotics 3",
@@ -3019,7 +3019,7 @@
       "reporter": "anton.mitrofanov",
       "created": "2026-09-17T06:15:37.417-0700",
       "updated": "2026-10-16T01:50:19.354-0700",
-      "ageDays": 32,
+      "ageDays": 33,
       "staleDays": 4,
       "labels": [
         "ANDR"
@@ -6394,7 +6394,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-10T06:21:43.634-0700",
       "updated": "2026-10-13T05:49:42.860-0700",
-      "ageDays": 70,
+      "ageDays": 71,
       "staleDays": 7,
       "labels": [
         "ALBT",
@@ -6422,7 +6422,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-10T06:17:22.230-0700",
       "updated": "2026-10-13T05:49:31.004-0700",
-      "ageDays": 70,
+      "ageDays": 71,
       "staleDays": 7,
       "labels": [
         "ALBT",
@@ -7351,7 +7351,7 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-10-05T06:20:15.522-0700",
       "updated": "2026-10-12T02:20:55.002-0700",
-      "ageDays": 14,
+      "ageDays": 15,
       "staleDays": 8,
       "labels": [
         "ALBT",
@@ -7908,7 +7908,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-28T06:26:21.406-0700",
       "updated": "2026-10-12T00:32:18.062-0700",
-      "ageDays": 21,
+      "ageDays": 22,
       "staleDays": 8,
       "labels": [
         "IOS",
@@ -10833,7 +10833,7 @@
       "reporter": "Swati Goel",
       "created": "2026-09-26T06:29:22.824-0700",
       "updated": "2026-10-08T22:56:19.966-0700",
-      "ageDays": 23,
+      "ageDays": 24,
       "staleDays": 11,
       "labels": [
         "IOS"
@@ -12559,8 +12559,8 @@
       "reporter": "Rohan Patil",
       "created": "2026-10-08T06:26:02.993-0700",
       "updated": "2026-10-08T06:27:57.437-0700",
-      "ageDays": 11,
-      "staleDays": 11,
+      "ageDays": 12,
+      "staleDays": 12,
       "labels": [
         "ANDR"
       ],
@@ -12586,8 +12586,8 @@
       "reporter": "Brijesh Bhatt",
       "created": "2026-10-05T06:18:47.642-0700",
       "updated": "2026-10-08T06:24:29.622-0700",
-      "ageDays": 14,
-      "staleDays": 11,
+      "ageDays": 15,
+      "staleDays": 12,
       "labels": [
         "ALBT",
         "ANDR",
@@ -15009,7 +15009,7 @@
       "created": "2026-08-05T08:16:17.577-0700",
       "updated": "2026-09-28T06:26:22.650-0700",
       "ageDays": 75,
-      "staleDays": 21,
+      "staleDays": 22,
       "labels": [
         "IOS",
         "PRGM"
@@ -15037,7 +15037,7 @@
       "created": "2026-07-08T01:34:37.680-0700",
       "updated": "2026-09-28T06:25:51.041-0700",
       "ageDays": 104,
-      "staleDays": 21,
+      "staleDays": 22,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20083"
     },
@@ -17132,7 +17132,7 @@
       "reporter": "Abhinav Singh",
       "created": "2026-08-21T06:30:24.333-0700",
       "updated": "2026-09-20T21:57:49.658-0700",
-      "ageDays": 59,
+      "ageDays": 60,
       "staleDays": 29,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20446"
@@ -20548,7 +20548,7 @@
       "reporter": "vikas yadav",
       "created": "2026-09-01T06:15:50.577-0700",
       "updated": "2026-09-08T01:24:38.406-0700",
-      "ageDays": 48,
+      "ageDays": 49,
       "staleDays": 42,
       "labels": [
         "iOS"
@@ -23799,7 +23799,7 @@
       "created": "2026-08-07T02:16:59.305-0700",
       "updated": "2026-09-07T06:17:19.936-0700",
       "ageDays": 74,
-      "staleDays": 42,
+      "staleDays": 43,
       "labels": [
         "Backend",
         "REBM",
@@ -24254,7 +24254,7 @@
       "created": "2026-09-03T01:06:51.670-0700",
       "updated": "2026-09-03T06:19:26.862-0700",
       "ageDays": 47,
-      "staleDays": 46,
+      "staleDays": 47,
       "labels": [
         "IOS",
         "PRGM"
@@ -25329,7 +25329,7 @@
       "created": "2026-07-24T02:58:43.458-0700",
       "updated": "2026-08-31T06:15:36.514-0700",
       "ageDays": 88,
-      "staleDays": 49,
+      "staleDays": 50,
       "labels": [
         "AD-HOC",
         "PILOT",
