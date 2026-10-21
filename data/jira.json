@@ -1,16 +1,16 @@
 {
   "status": "live",
-  "lastUpdated": "2026-10-21T10:38:16.441937+00:00",
+  "lastUpdated": "2026-10-21T10:50:20.212189+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "projectName": "Rebotics 3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 196,
+    "openDefects": 194,
     "blockers": 134,
-    "inProgress": 190,
-    "inQa": 42,
+    "inProgress": 191,
+    "inQa": 43,
     "resolvedThisWeek": 10,
     "resolvedTotal": 572
   },
@@ -22,9 +22,9 @@
     "Lowest": 0
   },
   "byComponent": {
+    "General": 253,
     "IOS": 258,
     "ANDR": 246,
-    "General": 253,
     "FE REBM": 4,
     "BE REBM": 143,
     "FE Hawkeye": 14,
@@ -42,17 +42,17 @@
     "CVAT": 1
   },
   "byStatus": {
-    "Dev Complete": 25,
-    "In Progress": 37,
-    "To  Do": 163,
+    "In Progress": 38,
+    "Code Review": 27,
+    "QA": 43,
+    "Dev Complete": 24,
+    "To  Do": 161,
     "Waiting for clarification": 33,
     "UAT": 69,
-    "QA": 42,
     "PRODUCTION READY": 19,
     "Invalid": 84,
     "Staging": 14,
-    "Done": 488,
-    "Code Review": 26
+    "Done": 488
   },
   "filterOptions": {
     "projects": [
@@ -223,6 +223,83 @@
   },
   "issues": [
     {
+      "key": "REB3-20995",
+      "summary": "[BE]Undo for Set Aside and Add to Shelf with linked-action guards",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "In Progress",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "General",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Raghav Galhotra",
+      "reporter": "Raghav Galhotra",
+      "created": "2026-10-14T03:34:30.954-0700",
+      "updated": "2026-10-21T03:49:47.164-0700",
+      "ageDays": 7,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20995"
+    },
+    {
+      "key": "REB3-20996",
+      "summary": "[BE]Expose the sync settings to mobile",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "Code Review",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "General",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Raghav Galhotra",
+      "reporter": "Raghav Galhotra",
+      "created": "2026-10-14T03:35:20.033-0700",
+      "updated": "2026-10-21T03:49:41.829-0700",
+      "ageDays": 7,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20996"
+    },
+    {
+      "key": "REB3-21048",
+      "summary": "[iOS] Camera option is available to sub users, allowing them to upload scans",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Swati Goel",
+      "reporter": "Swati Goel",
+      "created": "2026-10-19T01:44:06.009-0700",
+      "updated": "2026-10-21T03:44:58.244-0700",
+      "ageDays": 2,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21048"
+    },
+    {
       "key": "REB3-20927",
       "summary": "[iOS] Add new API for polling new Updated Item",
       "project": "Rebotics 3",
@@ -300,33 +377,6 @@
         "ANDR"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-21044"
-    },
-    {
-      "key": "REB3-21048",
-      "summary": "[iOS] Camera option is available to sub users, allowing them to upload scans",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Swati Goel",
-      "reporter": "Swati Goel",
-      "created": "2026-10-19T01:44:06.009-0700",
-      "updated": "2026-10-21T02:49:15.361-0700",
-      "ageDays": 2,
-      "staleDays": 0,
-      "labels": [
-        "IOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-21048"
     },
     {
       "key": "REB3-21050",
@@ -599,7 +649,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-21T03:41:18.065-0700",
       "updated": "2026-10-21T02:31:26.642-0700",
-      "ageDays": 29,
+      "ageDays": 30,
       "staleDays": 0,
       "labels": [
         "IOS",
@@ -1454,56 +1504,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20997"
     },
     {
-      "key": "REB3-20996",
-      "summary": "[BE]Expose the sync settings to mobile",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "High",
-      "component": "General",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Raghav Galhotra",
-      "reporter": "Raghav Galhotra",
-      "created": "2026-10-14T03:35:20.033-0700",
-      "updated": "2026-10-21T00:09:55.778-0700",
-      "ageDays": 7,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20996"
-    },
-    {
-      "key": "REB3-20995",
-      "summary": "[BE]Undo for Set Aside and Add to Shelf with linked-action guards",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "High",
-      "component": "General",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Raghav Galhotra",
-      "reporter": "Raghav Galhotra",
-      "created": "2026-10-14T03:34:30.954-0700",
-      "updated": "2026-10-21T00:09:28.486-0700",
-      "ageDays": 7,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20995"
-    },
-    {
       "key": "REB3-20994",
       "summary": "[BE]Reject writes on a completed bay or after pre-photo is closed; take subtask locks in one order in the handoff",
       "project": "Rebotics 3",
@@ -2198,7 +2198,7 @@
       "reporter": "Swati Goel",
       "created": "2026-10-19T03:48:32.092-0700",
       "updated": "2026-10-19T06:10:19.943-0700",
-      "ageDays": 1,
+      "ageDays": 2,
       "staleDays": 1,
       "labels": [
         "BE"
@@ -2357,7 +2357,7 @@
       "created": "2026-10-18T23:23:28.649-0700",
       "updated": "2026-10-19T03:43:10.371-0700",
       "ageDays": 2,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21046"
     },
@@ -2436,7 +2436,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-09-24T03:43:51.709-0700",
       "updated": "2026-10-19T01:39:11.114-0700",
-      "ageDays": 26,
+      "ageDays": 27,
       "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20731"
@@ -2962,8 +2962,8 @@
       "reporter": "Rohit Mahajan",
       "created": "2026-10-12T03:43:49.586-0700",
       "updated": "2026-10-17T03:40:48.612-0700",
-      "ageDays": 8,
-      "staleDays": 3,
+      "ageDays": 9,
+      "staleDays": 4,
       "labels": [
         "ALBT",
         "ANDR"
@@ -4839,7 +4839,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-10-08T03:40:15.051-0700",
       "updated": "2026-10-13T23:49:47.215-0700",
-      "ageDays": 12,
+      "ageDays": 13,
       "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20915"
@@ -4978,7 +4978,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-21T03:39:12.249-0700",
       "updated": "2026-10-13T23:49:43.895-0700",
-      "ageDays": 29,
+      "ageDays": 30,
       "staleDays": 7,
       "labels": [
         "IOS",
@@ -7186,7 +7186,7 @@
       "created": "2026-09-11T09:21:32.889-0700",
       "updated": "2026-10-13T03:46:00.217-0700",
       "ageDays": 39,
-      "staleDays": 7,
+      "staleDays": 8,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -7296,7 +7296,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-10-06T03:42:23.495-0700",
       "updated": "2026-10-13T03:37:24.679-0700",
-      "ageDays": 14,
+      "ageDays": 15,
       "staleDays": 8,
       "labels": [
         "AD-HOC",
@@ -9583,7 +9583,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-09-30T03:40:49.247-0700",
       "updated": "2026-10-08T23:15:03.936-0700",
-      "ageDays": 20,
+      "ageDays": 21,
       "staleDays": 12,
       "labels": [
         "IOS"
@@ -13444,7 +13444,7 @@
       "reporter": "Swati Goel",
       "created": "2026-09-26T03:40:15.729-0700",
       "updated": "2026-10-07T00:36:44.597-0700",
-      "ageDays": 24,
+      "ageDays": 25,
       "staleDays": 14,
       "labels": [
         "IOS"
@@ -15834,7 +15834,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-07-02T03:44:43.276-0700",
       "updated": "2026-09-23T05:53:47.431-0700",
-      "ageDays": 110,
+      "ageDays": 111,
       "staleDays": 27,
       "labels": [
         "Backend",
@@ -15890,7 +15890,7 @@
       "created": "2024-10-11T05:31:53.411-0700",
       "updated": "2026-09-23T03:49:31.537-0700",
       "ageDays": 739,
-      "staleDays": 27,
+      "staleDays": 28,
       "labels": [
         "Android"
       ],
@@ -16953,7 +16953,7 @@
       "reporter": "Gleb Sapunkov",
       "created": "2024-03-28T03:49:04.848-0700",
       "updated": "2026-09-20T22:40:46.624-0700",
-      "ageDays": 936,
+      "ageDays": 937,
       "staleDays": 30,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-14330"
@@ -18135,7 +18135,7 @@
       "created": "2026-07-28T01:05:06.071-0700",
       "updated": "2026-09-16T03:45:00.533-0700",
       "ageDays": 85,
-      "staleDays": 34,
+      "staleDays": 35,
       "labels": [
         "ALBT",
         "Customer"
@@ -18162,8 +18162,8 @@
       "reporter": "Ashok Pilli",
       "created": "2026-08-13T03:38:58.616-0700",
       "updated": "2026-09-16T03:43:57.426-0700",
-      "ageDays": 68,
-      "staleDays": 34,
+      "ageDays": 69,
+      "staleDays": 35,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20380"
     },
@@ -18188,7 +18188,7 @@
       "created": "2026-09-04T01:58:10.559-0700",
       "updated": "2026-09-16T03:43:23.904-0700",
       "ageDays": 47,
-      "staleDays": 34,
+      "staleDays": 35,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20573"
     },
@@ -18213,7 +18213,7 @@
       "created": "2026-08-31T20:35:24.484-0700",
       "updated": "2026-09-16T03:43:18.124-0700",
       "ageDays": 50,
-      "staleDays": 34,
+      "staleDays": 35,
       "labels": [
         "ALBT",
         "Customer"
@@ -19451,7 +19451,7 @@
       "created": "2026-07-22T00:06:38.180-0700",
       "updated": "2026-09-11T03:42:22.601-0700",
       "ageDays": 91,
-      "staleDays": 39,
+      "staleDays": 40,
       "labels": [
         "SHIELD",
         "iOS"
@@ -24728,7 +24728,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-25T03:46:15.270-0700",
       "updated": "2026-09-02T04:07:15.674-0700",
-      "ageDays": 56,
+      "ageDays": 57,
       "staleDays": 48,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20459"
@@ -26575,7 +26575,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-13T03:43:23.856-0700",
       "updated": "2026-08-27T03:25:35.749-0700",
-      "ageDays": 68,
+      "ageDays": 69,
       "staleDays": 55,
       "labels": [
         "ANDR"
@@ -26738,7 +26738,7 @@
       "created": "2026-06-18T08:28:41.554-0700",
       "updated": "2026-08-26T03:44:36.395-0700",
       "ageDays": 124,
-      "staleDays": 55,
+      "staleDays": 56,
       "labels": [
         "AD-HOC",
         "ALBT",
