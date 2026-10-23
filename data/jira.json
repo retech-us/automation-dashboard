@@ -1,16 +1,16 @@
 {
   "status": "live",
-  "lastUpdated": "2026-10-23T10:25:09.325207+00:00",
+  "lastUpdated": "2026-10-23T10:36:26.773683+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "projectName": "Rebotics 3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 187,
+    "openDefects": 186,
     "blockers": 138,
-    "inProgress": 201,
-    "inQa": 43,
+    "inProgress": 197,
+    "inQa": 48,
     "resolvedThisWeek": 5,
     "resolvedTotal": 569
   },
@@ -22,11 +22,11 @@
     "Lowest": 0
   },
   "byComponent": {
-    "General": 233,
+    "ANDR": 258,
     "IOS": 258,
+    "General": 233,
     "BE REBM": 152,
     "FE REBM": 6,
-    "ANDR": 258,
     "DE": 14,
     "HAWKEYE": 18,
     "FE Hawkeye": 12,
@@ -42,13 +42,13 @@
     "CVAT": 1
   },
   "byStatus": {
-    "To  Do": 153,
-    "In Progress": 34,
-    "QA": 43,
+    "In Progress": 35,
+    "UAT": 73,
+    "QA": 48,
+    "To  Do": 152,
     "Code Review": 29,
-    "Dev Complete": 33,
+    "Dev Complete": 27,
     "Staging": 15,
-    "UAT": 72,
     "Waiting for clarification": 34,
     "PRODUCTION READY": 18,
     "Invalid": 84,
@@ -224,6 +224,277 @@
   },
   "issues": [
     {
+      "key": "REB3-21022",
+      "summary": "[Android] Non-Task Lead User Can Access Manage Users and Assign Bays After Task Lead Marks Task Incomplete",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "In Progress",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "ANDR",
+      "assignee": "Rohit Mahajan",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/92bc2584e645a62df2a38c6e1f805a5d?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FRM-3.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-10-16T01:24:37.784-0700",
+      "updated": "2026-10-23T03:30:30.495-0700",
+      "ageDays": 7,
+      "staleDays": 0,
+      "labels": [
+        "ANDR"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21022"
+    },
+    {
+      "key": "REB3-21019",
+      "summary": "[iOS] User Able to Start a Task with \u201cNot Prepared\u201d Indicator While Task Is In Progress",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.42 PRGM",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "IOS",
+      "assignee": "anton.mitrofanov",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-10-15T23:53:51.628-0700",
+      "updated": "2026-10-23T03:29:42.284-0700",
+      "ageDays": 7,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21019"
+    },
+    {
+      "key": "REB3-20985",
+      "summary": "[iOS][IR] Update Task Detail and Action List API Models for Multi-User Support",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "Unversioned",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "General",
+      "assignee": "vikas yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
+      "tester": "vikas yadav",
+      "reporter": "vikas yadav",
+      "created": "2026-10-14T00:47:50.344-0700",
+      "updated": "2026-10-23T03:27:26.242-0700",
+      "ageDays": 9,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-20985"
+    },
+    {
+      "key": "REB3-20927",
+      "summary": "[iOS] Add new API for polling new Updated Item",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Nitish Kumar",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
+      "tester": "Nitish Kumar",
+      "reporter": "Nitish Kumar",
+      "created": "2026-10-09T01:54:13.720-0700",
+      "updated": "2026-10-23T03:27:26.179-0700",
+      "ageDays": 14,
+      "staleDays": 0,
+      "labels": [
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20927"
+    },
+    {
+      "key": "REB3-20925",
+      "summary": "[iOS] Show actioned item for current bay.",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Nitish Kumar",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
+      "tester": "Nitish Kumar",
+      "reporter": "Nitish Kumar",
+      "created": "2026-10-09T01:54:12.134-0700",
+      "updated": "2026-10-23T03:27:26.110-0700",
+      "ageDays": 14,
+      "staleDays": 0,
+      "labels": [
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20925"
+    },
+    {
+      "key": "REB3-20926",
+      "summary": "[iOS] Add Direct patch call for set aside",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "vikas yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
+      "tester": "Nitish Kumar",
+      "reporter": "Nitish Kumar",
+      "created": "2026-10-09T01:54:12.921-0700",
+      "updated": "2026-10-23T03:27:25.911-0700",
+      "ageDays": 14,
+      "staleDays": 0,
+      "labels": [
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20926"
+    },
+    {
+      "key": "REB3-20929",
+      "summary": "[iOS] Update Cell UI",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "vikas yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
+      "tester": "Nitish Kumar",
+      "reporter": "Nitish Kumar",
+      "created": "2026-10-09T01:54:15.098-0700",
+      "updated": "2026-10-23T03:27:25.544-0700",
+      "ageDays": 14,
+      "staleDays": 0,
+      "labels": [
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20929"
+    },
+    {
+      "key": "REB3-20928",
+      "summary": "[iOS] Smoothly Update Existing item with Updated Pooling Item",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "vikas yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
+      "tester": "Nitish Kumar",
+      "reporter": "Nitish Kumar",
+      "created": "2026-10-09T01:54:14.403-0700",
+      "updated": "2026-10-23T03:27:25.342-0700",
+      "ageDays": 14,
+      "staleDays": 0,
+      "labels": [
+        "Customer"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20928"
+    },
+    {
+      "key": "REB3-20685",
+      "summary": "[iOS] Conditional post photo in survey tasks",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.42 PRGM",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Sub-task",
+      "epic": "REB3-18247 - [PRGM] CONTRACTUAL - Create conditional post-photos in surveys/task management",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "anton.mitrofanov",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
+      "tester": "anton.mitrofanov",
+      "reporter": "anton.mitrofanov",
+      "created": "2026-09-17T06:11:33.846-0700",
+      "updated": "2026-10-23T03:26:07.978-0700",
+      "ageDays": 35,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20685"
+    },
+    {
+      "key": "REB3-20701",
+      "summary": "[iOS] Offline Task Not Syncing on iOS with Full Internet Connectivity",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.42 PRGM",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "High",
+      "component": "IOS",
+      "assignee": "anton.mitrofanov",
+      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-09-21T03:41:18.065-0700",
+      "updated": "2026-10-23T03:26:07.922-0700",
+      "ageDays": 31,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM",
+        "offline-survey"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-20701"
+    },
+    {
       "key": "REB3-20974",
       "summary": "[BE] Action list: 503 planned_list_unavailable instead of the v1 fallback for multi pre-photo",
       "project": "Rebotics 3",
@@ -272,35 +543,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21052"
-    },
-    {
-      "key": "REB3-20701",
-      "summary": "[iOS] Offline Task Not Syncing on iOS with Full Internet Connectivity",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.42 PRGM",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "High",
-      "component": "IOS",
-      "assignee": "anton.mitrofanov",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-09-21T03:41:18.065-0700",
-      "updated": "2026-10-23T03:08:24.261-0700",
-      "ageDays": 31,
-      "staleDays": 0,
-      "labels": [
-        "IOS",
-        "PRGM",
-        "offline-survey"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20701"
     },
     {
       "key": "REB3-21043",
@@ -624,33 +866,6 @@
         "ANDR"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-21009"
-    },
-    {
-      "key": "REB3-21022",
-      "summary": "[Android] Non-Task Lead User Can Access Manage Users and Assign Bays After Task Lead Marks Task Incomplete",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "High",
-      "component": "ANDR",
-      "assignee": "Gaurav Tripathi",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
-      "tester": "Rohan Patil",
-      "reporter": "Rohan Patil",
-      "created": "2026-10-16T01:24:37.784-0700",
-      "updated": "2026-10-23T00:46:58.708-0700",
-      "ageDays": 7,
-      "staleDays": 0,
-      "labels": [
-        "ANDR"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-21022"
     },
     {
       "key": "REB3-20103",
@@ -1222,33 +1437,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-21045"
     },
     {
-      "key": "REB3-20928",
-      "summary": "[iOS] Smoothly Update Existing item with Updated Pooling Item",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "vikas yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
-      "tester": "Nitish Kumar",
-      "reporter": "Nitish Kumar",
-      "created": "2026-10-09T01:54:14.403-0700",
-      "updated": "2026-10-22T22:55:01.143-0700",
-      "ageDays": 14,
-      "staleDays": 0,
-      "labels": [
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20928"
-    },
-    {
       "key": "REB3-20983",
       "summary": "[DE][WHFD] Scan Detail API Endpoint Updates",
       "project": "Rebotics 3",
@@ -1293,7 +1481,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-10-14T03:36:20.407-0700",
       "updated": "2026-10-22T07:00:03.612-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20997"
@@ -1692,7 +1880,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-10-14T03:34:30.954-0700",
       "updated": "2026-10-22T04:00:12.867-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20995"
@@ -1717,7 +1905,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-10-14T03:35:20.033-0700",
       "updated": "2026-10-22T03:59:59.244-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20996"
@@ -1832,61 +2020,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-21028"
     },
     {
-      "key": "REB3-21019",
-      "summary": "[iOS] User Able to Start a Task with \u201cNot Prepared\u201d Indicator While Task Is In Progress",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.42 PRGM",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "IOS",
-      "assignee": "anton.mitrofanov",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-10-15T23:53:51.628-0700",
-      "updated": "2026-10-22T03:46:25.615-0700",
-      "ageDays": 7,
-      "staleDays": 0,
-      "labels": [
-        "IOS",
-        "PRGM"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-21019"
-    },
-    {
-      "key": "REB3-20685",
-      "summary": "[iOS] Conditional post photo in survey tasks",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.42 PRGM",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-18247 - [PRGM] CONTRACTUAL - Create conditional post-photos in surveys/task management",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "anton.mitrofanov",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:2a289203-a6c9-4a1e-acc3-07013dfa855a/e545743c-4f06-4a04-9a51-e9bbf80b7701/48",
-      "tester": "anton.mitrofanov",
-      "reporter": "anton.mitrofanov",
-      "created": "2026-09-17T06:11:33.846-0700",
-      "updated": "2026-10-22T03:42:04.575-0700",
-      "ageDays": 35,
-      "staleDays": 0,
-      "labels": [
-        "IOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20685"
-    },
-    {
       "key": "REB3-21058",
       "summary": "[IR] Evaluate and display shelf-count mismatch before reset actions",
       "project": "Rebotics 3",
@@ -1932,7 +2065,7 @@
       "created": "2026-10-22T02:54:23.247-0700",
       "updated": "2026-10-22T03:29:17.443-0700",
       "ageDays": 1,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "Android",
         "PRGM"
@@ -1960,7 +2093,7 @@
       "created": "2026-10-22T03:00:09.454-0700",
       "updated": "2026-10-22T03:29:13.673-0700",
       "ageDays": 1,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "Android",
         "PRGM"
@@ -2092,7 +2225,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-10-14T03:33:21.019-0700",
       "updated": "2026-10-22T01:14:06.419-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20994"
@@ -2173,7 +2306,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-10-14T03:32:22.054-0700",
       "updated": "2026-10-21T23:41:21.347-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20993"
@@ -2248,7 +2381,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-10-14T03:31:22.499-0700",
       "updated": "2026-10-21T22:44:59.818-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20992"
@@ -2273,7 +2406,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-10-14T03:26:01.580-0700",
       "updated": "2026-10-21T22:44:31.078-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20988"
@@ -2298,7 +2431,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-10-14T03:27:00.045-0700",
       "updated": "2026-10-21T22:11:35.277-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20989"
@@ -2566,7 +2699,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-10-14T03:30:33.585-0700",
       "updated": "2026-10-21T07:22:43.748-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20991"
@@ -2591,7 +2724,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-10-14T03:27:56.018-0700",
       "updated": "2026-10-21T07:21:17.870-0700",
-      "ageDays": 8,
+      "ageDays": 9,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20990"
@@ -2726,33 +2859,6 @@
         "BE"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-21036"
-    },
-    {
-      "key": "REB3-20927",
-      "summary": "[iOS] Add new API for polling new Updated Item",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Nitish Kumar",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
-      "tester": "Nitish Kumar",
-      "reporter": "Nitish Kumar",
-      "created": "2026-10-09T01:54:13.720-0700",
-      "updated": "2026-10-21T03:28:03.679-0700",
-      "ageDays": 14,
-      "staleDays": 1,
-      "labels": [
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20927"
     },
     {
       "key": "REB3-20862",
@@ -3534,60 +3640,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-19611"
     },
     {
-      "key": "REB3-20925",
-      "summary": "[iOS] Show actioned item for current bay.",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Nitish Kumar",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
-      "tester": "Nitish Kumar",
-      "reporter": "Nitish Kumar",
-      "created": "2026-10-09T01:54:12.134-0700",
-      "updated": "2026-10-19T07:43:12.092-0700",
-      "ageDays": 14,
-      "staleDays": 3,
-      "labels": [
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20925"
-    },
-    {
-      "key": "REB3-20926",
-      "summary": "[iOS] Add Direct patch call for set aside",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "vikas yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
-      "tester": "Nitish Kumar",
-      "reporter": "Nitish Kumar",
-      "created": "2026-10-09T01:54:12.921-0700",
-      "updated": "2026-10-19T07:25:25.769-0700",
-      "ageDays": 14,
-      "staleDays": 3,
-      "labels": [
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20926"
-    },
-    {
       "key": "REB3-20502",
       "summary": "[QT] Investigate: Planogram Product Position not correctly positioned",
       "project": "Rebotics 3",
@@ -3790,58 +3842,6 @@
       "staleDays": 4,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20975"
-    },
-    {
-      "key": "REB3-20985",
-      "summary": "[iOS][IR] Update Task Detail and Action List API Models for Multi-User Support",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "Unversioned",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "General",
-      "assignee": "vikas yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
-      "tester": "vikas yadav",
-      "reporter": "vikas yadav",
-      "created": "2026-10-14T00:47:50.344-0700",
-      "updated": "2026-10-18T23:57:31.959-0700",
-      "ageDays": 9,
-      "staleDays": 4,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20985"
-    },
-    {
-      "key": "REB3-20929",
-      "summary": "[iOS] Update Cell UI",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Sub-task",
-      "epic": "REB3-20924 - [iOS]  [IR] [PHASE 1] Multi-User Set Aside & Add to Shelf Synchronization",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "vikas yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
-      "tester": "Nitish Kumar",
-      "reporter": "Nitish Kumar",
-      "created": "2026-10-09T01:54:15.098-0700",
-      "updated": "2026-10-18T23:57:22.151-0700",
-      "ageDays": 14,
-      "staleDays": 4,
-      "labels": [
-        "Customer"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-20929"
     },
     {
       "key": "REB3-20940",
@@ -5242,7 +5242,7 @@
       "created": "2026-08-26T14:29:45.130-0700",
       "updated": "2026-10-14T03:25:30.907-0700",
       "ageDays": 57,
-      "staleDays": 8,
+      "staleDays": 9,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20484"
     },
@@ -5944,7 +5944,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-10-08T03:29:03.515-0700",
       "updated": "2026-10-13T23:48:18.477-0700",
-      "ageDays": 14,
+      "ageDays": 15,
       "staleDays": 9,
       "labels": [
         "AD-HOC",
@@ -6598,7 +6598,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-08-14T03:30:56.559-0700",
       "updated": "2026-10-13T21:34:08.327-0700",
-      "ageDays": 69,
+      "ageDays": 70,
       "staleDays": 9,
       "labels": [
         "AD-HOC",
@@ -7389,7 +7389,7 @@
       "reporter": "Swati Goel",
       "created": "2026-10-07T03:25:33.547-0700",
       "updated": "2026-10-13T05:29:20.125-0700",
-      "ageDays": 15,
+      "ageDays": 16,
       "staleDays": 9,
       "labels": [
         "IOS"
@@ -7917,7 +7917,7 @@
       "created": "2026-10-12T21:26:35.770-0700",
       "updated": "2026-10-13T03:36:16.184-0700",
       "ageDays": 10,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "AD-HOC",
         "PILOT",
@@ -7946,7 +7946,7 @@
       "created": "2026-10-08T02:17:30.986-0700",
       "updated": "2026-10-13T03:34:56.711-0700",
       "ageDays": 15,
-      "staleDays": 9,
+      "staleDays": 10,
       "labels": [
         "IOS"
       ],
@@ -9059,7 +9059,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-08-31T03:36:08.389-0700",
       "updated": "2026-10-09T00:40:53.638-0700",
-      "ageDays": 52,
+      "ageDays": 53,
       "staleDays": 14,
       "labels": [
         "AD-HOC",
@@ -9601,7 +9601,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-10-02T03:26:50.054-0700",
       "updated": "2026-10-08T23:15:39.259-0700",
-      "ageDays": 20,
+      "ageDays": 21,
       "staleDays": 14,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20872"
@@ -10171,7 +10171,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-09-28T03:28:07.361-0700",
       "updated": "2026-10-08T23:14:39.414-0700",
-      "ageDays": 24,
+      "ageDays": 25,
       "staleDays": 14,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20825"
@@ -12080,7 +12080,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-09-24T03:26:34.186-0700",
       "updated": "2026-10-08T22:56:05.045-0700",
-      "ageDays": 28,
+      "ageDays": 29,
       "staleDays": 14,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20729"
@@ -12972,7 +12972,7 @@
       "reporter": "Gaurav Jain",
       "created": "2026-09-24T03:33:35.775-0700",
       "updated": "2026-10-08T22:52:55.421-0700",
-      "ageDays": 28,
+      "ageDays": 29,
       "staleDays": 14,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20730"
@@ -14715,7 +14715,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-09-10T03:28:11.925-0700",
       "updated": "2026-10-05T00:04:26.554-0700",
-      "ageDays": 42,
+      "ageDays": 43,
       "staleDays": 18,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20619"
@@ -15462,7 +15462,7 @@
       "created": "2026-09-28T23:45:51.854-0700",
       "updated": "2026-09-29T03:31:48.817-0700",
       "ageDays": 24,
-      "staleDays": 23,
+      "staleDays": 24,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20836"
     },
@@ -15834,8 +15834,8 @@
       "reporter": "Gaurav Jain",
       "created": "2026-09-25T03:30:56.136-0700",
       "updated": "2026-09-25T03:31:33.247-0700",
-      "ageDays": 27,
-      "staleDays": 27,
+      "ageDays": 28,
+      "staleDays": 28,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20765"
     },
@@ -15938,7 +15938,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-07-31T03:30:18.380-0700",
       "updated": "2026-09-25T00:10:50.198-0700",
-      "ageDays": 83,
+      "ageDays": 84,
       "staleDays": 28,
       "labels": [
         "Android",
@@ -16048,7 +16048,7 @@
       "created": "2026-07-22T00:23:25.361-0700",
       "updated": "2026-09-24T03:25:23.222-0700",
       "ageDays": 93,
-      "staleDays": 28,
+      "staleDays": 29,
       "labels": [
         "SHIELD",
         "iOS"
@@ -16628,7 +16628,7 @@
       "reporter": "Anil Melinmani",
       "created": "2026-07-17T03:28:21.999-0700",
       "updated": "2026-09-22T01:11:56.141-0700",
-      "ageDays": 97,
+      "ageDays": 98,
       "staleDays": 31,
       "labels": [
         "SHIELD"
@@ -16655,7 +16655,7 @@
       "reporter": "Anil Melinmani",
       "created": "2026-07-17T03:28:07.562-0700",
       "updated": "2026-09-22T01:11:47.248-0700",
-      "ageDays": 97,
+      "ageDays": 98,
       "staleDays": 31,
       "labels": [
         "SHIELD"
@@ -16682,7 +16682,7 @@
       "reporter": "Vishal Kohli",
       "created": "2026-07-17T03:27:17.985-0700",
       "updated": "2026-09-22T01:11:34.475-0700",
-      "ageDays": 97,
+      "ageDays": 98,
       "staleDays": 31,
       "labels": [
         "SHIELD"
@@ -19804,7 +19804,7 @@
       "created": "2026-08-27T21:13:43.225-0700",
       "updated": "2026-09-12T03:34:03.182-0700",
       "ageDays": 56,
-      "staleDays": 40,
+      "staleDays": 41,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20501"
     },
@@ -20788,7 +20788,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-06-23T03:33:52.076-0700",
       "updated": "2026-09-08T04:06:13.219-0700",
-      "ageDays": 121,
+      "ageDays": 122,
       "staleDays": 44,
       "labels": [
         "PILOT"
@@ -20816,7 +20816,7 @@
       "created": "2026-09-02T01:44:54.160-0700",
       "updated": "2026-09-08T03:27:14.630-0700",
       "ageDays": 51,
-      "staleDays": 44,
+      "staleDays": 45,
       "labels": [
         "FE"
       ],
@@ -21311,7 +21311,7 @@
       "reporter": "vikas yadav",
       "created": "2026-09-02T03:32:27.746-0700",
       "updated": "2026-09-08T01:23:05.712-0700",
-      "ageDays": 50,
+      "ageDays": 51,
       "staleDays": 45,
       "labels": [
         "iOS"
@@ -25890,7 +25890,7 @@
       "created": "2026-07-13T05:07:46.219-0700",
       "updated": "2026-08-31T03:36:10.052-0700",
       "ageDays": 101,
-      "staleDays": 52,
+      "staleDays": 53,
       "labels": [
         "AD-HOC",
         "Customer",
@@ -26480,7 +26480,7 @@
       "reporter": "Farid Khalikov",
       "created": "2023-11-30T02:31:03.808-0800",
       "updated": "2026-08-28T16:51:45.519-0700",
-      "ageDays": 1057,
+      "ageDays": 1058,
       "staleDays": 55,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-13408"
@@ -26718,7 +26718,7 @@
       "created": "2026-04-14T02:41:11.707-0700",
       "updated": "2026-08-27T03:27:15.954-0700",
       "ageDays": 192,
-      "staleDays": 56,
+      "staleDays": 57,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19448"
     },
@@ -26743,7 +26743,7 @@
       "created": "2026-05-07T01:45:19.240-0700",
       "updated": "2026-08-27T03:27:10.864-0700",
       "ageDays": 169,
-      "staleDays": 56,
+      "staleDays": 57,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19577"
     },
@@ -26768,7 +26768,7 @@
       "created": "2026-05-08T07:53:46.872-0700",
       "updated": "2026-08-27T03:27:01.296-0700",
       "ageDays": 167,
-      "staleDays": 56,
+      "staleDays": 57,
       "labels": [
         "ANDR"
       ],
@@ -26795,7 +26795,7 @@
       "created": "2026-05-29T01:03:11.728-0700",
       "updated": "2026-08-27T03:26:57.638-0700",
       "ageDays": 147,
-      "staleDays": 56,
+      "staleDays": 57,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19721"
     },
@@ -26820,7 +26820,7 @@
       "created": "2026-05-29T04:00:02.046-0700",
       "updated": "2026-08-27T03:26:53.108-0700",
       "ageDays": 146,
-      "staleDays": 56,
+      "staleDays": 57,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19728"
     },
@@ -26845,7 +26845,7 @@
       "created": "2026-05-29T04:24:18.635-0700",
       "updated": "2026-08-27T03:26:48.714-0700",
       "ageDays": 146,
-      "staleDays": 56,
+      "staleDays": 57,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19729"
     },
@@ -26870,7 +26870,7 @@
       "created": "2026-06-23T00:50:06.604-0700",
       "updated": "2026-08-27T03:26:32.311-0700",
       "ageDays": 122,
-      "staleDays": 56,
+      "staleDays": 57,
       "labels": [
         "Customer"
       ],
@@ -26897,7 +26897,7 @@
       "created": "2026-08-06T04:13:24.168-0700",
       "updated": "2026-08-27T03:26:19.013-0700",
       "ageDays": 77,
-      "staleDays": 56,
+      "staleDays": 57,
       "labels": [
         "AD-HOC",
         "Customer"
@@ -26925,7 +26925,7 @@
       "created": "2026-07-24T01:41:24.367-0700",
       "updated": "2026-08-27T03:25:51.142-0700",
       "ageDays": 91,
-      "staleDays": 56,
+      "staleDays": 57,
       "labels": [
         "ANDR",
         "Android",
@@ -26954,7 +26954,7 @@
       "created": "2026-08-13T03:43:23.856-0700",
       "updated": "2026-08-27T03:25:35.749-0700",
       "ageDays": 70,
-      "staleDays": 56,
+      "staleDays": 57,
       "labels": [
         "ANDR"
       ],
