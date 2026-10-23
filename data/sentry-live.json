@@ -1,8 +1,10 @@
 {
-  "generated_at": "2026-10-23T22:47:08+00:00",
+  "generated_at": "2026-10-23T23:04:22+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
-  "errors": [],
+  "errors": [
+    "environments_30d: The read operation timed out"
+  ],
   "billing_period": {
     "start": "2026-09-25",
     "end": "2026-10-24",
@@ -563,8 +565,8 @@
     {
       "date": "2026-10-23",
       "accepted": 0,
-      "quota_dropped": 104824164,
-      "dropped": 180624408
+      "quota_dropped": 105570352,
+      "dropped": 181879126
     }
   ],
   "months": [
@@ -593,20 +595,20 @@
       "month": "2026-10",
       "days_covered": 23,
       "accepted_total": 0,
-      "quota_dropped": 2079799713,
-      "all_dropped": 3907536890
+      "quota_dropped": 2080545901,
+      "all_dropped": 3908791608
     }
   ],
   "span_drop_reasons_90d": {
-    "rate_limited/span_usage_exceeded": 4837476570,
-    "client_discard/ratelimit_backoff": 3583463258,
+    "rate_limited/span_usage_exceeded": 4838222758,
+    "client_discard/ratelimit_backoff": 3583817963,
     "invalid/too_large:transaction": 1173907651,
-    "client_discard/sample_rate": 1087428084,
+    "client_discard/sample_rate": 1087567726,
     "rate_limited/spike_protection": 199691433,
-    "client_discard/backpressure": 136485413,
+    "client_discard/backpressure": 136497975,
     "invalid/too_large:event": 13131410,
-    "client_discard/network_error": 7429842,
-    "client_discard/before_send": 2705902,
+    "client_discard/network_error": 7431420,
+    "client_discard/before_send": 2705945,
     "filtered/web-crawlers": 1051121,
     "client_discard/send_error": 921608,
     "invalid/too_large:span": 769017,
@@ -620,9 +622,9 @@
     "invalid/internal": 2
   },
   "period_usage": {
-    "error": 902741,
+    "error": 902809,
     "log_byte": 5000451650,
-    "replay": 275447,
+    "replay": 275518,
     "span": 290330654,
     "attachment": 47043248,
     "profile_duration_ui": 11.06,
@@ -631,12 +633,12 @@
     "uptime": 0
   },
   "error_outcomes_30d": {
+    "client_discard": 3148819,
+    "invalid": 350,
     "rate_limited": 563,
     "abuse": 3,
-    "invalid": 350,
-    "accepted": 982181,
-    "filtered": 111,
-    "client_discard": 3148275
+    "accepted": 982249,
+    "filtered": 111
   },
   "projects_period": [
     {
@@ -667,338 +669,5 @@
       "project": "fvm",
       "accepted": 39
     }
-  ],
-  "environments_30d": [
-    {
-      "project": "rebm",
-      "environment": "krcs",
-      "stored": 180095168.0,
-      "extrapolated": 308623229.0
-    },
-    {
-      "project": "rebm",
-      "environment": "albt",
-      "stored": 29507678.0,
-      "extrapolated": 78559450.0
-    },
-    {
-      "project": "rebm",
-      "environment": "krog",
-      "stored": 25180206.0,
-      "extrapolated": 27562240.0
-    },
-    {
-      "project": "rebm",
-      "environment": "harr",
-      "stored": 10804683.0,
-      "extrapolated": 19662173.0
-    },
-    {
-      "project": "rebm",
-      "environment": "prgm",
-      "stored": 10565385.0,
-      "extrapolated": 15554274.0
-    },
-    {
-      "project": "rebm",
-      "environment": "spar",
-      "stored": 4291554.0,
-      "extrapolated": 5249330.0
-    },
-    {
-      "project": "rebm",
-      "environment": "sona",
-      "stored": 4218701.0,
-      "extrapolated": 15867891.0
-    },
-    {
-      "project": "rebotics-frontend",
-      "environment": "production",
-      "stored": 3667203.0,
-      "extrapolated": 3667203.0
-    },
-    {
-      "project": "rebm",
-      "environment": "mjhd",
-      "stored": 3637978.0,
-      "extrapolated": 6780610.0
-    },
-    {
-      "project": "ios",
-      "environment": "production",
-      "stored": 3586241.0,
-      "extrapolated": 9538153.0
-    },
-    {
-      "project": "rebm",
-      "environment": "qktp",
-      "stored": 3414779.0,
-      "extrapolated": 193890999.0
-    },
-    {
-      "project": "android",
-      "environment": "production",
-      "stored": 2982904.0,
-      "extrapolated": 2984403.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "epsilon",
-      "stored": 1787716.0,
-      "extrapolated": 1787824.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "stgalbt",
-      "stored": 1417680.0,
-      "extrapolated": 1417680.0
-    },
-    {
-      "project": "rebm",
-      "environment": "weis",
-      "stored": 956518.0,
-      "extrapolated": 956518.0
-    },
-    {
-      "project": "rebm",
-      "environment": "wstm",
-      "stored": 925918.0,
-      "extrapolated": 2186164.0
-    },
-    {
-      "project": "rebm",
-      "environment": "albtqa",
-      "stored": 878254.0,
-      "extrapolated": 2770846.0
-    },
-    {
-      "project": "rebm",
-      "environment": "stgsams",
-      "stored": 664128.0,
-      "extrapolated": 7065081.0
-    },
-    {
-      "project": "rebm",
-      "environment": "whfd",
-      "stored": 384594.0,
-      "extrapolated": 444534.0
-    },
-    {
-      "project": "rebm",
-      "environment": "epsilon",
-      "stored": 371371.0,
-      "extrapolated": 3396568.0
-    },
-    {
-      "project": "race-platform",
-      "environment": "test01",
-      "stored": 340281.0,
-      "extrapolated": 544246.0
-    },
-    {
-      "project": "rebm",
-      "environment": "rsmn",
-      "stored": 226127.0,
-      "extrapolated": 441911.0
-    },
-    {
-      "project": "race-platform",
-      "environment": "dev01",
-      "stored": 212351.0,
-      "extrapolated": 217861.0
-    },
-    {
-      "project": "rebm",
-      "environment": "prge",
-      "stored": 58061.0,
-      "extrapolated": 392843.0
-    },
-    {
-      "project": "rebm",
-      "environment": "cpgd",
-      "stored": 54729.0,
-      "extrapolated": 54729.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "qktp",
-      "stored": 37175.0,
-      "extrapolated": 274189757.0
-    },
-    {
-      "project": "rebm",
-      "environment": "stgalbt",
-      "stored": 29424.0,
-      "extrapolated": 28468956.0
-    },
-    {
-      "project": "rebm",
-      "environment": "delta",
-      "stored": 9398.0,
-      "extrapolated": 92563.0
-    },
-    {
-      "project": "rebm",
-      "environment": "wtrs",
-      "stored": 8041.0,
-      "extrapolated": 7255786.0
-    },
-    {
-      "project": "race-platform",
-      "environment": "test02",
-      "stored": 4693.0,
-      "extrapolated": 4693.0
-    },
-    {
-      "project": "rebm",
-      "environment": "heb",
-      "stored": 3173.0,
-      "extrapolated": 3173.0
-    },
-    {
-      "project": "rebm",
-      "environment": "srai",
-      "stored": 3137.0,
-      "extrapolated": 3137.0
-    },
-    {
-      "project": "rebm",
-      "environment": "qktpdev",
-      "stored": 2608.0,
-      "extrapolated": 2556052.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "sona",
-      "stored": 2260.0,
-      "extrapolated": 22600000.0
-    },
-    {
-      "project": "android",
-      "environment": "alpha",
-      "stored": 1478.0,
-      "extrapolated": 1478.0
-    },
-    {
-      "project": "rebm",
-      "environment": "brws",
-      "stored": 535.0,
-      "extrapolated": 535.0
-    },
-    {
-      "project": "ios",
-      "environment": "debug",
-      "stored": 471.0,
-      "extrapolated": 471.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "albt",
-      "stored": 374.0,
-      "extrapolated": 3740000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "sevn",
-      "stored": 275.0,
-      "extrapolated": 2750000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "stguk",
-      "stored": 256.0,
-      "extrapolated": 2560000.0
-    },
-    {
-      "project": "ios",
-      "environment": "beta",
-      "stored": 254.0,
-      "extrapolated": 254.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "stgeu",
-      "stored": 181.0,
-      "extrapolated": 1810000.0
-    },
-    {
-      "project": "rebm",
-      "environment": "swe",
-      "stored": 169.0,
-      "extrapolated": 169.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "cpgd",
-      "stored": 168.0,
-      "extrapolated": 1680000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "wtrs",
-      "stored": 144.0,
-      "extrapolated": 1440000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "sbry",
-      "stored": 105.0,
-      "extrapolated": 1050000.0
-    },
-    {
-      "project": "rebm",
-      "environment": "stgeu",
-      "stored": 84.0,
-      "extrapolated": 84.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "qktpdemo",
-      "stored": 55.0,
-      "extrapolated": 550000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "srai",
-      "stored": 46.0,
-      "extrapolated": 460000.0
-    },
-    {
-      "project": "fvm",
-      "environment": "r3dev",
-      "stored": 39.0,
-      "extrapolated": 39.0
-    }
-  ],
-  "span_ops_30d": {
-    "rebm": {
-      "event.django": 218831585.0,
-      "middleware.django": 30507766.0,
-      "db": 21687240.0,
-      "http.server": 1674467.0,
-      "view.response.render": 1444996.0,
-      "view.render": 1441918.0,
-      "http.client": 373660.0,
-      "db.redis": 307989.0,
-      "http.client.stream": 22810.0,
-      "template.render": 4.0
-    },
-    "rebotics-frontend": {
-      "resource.script": 965796.0,
-      "mark": 692598.0,
-      "measure": 649574.0,
-      "http.client": 338189.0,
-      "browser": 320084.0,
-      "ui.angular.routing": 292336.0,
-      "navigation": 175004.0,
-      "resource.img": 98015.0,
-      "resource.link": 36037.0,
-      "pageload": 35898.0,
-      "resource.css": 30746.0,
-      "paint": 26545.0,
-      "resource.other": 5076.0,
-      "web.vitals": 934.0,
-      "resource.icon": 146.0
-    }
-  }
+  ]
 }
