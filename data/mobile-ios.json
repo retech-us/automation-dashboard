@@ -5,8 +5,8 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-10-24T06:07:32Z",
-  "durationMs": 23064941,
+  "finishedAt": "2026-10-25T05:51:28Z",
+  "durationMs": 22293038,
   "summary": {
     "total": 25,
     "passed": 13,
@@ -15,7 +15,7 @@
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/40040596130",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/40143298375",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -61,16 +61,24 @@
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 60 seconds",
       "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 60 seconds",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from section level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_8",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -88,20 +96,12 @@
       "category": "timeout",
       "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34'",
       "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
-      "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34': Could not find 'Ascending' element using any locator strategy. Please verify the sorting dialog is open and the element is visible.",
-      "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
-    "locator": 3,
+    "locator": 4,
     "timeout": 8,
-    "unknown": 12
+    "unknown": 13
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
@@ -131,7 +131,7 @@
       "status": "failure"
     }
   ],
-  "runId": "40040596130",
-  "runNumber": 337,
+  "runId": "40143298375",
+  "runNumber": 338,
   "environment": "CI"
 }
