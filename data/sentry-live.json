@@ -1,31 +1,25 @@
 {
-  "generated_at": "2026-10-24T23:47:44+00:00",
+  "generated_at": "2026-10-25T00:12:59+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
   "errors": [],
   "billing_period": {
-    "start": "2026-09-25",
-    "end": "2026-10-24",
+    "start": "2026-10-25",
+    "end": "2026-11-24",
     "source": "sentry-subscription"
   },
   "reserved": {
+    "error": 1000000,
+    "log_byte": 5000000000.0,
+    "replay": 300000,
+    "span": 5000000,
     "monitor_seat": 1,
     "uptime": 1,
-    "profile_duration": 0.0,
-    "profile_duration_ui": 0.0,
-    "span": 5000000,
-    "log_byte": 5000000000.0,
     "attachment": 1000000000.0,
-    "replay": 300000,
-    "error": 1000000
+    "profile_duration": 0.0,
+    "profile_duration_ui": 0.0
   },
   "daily": [
-    {
-      "date": "2026-07-26",
-      "accepted": 3386047,
-      "quota_dropped": 0,
-      "dropped": 16201392
-    },
     {
       "date": "2026-07-27",
       "accepted": 11656786,
@@ -563,17 +557,23 @@
     {
       "date": "2026-10-24",
       "accepted": 0,
-      "quota_dropped": 29465579,
-      "dropped": 51556732
+      "quota_dropped": 29611597,
+      "dropped": 51887528
+    },
+    {
+      "date": "2026-10-25",
+      "accepted": 104671,
+      "quota_dropped": 58251,
+      "dropped": 294202
     }
   ],
   "months": [
     {
       "month": "2026-07",
-      "days_covered": 6,
-      "accepted_total": 136360101,
+      "days_covered": 5,
+      "accepted_total": 132974054,
       "quota_dropped": 0,
-      "all_dropped": 341102085
+      "all_dropped": 324900693
     },
     {
       "month": "2026-08",
@@ -591,107 +591,103 @@
     },
     {
       "month": "2026-10",
-      "days_covered": 24,
-      "accepted_total": 0,
-      "quota_dropped": 2112121596,
-      "all_dropped": 3963779188
+      "days_covered": 25,
+      "accepted_total": 104671,
+      "quota_dropped": 2112325865,
+      "all_dropped": 3964404186
     }
   ],
   "span_drop_reasons_90d": {
-    "rate_limited/span_usage_exceeded": 4869797567,
-    "client_discard/ratelimit_backoff": 3595908358,
-    "invalid/too_large:transaction": 1173907651,
-    "client_discard/sample_rate": 1088567380,
-    "rate_limited/spike_protection": 196202544,
-    "client_discard/backpressure": 136963589,
-    "invalid/too_large:event": 8505432,
-    "client_discard/network_error": 7452795,
-    "client_discard/before_send": 2679174,
-    "filtered/web-crawlers": 1013036,
-    "client_discard/send_error": 921620,
-    "invalid/too_large:span": 762552,
+    "rate_limited/span_usage_exceeded": 4870001836,
+    "client_discard/ratelimit_backoff": 3595959507,
+    "invalid/too_large:transaction": 1173997495,
+    "client_discard/sample_rate": 1080280727,
+    "rate_limited/spike_protection": 195484511,
+    "client_discard/backpressure": 136954681,
+    "client_discard/network_error": 7444471,
+    "client_discard/before_send": 2660346,
+    "invalid/too_large:event": 1676560,
+    "filtered/web-crawlers": 975129,
+    "client_discard/send_error": 922061,
+    "invalid/too_large:span": 754017,
     "client_discard/buffer_overflow": 274212,
-    "filtered/filtered-transaction": 149387,
-    "client_discard/cache_overflow": 96304,
-    "client_discard/queue_overflow": 89428,
-    "invalid/invalid_transaction": 12866,
+    "filtered/filtered-transaction": 143597,
+    "client_discard/cache_overflow": 96296,
+    "client_discard/queue_overflow": 89191,
+    "invalid/invalid_transaction": 12864,
     "client_discard/no_parent_span": 3909,
     "filtered/legacy-browsers": 1026,
     "invalid/internal": 2
   },
   "period_usage": {
-    "error": 907427,
-    "log_byte": 5000451650,
-    "replay": 277500,
-    "span": 290330654,
-    "attachment": 47853478,
-    "profile_duration_ui": 11.06,
+    "error": 100,
+    "log_byte": 456399,
+    "replay": 20,
+    "span": 104671,
+    "attachment": 0,
+    "profile_duration_ui": 0.0,
     "profile_duration": 0.0,
     "monitor_seat": 0,
     "uptime": 0
   },
   "error_outcomes_30d": {
-    "filtered": 110,
-    "rate_limited": 563,
+    "rate_limited": 497,
+    "accepted": 907555,
+    "client_discard": 2895833,
+    "filtered": 100,
     "abuse": 3,
-    "invalid": 352,
-    "client_discard": 3043598,
-    "accepted": 948781
+    "invalid": 342
   },
   "projects_period": [
     {
       "project": "rebm",
-      "accepted": 276292445
-    },
-    {
-      "project": "rebotics-frontend",
-      "accepted": 3667946
-    },
-    {
-      "project": "ios",
-      "accepted": 3585219
+      "accepted": 99986
     },
     {
       "project": "hawkeye",
-      "accepted": 3246470
+      "accepted": 2910
     },
     {
       "project": "android",
-      "accepted": 2981210
+      "accepted": 851
+    },
+    {
+      "project": "ios",
+      "accepted": 699
     },
     {
       "project": "race-platform",
-      "accepted": 557325
+      "accepted": 160
     },
     {
-      "project": "fvm",
-      "accepted": 39
+      "project": "rebotics-frontend",
+      "accepted": 65
     }
   ],
   "environments_30d": [
     {
       "project": "rebm",
       "environment": "krcs",
-      "stored": 180095168.0,
-      "extrapolated": 308623229.0
+      "stored": 180075104.0,
+      "extrapolated": 308600005.0
     },
     {
       "project": "rebm",
       "environment": "albt",
-      "stored": 29507678.0,
-      "extrapolated": 78559450.0
+      "stored": 29511071.0,
+      "extrapolated": 78561363.0
     },
     {
       "project": "rebm",
       "environment": "krog",
-      "stored": 25180206.0,
-      "extrapolated": 27562240.0
+      "stored": 25209820.0,
+      "extrapolated": 27591854.0
     },
     {
       "project": "rebm",
       "environment": "harr",
-      "stored": 10804683.0,
-      "extrapolated": 19662173.0
+      "stored": 10792688.0,
+      "extrapolated": 19650178.0
     },
     {
       "project": "rebm",
@@ -702,8 +698,8 @@
     {
       "project": "rebm",
       "environment": "spar",
-      "stored": 4291554.0,
-      "extrapolated": 5249330.0
+      "stored": 4278545.0,
+      "extrapolated": 5236321.0
     },
     {
       "project": "rebm",
@@ -714,44 +710,44 @@
     {
       "project": "rebotics-frontend",
       "environment": "production",
-      "stored": 3667015.0,
-      "extrapolated": 3667015.0
+      "stored": 3666733.0,
+      "extrapolated": 3666733.0
     },
     {
       "project": "rebm",
       "environment": "mjhd",
-      "stored": 3637978.0,
-      "extrapolated": 6780610.0
+      "stored": 3639988.0,
+      "extrapolated": 6782620.0
     },
     {
       "project": "ios",
       "environment": "production",
-      "stored": 3585854.0,
-      "extrapolated": 9537314.0
+      "stored": 3581699.0,
+      "extrapolated": 9528407.0
     },
     {
       "project": "rebm",
       "environment": "qktp",
-      "stored": 3414779.0,
-      "extrapolated": 193890999.0
+      "stored": 3424766.0,
+      "extrapolated": 194011875.0
     },
     {
       "project": "android",
       "environment": "production",
-      "stored": 2982014.0,
-      "extrapolated": 2983513.0
+      "stored": 2979537.0,
+      "extrapolated": 2981036.0
     },
     {
       "project": "hawkeye",
       "environment": "epsilon",
-      "stored": 1787716.0,
-      "extrapolated": 1787824.0
+      "stored": 1787546.0,
+      "extrapolated": 1787546.0
     },
     {
       "project": "hawkeye",
       "environment": "stgalbt",
-      "stored": 1417680.0,
-      "extrapolated": 1417680.0
+      "stored": 1417905.0,
+      "extrapolated": 1417905.0
     },
     {
       "project": "rebm",
@@ -804,8 +800,8 @@
     {
       "project": "race-platform",
       "environment": "dev01",
-      "stored": 212351.0,
-      "extrapolated": 217861.0
+      "stored": 212507.0,
+      "extrapolated": 218017.0
     },
     {
       "project": "rebm",
@@ -822,14 +818,14 @@
     {
       "project": "hawkeye",
       "environment": "qktp",
-      "stored": 37175.0,
-      "extrapolated": 274189757.0
+      "stored": 37223.0,
+      "extrapolated": 274669757.0
     },
     {
       "project": "rebm",
       "environment": "stgalbt",
-      "stored": 29424.0,
-      "extrapolated": 28468956.0
+      "stored": 29479.0,
+      "extrapolated": 28523956.0
     },
     {
       "project": "rebm",
@@ -846,8 +842,8 @@
     {
       "project": "race-platform",
       "environment": "test02",
-      "stored": 4693.0,
-      "extrapolated": 4693.0
+      "stored": 4695.0,
+      "extrapolated": 4695.0
     },
     {
       "project": "rebm",
@@ -972,31 +968,31 @@
   ],
   "span_ops_30d": {
     "rebm": {
-      "event.django": 218831585.0,
-      "middleware.django": 30507766.0,
-      "db": 21687240.0,
-      "http.server": 1674467.0,
-      "view.response.render": 1444996.0,
-      "view.render": 1441918.0,
-      "http.client": 373660.0,
-      "db.redis": 307989.0,
-      "http.client.stream": 22810.0,
+      "event.django": 218827701.0,
+      "middleware.django": 30510722.0,
+      "db": 21687596.0,
+      "http.server": 1674624.0,
+      "view.response.render": 1445137.0,
+      "view.render": 1442069.0,
+      "http.client": 373648.0,
+      "db.redis": 308109.0,
+      "http.client.stream": 22816.0,
       "template.render": 4.0
     },
     "rebotics-frontend": {
-      "resource.script": 965794.0,
-      "mark": 692598.0,
-      "measure": 649574.0,
-      "http.client": 338117.0,
-      "browser": 320084.0,
-      "ui.angular.routing": 292240.0,
-      "navigation": 174986.0,
-      "resource.img": 98015.0,
-      "resource.link": 36037.0,
-      "pageload": 35898.0,
+      "resource.script": 965714.0,
+      "mark": 692560.0,
+      "measure": 649538.0,
+      "http.client": 338070.0,
+      "browser": 320069.0,
+      "ui.angular.routing": 292229.0,
+      "navigation": 174977.0,
+      "resource.img": 97977.0,
+      "resource.link": 36035.0,
+      "pageload": 35896.0,
       "resource.css": 30746.0,
-      "paint": 26545.0,
-      "resource.other": 5076.0,
+      "paint": 26540.0,
+      "resource.other": 5077.0,
       "web.vitals": 934.0,
       "resource.icon": 146.0
     }
