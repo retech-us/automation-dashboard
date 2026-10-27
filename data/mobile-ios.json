@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-10-26T06:09:13Z",
-  "durationMs": 23302031,
+  "finishedAt": "2026-10-27T07:31:25Z",
+  "durationMs": 28024997,
   "summary": {
     "total": 25,
-    "passed": 12,
+    "passed": 7,
     "failed": 0,
-    "broken": 13,
+    "broken": 18,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/40245406483",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/40420963634",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -61,24 +61,32 @@
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 60 seconds",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
       "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen View POG from planogram level",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "feature": "Tracked Capture Screen"
+    },
+    {
+      "name": "Tracked Capture Screen View POG from section level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -88,34 +96,26 @@
       "category": "unknown",
       "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen sorting by Capture when TASKS_CAPTURE_BANNER_AISLE_BASED disabled",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:43",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:43': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
-      "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
     "locator": 3,
-    "timeout": 9,
-    "unknown": 15
+    "timeout": 6,
+    "unknown": 18
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 12,
-    "review": 13,
+    "passed": 7,
+    "review": 18,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 48.0,
+      "passPct": 28.0,
       "total": 25,
-      "failed": 13
+      "failed": 18
     }
   ],
   "platform": "iOS",
@@ -131,7 +131,7 @@
       "status": "failure"
     }
   ],
-  "runId": "40245406483",
-  "runNumber": 339,
+  "runId": "40420963634",
+  "runNumber": 340,
   "environment": "CI"
 }
