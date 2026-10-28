@@ -9,7 +9,7 @@ same entry shape and passing it in as ``remote``.
 from datetime import date, datetime, timedelta, timezone
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 HISTORY_SCHEMA_VERSION = 1
 MAX_HISTORY_ENTRIES = 1000
@@ -265,6 +265,18 @@ def _named(value: Any) -> Tuple[Optional[str], Any]:
     return (str(value) if value else None), None
 
 
+def performer_identity(value: Any) -> Tuple[Optional[str], Optional[str], Any]:
+    """Return display name, username, and id for the associate who performed a task."""
+    if not isinstance(value, dict):
+        text = str(value).strip() if value else ""
+        return (text or None), (text or None), None
+    first = str(value.get("first_name") or "").strip()
+    last = str(value.get("last_name") or "").strip()
+    username = str(value.get("username") or "").strip() or None
+    name = f"{first} {last}".strip() or username
+    return name, username, value.get("id")
+
+
 def normalize_instance_tasks(payload: Any, instance: Optional[str]) -> List[Dict[str, Any]]:
     """Map a backend task list onto the shared entry shape."""
     rows = payload.get("results") if isinstance(payload, dict) else payload
@@ -281,6 +293,7 @@ def normalize_instance_tasks(payload: Any, instance: Optional[str]) -> List[Dict
         raw_status = row.get("status")
         type_name, type_id = _named(row.get("type"))
         category_name, _ = _named(row.get("category"))
+        performer_name, performer_username, performer_id = performer_identity(row.get("performer"))
         entries.append({
             "task_id": task_id,
             "instance": instance,
@@ -301,6 +314,9 @@ def normalize_instance_tasks(payload: Any, instance: Optional[str]) -> List[Dict
             "store_id": (store.get("id") if isinstance(store, dict) else None) or row.get("store_id"),
             "store_name": store.get("name") if isinstance(store, dict) else None,
             "store_custom_id": store.get("custom_id") if isinstance(store, dict) else None,
+            "performer": performer_name,
+            "performer_username": performer_username,
+            "performer_id": performer_id,
             "gate_state": "unknown",
             "post_photo_state": None,
             "overall_score_pct": None,
@@ -355,15 +371,40 @@ def merge_entries(
 ) -> List[Dict[str, Any]]:
     """Combine both sources, preferring the audited local row, newest first."""
     merged: Dict[tuple, Dict[str, Any]] = {}
+    id_to_key: Dict[str, tuple] = {}
+
     for entry in remote:
-        merged[(str(entry.get("instance")), str(entry.get("task_id")))] = dict(entry)
+        tid = str(entry.get("task_id") or "").strip()
+        if not tid:
+            continue
+        inst = str(entry.get("instance") or "").strip().lower()
+        key = (inst, tid)
+        merged[key] = dict(entry)
+        id_to_key[tid] = key
+
     for entry in local:
-        key = (str(entry.get("instance")), str(entry.get("task_id")))
-        thin = merged.get(key) or {}
+        tid = str(entry.get("task_id") or "").strip()
+        if not tid:
+            continue
+        inst = str(entry.get("instance") or "").strip().lower()
+        key = (inst, tid)
+        target_key = key if key in merged else id_to_key.get(tid, key)
+        thin = merged.get(target_key) or {}
         combined = dict(entry)
         # The audit owns the quality numbers; the instance owns what the task *is*.
         # A stale snapshot of the title or status must never mask the live one.
-        for field in ("title", "store_id", "store_name", "store_custom_id", "task_type", "task_type_id", "category"):
+        for field in (
+            "title",
+            "store_id",
+            "store_name",
+            "store_custom_id",
+            "task_type",
+            "task_type_id",
+            "category",
+            "performer",
+            "performer_username",
+            "performer_id",
+        ):
             if thin.get(field):
                 combined[field] = thin[field]
             else:
@@ -371,12 +412,25 @@ def merge_entries(
         if thin.get("status"):
             combined["status"] = thin["status"]
             combined["status_label"] = thin.get("status_label") or status_label(thin["status"])
-        merged[key] = combined
-    return sorted(
+        merged[target_key] = combined
+        id_to_key[tid] = target_key
+
+    sorted_rows = sorted(
         merged.values(),
         key=lambda e: (e.get("task_date") or "", str(e.get("task_id"))),
         reverse=True,
     )
+    # Guarantee no duplicate task_ids exist in the returned list
+    seen_ids: Set[str] = set()
+    deduped: List[Dict[str, Any]] = []
+    for row in sorted_rows:
+        tid = str(row.get("task_id") or "").strip()
+        if tid and tid in seen_ids:
+            continue
+        if tid:
+            seen_ids.add(tid)
+        deduped.append(row)
+    return deduped
 
 
 def cache_lookup(

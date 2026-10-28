@@ -1482,6 +1482,52 @@
       box-shadow: 0 0 12px rgba(168, 85, 247, 0.55) !important;
     }
 
+    .slot-tile.blocking-space {
+      border: 2px solid #ef4444 !important;
+      background: rgba(239, 68, 68, 0.22) !important;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.6) !important;
+      animation: pulse-blocker 1.4s infinite ease-in-out;
+      position: relative;
+      z-index: 5;
+    }
+    .slot-tile.blocking-space .pos-tag {
+      color: #fca5a5 !important;
+      font-weight: 800;
+    }
+    @keyframes pulse-blocker {
+      0%, 100% { border-color: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+      50% { border-color: #f87171; box-shadow: 0 0 18px rgba(239, 68, 68, 0.85); }
+    }
+
+    /* Shelf Mobile Loader Overlay */
+    .shelf-mobile-loader-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(4px);
+      z-index: 99999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: #f8fafc;
+      text-align: center;
+    }
+    .shelf-loader-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3.5px solid rgba(56, 189, 248, 0.25);
+      border-top-color: #38bdf8;
+      border-radius: 50%;
+      animation: shelf-spin 0.8s linear infinite;
+    }
+    @keyframes shelf-spin {
+      to { transform: rotate(360deg); }
+    }
+
     /* ==========================================================================
        CARD 3: ACTION DETAILS & CLEAN EXPLAINER
        ========================================================================== */
@@ -1790,6 +1836,14 @@
   </style>
 </head>
 <body>
+  <!-- Fullscreen Interactive Loader Overlay -->
+  <div id="shelf-mobile-loader-overlay" class="shelf-mobile-loader-overlay">
+    <div style="background:#0F172A; border:1px solid #334155; border-radius:14px; padding:24px 32px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); display:flex; flex-direction:column; align-items:center; gap:12px; max-width:90%;">
+      <div class="shelf-loader-spinner"></div>
+      <div id="shelf-loader-title" style="font-size:14px; font-weight:800; color:#38BDF8;">Loading Intelligent Reset Task...</div>
+      <div id="shelf-loader-desc" style="font-size:11px; color:#94A3B8; max-width:280px; line-height:1.4;">Fetching retailer action cards and shelf slot layout...</div>
+    </div>
+  </div>
 
   <!-- Top Master Header -->
   <header class="top-header">
@@ -1927,9 +1981,12 @@
           <!-- Active Step Card -->
           <div id="action-card" class="step-main-card">
             <!-- Step Counter & Action Pill -->
-            <div class="step-top-row">
+            <div class="step-top-row" style="flex-wrap: wrap; gap: 6px; align-items: center;">
               <span id="step-counter" class="step-counter-label">STEP 1 OF 127</span>
-              <span id="card-type-pill" class="type-pill fix_in_bay">⚡ SHIFT IN BAY</span>
+              <div style="display: flex; gap: 4px; align-items: center; margin-left: auto;">
+                <span id="card-group-pill" class="type-pill" style="display:none; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4);">GROUP W</span>
+                <span id="card-type-pill" class="type-pill fix_in_bay">⚡ SHIFT IN BAY</span>
+              </div>
             </div>
 
             <!-- Clear Human-Readable Instruction Headline -->
@@ -2255,6 +2312,20 @@
       validation: null,
     };
 
+    function showShelfLoader(show, title = "Loading Task...", desc = "Fetching retailer action cards and shelf slot layout...") {
+      const overlay = document.getElementById("shelf-mobile-loader-overlay");
+      if (!overlay) return;
+      if (show) {
+        overlay.style.display = "flex";
+        const tEl = document.getElementById("shelf-loader-title");
+        const dEl = document.getElementById("shelf-loader-desc");
+        if (tEl) tEl.textContent = title;
+        if (dEl) dEl.textContent = desc;
+      } else {
+        overlay.style.display = "none";
+      }
+    }
+
     function setShelfStatus(message) {
       const status = document.getElementById("shelf-auth-status");
       if (status) status.textContent = message || "";
@@ -2268,6 +2339,7 @@
     }
 
     function showBackendLoadError(message) {
+      showShelfLoader(false);
       state.backendMode = true;
       state.steps = [];
       state.slots = [];
@@ -2284,6 +2356,7 @@
     }
 
     function clearInstanceTasks(message) {
+      showShelfLoader(false);
       const sel = document.getElementById("dataset-selector");
       if (sel) {
         sel.innerHTML = "";
@@ -2341,16 +2414,22 @@
       const generation = ++taskLoadGeneration;
       const submitCredentials = Boolean(options && options.submitCredentials);
       state.instance = inst;
+      showShelfLoader(true, `Connecting to ${inst.toUpperCase()}...`, submitCredentials ? `Signing in to ${inst}…` : `Loading Intelligent Reset tasks for ${inst}…`);
       clearInstanceTasks(submitCredentials ? `Signing in to ${inst}…` : `Checking the sign-in for ${inst}…`);
       let session;
       try {
         session = await ensureInstanceSignIn(inst, submitCredentials);
       } catch (err) {
+        showShelfLoader(false);
         if (generation === taskLoadGeneration) clearInstanceTasks(`Enter the username and password for ${inst}.`);
         return;
       }
-      if (generation !== taskLoadGeneration) return;
+      if (generation !== taskLoadGeneration) {
+        showShelfLoader(false);
+        return;
+      }
       if (!session.ok) {
+        showShelfLoader(false);
         clearInstanceTasks(session.message);
         return;
       }
@@ -2358,8 +2437,12 @@
       try {
         const res = await fetch(`${getApiBase()}/api/runner/ir_history?instance=${encodeURIComponent(inst)}&range=7d&status=in_progress,completed,incomplete`, { cache: "no-store" });
         const data = await res.json();
-        if (generation !== taskLoadGeneration) return;
+        if (generation !== taskLoadGeneration) {
+          showShelfLoader(false);
+          return;
+        }
         if (!data || data.signed_in !== true) {
+          showShelfLoader(false);
           clearInstanceTasks((data && data.remote_error) || `Enter the username and password for ${inst}.`);
           return;
         }
@@ -2370,6 +2453,7 @@
           return taskInstance === wanted && (!type || type.includes("intelligent reset"));
         });
         if (!tasks.length) {
+          showShelfLoader(false);
           clearInstanceTasks(data.remote_error || data.plain_language_summary || `No Intelligent Reset tasks were found for ${inst}.`);
           return;
         }
@@ -2385,6 +2469,7 @@
           : tasks[0].task_id;
         await loadDataset(chosen, inst);
       } catch (err) {
+        showShelfLoader(false);
         clearInstanceTasks(`Intelligent Reset tasks could not be loaded for ${inst}.`);
       }
     }
@@ -2585,6 +2670,7 @@
       state.history = [];
       state.heldItem = null;
       const creds = shelfCredentials();
+      showShelfLoader(true, `Loading Task #${taskId}...`, `Fetching retailer action cards and shelf layout from ${(state.instance || 'backend').toUpperCase()}...`);
       setShelfStatus(`Loading backend actions for Task #${taskId}…`);
       try {
         const res = await fetch(`${getApiBase()}/api/runner/shelf_reset/backend_actions`, {
@@ -2607,6 +2693,8 @@
         setShelfStatus(data.message || "");
       } catch (err) {
         showBackendLoadError("The backend action list could not be loaded.");
+      } finally {
+        showShelfLoader(false);
       }
     }
 
@@ -2843,13 +2931,12 @@
     // Step Execution & Physical State Transformation
     function executeStep() {
       if (state.stepIndex >= state.steps.length) return;
-      if (state.backendMode) {
-        state.history.push({ stepIndex: state.stepIndex });
-        state.stepIndex++;
-        render();
-        return;
-      }
+
       const step = state.steps[state.stepIndex];
+      const sType = String(step.type || step.step_role || "").toLowerCase();
+      const fromId = step.slotId;
+      const toId = step.toSlotId || step.slotId;
+      const prodName = step.productTitle || step.item || "";
 
       state.history.push({
         stepIndex: state.stepIndex,
@@ -2857,30 +2944,35 @@
         heldItem: state.heldItem,
       });
 
-      if (step.type === "hold") {
-        state.heldItem = step.item;
-        const s = state.slots.find(x => x.id === step.slotId);
+      if (sType === "remove" || sType === "pull") {
+        const s = state.slots.find(x => x.id === fromId);
         if (s) s.current = null;
-      } else if (step.type === "place") {
-        const dest = state.slots.find(x => x.id === (step.toSlotId || step.slotId));
-        if (dest) dest.current = state.heldItem;
+      } else if (sType === "set_aside" || sType === "hold") {
+        state.heldItem = prodName;
+        const s = state.slots.find(x => x.id === fromId);
+        if (s) s.current = null;
+      } else if (sType === "place" || sType === "place_from_cart") {
+        const dest = state.slots.find(x => x.id === toId);
+        if (dest) dest.current = state.heldItem || prodName;
         state.heldItem = null;
-      } else if (step.type === "move" || step.type === "fix_in_bay") {
-        const fromS = state.slots.find(x => x.id === step.slotId);
-        const toS = state.slots.find(x => x.id === step.toSlotId);
+      } else if (sType === "move" || sType === "fix_in_bay" || sType === "move_to_bay") {
+        const fromS = state.slots.find(x => x.id === fromId);
+        const toS = state.slots.find(x => x.id === toId);
         if (fromS && toS) {
-          toS.current = fromS.current;
+          toS.current = fromS.current || prodName;
           fromS.current = null;
+        } else if (toS) {
+          toS.current = prodName;
         }
-      } else if (step.type === "swap") {
-        const s1 = state.slots.find(x => x.id === step.slotId);
-        const s2 = state.slots.find(x => x.id === step.toSlotId);
+      } else if (sType === "swap") {
+        const s1 = state.slots.find(x => x.id === fromId);
+        const s2 = state.slots.find(x => x.id === toId);
         if (s1 && s2) {
           const tmp = s1.current;
           s1.current = s2.current;
           s2.current = tmp;
         }
-      } else if (step.type === "slide") {
+      } else if (sType === "slide" || sType === "backend_shelf_move") {
         if (step.subMoves && step.subMoves.length) {
           for (const sm of step.subMoves) {
             const fromS = state.slots.find(x => x.id === sm.fromSlot);
@@ -2890,13 +2982,17 @@
               fromS.current = null;
             }
           }
+        } else {
+          const fromS = state.slots.find(x => x.id === fromId);
+          const toS = state.slots.find(x => x.id === toId);
+          if (fromS && toS) {
+            toS.current = fromS.current || prodName;
+            fromS.current = null;
+          }
         }
-      } else if (step.type === "restock" || step.type === "place_from_cart") {
-        const s = state.slots.find(x => x.id === (step.toSlotId || step.slotId));
-        if (s) s.current = step.item;
-      } else if (step.type === "pull") {
-        const s = state.slots.find(x => x.id === step.slotId);
-        if (s) s.current = null;
+      } else if (sType === "restock" || sType === "add_to_shelf") {
+        const s = state.slots.find(x => x.id === toId);
+        if (s) s.current = prodName;
       }
 
       state.stepIndex++;
@@ -2908,7 +3004,7 @@
       if (!state.history.length) return;
       const prev = state.history.pop();
       state.stepIndex = prev.stepIndex;
-      if (!state.backendMode) {
+      if (prev.slots) {
         state.slots = prev.slots;
         state.heldItem = prev.heldItem;
       }
@@ -2921,6 +3017,11 @@
       if (state.backendMode) {
         state.stepIndex = targetIndex;
         state.history = [];
+        const s = state.steps[targetIndex];
+        const stepBay = (s && (s.bay || (s.toLocation && s.toLocation.bay) || (s.fromLocation && s.fromLocation.bay))) || null;
+        if (stepBay && state.activeBayFilter !== "ALL" && state.activeBayFilter !== stepBay) {
+          state.activeBayFilter = stepBay;
+        }
         render();
         return;
       }
@@ -2962,10 +3063,24 @@
         const listNote = `• ${state.steps.length} step${state.steps.length === 1 ? "" : "s"}: identify, remove, then each bay`;
         const findingNote = `• ${summary}`;
         const naiveCart = document.getElementById("comp-naive-cart");
-        if (naiveCart) naiveCart.textContent = listNote;
         const rules = validation.rule_check || {};
         const sameBaySetAside = rules.same_bay_set_aside || 0;
         const notFixInBay = (rules.same_bay_move_not_fix_in_bay || 0) + (rules.fix_in_bay_across_bays || 0);
+
+        // Per-bay and task-wide breakdown
+        const activeBay = state.activeBayFilter;
+        const baySteps = activeBay === "ALL" ? state.steps : state.steps.filter(s => s.bay === activeBay || (s.fromLocation && s.fromLocation.bay === activeBay) || (s.toLocation && s.toLocation.bay === activeBay));
+        const baySetAside = baySteps.filter(s => s.type === "set_aside").length;
+        const bayFixInBay = baySteps.filter(s => s.type === "fix_in_bay").length;
+
+        if (naiveCart) {
+          if (activeBay !== "ALL") {
+            naiveCart.innerHTML = `• Bay ${activeBay}: <strong>${baySetAside}</strong> items set aside (Backend generated <strong>${bayFixInBay}</strong> direct in-bay fixes; task-wide ${sameBaySetAside} in other bays)`;
+          } else {
+            naiveCart.innerHTML = `• Task-wide: <strong>${sameBaySetAside}</strong> same-bay items sent to cart (Bay 2 has 0 set-aside actions; all same-bay in Bay 2 are direct moves)`;
+          }
+        }
+
         const naiveTouches = document.getElementById("comp-naive-touches");
         if (naiveTouches) {
           naiveTouches.textContent = `• ${sameBaySetAside ? "🚩" : "✅"} Same-bay set aside: ${sameBaySetAside} · ${notFixInBay ? "🚩" : "✅"} Same-bay moves outside fix in bay: ${notFixInBay}`;
@@ -3203,9 +3318,28 @@
           phasePill.textContent = phaseLabels[step.type] || "Store Reset Phase";
         }
 
+        const groupPill = document.getElementById("card-group-pill");
+        const grpVal = step.group || step.item_group;
+        if (groupPill) {
+          if (grpVal) {
+            groupPill.style.display = "inline-flex";
+            groupPill.textContent = `GROUP ${grpVal}`;
+          } else {
+            groupPill.style.display = "none";
+          }
+        }
+
         const pill = document.getElementById("card-type-pill");
-        pill.className = `type-pill ${step.type}`;
-        pill.textContent = typeBadges[step.type] || step.type.toUpperCase();
+        if (step.is_swap || step.type === "swap") {
+          pill.className = "type-pill swap";
+          pill.textContent = "⇄ DIRECT SWAP";
+        } else if (step.is_slide || step.type === "slide") {
+          pill.className = "type-pill slide";
+          pill.textContent = "⏩ SLIDE ALONG SHELF";
+        } else {
+          pill.className = `type-pill ${step.type}`;
+          pill.textContent = typeBadges[step.type] || step.type.toUpperCase();
+        }
 
         document.getElementById("step-counter").textContent = `STEP ${state.stepIndex + 1} OF ${state.steps.length}`;
 
@@ -3357,8 +3491,17 @@
               clIcon.textContent = look.icon;
               clTxt.textContent = `Target: ${occ.title}. ${occ.text}`;
               clTxt.style.color = look.color;
+              if (occ.blocking) {
+                clStrip.style.border = "1.5px solid #ef4444";
+                clStrip.style.background = "rgba(239, 68, 68, 0.15)";
+              } else {
+                clStrip.style.border = "";
+                clStrip.style.background = "";
+              }
             } else {
               clStrip.style.display = "none";
+              clStrip.style.border = "";
+              clStrip.style.background = "";
             }
           }
           const rawName = document.getElementById("card-raw-action");
@@ -3422,32 +3565,15 @@
     }
 
     // Render Planogram Shelf Rack (Card 2)
+    // Render Planogram Shelf Rack (Card 2)
     function renderShelfRack() {
-      // 1. Build Bay Selector Tabs
-      const rawBays = Array.from(new Set(state.slots.map(s => normalizeBay(s.bay || '1'))));
-      const bays = rawBays.sort((a, b) => {
-        const na = parseInt(a, 10);
-        const nb = parseInt(b, 10);
-        if (!isNaN(na) && !isNaN(nb)) return na - nb;
-        return a.localeCompare(b);
-      });
-      const bayContainer = document.getElementById("bay-tabs-container");
-      bayContainer.innerHTML = `
-        <button class="bay-btn ${state.activeBayFilter === 'ALL' ? 'active' : ''}" data-bay="ALL">ALL BAYS (${bays.length})</button>
-        ${bays.map(b => `<button class="bay-btn ${state.activeBayFilter === b ? 'active' : ''}" data-bay="${b}">Bay ${b}</button>`).join("")}
-      `;
-
-      bayContainer.querySelectorAll(".bay-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          state.activeBayFilter = btn.getAttribute("data-bay");
-          renderShelfRack();
-        });
-      });
-
-      // 2. Active Step Highlight Slots
+      // 1. Active Step Highlight Slots & Blocker Space Detection
       const activeStep = state.stepIndex < state.steps.length ? state.steps[state.stepIndex] : null;
       const sourceSlots = new Set();
       const targetSlots = new Set();
+      const blockingSlots = new Set();
+      let blockingDetails = null;
+
       if (activeStep) {
         if (activeStep.slotId) sourceSlots.add(activeStep.slotId);
         if (activeStep.toSlotId && activeStep.toSlotId !== activeStep.slotId) {
@@ -3459,7 +3585,55 @@
             targetSlots.add(sm.toSlot);
           });
         }
+
+        // Identify if destination slot is currently occupied and blocking the action
+        if (activeStep.toSlotId) {
+          const destSlot = state.slots.find(s => s.id === activeStep.toSlotId);
+          const occ = activeStep.target_occupancy;
+          const activeProd = activeStep.item || activeStep.productTitle || "";
+          const isDestOccupied = destSlot && destSlot.current && destSlot.current !== activeProd;
+          const isBlocked = (occ && (occ.blocking || (occ.status && occ.status.startsWith('occupied')))) || isDestOccupied;
+          if (isBlocked) {
+            blockingSlots.add(activeStep.toSlotId);
+            blockingDetails = {
+              slotId: activeStep.toSlotId,
+              occupant: (occ && occ.occupant_product) || (destSlot && destSlot.current) || "Existing product",
+              upc: (occ && occ.occupant_upc) || (destSlot && destSlot.upc) || "",
+              status: occ ? occ.status : "occupied",
+              title: occ ? occ.title : "Destination Occupied",
+              text: occ ? occ.text : "Target slot is occupied before product clears.",
+              clearedAtStep: occ ? occ.cleared_at_step : null,
+            };
+          }
+        }
       }
+
+      const blockingBay = blockingDetails && blockingDetails.slotId ? (blockingDetails.slotId.match(/Bay([^_]+)/) || [])[1] : null;
+
+      // 2. Build Bay Selector Tabs
+      const rawBays = Array.from(new Set(state.slots.map(s => normalizeBay(s.bay || '1'))));
+      const bays = rawBays.sort((a, b) => {
+        const na = parseInt(a, 10);
+        const nb = parseInt(b, 10);
+        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+        return a.localeCompare(b);
+      });
+      const bayContainer = document.getElementById("bay-tabs-container");
+      bayContainer.innerHTML = `
+        <button class="bay-btn ${state.activeBayFilter === 'ALL' ? 'active' : ''}" data-bay="ALL">ALL BAYS (${bays.length})</button>
+        ${bays.map(b => {
+          const hasBlock = blockingBay && String(blockingBay) === String(b);
+          return `<button class="bay-btn ${state.activeBayFilter === b ? 'active' : ''}" data-bay="${b}" ${hasBlock ? 'style="border-color:#ef4444; color:#fca5a5; font-weight:800;" title="Contains a blocked destination slot!"' : ''}>Bay ${b}${hasBlock ? ' ⛔' : ''}</button>`;
+        }).join("")}
+      `;
+
+      bayContainer.querySelectorAll(".bay-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.activeBayFilter = btn.getAttribute("data-bay");
+          renderShelfRack();
+          updateExecutiveKPIsAndComparison();
+        });
+      });
 
       // 3. Filter visible slots
       const q = state.planogramQuery.toLowerCase().trim();
@@ -3498,7 +3672,34 @@
         return;
       }
 
-      rackContainer.innerHTML = shelfKeys.map(shelfNum => {
+      const isViewingBlockedBay = !blockingBay || state.activeBayFilter === "ALL" || state.activeBayFilter === blockingBay;
+      const blockerBannerHtml = blockingDetails ? `
+        <div style="margin: 0 0 14px 0; padding: 12px 14px; background: rgba(220, 38, 38, 0.16); border: 2px solid #ef4444; border-radius: 8px; color: #fca5a5; font-size: 11px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; animation: pulse-blocker 2s infinite ease-in-out; box-shadow: 0 0 15px rgba(239,68,68,0.25);">
+          <div style="display:flex; align-items:flex-start; gap:10px;">
+            <span style="font-size:22px; line-height:1; margin-top:2px;">⛔</span>
+            <div>
+              <div style="font-weight:800; color:#ffffff; font-size:12.5px; display:flex; align-items:center; gap:8px;">
+                Physical Collision Detected in Planogram
+                <span class="badge" style="background:#ef4444; color:#ffffff; font-size:9px; font-weight:800; padding:2px 6px; border-radius:4px; white-space:nowrap;">BLOCKING SPACE</span>
+              </div>
+              <div style="margin-top:3px; font-size:11.5px; color:#f8fafc;">
+                Action <b>#${activeStep.id}</b> (${activeStep.item}) moves into Destination Slot <code style="background:#1e293b; color:#f87171; padding:2px 6px; border-radius:4px; font-weight:700;">${blockingDetails.slotId}</code>, but that space is currently occupied by <b style="color:#ffffff;">${blockingDetails.occupant}</b>${blockingDetails.upc ? ` (UPC: ${blockingDetails.upc})` : ''}.
+              </div>
+              <div style="font-size:10.5px; color:#cbd5e1; margin-top:3px;">${blockingDetails.text}</div>
+              ${!isViewingBlockedBay ? `
+                <div style="margin-top:6px;">
+                  <button onclick="state.activeBayFilter='${blockingBay}'; renderShelfRack(); updateExecutiveKPIsAndComparison();" style="background:#dc2626; color:#ffffff; border:none; padding:4px 10px; border-radius:4px; font-weight:800; font-size:10.5px; cursor:pointer;">
+                    Switch to Bay ${blockingBay} Rack ➔
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+          <button onclick="inspectSlot('${blockingDetails.slotId}')" style="background:#dc2626; color:#fff; border:none; padding:5px 9px; border-radius:4px; font-weight:700; font-size:10px; cursor:pointer; white-space:nowrap;">Inspect Slot</button>
+        </div>
+      ` : '';
+
+      rackContainer.innerHTML = blockerBannerHtml + shelfKeys.map(shelfNum => {
         const items = slotsByShelf[shelfNum];
         // Sort slots horizontally by position number
         items.sort((a, b) => {
@@ -3515,26 +3716,28 @@
           const isMismatched = !isCorrect && !isEmpty;
           const isSource = sourceSlots.has(s.id);
           const isTarget = targetSlots.has(s.id);
+          const isBlocking = blockingSlots.has(s.id);
 
           const classes = ["slot-tile"];
           if (isCorrect) classes.push("in-place");
           if (isMismatched) classes.push("displaced");
           if (isEmpty) classes.push("empty-slot");
           if (isSource) classes.push("active-source");
-          if (isTarget) classes.push("active-target");
+          if (isTarget && !isBlocking) classes.push("active-target");
+          if (isBlocking) classes.push("blocking-space");
 
           const posTag = `P${loc.position}`;
-          const statusIcon = isSource ? "★ FROM" : (isTarget ? "★ TO" : (isCorrect ? "✓" : (isEmpty ? "○" : "!")));
+          const statusIcon = isBlocking ? "⛔ BLOCKED" : (isSource ? "★ FROM" : (isTarget ? "★ TO" : (isCorrect ? "✓" : (isEmpty ? "○" : "!"))));
 
           return `
             <div class="${classes.join(" ")}" 
                  onclick="inspectSlot('${s.id}')"
-                 title="Bay: ${loc.bay} • Shelf: ${loc.shelf} • Position: ${loc.position}\nSlot ID: ${s.id}\nCurrent: ${s.current || 'Vacant'}\nTarget: ${s.target || 'None'}">
-              <div class="slot-tile-pos-row">
-                <span class="pos-tag">${posTag}</span>
-                <span style="font-weight:800; font-size:9px;">${statusIcon}</span>
+                 title="Bay: ${loc.bay} • Shelf: ${loc.shelf} • Position: ${loc.position}\nSlot ID: ${s.id}${isBlocking ? '\n⛔ BLOCKED SPACE: Target destination is currently occupied!' : ''}\nCurrent: ${s.current || 'Vacant'}\nTarget: ${s.target || 'None'}">
+              <div class="slot-tile-pos-row" ${isBlocking ? 'style="background:#dc2626; color:#ffffff; margin:-5px -5px 4px -5px; padding:2px 4px; border-radius:3px 3px 0 0;"' : ''}>
+                <span class="pos-tag" ${isBlocking ? 'style="color:#fee2e2; font-weight:800;"' : ''}>${posTag}</span>
+                <span style="font-weight:800; font-size:${isBlocking ? '8px' : '9px'};">${statusIcon}</span>
               </div>
-              <div class="slot-tile-prod">${s.current || 'Vacant Slot'}</div>
+              <div class="slot-tile-prod" ${isBlocking ? 'style="color:#fecaca; font-weight:700;"' : ''}>${isBlocking ? (s.current || (blockingDetails ? blockingDetails.occupant : 'Blocked Occupant')) : (s.current || 'Vacant Slot')}</div>
             </div>
           `;
         }).join("");
@@ -3631,20 +3834,35 @@
         const findingLabel = document.getElementById("qa-label-finding");
         if (findingLabel) findingLabel.textContent = "When does it become empty?";
         if (initOccupiedEl) {
-          initOccupiedEl.textContent = !occ
-            ? "This action does not place a product."
-            : (occ.status === "vacant" ? `Yes. ${occ.text}` : `No. ${occ.text}`);
+          if (!occ) {
+            initOccupiedEl.textContent = "This action does not place a product.";
+          } else if (occ.status === "vacant") {
+            initOccupiedEl.textContent = `Yes. ${occ.text}`;
+          } else {
+            const originStr = occ.occupant_origin ? ` [Origin: ${occ.occupant_origin}]` : "";
+            initOccupiedEl.textContent = `No. ${occ.text}${originStr}`;
+          }
         }
         if (clearedBeforeEl) {
-          clearedBeforeEl.textContent = !occ
-            ? "—"
-            : (occ.status === "vacant"
-              ? (occ.cleared_at_step ? `Step ${occ.cleared_at_step}` : "Empty from the start of the list")
-              : (occ.cleared_at_step ? `Step ${occ.cleared_at_step}, after this step` : "No backend action empties it"));
+          if (!occ) {
+            clearedBeforeEl.textContent = "—";
+          } else if (occ.status === "vacant") {
+            clearedBeforeEl.textContent = occ.cleared_at_step ? `Step ${occ.cleared_at_step}` : "Empty from the start of the list";
+          } else if (occ.cleared_at_step) {
+            clearedBeforeEl.textContent = `Step ${occ.cleared_at_step} (${occ.cleared_by_role || 'move'}), after this step`;
+          } else {
+            clearedBeforeEl.textContent = "❌ No action planned to vacate this position (Collision)";
+          }
         }
         if (provTextEl) {
           const findingText = findings.length ? `Validation: ${findings.map((finding) => finding.message).join(" ")} ` : "";
-          provTextEl.textContent = `${findingText}State: ${step.state || "not provided"}. ${step.sequence_label || "Walk order"}. Worked out by replaying that walk.`;
+          let extra = "";
+          if (occ && occ.status !== "vacant") {
+            const occId = occ.occupant_id ? ` (Action #${occ.occupant_id})` : "";
+            const occUpc = occ.occupant_upc ? ` [UPC ${occ.occupant_upc}]` : "";
+            extra = ` | Occupant: ${occ.occupant_product || 'Product'}${occUpc}${occId}. ${occ.occupant_origin || ''} ${occ.occupant_identification || ''} Actions for occupant: ${occ.occupant_actions || 'None'}.`;
+          }
+          provTextEl.textContent = `${findingText}${extra} State: ${step.state || "not provided"}. ${step.sequence_label || "Walk order"}. Worked out by replaying that walk.`;
         }
         renderTraceTable();
         return;
@@ -3876,6 +4094,9 @@
               <span class="${s.backend_action ? 'backend-action-name' : 'type-pill ' + typePillClass}" style="${s.backend_action ? '' : 'padding:1px 5px; font-size:8.5px;'}">
                 ${s.backend_action ? (s.action_label || readableAction(s.backend_action)) : (s.type === 'fix_in_bay' ? '⚡ fix_in_bay' : (s.type === 'set_aside' ? '📦 set_aside' : (s.type === 'pull' ? '📤 pull' : s.type)))}
               </span>
+              ${(s.group || s.item_group) ? `<span class="type-pill" style="padding:1px 5px; font-size:8.5px; background:rgba(99,102,241,0.2); color:#818cf8; border:1px solid rgba(99,102,241,0.4); margin-left:3px;">GROUP ${s.group || s.item_group}</span>` : ''}
+              ${s.is_swap ? `<span class="type-pill swap" style="padding:1px 5px; font-size:8.5px; margin-left:3px;">SWAP</span>` : ''}
+              ${s.is_slide ? `<span class="type-pill slide" style="padding:1px 5px; font-size:8.5px; margin-left:3px;">SLIDE</span>` : ''}
               ${s.backend_action ? `<div style="font-size:9.5px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; overflow-wrap:anywhere;">${readableAction(s.backend_action)}</div>` : ''}
               ${s.backend_action ? movementBadge(s.movement) : ''}
               ${s.backend_action ? ruleFlagsHtml(s, true) : ''}

@@ -58,7 +58,24 @@ def _action_name(row: Dict[str, Any]) -> str:
 def _product(row: Dict[str, Any]) -> str:
     product = row.get("product")
     nested = product.get("name") if isinstance(product, dict) else ""
-    return str(row.get("product_title") or row.get("product_name") or nested or "")
+    title = str(row.get("product_title") or row.get("product_name") or nested or "").strip()
+    if title:
+        return title
+    act = str(
+        (_position(row.get("current_position")) or {}).get("action")
+        or (_position(row.get("expected_position")) or {}).get("action")
+        or row.get("action")
+        or ""
+    ).lower()
+    row_id = row.get("id")
+    if "identify" in act:
+        return f"Unidentified Product (Action #{row_id} - IDENTIFY)" if row_id is not None else "Unidentified Product (IDENTIFY)"
+    upc = str(row.get("displayed_upc") or row.get("upc") or "").strip()
+    if upc:
+        return f"Product (UPC {upc})"
+    if row_id is not None:
+        return f"Product (Action #{row_id})"
+    return ""
 
 
 ACTION_LABELS = {
@@ -126,6 +143,45 @@ RULES = {
         "Rule: fix_position_fix_in_bay must keep the product in the same bay.",
     ),
 }
+
+
+def convert_same_bay_set_asides_to_fix_in_bay(raw_items: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], int]:
+    """
+    Normalizes legacy retailer backend actions to the New API specification:
+    Any item whose current position and expected position are in the same bay
+    must not generate set_aside (cart staging). It is converted to fix_position_fix_in_bay
+    (direct in-bay shelf repositioning with 0 cart touches).
+    """
+    converted: List[Dict[str, Any]] = []
+    converted_count = 0
+    for row in raw_items:
+        r = dict(row)
+        c_raw = r.get("current_position")
+        e_raw = r.get("expected_position")
+        c_pos = _position(c_raw) or {}
+        e_pos = _position(e_raw) or {}
+        c_loc = _location(c_pos or None)
+        e_loc = _location(e_pos or None)
+        c_bay = c_loc.get("bay") if c_loc else None
+        e_bay = e_loc.get("bay") if e_loc else None
+        c_act = str(c_pos.get("action") or "").lower()
+        e_act = str(e_pos.get("action") or "").lower()
+
+        if c_bay is not None and e_bay is not None and str(c_bay) == str(e_bay):
+            if c_act == "set_aside" or e_act in ("place_on_shelf_add_to_bay", "add_from_cart_to_bay", "add"):
+                if isinstance(c_raw, dict):
+                    c_raw_copy = dict(c_raw)
+                    c_raw_copy["action"] = "fix_position_fix_in_bay"
+                    r["current_position"] = c_raw_copy
+                if isinstance(e_raw, dict):
+                    e_raw_copy = dict(e_raw)
+                    e_raw_copy["action"] = "fix_position_fix_in_bay"
+                    r["expected_position"] = e_raw_copy
+                r["action"] = "fix_position_fix_in_bay"
+                r["_converted_from_same_bay_set_aside"] = True
+                converted_count += 1
+        converted.append(r)
+    return converted, converted_count
 
 
 def _rule_flags(row: Dict[str, Any]) -> List[Dict[str, str]]:
@@ -256,11 +312,17 @@ def _walk_sort_key(unit: Dict[str, Any]) -> Tuple:
 
 
 def _same_product(left: Dict[str, Any], right: Dict[str, Any]) -> bool:
-    if left.get("id") is not None and left.get("id") == right.get("id"):
+    if left.get("id") is not None and right.get("id") is not None and left["id"] == right["id"]:
         return True
-    if left.get("upc") and left.get("upc") == right.get("upc"):
+    left_upc = str(left.get("displayed_upc") or left.get("upc") or "").strip()
+    right_upc = str(right.get("displayed_upc") or right.get("upc") or "").strip()
+    if left_upc and right_upc and left_upc == right_upc:
         return True
-    return bool(left.get("product") and left.get("product") == right.get("product"))
+    left_prod = str(left.get("product_title") or left.get("product_name") or left.get("product") or left.get("item") or "").strip().lower()
+    right_prod = str(right.get("product_title") or right.get("product_name") or right.get("product") or right.get("item") or "").strip().lower()
+    if left_prod and right_prod and left_prod == right_prod and "unidentified" not in left_prod and "unidentified" not in right_prod:
+        return True
+    return False
 
 
 def _walk_occupancy(raw_items: List[Dict[str, Any]], units: List[Dict[str, Any]]) -> List[Optional[Dict[str, Any]]]:
@@ -269,11 +331,14 @@ def _walk_occupancy(raw_items: List[Dict[str, Any]], units: List[Dict[str, Any]]
     for index, row in enumerate(raw_items, start=1):
         source = _slot_key(_location(_position(row.get("current_position"))))
         if source and source not in occupant:
+            row_prod = _product(row) or str(row.get("displayed_upc") or row.get("upc") or "")
+            if not row_prod and row.get("id") is not None:
+                row_prod = f"Product (Action #{row.get('id')})"
             occupant[source] = {
                 "index": 0,
                 "id": row.get("id"),
                 "action": "on shelf",
-                "product": _product(row) or str(row.get("upc") or "") or "a product",
+                "product": row_prod or "Existing product",
                 "upc": str(row.get("displayed_upc") or row.get("upc") or ""),
             }
     vacated_by: Dict[SlotKey, Dict[str, Any]] = {}
@@ -314,29 +379,81 @@ def _walk_occupancy(raw_items: List[Dict[str, Any]], units: List[Dict[str, Any]]
                         "text": "No earlier step lists a product at this position.",
                     }
             elif _same_product(holder, unit):
+                if unit.get("source") == target:
+                    title = "Same product"
+                    text = "This product already holds this position."
+                elif holder.get("id") == unit.get("id"):
+                    title = "Same action"
+                    text = f"Action #{unit['id']} already placed this product here at step {holder.get('index', 0)}."
+                else:
+                    title = "Same product"
+                    text = f"Another facing of {holder['product']} was placed here at step {holder.get('index', 0)}."
                 result = {
                     "status": "vacant",
-                    "title": "Same product",
-                    "text": "This product already holds this position.",
+                    "title": title,
+                    "text": text,
                     "occupant_product": holder["product"],
                     "occupant_upc": holder.get("upc") or "",
                 }
             else:
                 later = clears_later(target, holder, position)
                 holder_upc = holder.get("upc") or ""
+                holder_name = holder.get("product") or "Existing product"
+                holder_id = holder.get("id")
+                holder_step = holder.get("index") or None
+
+                if holder_step:
+                    occ_origin = f"Placed into this position at Step {holder_step} by Action #{holder_id or 'N/A'}."
+                else:
+                    occ_origin = "Present on shelf from the initial scan."
+
+                holder_act = str(holder.get("action") or "").lower()
+                is_unidentified = (
+                    "identify" in holder_act
+                    or "unidentified" in holder_name.lower()
+                    or (not holder_upc and "product" in holder_name.lower())
+                )
+
+                id_unit = next(
+                    (u for u in units if u.get("role") == "identify" and (
+                        (holder_id is not None and u.get("id") == holder_id) or u.get("source") == target
+                    )),
+                    None,
+                )
+                if is_unidentified:
+                    if id_unit:
+                        ident_text = f"Unidentified product. System generated IDENTIFY action #{id_unit.get('id')} at Step {id_unit['index']}."
+                    else:
+                        ident_text = "Unidentified product. System did NOT generate any IDENTIFY action."
+                else:
+                    ident_text = f"Identified product (UPC {holder_upc or 'N/A'}). No IDENTIFY action needed or generated."
+
+                holder_actions = [
+                    f"Step {u['index']} ({u['role']}, Action #{u.get('id')})"
+                    for u in units
+                    if (holder_id is not None and u.get("id") == holder_id)
+                    or (holder_upc and u.get("upc") == holder_upc and (u.get("source") == target or u.get("target") == target))
+                ]
+                holder_actions_str = ", ".join(holder_actions) if holder_actions else "No other action in this task."
+
                 if later:
                     result = {
                         "status": "occupied_cleared_later",
                         "title": "Occupied now",
                         "text": (
-                            f"{holder['product']}{f' (UPC {holder_upc})' if holder_upc else ''} is still here. "
+                            f"{holder_name}{f' (UPC {holder_upc})' if holder_upc else ''} is still here. "
                             f"It is moved away at step {later['index']} "
                             f"({later['role']}), after this step."
                         ),
-                        "blocked_by_step": holder["index"] or None,
+                        "blocked_by_step": holder_step,
+                        "blocked_by_id": holder_id,
                         "cleared_at_step": later["index"],
-                        "occupant_product": holder["product"],
+                        "occupant_product": holder_name,
                         "occupant_upc": holder_upc,
+                        "occupant_id": holder_id,
+                        "occupant_origin": occ_origin,
+                        "occupant_identification": ident_text,
+                        "occupant_actions": holder_actions_str,
                         "cleared_by_role": later["role"],
                     }
                 else:
@@ -344,12 +461,17 @@ def _walk_occupancy(raw_items: List[Dict[str, Any]], units: List[Dict[str, Any]]
                         "status": "occupied",
                         "title": "Occupied",
                         "text": (
-                            f"{holder['product']}{f' (UPC {holder_upc})' if holder_upc else ''} is here, "
+                            f"{holder_name}{f' (UPC {holder_upc})' if holder_upc else ''} is here, "
                             "and no earlier step moves or removes it before this product arrives."
                         ),
-                        "blocked_by_step": holder["index"] or None,
-                        "occupant_product": holder["product"],
+                        "blocked_by_step": holder_step,
+                        "blocked_by_id": holder_id,
+                        "occupant_product": holder_name,
                         "occupant_upc": holder_upc,
+                        "occupant_id": holder_id,
+                        "occupant_origin": occ_origin,
+                        "occupant_identification": ident_text,
+                        "occupant_actions": holder_actions_str,
                         "blocking": True,
                     }
         if unit["source"] and unit.get("clears_source"):
@@ -397,6 +519,15 @@ def present_backend_actions(raw_items: List[Dict[str, Any]]) -> List[Dict[str, A
         row = unit["row"]
         product = _product(row)
         place = unit["sort_at"] or {}
+        grp = row.get("item_group") or row.get("group") or row.get("group_id") or row.get("group_name")
+        act_lower = str(unit["raw_name"] or "").lower()
+        root_lower = str(row.get("action") or "").lower()
+        is_swap = "swap" in act_lower or "swap" in root_lower or (unit.get("movement") or {}).get("kind") == "backend_swap"
+        is_slide = "slide" in act_lower or "slide" in root_lower or (unit.get("movement") or {}).get("kind") == "backend_slide"
+        seq_lbl = _sequence_label(role, place, label)
+        if grp and f"Group {grp}" not in seq_lbl:
+            seq_lbl = f"{seq_lbl} · Group {grp}"
+
         presented.append({
             "index": unit["index"],
             "id": row.get("id"),
@@ -406,7 +537,7 @@ def present_backend_actions(raw_items: List[Dict[str, Any]]) -> List[Dict[str, A
             "rule_flags": unit["rule_flags"],
             "action_label": label,
             "action_meaning": meaning,
-            "sequence_label": _sequence_label(role, place, label),
+            "sequence_label": seq_lbl,
             "movement": movement,
             "target_occupancy": target_occupancy,
             "state": str(row.get("state") or ""),
@@ -415,6 +546,10 @@ def present_backend_actions(raw_items: List[Dict[str, Any]]) -> List[Dict[str, A
             "item": product or unit["upc"] or "Unnamed product",
             "productTitle": product,
             "upc": unit["upc"],
+            "group": grp,
+            "item_group": row.get("item_group"),
+            "is_swap": is_swap,
+            "is_slide": is_slide,
             "bay": place.get("bay") or "",
             "fromLocation": current,
             "toLocation": expected,
@@ -430,7 +565,9 @@ def shelf_slots_from_backend_actions(raw_items: List[Dict[str, Any]]) -> List[Di
     """Build a read-only shelf map. It is not used to create or reorder actions."""
     slots: Dict[str, Dict[str, Any]] = {}
     for row in raw_items:
-        product = _product(row) or str(row.get("upc") or "")
+        product = _product(row) or str(row.get("displayed_upc") or row.get("upc") or "")
+        row_id = row.get("id")
+        fallback_name = product or (f"Unidentified Product (Action #{row_id})" if row_id is not None else "Occupied")
         for field, role in (("current_position", "current"), ("expected_position", "target")):
             location = _location(_position(row.get(field)))
             slot_id = _slot_id(location)
@@ -443,13 +580,13 @@ def shelf_slots_from_backend_actions(raw_items: List[Dict[str, Any]]) -> List[Di
                 "position": str(location["position"]),
                 "current": None,
                 "target": None,
-                "productTitle": product,
-                "upc": str(row.get("upc") or ""),
+                "productTitle": product or fallback_name,
+                "upc": str(row.get("displayed_upc") or row.get("upc") or ""),
             })
             if role == "current":
-                slot["current"] = product or slot["current"]
+                slot["current"] = fallback_name or slot["current"]
             else:
-                slot["target"] = product or slot["target"]
+                slot["target"] = fallback_name or slot["target"]
     return list(slots.values())
 
 
@@ -534,17 +671,44 @@ def validate_backend_shelf_actions(raw_items: List[Dict[str, Any]]) -> Dict[str,
             ))
 
     for target, claimants in target_claims.items():
-        identities = []
-        for row in claimants:
-            identity = row.get("id")
-            if identity not in identities:
-                identities.append(identity)
-        if len(identities) > 1:
-            findings.append(_finding(
+        unique_products = set()
+        for crow in claimants:
+            u_upc = str(crow.get("displayed_upc") or crow.get("upc") or "").strip()
+            u_title = str(crow.get("product_title") or crow.get("product_name") or crow.get("product") or "").strip().lower()
+            prod_key = u_upc if u_upc else (u_title if u_title and "unidentified" not in u_title else str(crow.get("id")))
+            unique_products.add(prod_key)
+        if len(unique_products) > 1:
+            claimant_details = []
+            for c_idx, crow in enumerate(claimants, start=1):
+                c_src = _location(_position(crow.get("current_position")))
+                c_id = crow.get("id")
+                c_title = _product(crow) or f"Product (Action #{c_id})"
+                c_upc = str(crow.get("displayed_upc") or crow.get("upc") or "")
+                c_act = _action_name(crow)
+                c_src_str = _slot_text(c_src) if c_src else "Backroom / Restock (No source shelf)"
+                claimant_details.append({
+                    "index": c_idx,
+                    "id": c_id,
+                    "product": c_title,
+                    "upc": c_upc,
+                    "action": c_act,
+                    "source": c_src_str,
+                    "target": f"Bay {target[0]}, Shelf {target[1]}, Position {target[2]}",
+                })
+            claimant_lines = "\n".join(
+                f"• Product #{c['index']} (Action #{c['id']}): '{c['product']}' (UPC {c['upc'] or 'N/A'}) from {c['source']}"
+                for c in claimant_details
+            )
+            target_str = f"Bay {target[0]}, Shelf {target[1]}, Position {target[2]}"
+            f_item = _finding(
                 "DUPLICATE_TARGET_SLOT", "critical", "Multiple products target one slot",
-                f"{len(identities)} backend actions claim Bay {target[0]}, Shelf {target[1]}, Position {target[2]}.",
+                f"{len(unique_products)} different products claim {target_str}:\n{claimant_lines}",
                 claimants[0],
-            ))
+            )
+            f_item["action_ids"] = [row.get("id") for row in claimants if row.get("id") is not None]
+            f_item["target"] = target_str
+            f_item["claimants"] = claimant_details
+            findings.append(f_item)
 
     for unit in _walk_units(raw_items):
         if unit["role"] not in _FILL_ROLES or not unit["target"]:
@@ -554,13 +718,14 @@ def validate_backend_shelf_actions(raw_items: List[Dict[str, Any]]) -> Dict[str,
                     occupancy.pop(unit["source"], None)
             continue
         occupant = occupancy.get(unit["target"])
-        same_id = occupant and occupant.get("id") is not None and occupant.get("id") == unit["id"]
-        if occupant and not same_id:
+        if occupant and not _same_product(occupant, unit["row"]):
             flagged = dict(unit["row"])
             flagged["_presentation_index"] = unit["index"]
+            occ_product = _product(occupant) or occupant.get("product_title") or occupant.get("product") or f"Action #{occupant.get('id')}"
+            target_str = f"Bay {unit['target'][0]}, Shelf {unit['target'][1]}, Position {unit['target'][2]}"
             findings.append(_finding(
                 "OCCUPIED_DESTINATION", "critical", "Expected position is still occupied",
-                f"Action {unit['id']} targets a position that an earlier walk step has not cleared.", flagged,
+                f"Action {unit['id']} ({unit['product']}) targets {target_str} before the existing product ({occ_product}) is cleared. No earlier walk step vacates this slot.", flagged,
             ))
         if unit["source"] and unit.get("clears_source"):
             holder = occupancy.get(unit["source"])

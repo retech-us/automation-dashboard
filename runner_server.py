@@ -44,7 +44,12 @@ from core.action_list_domain_mapper import transform_action_list_to_domain, Acti
 from core.action_list_ui_mapper import partition_ui_models_by_bay, BayUiSummary, map_domain_to_ui_model
 from core.invariants_validator import validate_all_invariants, InvariantCheckResult
 from core.action_generation_validator import validate_action_generation
-from core.backend_shelf_actions import present_backend_actions, shelf_slots_from_backend_actions, validate_backend_shelf_actions
+from core.backend_shelf_actions import (
+    convert_same_bay_set_asides_to_fix_in_bay,
+    present_backend_actions,
+    shelf_slots_from_backend_actions,
+    validate_backend_shelf_actions,
+)
 from core.scan_issue_investigator import investigate_scan_problem, parse_scan_url, placement_for_task_scans
 from core.html_report_generator import generate_html_validation_report
 from core.e2e_audit_engine import audit_task_execution, derive_why_user_performs_action
@@ -53,7 +58,12 @@ from core.digital_report_client import fetch_section_product_reports_for_scans, 
 from core.dashboard_agents import TAB_LABELS, answer_question, enhance_with_model, list_agents, model_is_configured, run_agent
 from core.leadership_reports import generate_leadership_report
 from core.ir_live_snapshot import build_ir_live_snapshot, load_ir_snapshot, save_ir_snapshot
-from core.ir_task_flow_builder import get_task_flow, synthesize_task_flow_from_raw_actions
+from core.ir_task_flow_builder import (
+    build_stage_action_payload,
+    enrich_flow_with_digital_shelf_evidence,
+    get_task_flow,
+    synthesize_task_flow_from_raw_actions,
+)
 from core.session_store import load_tokens, save_tokens
 from core.ir_history import (
     build_history_view,
@@ -97,8 +107,43 @@ REFERENCE_FIXTURE_DATA = [
 
 DEFAULT_TOKEN = ""
 TOKEN = None
-BASE_URL = ""
-ssl_ctx = ssl._create_unverified_context()
+BASE_URL = "https://krcs.symphonyretailai.com"
+def _make_ssl_context() -> ssl.SSLContext:
+    try:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        if hasattr(ssl, "TLSVersion") and hasattr(ssl.TLSVersion, "TLSv1_2"):
+            ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+        return ctx
+    except Exception:
+        return ssl._create_unverified_context()
+
+ssl_ctx = _make_ssl_context()
+
+def _safe_int(val: Any, default: int = 1) -> int:
+    """Safely coerce val to int, guarding against int vs str TypeError in tuple comparisons and min/max."""
+    if val is None:
+        return default
+    if isinstance(val, int):
+        return val
+    if isinstance(val, float):
+        return int(val)
+    try:
+        s = str(val).strip()
+        if not s:
+            return default
+        if s.startswith("-") and s[1:].isdigit():
+            return int(s)
+        if s.isdigit():
+            return int(s)
+        digits = "".join(ch for ch in s if ch.isdigit() or ch == "-")
+        if digits and digits not in ("-", "--"):
+            return int(digits)
+    except Exception:
+        pass
+    return default
+
 
 # Execution State
 EXECUTION_STATE = {
@@ -735,7 +780,15 @@ def get_git_branches(repo_path: Path) -> List[str]:
 def normalize_backend_url(raw: str) -> str:
     if not raw:
         return "https://epsilon.rebotics.net"
-    raw = raw.strip()
+    raw = str(raw).strip()
+    # Clean any accidental double-domain typos like .net.net or .rebotics.net.net
+    while ".net.net" in raw:
+        raw = raw.replace(".net.net", ".net")
+    while ".rebotics.net.rebotics.net" in raw:
+        raw = raw.replace(".rebotics.net.rebotics.net", ".rebotics.net")
+    while ".rebotics.net.net" in raw:
+        raw = raw.replace(".rebotics.net.net", ".rebotics.net")
+
     # Always enforce HTTPS for cloud instances to prevent 301 redirect POST->GET 405 error
     if raw.startswith("http://"):
         raw = "https://" + raw[7:]
@@ -744,6 +797,16 @@ def normalize_backend_url(raw: str) -> str:
         # Normalize common abbreviations / typos like krsc -> krcs, krog -> krcs, kroger -> krcs
         if slug in ("krsc", "krog", "kroger"):
             slug = "krcs"
+        if slug in ("harr", "harris"):
+            slug = "harr"
+        if slug in ("albt", "albe", "albertsons"):
+            slug = "albt"
+        if slug in ("stgsams", "sams"):
+            slug = "stgsams"
+        if slug in ("schn", "schnucks"):
+            slug = "schn"
+        if slug in ("wake", "wakefern"):
+            slug = "wake"
         if "." not in slug:
             return f"https://{slug}.rebotics.net"
         raw = f"https://{slug}"
@@ -1053,22 +1116,19 @@ def get_auth_token(base_url: str = None, username: str = None, password: str = N
         raise ValueError("Backend URL is required to authenticate.")
     target_url = normalize_backend_url(target_raw)
 
-    # 1. Check if an explicit override_token is provided
-    if override_token and str(override_token).strip():
-        tok = str(override_token).strip()
-        TOKEN = tok
-        INSTANCE_TOKENS[target_url] = tok
-        remember_instance_tokens()
-        return TOKEN
-
-    # 2. If username & password are supplied, authenticate with backend 2fa/verify endpoint
+    # 1. If username & password are supplied, authenticate with backend 2fa/verify endpoint
     if username and password:
         u_name = str(username).strip()
         p_word = str(password).strip()
         try:
             url = f"{target_url}/api/v1/2fa/verify/"
             payload = {"username": u_name, "password": p_word, "device_id": "HEADLESS-RUNNER-001", "token_type": "simple"}
-            req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers={"Content-Type": "application/json"}, method="POST")
+            req_headers = {
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)",
+                "Accept": "application/json"
+            }
+            req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=req_headers, method="POST")
             with urllib.request.urlopen(req, context=ssl_ctx, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 if data.get("token"):
@@ -1081,7 +1141,7 @@ def get_auth_token(base_url: str = None, username: str = None, password: str = N
             if http_err.code in (404, 405):
                 try:
                     alt_url = f"{target_url}/api-token-auth/"
-                    alt_req = urllib.request.Request(alt_url, data=json.dumps({"username": u_name, "password": p_word}).encode("utf-8"), headers={"Content-Type": "application/json"}, method="POST")
+                    alt_req = urllib.request.Request(alt_url, data=json.dumps({"username": u_name, "password": p_word}).encode("utf-8"), headers=req_headers, method="POST")
                     with urllib.request.urlopen(alt_req, context=ssl_ctx, timeout=10) as alt_resp:
                         alt_data = json.loads(alt_resp.read().decode("utf-8"))
                         if alt_data.get("token"):
@@ -1103,6 +1163,14 @@ def get_auth_token(base_url: str = None, username: str = None, password: str = N
         except Exception as e:
             print(f"Auth token error for {u_name} on {target_url}: {e}")
             raise e
+
+    # 2. Check if an explicit override_token is provided (when username/password are not supplied)
+    if override_token and str(override_token).strip():
+        tok = str(override_token).strip()
+        TOKEN = tok
+        INSTANCE_TOKENS[target_url] = tok
+        remember_instance_tokens()
+        return TOKEN
 
     # 3. Check instance token cache for an active token on this instance
     if target_url in INSTANCE_TOKENS:
@@ -1229,14 +1297,16 @@ def parse_raw_action_items(raw_items: List[Dict[str, Any]], task_id: int, pog_id
         real_scan = (dm.current_position.scan_id if dm.current_position and dm.current_position.scan_id else None) or (dm.expected_position.scan_id if dm.expected_position and dm.expected_position.scan_id else None)
         
         # Prioritize the most recent (highest numeric ID) scan
-        if bay_latest_scan and real_scan:
-            scan_id = max(bay_latest_scan, real_scan)
-        elif bay_latest_scan:
-            scan_id = bay_latest_scan
-        elif real_scan:
-            scan_id = real_scan
+        b_scan_int = _safe_int(bay_latest_scan, 0)
+        r_scan_int = _safe_int(real_scan, 0)
+        if b_scan_int and r_scan_int:
+            scan_id = max(b_scan_int, r_scan_int)
+        elif b_scan_int:
+            scan_id = b_scan_int
+        elif r_scan_int:
+            scan_id = r_scan_int
         else:
-            scan_id = (int(sec) if str(sec).isdigit() else 1)
+            scan_id = _safe_int(sec, 1)
 
         # Map UI Type and Theme
         if dm.action_type == "Identify" or ui_model.step_subtype == "identify":
@@ -1302,10 +1372,10 @@ def parse_raw_action_items(raw_items: List[Dict[str, Any]], task_id: int, pog_id
             "theme": theme,
             "title": dm.product_title,
             "upc": dm.displayed_upc,
-            "cur_shelf": ui_model.source_shelf or 1,
-            "cur_pos_num": ui_model.source_position or 1,
-            "exp_shelf": ui_model.target_shelf or 1,
-            "exp_pos_num": ui_model.target_position or 1,
+            "cur_shelf": _safe_int(ui_model.source_shelf, 1),
+            "cur_pos_num": _safe_int(ui_model.source_position, 1),
+            "exp_shelf": _safe_int(ui_model.target_shelf, 1),
+            "exp_pos_num": _safe_int(ui_model.target_position, 1),
             "source_bay": ui_model.source_bay,
             "source_shelf": ui_model.source_shelf,
             "source_position": ui_model.source_position,
@@ -1335,6 +1405,10 @@ def parse_raw_action_items(raw_items: List[Dict[str, Any]], task_id: int, pog_id
             "meaning": ui_model.user_action_meaning,
             "state": "STATE_ACCEPTED" if dm.action_resolved else "STATE_IDLE",
             "reason": dm.reason,
+            "group": getattr(dm, "group", ""),
+            "item_group": getattr(dm, "item_group", ""),
+            "is_swap": getattr(dm, "is_swap", False),
+            "is_slide": getattr(dm, "is_slide", False),
         })
 
     # Sort actions by strict store associate execution sequence
@@ -1363,6 +1437,7 @@ def _backend_actions_payload(
     task_id: int,
     raw_items: List[Dict[str, Any]],
     message: str,
+    converted_count: int = 0,
 ) -> Dict[str, Any]:
     """Return the retailer rows in store walk order, plus a read-only report."""
     actions = present_backend_actions(raw_items)
@@ -1379,6 +1454,7 @@ def _backend_actions_payload(
         "steps": actions,
         "slots": shelf_slots_from_backend_actions(raw_items),
         "validation": validate_backend_shelf_actions(raw_items),
+        "converted_same_bay_set_asides": converted_count,
         "message": message,
     }
 
@@ -1438,11 +1514,24 @@ def run_shelf_reset_backend_actions(payload: Dict[str, Any]) -> Dict[str, Any]:
             "message": f"Could not load Task #{task_id} from {base_url}. {exc}",
         }
 
+    # Automatically convert same-bay set_asides to fix_in_bay per new API rules (unless explicitly disabled)
+    auto_convert = payload.get("auto_convert_same_bay", True)
+    converted_count = 0
+    if auto_convert:
+        raw_items, converted_count = convert_same_bay_set_asides_to_fix_in_bay(raw_items)
+        if converted_count > 0:
+            msg = f"Loaded {len(raw_items)} backend actions for Task #{task_id} ({converted_count} same-bay set-aside actions converted to FixInBay per new API rules)."
+        else:
+            msg = f"Loaded {len(raw_items)} backend actions for Task #{task_id}."
+    else:
+        msg = f"Loaded {len(raw_items)} backend actions for Task #{task_id}."
+
     return _backend_actions_payload(
         base_url,
         task_id,
         raw_items,
-        f"Loaded {len(raw_items)} backend actions for Task #{task_id}.",
+        msg,
+        converted_count=converted_count,
     )
 
 
@@ -1630,12 +1719,11 @@ def sort_action_sequence(actions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     def action_sort_key(act: Dict[str, Any]):
         a_type = act.get("type", "")
-        bay_str = str(act.get("bay", "1"))
-        bay_num = int(bay_str) if bay_str.isdigit() else 99
-        cur_sh = act.get("cur_shelf", 1)
-        cur_p = act.get("cur_pos_num", 1)
-        exp_sh = act.get("exp_shelf", 1)
-        exp_p = act.get("exp_pos_num", 1)
+        bay_num = _safe_int(act.get("bay"), 99)
+        cur_sh = _safe_int(act.get("cur_shelf"), 1)
+        cur_p = _safe_int(act.get("cur_pos_num"), 1)
+        exp_sh = _safe_int(act.get("exp_shelf"), 1)
+        exp_p = _safe_int(act.get("exp_pos_num"), 1)
 
         # Phase 1: Identify
         if a_type == "IDENTIFY" or "IDENTIFY" in act.get("backend_action_type", ""):
@@ -1667,14 +1755,14 @@ def sort_action_sequence(actions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         position = cur_p or exp_p
         if a_type == "FIX_IN_BAY" and cur_sh == exp_sh:
             try:
-                source_pos = int(cur_p)
-                target_pos = int(exp_p)
+                source_pos = _safe_int(cur_p, 1)
+                target_pos = _safe_int(exp_p, 1)
                 # Walk toward the vacancy: rightward chains move from right to
                 # left; leftward chains move from left to right.
                 position = -source_pos if target_pos > source_pos else source_pos
             except (TypeError, ValueError):
                 pass
-        return (3, bay_num, sub_prio, shelf, position)
+        return (3, bay_num, sub_prio, _safe_int(shelf, 1), _safe_int(position, 1))
 
     sorted_list = sorted(actions, key=action_sort_key)
     
@@ -2931,6 +3019,17 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     break
             offset += TASK_PAGE_SIZE * TASK_PARALLEL_PAGES
 
+        # Guarantee no duplicate task_ids from overlapping parallel page windows
+        seen_tids: set = set()
+        deduped_collected: List[Dict[str, Any]] = []
+        for entry in collected:
+            tid = str(entry.get("task_id") or "").strip()
+            if not tid or tid in seen_tids:
+                continue
+            seen_tids.add(tid)
+            deduped_collected.append(entry)
+        collected = deduped_collected
+
         if first_error == "SESSION_EXPIRED":
             return collected, (
                 f"Your saved sign-in for {instance} has expired. "
@@ -3020,15 +3119,21 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             with urllib.request.urlopen(task_req, context=ssl_ctx, timeout=15) as resp:
                 task_obj = json.loads(resp.read().decode("utf-8"))
 
-            # 2. Fetch Raw Action Items
-            act_req = urllib.request.Request(
-                f"{base_url}/api/v1/tasks/{task_id}/action-list/retailer/?limit=1000",
-                headers=headers,
+            # 2. Keep pre-photo and post-photo action lists separate.
+            raw_actions, pre_error, _pre_status, _pre_url = fetch_task_action_list(
+                base_url,
+                token,
+                task_id,
+                stage="pre_photo",
             )
-            with urllib.request.urlopen(act_req, context=ssl_ctx, timeout=20) as resp:
-                act_payload = json.loads(resp.read().decode("utf-8"))
-            raw_actions = act_payload.get("results") if isinstance(act_payload, dict) else act_payload
-            raw_actions = raw_actions if isinstance(raw_actions, list) else []
+            if pre_error or not raw_actions:
+                raw_actions, _ = fetch_live_task_actions(base_url, task_id, token)
+            post_raw_actions, post_stage_loaded, post_stage_error = load_post_photo_actions(
+                base_url,
+                token,
+                task_id,
+                raw_actions,
+            )
 
             # Store info
             st = task_obj.get("store") or {}
@@ -3134,11 +3239,33 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 raw_actions,
                 metadata_override=meta_override,
             )
+            flow.update(build_stage_action_payload(
+                task_id,
+                raw_actions,
+                post_raw_actions,
+                post_loaded=post_stage_loaded,
+                post_error=post_stage_error,
+                metadata_override=meta_override,
+            ))
             digital_items, digital_loaded, digital_error, _ = load_digital_report_actions(
                 base_url,
                 token,
                 raw_actions,
             )
+            flow = enrich_flow_with_digital_shelf_evidence(flow, digital_items)
+            flow["all_digital_actions"] = [
+                {
+                    "scan_id": item.scan_id,
+                    "upc": item.upc,
+                    "product_name": item.product_name,
+                    "section": item.section,
+                    "rog_position": item.rog_position,
+                    "pog_position": item.pog_position,
+                    "action_type": item.action_type,
+                    "action_taken": item.action_taken,
+                }
+                for item in digital_items
+            ]
             evidence_scan_ids = sorted({
                 int(scan_id)
                 for item in raw_actions
@@ -3173,6 +3300,38 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 }
                 for item in digital_items
                 if item.action_taken and item.action_taken != "-"
+            ]
+            flow["unperformed_actions"] = [
+                {
+                    "scan_id": item.scan_id,
+                    "upc": item.upc,
+                    "product_name": item.product_name,
+                    "section": item.section,
+                    "rog_position": item.rog_position,
+                    "pog_position": item.pog_position,
+                    "action_type": item.action_type,
+                    "action_taken": item.action_taken or "-",
+                    "state": "NO_RECORD",
+                    "reason": f"Required {item.action_type} action was not confirmed in associate records (Action Taken is blank/'-')",
+                }
+                for item in digital_items
+                if (not item.action_taken or item.action_taken == "-") and str(item.action_type or "").casefold() != "ok"
+            ]
+            flow["ok_no_action_items"] = [
+                {
+                    "scan_id": item.scan_id,
+                    "upc": item.upc,
+                    "product_name": item.product_name,
+                    "section": item.section,
+                    "rog_position": item.rog_position,
+                    "pog_position": item.pog_position,
+                    "action_type": "ok",
+                    "action_taken": "-",
+                    "state": "ALREADY_CORRECT",
+                    "reason": "Product was already at correct planogram position before reset; no associate action needed",
+                }
+                for item in digital_items
+                if (not item.action_taken or item.action_taken == "-") and str(item.action_type or "").casefold() == "ok"
             ]
             return flow
         except Exception as e:
@@ -4491,6 +4650,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "returned_records": len(traffic[-limit:]),
                 "traffic": traffic[-limit:]
             })
+            return
         elif self.path.startswith("/api/runner/shelf_reset/reference"):
             slots = [Slot.from_dict(d) for d in REFERENCE_FIXTURE_DATA]
             steps = sequence_shelf_reset(slots)
@@ -4537,10 +4697,12 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
         elif self.path.startswith("/api/runner/shelf_reset/backend_actions"):
             qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            auto_conv = qs.get("auto_convert_same_bay", ["true"])[0].lower() != "false"
             res = run_shelf_reset_backend_actions({
                 "task_id": qs.get("task_id", [None])[0],
                 "instance": qs.get("instance", [None])[0],
                 "base_url": qs.get("base_url", [None])[0],
+                "auto_convert_same_bay": auto_conv,
             })
             self._send_json(res)
             return
@@ -5359,8 +5521,11 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         username = str(payload.get("username") or "").strip()
         password = str(payload.get("password") or "").strip()
         override_token = payload.get("token")
-        
-        if not override_token and (not username or not password):
+
+        # When credentials are provided, ignore any stale override_token so fresh login occurs
+        if username and password:
+            override_token = None
+        elif not override_token:
             if base_url in INSTANCE_TOKENS:
                 override_token = INSTANCE_TOKENS[base_url]
             else:
@@ -5372,7 +5537,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     "has_saved_token": False,
                     "message": "Username and Password are required to authenticate.",
                 }
-        
+
         start_t = time.time()
         try:
             token = get_auth_token(base_url=base_url, username=username, password=password, override_token=override_token)
@@ -5382,7 +5547,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 dur = int((time.time() - start_t) * 1000)
                 u_data = json.loads(resp.read().decode("utf-8"))
                 found_user = u_data.get("profile", {}).get("user", {}).get("username") or u_data.get("username", username)
-                
+
                 # Fetch backend version & instance name
                 backend_ver = fetch_backend_version(base_url)
                 instance_slug = base_url.replace("https://", "").replace("http://", "").split(".")[0]
@@ -5418,6 +5583,15 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             dur = int((time.time() - start_t) * 1000)
             instance_slug = base_url.replace("https://", "").replace("http://", "").split(".")[0]
             backend_ver = fetch_backend_version(base_url)
+            is_401 = "401" in str(e) or "Unauthorized" in str(e) or (isinstance(e, urllib.error.HTTPError) and e.code == 401)
+            if is_401:
+                forget_instance_token(base_url, token if 'token' in locals() else override_token or "")
+
+            err_msg = (
+                "Session token has expired or credentials are invalid (HTTP 401). Please enter your password to sign in."
+                if is_401
+                else f"Connection failed: {e}"
+            )
             err_data = {
                 "status": "error",
                 "connected": False,
@@ -5425,13 +5599,15 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "base_url": base_url,
                 "instance_slug": instance_slug,
                 "backend_version": backend_ver,
+                "has_saved_token": False,
+                "token_expired": is_401,
                 "error": str(e),
-                "message": f"Connection failed: {e}",
+                "message": err_msg,
             }
             record_network_traffic(
                 method="GET",
                 url=f"{base_url}/api/v1/users/me/",
-                status_code=401,
+                status_code=401 if is_401 else 500,
                 latency_ms=dur,
                 request_headers={"Content-Type": "application/json"},
                 request_payload={"base_url": base_url, "username": username},
@@ -5792,7 +5968,9 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                                     pog_id = pog_item.get("id") or pog_item.get("planogram_id") or pog_id
                                     store_planogram_id = pog_item.get("store_planogram_id")
                                     pog_name = pog_item.get("name") or pog_name
-                                    bays_count = pog_item.get("of_bays") or pog_item.get("bays_count") or bays_count
+                                    b_val = pog_item.get("of_bays") or pog_item.get("bays_count")
+                                    if b_val is not None:
+                                        bays_count = _safe_int(b_val, bays_count)
                                 elif isinstance(pog_item, int):
                                     pog_id = pog_item
                             elif t_info.get("planogram_id"):
@@ -5830,8 +6008,10 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                         if s_status in ("processing", "queued", "in_progress", "created", "waiting_for_cv", "pending", "started"):
                             processing_scans.append(s)
                         
-                        if sec not in latest_scan_map or s_id > latest_scan_map[sec]:
-                            latest_scan_map[sec] = s_id
+                        s_id_int = _safe_int(s_id, 0)
+                        prev_id_int = _safe_int(latest_scan_map.get(sec), 0)
+                        if sec not in latest_scan_map or s_id_int > prev_id_int:
+                            latest_scan_map[sec] = s_id_int if s_id_int else s_id
                 except Exception:
                     pass
 
@@ -5869,8 +6049,9 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     pog_name = p_info["name"]
                 if p_info.get("id"):
                     pog_id = p_info["id"]
-                if p_info.get("of_bays") or p_info.get("bays_count"):
-                    bays_count = p_info.get("of_bays") or p_info.get("bays_count")
+                b_val = p_info.get("of_bays") or p_info.get("bays_count")
+                if b_val is not None:
+                    bays_count = _safe_int(b_val, bays_count)
 
                 # Count unique bays across actions
                 bays_set = set()
@@ -5881,7 +6062,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                         if sec_info.get("name"):
                             bays_set.add(str(sec_info["name"]))
                 if bays_set:
-                    bays_count = max(bays_count, len(bays_set))
+                    bays_count = max(_safe_int(bays_count, 1), len(bays_set))
 
                 st_val = raw_items[0].get("store") or raw_items[0].get("store_id")
                 if st_val and isinstance(st_val, int) and not store_id:

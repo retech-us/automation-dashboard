@@ -170,7 +170,7 @@ def fetch_section_product_reports_for_scans(
     failed_scan_ids = []
     requested_urls = []
     raw_payloads = []
-    unique_scan_ids = sorted(set(scan_ids))
+    unique_scan_ids = sorted(set(int(s) for s in scan_ids if str(s or '').isdigit()))
     successful_fetches = 0
     for scan_id in unique_scan_ids:
         result = fetch_section_product_reports(
