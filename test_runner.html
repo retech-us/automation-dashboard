@@ -1404,18 +1404,45 @@
             box-shadow: 0 1px 3px rgba(31, 78, 121, 0.25);
         }
 
-        /* Console Box */
+        /* Console Box & Live Telemetry */
         .console-box {
             background: #090D16;
             color: #E2E8F0;
             font-family: 'JetBrains Mono', monospace;
             font-size: 10.5px;
             border-radius: var(--radius-md);
-            padding: 10px 12px;
-            height: 105px;
+            padding: 8px 10px;
+            min-height: 180px;
+            max-height: 800px;
+            height: 360px;
+            resize: vertical;
             overflow-y: auto;
             border: 1px solid #1E293B;
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+            position: relative;
+            transition: height 0.2s ease;
+        }
+
+        .console-box.expanded {
+            height: 520px;
+        }
+
+        .console-box.maximum {
+            height: 700px;
+        }
+
+        .telemetry-progress-line {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2.5px;
+            background: linear-gradient(90deg, #38BDF8, #818CF8, #34D399, #38BDF8);
+            background-size: 200% 100%;
+            animation: indeterminate-slide 1.2s infinite linear;
+            z-index: 5;
+            border-radius: 2px;
+            margin: -4px -6px 6px -6px;
         }
 
         .log-entry {
@@ -1427,6 +1454,216 @@
         .log-warn { color: #FBBF24; font-weight: 600; }
         .log-info { color: #38BDF8; }
         .log-error { color: #FB7185; font-weight: 600; }
+
+        /* Rich Telemetry Trace Item */
+        .trace-entry {
+            background: #0F172A;
+            border: 1px solid #1E293B;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            overflow: hidden;
+            transition: border-color 0.15s ease;
+        }
+
+        .trace-entry:hover {
+            border-color: #334155;
+        }
+
+        .trace-entry.is-error {
+            border-color: #7F1D1D;
+            background: #180F16;
+        }
+
+        .trace-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 8px;
+            cursor: pointer;
+            user-select: none;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .trace-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .trace-meta-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .trace-meta-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .trace-time {
+            color: #64748B;
+            font-size: 9.5px;
+            font-family: monospace;
+        }
+
+        .trace-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 700;
+            font-family: monospace;
+            line-height: 1.2;
+        }
+
+        .trace-method-get { background: #1E3A8A; color: #93C5FD; border: 1px solid #2563EB; }
+        .trace-method-post { background: #064E3B; color: #6EE7B7; border: 1px solid #059669; }
+        .trace-method-patch { background: #4C1D95; color: #C4B5FD; border: 1px solid #7C3AED; }
+        .trace-method-delete { background: #7F1D1D; color: #FCA5A5; border: 1px solid #DC2626; }
+        .trace-method-other { background: #334155; color: #CBD5E1; border: 1px solid #475569; }
+
+        .trace-status-ok { background: #064E3B; color: #34D399; }
+        .trace-status-warn { background: #78350F; color: #FBBF24; }
+        .trace-status-error { background: #7F1D1D; color: #F87171; }
+
+        .trace-latency {
+            color: #38BDF8;
+            font-size: 9px;
+        }
+
+        .trace-url {
+            color: #F8FAFC;
+            font-weight: 600;
+            font-size: 10px;
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .trace-badge-active { background: #1E1B4B; color: #A5B4FC; border: 1px solid #4F46E5; }
+        .trace-badge-idle { background: #1E293B; color: #94A3B8; border: 1px solid #334155; }
+
+        .trace-toggle-btn {
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #38BDF8;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .trace-toggle-btn:hover {
+            background: #334155;
+            color: #7DD3FC;
+        }
+
+        .trace-body-drawer {
+            border-top: 1px solid #1E293B;
+            background: #020617;
+            padding: 8px;
+            font-size: 10px;
+        }
+
+        .trace-tabs {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #1E293B;
+            padding-bottom: 4px;
+        }
+
+        .trace-tab {
+            background: transparent;
+            border: none;
+            color: #94A3B8;
+            font-size: 9.5px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .trace-tab.active {
+            background: #1E293B;
+            color: #38BDF8;
+        }
+
+        .trace-tab:hover {
+            color: #F8FAFC;
+        }
+
+        .trace-pane {
+            display: none;
+        }
+
+        .trace-pane.active {
+            display: block;
+        }
+
+        .trace-code-header {
+            font-size: 9px;
+            color: #64748B;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .trace-code-block {
+            background: #090D16;
+            border: 1px solid #1E293B;
+            border-radius: 4px;
+            padding: 6px 8px;
+            color: #E2E8F0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 220px;
+            overflow-y: auto;
+            margin: 0;
+            line-height: 1.35;
+        }
+
+        /* Studio Spinners and Progress Bars */
+        .studio-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(59, 130, 246, 0.2);
+            border-top-color: #2563EB;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .progress-bar-indeterminate {
+            animation: indeterminate-slide 1.5s infinite linear;
+        }
+
+        @keyframes indeterminate-slide {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(25%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 rgba(37, 99, 235, 0); }
+            50% { box-shadow: 0 0 10px rgba(37, 99, 235, 0.25); }
+        }
 
         /* Badges */
         .badge {
@@ -2252,6 +2489,19 @@
                         <strong>No results yet</strong>
                         <p>This area stays empty until a task check or scan investigation finishes.</p>
                     </div>
+                    <!-- Interactive Loading & Progress Bar -->
+                    <div id="existing-task-loader-wrap" style="display: none; margin-bottom: 8px; padding: 10px 12px; background: #F0FDF4; border: 1.5px solid #86EFAC; border-radius: 8px; animation: pulse-glow 2s infinite ease-in-out;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="studio-spinner"></div>
+                                <span id="existing-task-loader-text" style="font-weight: 800; font-size: 11.5px; color: #166534;">Loading live actions from backend...</span>
+                            </div>
+                            <span id="existing-task-loader-pct" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; color: #15803D;">0%</span>
+                        </div>
+                        <div class="progress-bar-wrap" style="height: 7px; background: #DCFCE7; border-radius: 999px; overflow: hidden;">
+                            <div id="existing-task-loader-bar" class="progress-bar-fill progress-bar-indeterminate" style="width: 30%; background: linear-gradient(90deg, #10B981, #059669); transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
                     <div id="existing-task-status" tabindex="-1" role="status" aria-live="polite" hidden></div>
                     <div id="existing-task-findings" style="display:none;"></div>
                     <div id="investigate-issue-result" role="status" aria-live="polite" style="display:none;"></div>
@@ -2307,15 +2557,29 @@
                 </div>
 
                 <!-- Network Telemetry Console -->
-                <div class="panel-title" style="margin-bottom: 3px; font-size: 10.5px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+                <div class="panel-title" style="margin-bottom: 3px; font-size: 10.5px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
                     <div style="display: flex; align-items: center; gap: 6px;">
                         <span>📡 Live Telemetry &amp; Network Trace</span>
-                        <span style="font-size: 9.5px; color: var(--green-text); font-weight: 700;">● Active</span>
+                        <span id="telemetry-live-status-pill" style="font-size: 9.5px; color: var(--green-text); font-weight: 700;">● Active</span>
+                        <span id="telemetry-badge-count" class="badge" style="background: #1E293B; color: #94A3B8; font-size: 8.5px; font-weight: 700;">0 calls</span>
                     </div>
-                    <button class="btn btn-outline" style="padding: 2px 8px; font-size: 10px; border-radius: 4px;" onclick="openTrafficInspectorModal()">🌐 Inspect All HTTP Calls</button>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <button type="button" id="btn-telemetry-filter-api" class="btn btn-ghost" style="padding: 2px 7px; font-size: 9.5px; background: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE; font-weight: 700;" onclick="toggleTelemetryFilter()" title="Filter: Show Real API calls only vs All events">
+                            ⚡ Real API Only
+                        </button>
+                        <button type="button" id="btn-telemetry-height" class="btn btn-ghost" style="padding: 2px 6px; font-size: 9.5px;" onclick="cycleTelemetryHeight()" title="Toggle Telemetry height (Standard 360px / Expanded 520px / Max 700px)">
+                            ↕ Height: <span id="telemetry-height-label" style="font-weight: 700; color: #2563EB;">Standard</span>
+                        </button>
+                        <button type="button" id="btn-telemetry-auto-expand" class="btn btn-ghost" style="padding: 2px 6px; font-size: 9.5px;" onclick="toggleAutoExpandBodies()" title="Toggle full Request and Response Body preview">
+                            📦 Body: <span id="auto-expand-text" style="font-weight: 700; color: #2563EB;">Compact</span>
+                        </button>
+                        <button type="button" class="btn btn-ghost" style="padding: 2px 6px; font-size: 9.5px;" onclick="clearTelemetryConsole()" title="Clear telemetry log">🧹 Clear</button>
+                        <button class="btn btn-outline" style="padding: 2px 8px; font-size: 10px; border-radius: 4px;" onclick="openTrafficInspectorModal()">🌐 Inspect All HTTP Calls</button>
+                    </div>
                 </div>
                 <div class="console-box" id="network-console">
-                    <div class="log-entry log-info">[00:00.000] Studio initialized. Ready to execute live pipeline.</div>
+                    <div id="telemetry-progress-line" class="telemetry-progress-line" style="display: none;"></div>
+                    <div class="log-entry log-info">[00:00.000] Studio initialized. Real API telemetry active (background sync &amp; keep-alive pings filtered out).</div>
                 </div>
             </div>
         </div>
@@ -2485,7 +2749,31 @@
         const empty = document.getElementById('validation-results-empty');
         const scorecard = document.getElementById('ir-live-scorecard');
         const gate = document.getElementById('disp-quality-gate');
+        const loaderWrap = document.getElementById('existing-task-loader-wrap');
+        const loaderText = document.getElementById('existing-task-loader-text');
+        const loaderPct = document.getElementById('existing-task-loader-pct');
+        const loaderBar = document.getElementById('existing-task-loader-bar');
         const showEmpty = phase === 'idle';
+
+        if (loaderWrap) {
+            if (phase === 'loading') {
+                loaderWrap.style.display = 'block';
+                if (loaderText) loaderText.textContent = message || 'Loading live actions from backend...';
+                if (loaderPct) loaderPct.textContent = '35%';
+                if (loaderBar) loaderBar.style.width = '35%';
+            } else if (phase === 'validating') {
+                loaderWrap.style.display = 'block';
+                if (loaderText) loaderText.textContent = message || 'Validating shelf coordinates and digital shelf history...';
+                if (loaderPct) loaderPct.textContent = '75%';
+                if (loaderBar) loaderBar.style.width = '75%';
+            } else if (phase === 'ready' || phase === 'ready_with_warnings') {
+                if (loaderPct) loaderPct.textContent = '100%';
+                if (loaderBar) loaderBar.style.width = '100%';
+                setTimeout(() => { if (loaderWrap) loaderWrap.style.display = 'none'; }, 600);
+            } else {
+                loaderWrap.style.display = 'none';
+            }
+        }
 
         if (empty) empty.hidden = !showEmpty;
         if (showEmpty) {
@@ -2517,13 +2805,117 @@
         if (findings) {
             findings.style.display = items.length ? 'block' : 'none';
             findings.setAttribute('role', items.some(item => item.severity === 'critical') ? 'alert' : 'status');
-            findings.innerHTML = items.map(item => `
-                <div style="padding:7px 9px; margin-top:5px; border-radius:6px; border:1px solid ${item.severity === 'critical' ? '#FECACA' : '#FDE68A'}; background:${item.severity === 'critical' ? '#FEF2F2' : '#FFFBEB'}; color:${item.severity === 'critical' ? '#991B1B' : '#854D0E'}; font-size:10px;">
-                    <b>${studioEscape(item.title || item.code)}</b>
-                    <div>${studioEscape(item.message || '')}</div>
-                    ${(item.source || item.target) ? `<div style="margin-top:2px;font-family:monospace;">${studioEscape(item.source || '')} → ${studioEscape(item.target || '')}</div>` : ''}
-                </div>
-            `).join('');
+            findings.innerHTML = items.map(item => {
+                const hasValidSource = item.source && item.source !== 'unknown slot';
+                const hasValidTarget = item.target && item.target !== 'unknown slot';
+                const movementText = (hasValidSource && hasValidTarget)
+                    ? `${studioEscape(item.source)} ➔ ${studioEscape(item.target)}`
+                    : (hasValidTarget ? `Target: ${studioEscape(item.target)}` : (hasValidSource ? `Source: ${studioEscape(item.source)}` : ''));
+                
+                let claimantsHtml = '';
+                if (item.claimants && Array.isArray(item.claimants) && item.claimants.length > 0) {
+                    claimantsHtml = `
+                        <div style="margin-top:6px; padding:7px 9px; border-radius:5px; background:rgba(255,255,255,0.92); border:1px solid #FCA5A5; font-size:9.5px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; flex-wrap:wrap; gap:4px;">
+                                <span style="font-weight:800; color:#991B1B;">🎯 Contested Slot: <b>${studioEscape(item.target || '')}</b></span>
+                                <span class="badge" style="background:#FEE2E2; color:#991B1B; border:1px solid #FCA5A5; font-size:8px; font-weight:800; padding:1px 5px;">${item.claimants.length} Claiming Actions</span>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:4px;">
+                                ${item.claimants.map(c => `
+                                    <div style="padding:5px 7px; border-radius:4px; background:#F8FAFC; border:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+                                        <div>
+                                            <span style="font-weight:800; color:#1E40AF;">#${c.index} Action ${c.id}:</span>
+                                            <b>${studioEscape(c.product || 'Product')}</b>
+                                            ${c.upc ? `<span style="font-family:monospace; font-size:8.5px; color:#475569; margin-left:3px;">(UPC ${studioEscape(c.upc)})</span>` : ''}
+                                        </div>
+                                        <div style="font-family:monospace; font-weight:700; color:#B91C1C; font-size:9px;">
+                                            📍 From: ${studioEscape(c.source)} ➔ To: ${studioEscape(c.target)}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const occ = item.occupant;
+                let occupantHtml = '';
+                if (occ) {
+                    const isDeadlock = occ.conflict_type === 'sequence_deadlock';
+                    const badgeText = isDeadlock ? '⚠️ SEQUENCE DEADLOCK' : '❌ NO EVACUATION ACTION';
+                    const badgeBg = isDeadlock ? '#FEF3C7' : '#FEE2E2';
+                    const badgeColor = isDeadlock ? '#92400E' : '#991B1B';
+                    const badgeBorder = isDeadlock ? '#FCD34D' : '#FCA5A5';
+                    const actionIdText = item.action_ids && item.action_ids.length ? `Action #${item.action_ids[0]}` : (item.id ? `Action #${item.id}` : 'Action');
+                    const whatHappened = isDeadlock
+                        ? `The occupant is scheduled to vacate at Step #${occ.scheduled_step} (${occ.scheduled_action_type || 'MOVE'}), but ${actionIdText} is scheduled to move in before that happens.`
+                        : `This shelf position is already occupied, but the backend generated NO action (REMOVE or SET_ASIDE) to vacate it before ${actionIdText} moves in.`;
+
+                    occupantHtml = `
+                        <div style="margin-top:6px; display:flex; flex-direction:column; gap:5px;">
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                                <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:5px; padding:6px 8px;">
+                                    <div style="font-size:8px; font-weight:800; color:#1D4ED8; text-transform:uppercase; letter-spacing:0.5px;">1. Incoming Move</div>
+                                    <div style="font-weight:700; color:#0F172A; font-size:9.5px; margin-top:2px;">${actionIdText}: ${studioEscape(item.product || 'Product')}</div>
+                                    ${movementText ? `<div style="font-family:monospace; font-size:9px; color:#1E40AF; margin-top:3px; font-weight:700;">📍 ${movementText}</div>` : ''}
+                                </div>
+                                <div style="background:#FFF1F2; border:1px solid #FECDD3; border-radius:5px; padding:6px 8px;">
+                                    <div style="font-size:8px; font-weight:800; color:#BE123C; text-transform:uppercase; letter-spacing:0.5px;">2. Current Occupant</div>
+                                    <div style="font-weight:700; color:#0F172A; font-size:9.5px; margin-top:2px;">${studioEscape(occ.product || 'Unknown Product')}</div>
+                                    <div style="font-size:9px; color:#991B1B; margin-top:3px; font-weight:700;">📍 Occupying: ${studioEscape(item.target || '')}</div>
+                                </div>
+                            </div>
+                            <div style="padding:6px 8px; background:rgba(255,255,255,0.95); border:1px solid ${badgeBorder}; border-radius:5px; font-size:9.5px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px; flex-wrap:wrap; gap:4px;">
+                                    <span class="badge" style="background:${badgeBg}; color:${badgeColor}; border:1px solid ${badgeBorder}; font-size:8px; font-weight:800; padding:1px 5px;">${badgeText}</span>
+                                    ${occ.has_scheduled_action ? `<span style="font-size:8.5px; color:#1D4ED8; font-weight:700;">Evacuates at Step #${occ.scheduled_step} (${studioEscape(occ.scheduled_action_type || '')})</span>` : '<span style="font-size:8.5px; color:#DC2626; font-weight:700;">Cannot Start Until Cleared</span>'}
+                                </div>
+                                <div style="color:#1E293B; line-height:1.35; margin-top:3px;">
+                                    <b>What happened:</b> ${studioEscape(whatHappened)}
+                                </div>
+                                ${occ.identify_status_text ? `<div style="color:#B45309; font-size:9px; margin-top:3px;">🔍 <b>Occupant status:</b> ${studioEscape(occ.identify_status_text)}</div>` : ''}
+                                <div style="color:#0F172A; line-height:1.35; margin-top:3px;">
+                                    <b>How to resolve:</b> ${studioEscape(occ.validation_guidance || '')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div style="padding:8px 10px; margin-top:6px; border-radius:6px; border:1px solid ${item.severity === 'critical' ? '#FECACA' : '#FDE68A'}; background:${item.severity === 'critical' ? '#FEF2F2' : '#FFFBEB'}; color:${item.severity === 'critical' ? '#991B1B' : '#854D0E'}; font-size:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b>${studioEscape(item.title || item.code)}</b>
+                            <span class="badge" style="background:${item.severity === 'critical' ? '#EF4444' : '#F59E0B'}; color:#fff; font-size:8px; font-weight:800; padding:1px 5px;">${item.severity.toUpperCase()}</span>
+                        </div>
+                        ${occ ? occupantHtml : `
+                            <div style="margin-top:3px; line-height:1.35; white-space:pre-line;">${studioEscape(item.message || '')}</div>
+                            ${claimantsHtml ? claimantsHtml : (movementText ? `<div style="margin-top:4px; font-family:monospace; font-weight:700; color:#1E40AF;">📍 ${movementText}</div>` : '')}
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    function cycleTelemetryHeight() {
+        const consoleEl = document.getElementById('network-console');
+        const label = document.getElementById('telemetry-height-label');
+        if (!consoleEl) return;
+        if (consoleEl.classList.contains('maximum')) {
+            consoleEl.classList.remove('maximum');
+            consoleEl.classList.remove('expanded');
+            consoleEl.style.height = '';
+            if (label) label.textContent = 'Standard';
+        } else if (consoleEl.classList.contains('expanded')) {
+            consoleEl.classList.remove('expanded');
+            consoleEl.classList.add('maximum');
+            consoleEl.style.height = '';
+            if (label) label.textContent = 'Max';
+        } else {
+            consoleEl.classList.add('expanded');
+            consoleEl.style.height = '';
+            if (label) label.textContent = 'Expanded';
         }
     }
 
@@ -3918,6 +4310,10 @@
     function normalizeBaseUrl(url) {
         if (!url || !url.trim()) return '';
         let clean = url.trim();
+        while (clean.includes('.net.net')) clean = clean.replace('.net.net', '.net');
+        while (clean.includes('.rebotics.net.rebotics.net')) clean = clean.replace('.rebotics.net.rebotics.net', '.rebotics.net');
+        while (clean.includes('.rebotics.net.net')) clean = clean.replace('.rebotics.net.net', '.rebotics.net');
+
         if (clean.startsWith('http://')) {
             clean = 'https://' + clean.substring(7);
         }
@@ -3926,9 +4322,13 @@
         if (clean === 'stgsams' || clean === 'sams') return 'https://stgsams.rebotics.net';
         if (clean === 'harr' || clean === 'harris') return 'https://harr.rebotics.net';
         if (clean === 'albt' || clean === 'albe' || clean === 'albertsons') return 'https://albt.rebotics.net';
+        if (clean === 'albtqa') return 'https://albtqa.rebotics.net';
         if (clean === 'schn' || clean === 'schnucks') return 'https://schn.rebotics.net';
         if (clean === 'wake' || clean === 'wakefern') return 'https://wake.rebotics.net';
         if (!clean.startsWith('https://')) {
+            if (clean.includes('.')) {
+                return `https://${clean}`.replace(/\/+$/, '');
+            }
             return `https://${clean}.rebotics.net`;
         }
         return clean.replace(/\/+$/, '');
@@ -4107,7 +4507,9 @@
                 <td style="font-family: monospace; font-size: 10px; color: #1E40AF; font-weight: 600;">
                     ${action.movement_line_on_mobile || action.movement_line || ''}
                     ${action.is_swap ? '<div style="margin-top:3px;"><span class="badge badge-purple">SWAP</span></div>' :
-                      action.slide_direction ? `<div style="margin-top:3px;"><span class="badge badge-blue">SLIDE ${studioEscape(action.slide_direction.toUpperCase())}</span></div>` : ''}
+                      action.slide_direction ? `<div style="margin-top:3px;"><span class="badge badge-blue">SLIDE ${studioEscape(action.slide_direction.toUpperCase())}</span></div>` :
+                      action.is_slide ? '<div style="margin-top:3px;"><span class="badge badge-blue">SLIDE</span></div>' : ''}
+                    ${(action.group || action.item_group) ? `<div style="margin-top:3px;"><span class="badge" style="background: #EEF2FF; color: #4338CA; border: 1px solid #C7D2FE; font-size: 8.5px; padding: 1px 5px; font-weight: 700;">GROUP ${studioEscape(String(action.group || action.item_group))}</span></div>` : ''}
                     ${isRedundantSameSlotMove(action) ? `<div style="margin-top: 3px;"><span class="badge" style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-size: 8.5px; padding: 1px 5px; font-weight: 800;">⚠️ REDUNDANT SAME-SLOT MOVE</span></div>` : ''}
                     ${actionFindings.map(item => `<div style="margin-top:3px;color:${item.severity === 'critical' ? '#B91C1C' : '#92400E'};font-size:8.5px;font-weight:700;">${studioEscape(item.title || item.code)}</div>`).join('')}
                     ${(action.investigation_issues || []).map(label => `<div style="margin-top:3px;color:#B91C1C;font-size:8.5px;font-weight:700;">${studioEscape(label)}</div>`).join('')}
@@ -4313,12 +4715,28 @@
         actionTableEmptyMessage = 'No live actions loaded.';
         const queueTitle = document.getElementById('header-queue-title');
         if (queueTitle) queueTitle.innerHTML = '📋 Action Sequence (<span id="count-total-actions">0</span> Actions)';
-        renderActionTable();
+        renderActionTableLoading(taskId);
         renderMobileScreen();
         setExistingTaskPhase('loading', `Loading live actions for Task #${taskId} from ${baseUrl}…`);
         btn.textContent = '⏳ Loading...';
         btn.disabled = true;
-        logNetwork('TASK_LOAD', `Loading actions for Task #${taskId} from ${baseUrl}...`, 200, 10);
+        showTelemetryLoader(true);
+
+        const tStart = performance.now();
+        const reqPayload = {
+            task_id: parseInt(taskId),
+            base_url: baseUrl,
+            username: username || undefined,
+            password: password ? '***' : undefined,
+            token: username && password ? undefined : (token || undefined)
+        };
+        const actualReqBody = {
+            task_id: parseInt(taskId),
+            base_url: baseUrl,
+            username: username,
+            password: password,
+            token: username && password ? undefined : (token || undefined)
+        };
 
         try {
             const resp = await fetch('/api/runner/load_task', {
@@ -4334,6 +4752,8 @@
                 signal: existingTaskLoadController.signal
             });
             const data = await resp.json();
+            const latency = Math.round(performance.now() - tStart);
+
             if (resp.ok && data.status === 'success' && data.is_from_cache === false && data.data_source === 'live') {
                 allActions = data.actions || [];
                 currentFilteredActions = [...allActions];
@@ -4362,7 +4782,15 @@
                 renderActionTable();
                 renderMobileScreen();
 
-                logNetwork('LOAD_COMPLETE', `Loaded ${allActions.length} live actions across ${data.bays_count || 1} bay(s) for Task #${data.task_id} (${data.latency_ms || 40}ms).`, 200, data.latency_ms || 40);
+                logNetwork('POST /api/runner/load_task', `Loaded ${allActions.length} live actions across ${data.bays_count || 1} bay(s) for Task #${data.task_id} (${latency}ms).`, resp.status, latency, {
+                    method: 'POST',
+                    url: `${window.location.origin}/api/runner/load_task`,
+                    requestPayload: reqPayload,
+                    responseBody: data,
+                    activityState: 'ACTIVE_USER_INTERACTION'
+                });
+                await syncUpstreamTrafficLogs();
+
                 setExistingTaskPhase('validating', `Checking action cards, shelf positions, Digital Shelf history, and the post photo for Task #${data.task_id}…`, data.validation);
                 btn.textContent = 'Checking history…';
                 const audit = await runHistoricalTaskAudit({ embedded: true });
@@ -4397,7 +4825,14 @@
                 if (!silent) {
                     showNotification('Failed to load task: ' + message, 'error');
                 }
-                logNetwork('LOAD_ERROR', message, resp.status || 400, 10);
+                logNetwork('POST /api/runner/load_task', message, resp.status || 400, latency, {
+                    method: 'POST',
+                    url: `${window.location.origin}/api/runner/load_task`,
+                    requestPayload: reqPayload,
+                    responseBody: data,
+                    activityState: 'ACTIVE_USER_INTERACTION'
+                });
+                await syncUpstreamTrafficLogs();
                 document.getElementById('existing-task-status')?.focus();
             }
         } catch (e) {
@@ -4412,9 +4847,16 @@
             if (!silent) {
                 showNotification('Network error while loading task: ' + e, 'error');
             }
-            logNetwork('LOAD_ERROR', '' + e, 500, 10);
+            logNetwork('POST /api/runner/load_task', '' + e, 500, Math.round(performance.now() - tStart), {
+                method: 'POST',
+                url: `${window.location.origin}/api/runner/load_task`,
+                requestPayload: reqPayload,
+                responseBody: { error: String(e) },
+                activityState: 'ACTIVE_USER_INTERACTION'
+            });
             document.getElementById('existing-task-status')?.focus();
         } finally {
+            showTelemetryLoader(false);
             btn.textContent = 'Run complete task validation';
             btn.disabled = false;
         }
@@ -4452,20 +4894,35 @@
         button.textContent = 'Investigating…';
         result.style.display = 'block';
         result.innerHTML = 'Checking this scan and the other sections from the same visit. This can take about a minute.';
+        showTelemetryLoader(true);
+        const tStart = performance.now();
+
+        const reqPayload = {
+            problem: problem.trim(),
+            scan_url: scanUrl.trim(),
+            base_url: `https://${scanHost}`,
+            username: username || undefined,
+            password: password ? '***' : undefined,
+            token: username && password ? undefined : (token || undefined)
+        };
+        const actualReqBody = {
+            problem: problem.trim(),
+            scan_url: scanUrl.trim(),
+            base_url: `https://${scanHost}`,
+            username: username || undefined,
+            password: password || undefined,
+            token: username && password ? undefined : (token || undefined)
+        };
+
         try {
             const response = await fetch('/api/runner/investigate_issue', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    problem: problem.trim(),
-                    scan_url: scanUrl.trim(),
-                    base_url: `https://${scanHost}`,
-                    username: username || undefined,
-                    password: password || undefined,
-                    token: username && password ? undefined : (token || undefined)
-                })
+                body: JSON.stringify(actualReqBody)
             });
             const payload = await response.json();
+            const latency = Math.round(performance.now() - tStart);
+
             if (payload.status !== 'success') {
                 if (/saved sign-in|rejected the username/i.test(payload.error || '')) {
                     ['cfg-token', 'cfg-fresh-token'].forEach((id) => {
@@ -4475,13 +4932,40 @@
                     saveAuthToLocalStorage();
                 }
                 result.innerHTML = `<span style="color:#B91C1C;">${escapeInvestigationText(payload.error || 'Investigation failed')}</span>`;
+                logNetwork('POST /api/runner/investigate_issue', payload.error || 'Investigation failed', response.status || 400, latency, {
+                    method: 'POST',
+                    url: `${window.location.origin}/api/runner/investigate_issue`,
+                    requestPayload: reqPayload,
+                    responseBody: payload,
+                    activityState: 'ACTIVE_USER_INTERACTION'
+                });
+                await syncUpstreamTrafficLogs();
                 return;
             }
+
+            logNetwork('POST /api/runner/investigate_issue', `Investigation completed for ${scanUrl} (${payload.findings ? payload.findings.length : 0} findings)`, response.status, latency, {
+                method: 'POST',
+                url: `${window.location.origin}/api/runner/investigate_issue`,
+                requestPayload: reqPayload,
+                responseBody: payload,
+                activityState: 'ACTIVE_USER_INTERACTION'
+            });
+            await syncUpstreamTrafficLogs();
+
             result.innerHTML = renderInvestigation(payload);
             showInvestigationActions(payload);
         } catch (error) {
+            const latency = Math.round(performance.now() - tStart);
             result.innerHTML = `<span style="color:#B91C1C;">${escapeInvestigationText(error)}</span>`;
+            logNetwork('POST /api/runner/investigate_issue', '' + error, 500, latency, {
+                method: 'POST',
+                url: `${window.location.origin}/api/runner/investigate_issue`,
+                requestPayload: reqPayload,
+                responseBody: { error: String(error) },
+                activityState: 'ACTIVE_USER_INTERACTION'
+            });
         } finally {
+            showTelemetryLoader(false);
             button.disabled = false;
             button.textContent = 'Investigate';
         }
@@ -4623,30 +5107,47 @@
         const password = document.getElementById('cfg-password').value;
         const platform = (document.getElementById('cfg-platform') || {}).value || 'both';
 
+        showTelemetryLoader(true);
+        const tStart = performance.now();
+        const reqPayload = {
+            task_id: runnerState.taskId,
+            action_id: currentStep.id,
+            step_index: currentIndex + 1,
+            action_type: currentStep.type,
+            upc: currentStep.upc,
+            product_title: currentStep.title,
+            movement_line: currentStep.movement_line_on_mobile || currentStep.movement_line,
+            banner_text: currentStep.banner_displayed_on_mobile || currentStep.banner_text || currentStep.type,
+            why_performed: currentStep.user_action_meaning || currentStep.meaning,
+            base_url: baseUrl,
+            username: username || undefined,
+            password: password ? '***' : undefined,
+            platform: platform
+        };
+        const actualReqBody = {
+            ...reqPayload,
+            password: password
+        };
+
         try {
             const resp = await fetch('/api/runner/execute_step', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    task_id: runnerState.taskId,
-                    action_id: currentStep.id,
-                    step_index: currentIndex + 1,
-                    action_type: currentStep.type,
-                    upc: currentStep.upc,
-                    product_title: currentStep.title,
-                    movement_line: currentStep.movement_line_on_mobile || currentStep.movement_line,
-                    banner_text: currentStep.banner_displayed_on_mobile || currentStep.banner_text || currentStep.type,
-                    why_performed: currentStep.user_action_meaning || currentStep.meaning,
-                    base_url: baseUrl,
-                    username: username,
-                    password: password,
-                    platform: platform
-                })
+                body: JSON.stringify(actualReqBody)
             });
             const data = await resp.json();
+            const latency = Math.round(performance.now() - tStart);
             const platLabel = platform === 'both' ? '🤖 Android & 🍏 iOS' : (platform === 'android' ? '🤖 Android' : '🍏 iOS');
-            const logMsg = `Step #${currentIndex + 1} (${currentStep.type}) [${platLabel}]: ${currentStep.title} ➔ <code>${data.http_status} OK</code> (${data.latency_ms}ms) | <i>${data.why_performed || ''}</i>`;
-            logNetwork('STEP_MUTATION', logMsg, data.http_status, data.latency_ms || 42);
+            const logMsg = `Step #${currentIndex + 1} (${currentStep.type}) [${platLabel}]: ${currentStep.title} ➔ ${data.http_status} OK`;
+
+            logNetwork('POST /api/runner/execute_step', logMsg, data.http_status || resp.status, latency, {
+                method: 'POST',
+                url: `${window.location.origin}/api/runner/execute_step`,
+                requestPayload: reqPayload,
+                responseBody: data,
+                activityState: 'ACTIVE_USER_INTERACTION'
+            });
+            await syncUpstreamTrafficLogs();
 
             if (data.cart) {
                 runnerState.cart = data.cart;
@@ -4655,13 +5156,23 @@
                 document.getElementById('cart-surplus').textContent = data.cart.surplus;
             }
         } catch (e) {
+            const latency = Math.round(performance.now() - tStart);
             if (currentStep.type === 'REMOVE') runnerState.cart.foreign += 1;
             if (currentStep.type === 'SET_ASIDE') runnerState.cart.picks += 1;
             if (currentStep.type === 'ADD_TO_SHELF' && runnerState.cart.picks > 0) runnerState.cart.picks -= 1;
             document.getElementById('cart-foreign').textContent = runnerState.cart.foreign;
             document.getElementById('cart-picks').textContent = runnerState.cart.picks;
             document.getElementById('cart-surplus').textContent = runnerState.cart.surplus;
-            logNetwork('STEP_MUTATION', `Simulated offline completion for Step #${currentIndex + 1} (${currentStep.type})`, 200, 38);
+
+            logNetwork('POST /api/runner/execute_step', `Simulated offline completion for Step #${currentIndex + 1} (${currentStep.type})`, 200, latency, {
+                method: 'POST',
+                url: `${window.location.origin}/api/runner/execute_step`,
+                requestPayload: reqPayload,
+                responseBody: { simulated: true, error: String(e) },
+                activityState: 'ACTIVE_USER_INTERACTION'
+            });
+        } finally {
+            showTelemetryLoader(false);
         }
 
         currentIndex += 1;
@@ -4712,7 +5223,23 @@
         const password = document.getElementById('cfg-password').value;
         const token = (document.getElementById('cfg-token') || {}).value || '';
 
-        logNetwork('AUDIT_START', `Running historical audit for Task #${taskId}...`, 200, 10);
+        showTelemetryLoader(true);
+        const tStart = performance.now();
+        const reqPayload = {
+            task_id: parseInt(taskId),
+            base_url: baseUrl,
+            username: username || undefined,
+            password: password ? '***' : undefined,
+            token: token.trim() || undefined
+        };
+        const actualReqBody = {
+            task_id: parseInt(taskId),
+            base_url: baseUrl,
+            username: username,
+            password: password,
+            token: token.trim() || undefined
+        };
+
         if (!embedded) {
             setExistingTaskPhase('validating', `Checking Digital Shelf history and the post photo for Task #${taskId}…`, existingTaskUi.validation);
         }
@@ -4721,17 +5248,21 @@
             const resp = await fetch('/api/runner/audit_task', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    task_id: parseInt(taskId),
-                    base_url: baseUrl,
-                    username: username,
-                    password: password,
-                    token: token.trim() || undefined
-                })
+                body: JSON.stringify(actualReqBody)
             });
             const data = await resp.json();
+            const latency = Math.round(performance.now() - tStart);
+
             if (resp.ok && data.status === 'success') {
-                logNetwork('AUDIT_COMPLETE', `Audit complete: ${data.total_raw_db_detections} DB detections ➔ ${data.total_generated_mobile_cards} cards (${data.compliance_score_pct}% compliance, 0 drops).`, 200, 25);
+                logNetwork('POST /api/runner/audit_task', `Audit complete: ${data.total_raw_db_detections} DB detections ➔ ${data.total_generated_mobile_cards} cards (${data.compliance_score_pct}% compliance, 0 drops)`, resp.status, latency, {
+                    method: 'POST',
+                    url: `${window.location.origin}/api/runner/audit_task`,
+                    requestPayload: reqPayload,
+                    responseBody: data,
+                    activityState: 'ACTIVE_USER_INTERACTION'
+                });
+                await syncUpstreamTrafficLogs();
+
                 updateReportBadgesForActiveTask(taskId);
                 if (!embedded) {
                     applyExistingTaskValidation(data.validation);
@@ -4742,17 +5273,36 @@
                 return data;
             }
             const message = data.message || data.error || 'Full check failed.';
+            logNetwork('POST /api/runner/audit_task', message, resp.status || 400, latency, {
+                method: 'POST',
+                url: `${window.location.origin}/api/runner/audit_task`,
+                requestPayload: reqPayload,
+                responseBody: data,
+                activityState: 'ACTIVE_USER_INTERACTION'
+            });
+            await syncUpstreamTrafficLogs();
+
             if (!embedded) {
                 setExistingTaskPhase('error', message, existingTaskUi.validation);
                 showNotification('Failed to audit task: ' + message, 'error');
             }
             return data;
         } catch (e) {
+            const latency = Math.round(performance.now() - tStart);
+            logNetwork('POST /api/runner/audit_task', '' + e, 500, latency, {
+                method: 'POST',
+                url: `${window.location.origin}/api/runner/audit_task`,
+                requestPayload: reqPayload,
+                responseBody: { error: String(e) },
+                activityState: 'ACTIVE_USER_INTERACTION'
+            });
             if (!embedded) {
                 setExistingTaskPhase('error', 'Full check failed: ' + e, existingTaskUi.validation);
                 showNotification('Audit error: ' + e, 'error');
             }
             return { status: 'error', message: String(e) };
+        } finally {
+            showTelemetryLoader(false);
         }
     }
 
@@ -4848,18 +5398,327 @@
         if (e2eLink) e2eLink.style.display = 'inline-flex';
     }
 
-    function logNetwork(type, message, status = 200, latency = 42) {
-        const consoleBox = document.getElementById('network-console');
-        const now = new Date().toISOString().substr(14, 9);
-        const div = document.createElement('div');
-        div.className = 'log-entry';
-        if (status === 200) {
-            div.innerHTML = `<span class="log-success">[${now}] HTTP ${status} OK (${latency}ms)</span> &bull; <b>${type}</b> &bull; ${message}`;
-        } else {
-            div.innerHTML = `<span class="log-warn">[${now}] ${type}</span> &bull; ${message}`;
+    let telemetryTraces = [];
+    let autoExpandBodies = false;
+    let lastRenderedTrafficId = 0;
+
+    function showTelemetryLoader(show) {
+        const line = document.getElementById('telemetry-progress-line');
+        if (line) line.style.display = show ? 'block' : 'none';
+        const pill = document.getElementById('telemetry-live-status-pill');
+        if (pill) {
+            pill.textContent = show ? '● Fetching...' : '● Active';
+            pill.style.color = show ? '#38BDF8' : 'var(--green-text)';
         }
-        consoleBox.appendChild(div);
+    }
+
+    function toggleAutoExpandBodies() {
+        autoExpandBodies = !autoExpandBodies;
+        const lbl = document.getElementById('auto-expand-text');
+        if (lbl) {
+            lbl.textContent = autoExpandBodies ? 'Expanded' : 'Compact';
+            lbl.style.color = autoExpandBodies ? '#10B981' : '#2563EB';
+        }
+        document.querySelectorAll('.trace-body-drawer').forEach(drawer => {
+            drawer.style.display = autoExpandBodies ? 'block' : 'none';
+        });
+        document.querySelectorAll('.trace-toggle-btn').forEach(btn => {
+            btn.innerHTML = autoExpandBodies ? '<span>▼</span> Body' : '<span>▶</span> Body';
+        });
+    }
+
+    function toggleTraceBody(traceId) {
+        const drawer = document.getElementById(`trace-body-${traceId}`);
+        const arrow = document.getElementById(`trace-arrow-${traceId}`);
+        if (!drawer) return;
+        const isHidden = drawer.style.display === 'none' || !drawer.style.display;
+        drawer.style.display = isHidden ? 'block' : 'none';
+        if (arrow) arrow.textContent = isHidden ? '▼' : '▶';
+    }
+
+    function switchTraceTab(traceId, tabName, btn) {
+        const parent = btn.closest('.trace-body-drawer');
+        if (!parent) return;
+        parent.querySelectorAll('.trace-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        parent.querySelectorAll('.trace-pane').forEach(p => p.style.display = 'none');
+        const target = document.getElementById(`trace-pane-${tabName}-${traceId}`);
+        if (target) target.style.display = 'block';
+    }
+
+    function copyTraceReq(traceId) {
+        const trace = telemetryTraces.find(t => t.id === traceId);
+        if (!trace || !trace.requestPayload) return;
+        navigator.clipboard.writeText(typeof trace.requestPayload === 'object' ? JSON.stringify(trace.requestPayload, null, 2) : String(trace.requestPayload));
+        showNotification('Copied request payload to clipboard!', 'success');
+    }
+
+    function copyTraceRes(traceId) {
+        const trace = telemetryTraces.find(t => t.id === traceId);
+        if (!trace || !trace.responseBody) return;
+        navigator.clipboard.writeText(typeof trace.responseBody === 'object' ? JSON.stringify(trace.responseBody, null, 2) : String(trace.responseBody));
+        showNotification('Copied response body to clipboard!', 'success');
+    }
+
+    function copyTraceCurl(traceId) {
+        const trace = telemetryTraces.find(t => t.id === traceId);
+        if (!trace || !trace.curlCommand) return;
+        navigator.clipboard.writeText(trace.curlCommand);
+        showNotification('Copied cURL command to clipboard!', 'success');
+    }
+
+    let telemetryFilterMode = 'REAL_API_ONLY'; // 'REAL_API_ONLY' or 'ALL'
+
+    function isRealApiCall(type, message, details) {
+        const t = String(type || '').toUpperCase();
+        const m = String(message || '').toUpperCase();
+        const u = String((details && details.url) || (type.includes('/') ? type : '')).toUpperCase();
+        const ev = String((details && details.callerEvent) || '').toUpperCase();
+
+        // Drop any background keep-alive sync, idle heartbeat, or polling
+        if (
+            t.includes('SYNC') ||
+            t.includes('HEARTBEAT') ||
+            t.includes('IDLE') ||
+            t.includes('KEEP_ALIVE') ||
+            m.includes('KEEP-ALIVE') ||
+            m.includes('TASK SYNC ACTIVE') ||
+            u.includes('/API/RUNNER/HEARTBEAT') ||
+            ev.includes('HEARTBEAT') ||
+            ev.includes('SYNC') ||
+            (details && details.activityState === 'IDLE_BACKGROUND_POLL')
+        ) {
+            return false;
+        }
+
+        // Must be a real HTTP request endpoint
+        if (u.startsWith('/API/') || u.startsWith('HTTP://') || u.startsWith('HTTPS://')) {
+            return true;
+        }
+        if (t.includes('/API/') || t.startsWith('GET ') || t.startsWith('POST ') || t.startsWith('PATCH ') || t.startsWith('DELETE ')) {
+            return true;
+        }
+        if (details && details.url && ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(String(details.method || '').toUpperCase())) {
+            return true;
+        }
+        return false;
+    }
+
+    function toggleTelemetryFilter() {
+        telemetryFilterMode = (telemetryFilterMode === 'REAL_API_ONLY') ? 'ALL' : 'REAL_API_ONLY';
+        const btn = document.getElementById('btn-telemetry-filter-api');
+        if (btn) {
+            if (telemetryFilterMode === 'REAL_API_ONLY') {
+                btn.style.background = '#EEF2FF';
+                btn.style.color = '#3730A3';
+                btn.style.borderColor = '#C7D2FE';
+                btn.textContent = '⚡ Real API Only';
+            } else {
+                btn.style.background = '#F1F5F9';
+                btn.style.color = '#475569';
+                btn.style.borderColor = '#CBD5E1';
+                btn.textContent = '📋 All Calls';
+            }
+        }
+        renderTelemetryConsole();
+    }
+
+    function clearTelemetryConsole() {
+        const consoleBox = document.getElementById('network-console');
+        if (consoleBox) {
+            consoleBox.innerHTML = '<div id="telemetry-progress-line" class="telemetry-progress-line" style="display: none;"></div><div class="log-entry log-info">[00:00.000] Console cleared. Real API telemetry active (background sync &amp; keep-alive pings filtered out).</div>';
+        }
+        telemetryTraces = [];
+        const badge = document.getElementById('telemetry-badge-count');
+        if (badge) badge.textContent = '0 calls';
+    }
+
+    function renderTelemetryConsole() {
+        const consoleBox = document.getElementById('network-console');
+        if (!consoleBox) return;
+
+        const visible = telemetryTraces.filter(t => telemetryFilterMode === 'ALL' || t.isApi);
+
+        const countBadge = document.getElementById('telemetry-badge-count');
+        if (countBadge) countBadge.textContent = `${visible.length} ${telemetryFilterMode === 'REAL_API_ONLY' ? 'API calls' : 'calls'}`;
+
+        consoleBox.innerHTML = '<div id="telemetry-progress-line" class="telemetry-progress-line" style="display: none;"></div>';
+        if (visible.length === 0) {
+            consoleBox.innerHTML += `<div class="log-entry log-info">[00:00.000] ${telemetryFilterMode === 'REAL_API_ONLY' ? 'Real API telemetry active. Waiting for network calls (background sync filtered out)...' : 'Studio initialized. Ready to execute live pipeline.'}</div>`;
+            return;
+        }
+
+        visible.forEach(t => appendTraceElement(t, consoleBox));
         consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
+
+    function appendTraceElement(traceRecord, consoleBox) {
+        const isOk = traceRecord.status >= 200 && traceRecord.status < 300;
+        const isWarn = traceRecord.status >= 300 && traceRecord.status < 500;
+        const isErr = traceRecord.status >= 500;
+
+        const statusClass = isOk ? 'ok' : isWarn ? 'warn' : 'error';
+        const methodClass = (traceRecord.method || 'GET').toLowerCase();
+        const isActive = traceRecord.activityState === 'ACTIVE_USER_INTERACTION';
+
+        const reqPayload = traceRecord.requestPayload;
+        const resBody = traceRecord.responseBody;
+        const curlCmd = traceRecord.curlCommand;
+        const hasBody = !!(reqPayload !== null && reqPayload !== undefined) || !!(resBody !== null && resBody !== undefined) || !!curlCmd;
+
+        const reqStr = reqPayload ? (typeof reqPayload === 'object' ? JSON.stringify(reqPayload, null, 2) : String(reqPayload)) : 'No request body (GET / empty)';
+        const resStr = resBody ? (typeof resBody === 'object' ? JSON.stringify(resBody, null, 2) : String(resBody)) : (isOk ? '{"status": 200, "ok": true}' : 'No response body recorded');
+
+        const div = document.createElement('div');
+        div.className = `trace-entry ${isErr || isWarn ? 'is-error' : ''}`;
+        div.id = `trace-row-${traceRecord.id}`;
+
+        div.innerHTML = `
+            <div class="trace-header" onclick="toggleTraceBody(${traceRecord.id})">
+                <div class="trace-meta-left">
+                    <span class="trace-time">[${traceRecord.time}]</span>
+                    <span class="trace-badge trace-method-${['get','post','patch','delete'].includes(methodClass) ? methodClass : 'other'}">${studioEscape(traceRecord.method)}</span>
+                    <span class="trace-badge trace-status-${statusClass}">${traceRecord.status}</span>
+                    <span class="trace-badge trace-latency">${traceRecord.latency}ms</span>
+                    <span class="trace-url" title="${studioEscape(traceRecord.url)}">${studioEscape(traceRecord.type || traceRecord.url)} &bull; ${studioEscape(traceRecord.message)}</span>
+                </div>
+                <div class="trace-meta-right">
+                    <span class="trace-badge ${isActive ? 'trace-badge-active' : 'trace-badge-idle'}">${isActive ? '⚡ Active' : '💤 Idle'}</span>
+                    ${hasBody ? `<button type="button" class="trace-toggle-btn" onclick="event.stopPropagation(); toggleTraceBody(${traceRecord.id})"><span id="trace-arrow-${traceRecord.id}">${autoExpandBodies ? '▼' : '▶'}</span> Body</button>` : ''}
+                </div>
+            </div>
+            ${hasBody ? `
+            <div class="trace-body-drawer" id="trace-body-${traceRecord.id}" style="${autoExpandBodies ? 'display: block;' : 'display: none;'}">
+                <div class="trace-tabs">
+                    <button type="button" class="trace-tab active" onclick="switchTraceTab(${traceRecord.id}, 'res', this)">📥 Response Body</button>
+                    <button type="button" class="trace-tab" onclick="switchTraceTab(${traceRecord.id}, 'req', this)">📤 Request Body</button>
+                    <button type="button" class="trace-tab" onclick="switchTraceTab(${traceRecord.id}, 'curl', this)">📋 cURL</button>
+                    <div style="margin-left: auto; display: flex; gap: 4px;">
+                        <button type="button" class="btn btn-ghost" style="padding: 1px 6px; font-size: 9px;" onclick="copyTraceRes(${traceRecord.id})">📋 Copy JSON</button>
+                    </div>
+                </div>
+                <div class="trace-pane" id="trace-pane-res-${traceRecord.id}" style="display: block;">
+                    <div class="trace-code-header">
+                        <span>Incoming Response (${traceRecord.status}):</span>
+                        <span style="font-size: 8.5px; color: #64748B;">${resStr.length} bytes</span>
+                    </div>
+                    <pre class="trace-code-block">${studioEscape(resStr)}</pre>
+                </div>
+                <div class="trace-pane" id="trace-pane-req-${traceRecord.id}" style="display: none;">
+                    <div class="trace-code-header">
+                        <span>Outgoing Request Payload (${traceRecord.method} ${studioEscape(traceRecord.url)}):</span>
+                        <button type="button" class="btn btn-ghost" style="padding: 1px 5px; font-size: 8.5px;" onclick="copyTraceReq(${traceRecord.id})">📋 Copy</button>
+                    </div>
+                    <pre class="trace-code-block">${studioEscape(reqStr)}</pre>
+                </div>
+                <div class="trace-pane" id="trace-pane-curl-${traceRecord.id}" style="display: none;">
+                    <div class="trace-code-header">
+                        <span>cURL Execution Command:</span>
+                        <button type="button" class="btn btn-ghost" style="padding: 1px 5px; font-size: 8.5px;" onclick="copyTraceCurl(${traceRecord.id})">📋 Copy</button>
+                    </div>
+                    <pre class="trace-code-block">${studioEscape(traceRecord.curlCommand || `curl -X ${traceRecord.method} '${traceRecord.url}'`)}</pre>
+                </div>
+            </div>` : ''}
+        `;
+        consoleBox.appendChild(div);
+    }
+
+    function logNetwork(type, message, status = 200, latency = 42, details = null) {
+        const consoleBox = document.getElementById('network-console');
+        if (!consoleBox) return;
+        const now = new Date().toISOString().substr(11, 12);
+        const traceId = telemetryTraces.length + 1;
+
+        const method = (details && details.method) || (type.includes('GET') ? 'GET' : type.includes('PATCH') ? 'PATCH' : type.includes('DELETE') ? 'DELETE' : 'POST');
+        const url = (details && details.url) || message;
+        const reqPayload = details ? details.requestPayload : null;
+        const resBody = details ? details.responseBody : null;
+        const curlCmd = (details && details.curlCommand) || (details && details.url ? `curl -X ${method} '${details.url}'` : '');
+        const actState = (details && details.activityState) || 'ACTIVE_USER_INTERACTION';
+
+        const isApi = isRealApiCall(type, message, details);
+
+        // Never record or log background sync, keep-alives, or idle heartbeat pings
+        if (
+            type.includes('SYNC') ||
+            type.includes('HEARTBEAT') ||
+            url.includes('/api/runner/heartbeat') ||
+            actState === 'IDLE_BACKGROUND_POLL'
+        ) {
+            return;
+        }
+
+        const traceRecord = {
+            id: traceId,
+            time: now,
+            type: type,
+            message: message,
+            status: status,
+            latency: latency,
+            method: method,
+            url: url,
+            requestPayload: reqPayload,
+            responseBody: resBody,
+            curlCommand: curlCmd,
+            activityState: actState,
+            isApi: isApi
+        };
+        telemetryTraces.push(traceRecord);
+
+        if (telemetryFilterMode === 'REAL_API_ONLY' && !isApi) {
+            return;
+        }
+
+        const visible = telemetryTraces.filter(t => telemetryFilterMode === 'ALL' || t.isApi);
+        const countBadge = document.getElementById('telemetry-badge-count');
+        if (countBadge) countBadge.textContent = `${visible.length} ${telemetryFilterMode === 'REAL_API_ONLY' ? 'API calls' : 'calls'}`;
+
+        appendTraceElement(traceRecord, consoleBox);
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
+
+    async function syncUpstreamTrafficLogs() {
+        try {
+            const resp = await fetch('/api/runner/traffic?limit=15');
+            if (!resp.ok) return;
+            const data = await resp.json();
+            const list = data.traffic || [];
+            list.forEach(t => {
+                if (t.id > lastRenderedTrafficId) {
+                    lastRenderedTrafficId = Math.max(lastRenderedTrafficId, t.id);
+                    const isHeartbeat = (t.caller_event && (t.caller_event.includes('HEARTBEAT') || t.caller_event.includes('SYNC'))) ||
+                                        (t.url && t.url.includes('/api/runner/heartbeat')) ||
+                                        t.activity_state === 'IDLE_BACKGROUND_POLL';
+                    if (!isHeartbeat) {
+                        logNetwork(t.caller_event || `${t.method} ${t.url}`, `${t.method} ${t.url}`, t.status_code || 200, t.latency_ms || 10, {
+                            method: t.method,
+                            url: t.url,
+                            requestPayload: t.request_payload,
+                            responseBody: t.response_body,
+                            curlCommand: t.curl_command,
+                            activityState: t.activity_state
+                        });
+                    }
+                }
+            });
+        } catch (_) {}
+    }
+
+    function renderActionTableLoading(taskId) {
+        const tbody = document.getElementById('action-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 45px 20px; background: #FAF5FF;">
+                    <div class="studio-spinner" style="width: 28px; height: 28px; border-width: 3px; border-color: rgba(124, 58, 237, 0.2); border-top-color: #7C3AED; margin: 0 auto 12px auto;"></div>
+                    <div style="font-size: 13px; font-weight: 800; color: #4C1D95;">Fetching &amp; Sequencing Live Task Actions...</div>
+                    <div style="font-size: 11px; color: #6D28D9; margin-top: 4px; max-width: 440px; margin-left: auto; margin-right: auto;">Connecting to live store planogram, detecting shelf coordinates, and calculating physical move order for Task #${studioEscape(taskId)}.</div>
+                    <div class="progress-bar-wrap" style="height: 6px; width: 220px; margin: 14px auto 0 auto; background: #E9D5FF; border-radius: 999px; overflow: hidden;">
+                        <div class="progress-bar-fill progress-bar-indeterminate" style="width: 100%; background: linear-gradient(90deg, #7C3AED, #A855F7);"></div>
+                    </div>
+                </td>
+            </tr>
+        `;
     }
 
     async function testAuthPing() {
@@ -4868,23 +5727,50 @@
         const password = document.getElementById('cfg-password').value;
 
         const baseUrl = normalizeBaseUrl(rawUrl);
-        logNetwork('AUTH_PING', `Testing connection to ${baseUrl}...`, 200, 10);
+        showTelemetryLoader(true);
+        const startT = performance.now();
+        const reqPayload = { base_url: baseUrl, username, password };
 
         try {
             const resp = await fetch('/api/runner/auth_ping', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ base_url: baseUrl, username, password })
+                body: JSON.stringify(reqPayload)
             });
             const data = await resp.json();
+            const durMs = Math.round(performance.now() - startT);
+            showTelemetryLoader(false);
+
             if (data.status === 'success' && data.connected) {
                 alert(`✅ Connected successfully to ${data.instance_slug} (v${data.backend_version}) as '${data.username}'!`);
-                logNetwork('AUTH_SUCCESS', `Authenticated user '${data.username}' on ${data.instance_slug} (${data.latency_ms}ms)`, 200, data.latency_ms);
+                logNetwork('AUTH_SUCCESS', `Authenticated user '${data.username}' on ${data.instance_slug} (${durMs}ms)`, 200, durMs, {
+                    method: 'POST',
+                    url: '/api/runner/auth_ping',
+                    requestPayload: reqPayload,
+                    responseBody: data,
+                    activityState: 'ACTIVE_USER_INTERACTION'
+                });
             } else {
                 alert('Connection notice: ' + (data.message || data.error));
+                logNetwork('AUTH_WARN', data.message || data.error, resp.status || 400, durMs, {
+                    method: 'POST',
+                    url: '/api/runner/auth_ping',
+                    requestPayload: reqPayload,
+                    responseBody: data,
+                    activityState: 'ACTIVE_USER_INTERACTION'
+                });
             }
         } catch (e) {
+            showTelemetryLoader(false);
+            const durMs = Math.round(performance.now() - startT);
             alert('Auth ping error: ' + e);
+            logNetwork('AUTH_ERROR', '' + e, 500, durMs, {
+                method: 'POST',
+                url: '/api/runner/auth_ping',
+                requestPayload: reqPayload,
+                responseBody: { error: String(e) },
+                activityState: 'ACTIVE_USER_INTERACTION'
+            });
         }
     }
 
@@ -4956,18 +5842,12 @@
 
             const startT = performance.now();
             try {
-                const resp = await fetch('/api/runner/heartbeat', {
+                await fetch('/api/runner/heartbeat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Client-State': clientState },
                     body: JSON.stringify({ client_state: clientState, task_id: tid, client_latency_ms: 12, timestamp: new Date().toISOString() })
                 });
-                const lat = Math.round(performance.now() - startT);
-                const data = await resp.json();
-                if (isIdle) {
-                    logNetwork('💤 IDLE_BACKGROUND_SYNC', `Keep-alive sync (Server Time: ${data.server_time ? data.server_time.split(' ')[1] : ''}, Token: Valid, Latency: ${lat}ms)`, 200, lat);
-                } else {
-                    logNetwork('⚡ ACTIVE_USER_SYNC', `Real-time task sync active (Task #${data.active_task_id || tid}, Latency: ${lat}ms)`, 200, lat);
-                }
+                // Silent background keep-alive: Real API telemetry only (no background sync pings)
             } catch (e) {
                 // Background heartbeat offline fallback
             }

@@ -53,3 +53,14 @@ mobile-backend-integration-tests/test-reports/
 !**/fixtures/**/*.csv
 node_modules/
 generated-reports/
+
+# Local MCP config with tokens — never commit (use env vars instead)
+.mcp.json
+**/.mcp.local.json
+
+# Exports and fetch caches from Grafana, Sentry and the reporting DB
+data/grafana-*.json
+data/scan-timing*.json
+data/db-export*.json
+*.token
+*.secret

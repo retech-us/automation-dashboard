@@ -29,6 +29,10 @@
   function resolveInstanceUrl(val) {
     if (!val) return 'https://harr.rebotics.net/';
     let v = val.trim().toLowerCase();
+    while (v.includes('.net.net')) v = v.replace('.net.net', '.net');
+    while (v.includes('.rebotics.net.rebotics.net')) v = v.replace('.rebotics.net.rebotics.net', '.rebotics.net');
+    while (v.includes('.rebotics.net.net')) v = v.replace('.rebotics.net.net', '.rebotics.net');
+
     if (v === 'krog' || v === 'kroger' || v === 'krsc') v = 'krcs';
     if (v.startsWith('http://') || v.startsWith('https://')) {
       if (v.includes('://krog.rebotics.net') || v.includes('://krsc.rebotics.net') || v.includes('://kroger.rebotics.net')) {

@@ -1,13 +1,62 @@
 import unittest
 from core.ir_task_flow_builder import (
-    get_task_flow,
     build_harr_reference_task_8648127,
     build_krcs_reference_task_42288818,
+    build_stage_action_payload,
+    enrich_flow_with_digital_shelf_evidence,
+    format_duration_hm,
+    get_task_flow,
     synthesize_task_flow_from_raw_actions,
 )
 
 
 class TestIrTaskFlowBuilder(unittest.TestCase):
+
+    def test_pre_and_post_photo_actions_have_separate_payloads(self):
+        pre_actions = [{
+            "id": 1,
+            "action": "ACTION_MOVE",
+            "product_title": "Before product",
+            "current_position": {"shelf": 1, "position": "1", "section_info": {"name": "1"}},
+            "expected_position": {"shelf": 1, "position": "2", "section_info": {"name": "1"}},
+        }]
+        post_actions = [{
+            "id": 2,
+            "action": "ACTION_REMOVE",
+            "product_title": "After product",
+            "current_position": {"shelf": 2, "position": "3", "section_info": {"name": "1"}},
+        }]
+
+        payload = build_stage_action_payload(
+            1234,
+            pre_actions,
+            post_actions,
+            post_loaded=True,
+            post_error=None,
+            metadata_override={"status": "completed"},
+        )
+
+        self.assertTrue(payload["pre_photo"]["loaded"])
+        self.assertEqual(payload["pre_photo"]["row_count"], 1)
+        self.assertTrue(payload["post_photo"]["loaded"])
+        self.assertEqual(payload["post_photo"]["row_count"], 1)
+        pre_item = next(iter(payload["pre_photo"]["action_batches"].values()))["items"][0]
+        post_item = next(iter(payload["post_photo"]["action_batches"].values()))["items"][0]
+        self.assertEqual(pre_item["product_name"], "Before product")
+        self.assertEqual(post_item["product_name"], "After product")
+
+    def test_unavailable_post_photo_stage_stays_separate_and_empty(self):
+        payload = build_stage_action_payload(
+            1234,
+            [{"id": 1, "action": "ACTION_REMOVE", "current_position": {"section_info": {"name": "1"}}}],
+            [],
+            post_loaded=False,
+            post_error="Backend ignored ?stage=post_photo",
+        )
+
+        self.assertFalse(payload["post_photo"]["loaded"])
+        self.assertEqual(payload["post_photo"]["action_batches"], {})
+        self.assertIn("ignored", payload["post_photo"]["error"])
 
     def test_harr_reference_task_lineage(self):
         flow = build_harr_reference_task_8648127()
@@ -95,6 +144,98 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
         item = next(iter(flow["action_batches"].values()))["items"][0]
         self.assertEqual(item["from_bay"], "Bay 1")
         self.assertEqual(item["to_bay"], "Bay 2")
+
+    def test_intra_shelf_slide_and_redundant_same_slot_discrepancy_tagging(self):
+        raw_actions = [
+            {
+                "id": 101,
+                "action": "ACTION_MOVE",
+                "displayed_upc": "011110636584",
+                "product_title": "ST CRAN CHERRIES TRAIL MX",
+                "current_position": {"shelf": 5, "position": "4", "section_info": {"name": "1"}},
+                "expected_position": {"shelf": 5, "position": "5", "section_info": {"name": "1"}},
+            },
+            {
+                "id": 102,
+                "action": "ACTION_MOVE",
+                "displayed_upc": "011110999999",
+                "product_title": "Redundant Product",
+                "current_position": {"shelf": 3, "position": "2", "section_info": {"name": "1"}},
+                "expected_position": {"shelf": 3, "position": "2", "section_info": {"name": "1"}},
+            },
+        ]
+        flow = synthesize_task_flow_from_raw_actions(44061994, raw_actions)
+        all_items = [it for b in flow["action_batches"].values() for it in b["items"]]
+        cran_item = next(it for it in all_items if it["upc"] == "011110636584")
+        redundant_item = next(it for it in all_items if it["upc"] == "011110999999")
+
+        self.assertEqual(cran_item["discrepancy_type"], "intra_shelf_slide")
+        self.assertIn("Pos 4 → 5", cran_item["discrepancy_label"])
+        self.assertEqual(redundant_item["discrepancy_type"], "redundant_same_slot")
+        self.assertEqual(redundant_item["discrepancy_label"], "Redundant Same-Slot Move")
+
+    def test_enrich_flow_with_digital_shelf_relative_sequence_ok(self):
+        raw_actions = [
+            {
+                "id": 101,
+                "action": "ACTION_MOVE",
+                "displayed_upc": "011110636584",
+                "product_title": "ST CRAN CHERRIES TRAIL MX",
+                "current_position": {"shelf": 5, "position": "4", "section_info": {"name": "1"}},
+                "expected_position": {"shelf": 5, "position": "5", "section_info": {"name": "1"}},
+            },
+        ]
+        flow = synthesize_task_flow_from_raw_actions(44061994, raw_actions)
+
+        # Mock Digital Shelf item reporting this UPC as OK with action_taken = "-"
+        mock_digital_items = [
+            {
+                "upc": "011110636584",
+                "action_type": "ok",
+                "action_taken": "-",
+                "section": "1",
+                "rog_position": "5:4",
+                "pog_position": "5:5",
+            }
+        ]
+        enriched = enrich_flow_with_digital_shelf_evidence(flow, mock_digital_items)
+        all_items = [it for b in enriched["action_batches"].values() for it in b["items"]]
+        cran_item = next(it for it in all_items if it["upc"] == "011110636584")
+
+        self.assertEqual(cran_item["discrepancy_type"], "relative_sequence_ok")
+        self.assertEqual(cran_item["digital_action_type"], "ok")
+        self.assertEqual(cran_item["digital_action_taken"], "-")
+        self.assertIn("Rel-Seq OK (Threshold=0)", cran_item["discrepancy_label"])
+        self.assertIn("SequenceMatcher", cran_item["discrepancy_detail"])
+
+    def test_format_duration_hm(self):
+        self.assertEqual(format_duration_hm(None), "not recorded")
+        self.assertEqual(format_duration_hm(0), "0 mins")
+        self.assertEqual(format_duration_hm(1), "1 min")
+        self.assertEqual(format_duration_hm(28.3), "28 mins")
+        self.assertEqual(format_duration_hm(60), "1 hr")
+        self.assertEqual(format_duration_hm(61), "1 hr 1 min")
+        self.assertEqual(format_duration_hm(120), "2 hrs")
+        self.assertEqual(format_duration_hm(351.7), "5 hrs 52 mins")
+        self.assertEqual(format_duration_hm(1440.0), "24 hrs")
+
+    def test_synthesize_task_flow_formats_duration_in_hours_and_minutes(self):
+        actions = [{
+            "id": 999,
+            "action": "ACTION_MOVE",
+            "product_title": "Product X",
+            "displayed_upc": "999",
+            "current_position": {"shelf": 1, "position": "1", "section_info": {"name": "1"}},
+            "expected_position": {"shelf": 1, "position": "2", "section_info": {"name": "1"}},
+        }]
+        flow = synthesize_task_flow_from_raw_actions(
+            5555,
+            actions,
+            metadata_override={"wall_duration_min": 351.7},
+        )
+        self.assertEqual(flow["metadata"]["wall_duration_min"], 351.7)
+        close_event = flow["events"][-1]
+        self.assertIn("Wall Time: 5 hrs 52 mins", close_event["detail"])
 
 
 if __name__ == "__main__":

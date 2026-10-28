@@ -2763,6 +2763,24 @@ class TestMobileActionListLogic(unittest.TestCase):
         self.assertIsNotNone(clean_rule9)
         self.assertTrue(clean_rule9.passed, "Legitimate cross-bay move must pass Invariant Rule 9")
 
+    def test_mixed_type_shelf_and_position_sorting_no_type_error(self):
+        """Verify sorting handles mixed string and integer shelf and position fields without '<' not supported TypeError."""
+        from runner_server import sort_action_sequence
+        mixed_actions = [
+            {"id": 1, "bay": "1", "type": "FIX_IN_BAY", "cur_shelf": 1, "cur_pos_num": 1, "exp_shelf": 1, "exp_pos_num": 2, "banner_displayed_on_mobile": "FIX IN BAY 1"},
+            {"id": 2, "bay": 1, "type": "FIX_IN_BAY", "cur_shelf": "1", "cur_pos_num": "2", "exp_shelf": "1", "exp_pos_num": "1", "banner_displayed_on_mobile": "FIX IN BAY 1"},
+            {"id": 3, "bay": "1", "type": "IDENTIFY", "cur_shelf": 2, "cur_pos_num": "1", "banner_displayed_on_mobile": "IDENTIFY"},
+            {"id": 4, "bay": "1", "type": "IDENTIFY", "cur_shelf": "2", "cur_pos_num": 2, "banner_displayed_on_mobile": "IDENTIFY"},
+            {"id": 5, "bay": "1", "type": "REMOVE", "cur_shelf": "3", "cur_pos_num": "4", "banner_displayed_on_mobile": "REMOVE"},
+            {"id": 6, "bay": "1", "type": "REMOVE", "cur_shelf": 3, "cur_pos_num": 5, "banner_displayed_on_mobile": "REMOVE"},
+        ]
+        sorted_actions = sort_action_sequence(mixed_actions)
+        self.assertEqual(len(sorted_actions), 6)
+        self.assertEqual(sorted_actions[0]["type"], "IDENTIFY")
+        self.assertEqual(sorted_actions[1]["type"], "IDENTIFY")
+        self.assertEqual(sorted_actions[2]["type"], "REMOVE")
+        self.assertEqual(sorted_actions[3]["type"], "REMOVE")
+
 
 if __name__ == "__main__":
     unittest.main()

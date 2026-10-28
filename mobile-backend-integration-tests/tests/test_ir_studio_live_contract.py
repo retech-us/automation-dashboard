@@ -158,6 +158,28 @@ class IrStudioLiveContractTests(unittest.TestCase):
             "OCCUPIED_DESTINATION",
             {item["code"] for item in result["findings"]},
         )
+        finding = next(f for f in result["findings"] if f["code"] == "OCCUPIED_DESTINATION")
+        self.assertNotEqual(finding["source"], "unknown slot")
+        self.assertNotEqual(finding["target"], "unknown slot")
+        self.assertIn("Bay 1, Shelf 1, Position 2", finding["target"])
+        self.assertIn("Stationary B", finding["occupant"]["product"])
+        self.assertEqual(finding["occupant"]["conflict_type"], "missing_evacuation")
+        self.assertFalse(finding["occupant"]["has_scheduled_action"])
+
+    def test_occupied_destination_detects_sequence_deadlock(self):
+        # Action 1 slides from Pos 1 to Pos 2, but Pos 2 product (Action 2) is scheduled to move later to Pos 3
+        raw = [
+            self._move(1, 1, 2, "Item A"),
+            self._move(2, 2, 3, "Item B"),
+        ]
+        # Invert order of actions to simulate a bad sequence ordering where move 1 runs before move 2
+        actions = list(reversed(runner_server.parse_raw_action_items(raw, 42)))
+        result = validate_action_generation(raw, actions)
+        self.assertFalse(result["can_start"])
+        finding = next(f for f in result["findings"] if f["code"] == "OCCUPIED_DESTINATION")
+        self.assertEqual(finding["occupant"]["conflict_type"], "sequence_deadlock")
+        self.assertTrue(finding["occupant"]["has_scheduled_action"])
+        self.assertIn("Step", finding["occupant"]["validation_guidance"])
 
     def test_two_product_swap_is_legal(self):
         raw = [

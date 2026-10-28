@@ -304,6 +304,42 @@ class ShelfResetBackendEndpointTests(unittest.TestCase):
         self.assertIn("no shelf capture", result["message"])
         self.assertEqual(result["source"], "live")
 
+    def test_auto_convert_same_bay_set_aside_to_fix_in_bay(self):
+        raw = [
+            _row(1, "ACTION_MOVE",
+                 current=_position("set_aside", "2", 2, 7),
+                 expected=_position("place_on_shelf_add_to_bay", "2", 2, 1),
+                 product_title="Cool Whip Lite", upc="038000175930"),
+            _row(2, "ACTION_MOVE",
+                 current=_position("set_aside", "2", 6, 2),
+                 expected=_position("place_on_shelf_add_to_bay", "3", 6, 2),
+                 product_title="Lemon Cream Pie", upc="012345678905"),
+        ]
+        from core.backend_shelf_actions import convert_same_bay_set_asides_to_fix_in_bay
+        converted, count = convert_same_bay_set_asides_to_fix_in_bay(raw)
+        self.assertEqual(count, 1)
+        self.assertEqual(converted[0]["current_position"]["action"], "fix_position_fix_in_bay")
+        self.assertEqual(converted[0]["expected_position"]["action"], "fix_position_fix_in_bay")
+        self.assertEqual(converted[1]["current_position"]["action"], "set_aside")
+
+        def fake_access(*_args):
+            return "token", "saved"
+
+        with patch.object(runner_server, "investigation_access", fake_access), \
+             patch.object(runner_server, "fetch_shelf_reset_actions", return_value=(raw, "https://krcs.rebotics.net/actions")):
+            res_converted = runner_server.run_shelf_reset_backend_actions({"instance": "krcs", "task_id": 44093318})
+            self.assertEqual(res_converted["converted_same_bay_set_asides"], 1)
+            self.assertEqual(res_converted["validation"]["rule_check"]["same_bay_set_aside"], 0)
+            self.assertEqual(len(res_converted["steps"]), 3)  # 1 step for same-bay + 2 steps for cross-bay
+
+            res_unconverted = runner_server.run_shelf_reset_backend_actions({
+                "instance": "krcs", "task_id": 44093318, "auto_convert_same_bay": False
+            })
+            self.assertEqual(res_unconverted["converted_same_bay_set_asides"], 0)
+            self.assertEqual(res_unconverted["validation"]["rule_check"]["same_bay_set_aside"], 1)
+            self.assertEqual(len(res_unconverted["steps"]), 4)  # 2 steps each
+
+
 
 class ShelfResetMobileContractTests(unittest.TestCase):
     def test_page_loads_live_actions_and_keeps_password_out_of_storage(self):

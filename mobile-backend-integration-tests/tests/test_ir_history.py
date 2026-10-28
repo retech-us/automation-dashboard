@@ -230,6 +230,32 @@ class StatusNormalisationTests(unittest.TestCase):
         self.assertEqual([e["status"] for e in entries], ["not_started", "in_progress"])
         self.assertEqual([e["status_label"] for e in entries], ["Not started", "In progress"])
 
+    def test_performer_name_prefers_full_name_then_username(self):
+        entries = normalize_instance_tasks(
+            [
+                {
+                    "id": 1,
+                    "task_date": "2026-10-15",
+                    "performer": {"id": 7, "username": "iweimann", "first_name": "Ingrid", "last_name": "Weimann"},
+                },
+                {
+                    "id": 2,
+                    "task_date": "2026-10-15",
+                    "performer": {"id": 8, "username": "Rohan", "first_name": "", "last_name": ""},
+                },
+                {"id": 3, "task_date": "2026-10-15", "performer": None},
+            ],
+            "krcs",
+        )
+
+        self.assertEqual(entries[0]["performer"], "Ingrid Weimann")
+        self.assertEqual(entries[0]["performer_username"], "iweimann")
+        self.assertEqual(entries[0]["performer_id"], 7)
+        self.assertEqual(entries[1]["performer"], "Rohan")
+        self.assertEqual(entries[1]["performer_username"], "Rohan")
+        self.assertIsNone(entries[2]["performer"])
+        self.assertIsNone(entries[2]["performer_username"])
+
 
 class FilterTests(unittest.TestCase):
     def entry(self, task_id, title, status, task_type="INTELLIGENT RESET", task_date="2026-09-09"):
@@ -500,6 +526,16 @@ class MergeAndSummaryTests(unittest.TestCase):
         self.assertTrue(audited["audited"])
         self.assertEqual(audited["overall_score_pct"], 99.0)
 
+    def test_audited_local_entry_preserves_remote_performer_identity(self):
+        remote = dict(self.remote_entry(1), performer="Ingrid Weimann", performer_username="Ingrid.Weimann", performer_id=767)
+        local = self.local_entry(1, "pass", 99.0)
+        self.assertIsNone(local.get("performer"))
+        merged = merge_entries([local], [remote])
+        audited = next(e for e in merged if e["task_id"] == 1)
+        self.assertEqual(audited["performer"], "Ingrid Weimann")
+        self.assertEqual(audited["performer_username"], "Ingrid.Weimann")
+        self.assertEqual(audited["performer_id"], 767)
+
     def test_merge_sorts_newest_first(self):
         merged = merge_entries(
             [self.local_entry(1, "pass", 99.0, task_date="2026-08-01")],
@@ -507,6 +543,22 @@ class MergeAndSummaryTests(unittest.TestCase):
         )
 
         self.assertEqual([e["task_id"] for e in merged], [2, 1])
+
+    def test_merge_entries_deduplicates_duplicate_tasks(self):
+        remote = [
+            self.remote_entry(100, task_date="2026-08-15"),
+            self.remote_entry(100, task_date="2026-08-15"),
+            self.remote_entry(101, task_date="2026-08-14"),
+        ]
+        local = [
+            dict(self.local_entry(100, "pass", 98.0, task_date="2026-08-15"), instance="KRCS"),
+        ]
+        merged = merge_entries(local, remote)
+        self.assertEqual(len(merged), 2)
+        self.assertEqual([e["task_id"] for e in merged], [100, 101])
+        # Audited entry updated the single task 100 row
+        entry_100 = next(e for e in merged if e["task_id"] == 100)
+        self.assertTrue(entry_100["audited"])
 
     def test_filter_uses_inclusive_bounds_and_instance(self):
         entries = [
@@ -728,6 +780,15 @@ class HistoryUiContractTests(unittest.TestCase):
         self.assertIn('"rog_position"', server)
         self.assertIn('"pog_position"', server)
         self.assertIn("load_digital_report_actions(", server)
+        self.assertIn('"unperformed_actions"', server)
+        self.assertIn('"ok_no_action_items"', server)
+        self.assertIn("ir-work-reconciliation", index_html)
+        self.assertIn("ir-unperformed-action-list", index_html)
+        self.assertIn("ir-card-unperformed-count", index_html)
+        self.assertIn("btn-view-unperformed", index_html)
+        self.assertIn("ir-recon-performed-count", script)
+        self.assertIn("ir-recon-unperformed-count", script)
+        self.assertIn("ir-unperformed-action-total", script)
         self.assertNotIn("const DEFAULT_INSTANCE_TASKS", script)
 
 

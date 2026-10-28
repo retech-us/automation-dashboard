@@ -44,6 +44,11 @@ class FlowItem:
     reason: str = ""
     image: Optional[str] = None
     planogram_facings: Optional[int] = None
+    digital_action_type: Optional[str] = None
+    digital_action_taken: Optional[str] = None
+    discrepancy_type: Optional[str] = None
+    discrepancy_label: Optional[str] = None
+    discrepancy_detail: Optional[str] = None
 
 
 @dataclass
@@ -1226,6 +1231,26 @@ def build_krcs_reference_task_42288818() -> Dict[str, Any]:
         "bay_summaries": bay_summaries,
         "lineage_tables": LINEAGE_TABLES,
     }
+def format_duration_hm(wall_min: Optional[Any]) -> str:
+    """Format duration in minutes into human-readable hours and minutes (e.g. '5 hrs 52 mins' or '28 mins')."""
+    if wall_min is None:
+        return "not recorded"
+    try:
+        val = float(wall_min)
+    except (ValueError, TypeError):
+        return str(wall_min)
+    if val < 0:
+        return "not recorded"
+    total_mins = int(round(val))
+    if total_mins < 60:
+        return "1 min" if total_mins == 1 else f"{total_mins} mins"
+    hours = total_mins // 60
+    rem_mins = total_mins % 60
+    hour_str = "1 hr" if hours == 1 else f"{hours} hrs"
+    if rem_mins == 0:
+        return hour_str
+    min_str = "1 min" if rem_mins == 1 else f"{rem_mins} mins"
+    return f"{hour_str} {min_str}"
 
 
 def synthesize_task_flow_from_raw_actions(
@@ -1417,16 +1442,36 @@ def synthesize_task_flow_from_raw_actions(
                     exp_section = (exp_pos.get("section_info") or {}).get("name")
                     raw_id = item.get("id") or (25000000 + idx * 7)
 
+                    from_sh = curr_pos.get("shelf")
+                    to_sh = exp_pos.get("shelf")
+                    from_p = str(curr_pos.get("position") or "").strip()
+                    to_p = str(exp_pos.get("position") or "").strip()
+                    from_b = str(curr_section or "").strip()
+                    to_b = str(exp_section or bay or "").strip()
+                    disc_type = None
+                    disc_label = None
+                    disc_detail = None
+                    if "MOVE" in str(act_type).upper():
+                        if from_sh is not None and to_sh is not None and from_sh == to_sh:
+                            if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
+                                disc_type = "redundant_same_slot"
+                                disc_label = "Redundant Same-Slot Move"
+                                disc_detail = f"Product {upc} is already in its planogram slot ({to_b} Shelf {to_sh} Pos {to_p}). Emitting a move action is redundant."
+                            elif from_p and to_p and from_p != to_p:
+                                disc_type = "intra_shelf_slide"
+                                disc_label = f"Rel-Seq OK (Threshold=0) · Pos {from_p} → {to_p}"
+                                disc_detail = f"Intra-shelf shift on Shelf {from_sh} from Pos {from_p} to Pos {to_p}. Digital Shelf reports this as OK under relative sequence matching (Threshold=0), while IR generates a Move."
+
                     flow_items.append(FlowItem(
                         ledger_id=raw_id,
                         product_report_id=item.get("product_id") or (1400000 + idx * 7),
                         upc=upc,
                         product_name=name,
                         action_type=act_type,
-                        from_shelf=curr_pos.get("shelf"),
-                        from_pos=str(curr_pos.get("position") or ""),
-                        to_shelf=exp_pos.get("shelf"),
-                        to_pos=str(exp_pos.get("position") or ""),
+                        from_shelf=from_sh,
+                        from_pos=from_p,
+                        to_shelf=to_sh,
+                        to_pos=to_p,
                         from_bay=(
                             f"Bay {curr_section}"
                             if curr_section and not str(curr_section).lower().startswith("bay")
@@ -1442,6 +1487,9 @@ def synthesize_task_flow_from_raw_actions(
                         reason=reason,
                         image=item.get("image"),
                         planogram_facings=item.get("horizontal_facings"),
+                        discrepancy_type=disc_type,
+                        discrepancy_label=disc_label,
+                        discrepancy_detail=disc_detail,
                     ))
 
                 action_batches[batch_id] = ActionBatch(
@@ -1552,7 +1600,7 @@ def synthesize_task_flow_from_raw_actions(
         if "wall_duration_min" in meta
         else round((current_time - base_time).total_seconds() / 60.0, 1)
     )
-    wall_label = f"{wall_min} min" if wall_min is not None else "not recorded"
+    wall_label = format_duration_hm(wall_min)
     if is_incomplete:
         close_detail = f"marked incomplete (Wall Time: {wall_label} · Reset not verified ❌)"
         close_badge = "warning"
@@ -1620,6 +1668,105 @@ def synthesize_task_flow_from_raw_actions(
         "bay_summaries": bay_summaries,
         "lineage_tables": LINEAGE_TABLES,
     }
+
+
+def build_stage_action_payload(
+    task_id: int,
+    pre_actions: List[Dict[str, Any]],
+    post_actions: List[Dict[str, Any]],
+    post_loaded: bool,
+    post_error: Optional[str],
+    metadata_override: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Keep pre-photo and verified post-photo action batches independent."""
+    metadata = metadata_override or {}
+    pre_flow = synthesize_task_flow_from_raw_actions(
+        task_id,
+        pre_actions,
+        metadata_override=metadata,
+    )
+    post_batches: Dict[str, Any] = {}
+    if post_loaded and post_actions:
+        post_flow = synthesize_task_flow_from_raw_actions(
+            task_id,
+            post_actions,
+            metadata_override=metadata,
+        )
+        post_batches = post_flow.get("action_batches") or {}
+    return {
+        "pre_photo": {
+            "loaded": True,
+            "row_count": len(pre_actions),
+            "action_batches": pre_flow.get("action_batches") or {},
+            "error": None,
+        },
+        "post_photo": {
+            "loaded": bool(post_loaded and post_actions),
+            "row_count": len(post_actions) if post_loaded else 0,
+            "action_batches": post_batches,
+            "error": post_error,
+        },
+    }
+
+
+def enrich_flow_with_digital_shelf_evidence(
+    flow: Dict[str, Any],
+    digital_items: List[Any],
+) -> Dict[str, Any]:
+    """Correlate generated action flow with live Digital Shelf report items."""
+    if not flow or not digital_items:
+        return flow
+
+    digital_by_upc: Dict[str, Any] = {}
+    for item in digital_items:
+        upc = str(getattr(item, "upc", "") or (item.get("upc") if isinstance(item, dict) else "")).strip()
+        if upc:
+            digital_by_upc[upc] = item
+
+    def enrich_batch_items(batches: Dict[str, Any]):
+        for batch in batches.values():
+            items = batch.get("items") or []
+            for it in items:
+                upc = str(it.get("upc") or "").strip()
+                d_item = digital_by_upc.get(upc)
+                if not d_item:
+                    continue
+                d_act_type = getattr(d_item, "action_type", None) or (d_item.get("action_type") if isinstance(d_item, dict) else "")
+                d_act_taken = getattr(d_item, "action_taken", None) or (d_item.get("action_taken") if isinstance(d_item, dict) else "")
+                it["digital_action_type"] = d_act_type
+                it["digital_action_taken"] = d_act_taken
+
+                from_sh = it.get("from_shelf")
+                to_sh = it.get("to_shelf")
+                from_p = str(it.get("from_pos") or "").strip()
+                to_p = str(it.get("to_pos") or "").strip()
+                from_b = str(it.get("from_bay") or "").strip()
+                to_b = str(it.get("to_bay") or "").strip()
+
+                is_move = "MOVE" in str(it.get("action_type") or "").upper()
+                if is_move and from_sh is not None and to_sh is not None and from_sh == to_sh:
+                    if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
+                        it["discrepancy_type"] = "redundant_same_slot"
+                        it["discrepancy_label"] = "Redundant Same-Slot Move"
+                        it["discrepancy_detail"] = f"Product {upc} is already in planogram slot ({to_b} Shelf {to_sh} Pos {to_p}). Generating move is redundant."
+                    elif from_p and to_p and from_p != to_p:
+                        d_ok = (str(d_act_type).lower() == "ok") or (not d_act_taken or d_act_taken == "-")
+                        if d_ok:
+                            it["discrepancy_type"] = "relative_sequence_ok"
+                            it["discrepancy_label"] = f"Rel-Seq OK (Threshold=0) · Pos {from_p} → {to_p}"
+                            it["discrepancy_detail"] = (
+                                f"Digital Shelf marks this product OK because SequenceMatcher preserved relative shelf sequence (Threshold=0), "
+                                f"but IR generated a Move to adjust coordinate from Pos {from_p} to Pos {to_p}."
+                            )
+
+    if "action_batches" in flow:
+        enrich_batch_items(flow["action_batches"])
+    if "pre_photo" in flow and isinstance(flow["pre_photo"], dict):
+        enrich_batch_items(flow["pre_photo"].get("action_batches") or {})
+    if "post_photo" in flow and isinstance(flow["post_photo"], dict):
+        enrich_batch_items(flow["post_photo"].get("action_batches") or {})
+
+    return flow
 
 
 def get_task_flow(task_id: int, instance: Optional[str] = None) -> Dict[str, Any]:

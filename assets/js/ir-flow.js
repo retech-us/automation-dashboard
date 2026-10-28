@@ -11,7 +11,9 @@
   let currentSubView = 'summary'; // 'summary' | 'story' | 'history'
   let catalogTasks = [];
   let catalogStatusNote = '';
+  let unfilteredCatalogNote = '';
   let selectedCatalogTaskId = '';
+  let selectedPerformerKey = '';
 
   function byId(id) {
     return document.getElementById(id);
@@ -19,7 +21,11 @@
 
   function normalizeInstanceUrl(inst) {
     if (!inst) return 'https://harr.rebotics.net';
-    const clean = String(inst).trim();
+    let clean = String(inst).trim();
+    while (clean.includes('.net.net')) clean = clean.replace('.net.net', '.net');
+    while (clean.includes('.rebotics.net.rebotics.net')) clean = clean.replace('.rebotics.net.rebotics.net', '.rebotics.net');
+    while (clean.includes('.rebotics.net.net')) clean = clean.replace('.rebotics.net.net', '.rebotics.net');
+
     if (clean.startsWith('http://') || clean.startsWith('https://')) return clean.replace(/\/+$/, '');
     if (clean === 'krcs' || clean === 'krsc' || clean === 'krog' || clean === 'kroger') return 'https://krcs.rebotics.net';
     if (clean === 'stgsams' || clean === 'sams') return 'https://stgsams.rebotics.net';
@@ -28,6 +34,7 @@
     if (clean === 'albtqa') return 'https://albtqa.rebotics.net';
     if (clean === 'schn') return 'https://schn.rebotics.net';
     if (clean === 'wake') return 'https://wake.rebotics.net';
+    if (clean.includes('.')) return `https://${clean}`.replace(/\/+$/, '');
     return `https://${clean}.rebotics.net`;
   }
 
@@ -111,7 +118,10 @@
             }
           } else {
             savedTag.style.display = 'none';
-            if (tokenInput) tokenInput.placeholder = 'Paste token e.g. b131c80b29...';
+            if (tokenInput) {
+              tokenInput.placeholder = 'Paste token e.g. b131c80b29...';
+              tokenInput.value = '';
+            }
           }
         }
       })
@@ -136,7 +146,12 @@
     const baseUrl = (byId('ir-auth-base-url') || {}).value || '';
     const username = (byId('ir-auth-username') || {}).value || '';
     const password = (byId('ir-auth-password') || {}).value || '';
-    const token = (byId('ir-auth-token') || {}).value || '';
+    let token = (byId('ir-auth-token') || {}).value || '';
+
+    // If username and password are provided, ignore stale token so fresh login runs
+    if (username && password) {
+      token = '';
+    }
     const msgEl = byId('ir-auth-status-msg');
     const btn = byId('btn-ir-auth-test');
 
@@ -166,6 +181,17 @@
         }
         checkAuthStatus(data.instance_slug);
       } else {
+        if (data.token_expired || (data.message && (data.message.includes('401') || data.message.includes('expired')))) {
+          try {
+            localStorage.removeItem(`ir_creds_${baseUrl}`);
+          } catch (e) {}
+          const tokenInput = byId('ir-auth-token');
+          if (tokenInput) tokenInput.value = '';
+          const savedTag = byId('ir-auth-saved-tag');
+          if (savedTag) savedTag.style.display = 'none';
+          const slug = baseUrl.replace('https://', '').split('.')[0];
+          checkAuthStatus(slug);
+        }
         if (msgEl) {
           msgEl.style.background = '#FEF2F2';
           msgEl.style.border = '1px solid #FECACA';
@@ -189,7 +215,10 @@
     const baseUrl = (byId('ir-auth-base-url') || {}).value || '';
     const username = (byId('ir-auth-username') || {}).value || '';
     const password = (byId('ir-auth-password') || {}).value || '';
-    const token = (byId('ir-auth-token') || {}).value || '';
+    let token = (byId('ir-auth-token') || {}).value || '';
+    if (username && password) {
+      token = '';
+    }
     const msgEl = byId('ir-auth-status-msg');
     const btn = byId('btn-ir-auth-save');
 
@@ -227,9 +256,25 @@
         hideAuthAlertBanner();
         checkAuthStatus(data.instance_slug);
         closeCredentialsModal();
-
-        loadCurrentInputs();
+        const signedInInstance = data.instance_slug || getSelectedInstance();
+        const picker = byId('ir-instance-picker');
+        if (picker && signedInInstance && [...picker.options].some((option) => option.value === signedInInstance)) {
+          picker.value = signedInInstance;
+        }
+        const preferredTask = (byId('ir-simple-task-input') || {}).value || '';
+        await loadTaskCatalog(signedInInstance, preferredTask);
       } else {
+        if (data.token_expired || (data.message && (data.message.includes('401') || data.message.includes('expired')))) {
+          try {
+            localStorage.removeItem(`ir_creds_${baseUrl}`);
+          } catch (e) {}
+          const tokenInput = byId('ir-auth-token');
+          if (tokenInput) tokenInput.value = '';
+          const savedTag = byId('ir-auth-saved-tag');
+          if (savedTag) savedTag.style.display = 'none';
+          const slug = baseUrl.replace('https://', '').split('.')[0];
+          checkAuthStatus(slug);
+        }
         if (msgEl) {
           msgEl.style.display = 'block';
           msgEl.style.background = '#FEF2F2';
@@ -302,6 +347,130 @@
     await loadTaskCatalog(inst, tid);
   }
 
+  function formatDurationHoursMinutes(minutes) {
+    if (typeof minutes !== 'number' || isNaN(minutes) || minutes < 0) {
+      return null;
+    }
+    if (minutes === 0) {
+      return '0 mins';
+    }
+    const totalMinutes = Math.round(minutes);
+    if (totalMinutes < 60) {
+      return totalMinutes === 1 ? '1 min' : `${totalMinutes} mins`;
+    }
+    const hours = Math.floor(totalMinutes / 60);
+    const remainingMins = totalMinutes % 60;
+    const hourStr = hours === 1 ? '1 hr' : `${hours} hrs`;
+    if (remainingMins === 0) {
+      return hourStr;
+    }
+    const minStr = remainingMins === 1 ? '1 min' : `${remainingMins} mins`;
+    return `${hourStr} ${minStr}`;
+  }
+
+  let performerAliasMap = new Map();
+
+  function rebuildPerformerAliasMap() {
+    performerAliasMap = new Map();
+    catalogTasks.forEach((task) => {
+      const name = String(task.performer || '').trim().toLowerCase();
+      const username = String(task.performer_username || '').trim().toLowerCase();
+      const id = task.performer_id ? `id:${task.performer_id}` : '';
+      const canonical = username || name || id;
+      if (!canonical) return;
+      if (name) performerAliasMap.set(`name:${name}`, canonical);
+      if (username) performerAliasMap.set(`user:${username}`, canonical);
+      if (id) performerAliasMap.set(id, canonical);
+    });
+  }
+
+  function performerKey(task) {
+    const name = String(task.performer || '').trim().toLowerCase();
+    const username = String(task.performer_username || '').trim().toLowerCase();
+    const id = task.performer_id ? `id:${task.performer_id}` : '';
+    if (username && performerAliasMap.has(`user:${username}`)) return performerAliasMap.get(`user:${username}`);
+    if (name && performerAliasMap.has(`name:${name}`)) return performerAliasMap.get(`name:${name}`);
+    if (id && performerAliasMap.has(id)) return performerAliasMap.get(id);
+    return username || name || id || '';
+  }
+
+  function performerLabel(task) {
+    const name = String(task.performer || '').trim();
+    const username = String(task.performer_username || '').trim();
+    if (name && username && name.toLowerCase() !== username.toLowerCase()) return `${name} (${username})`;
+    return name || username || 'Unassigned';
+  }
+
+  function visibleCatalogTasks() {
+    let list;
+    if (!selectedPerformerKey) {
+      list = catalogTasks;
+    } else {
+      list = catalogTasks.filter((task) => performerKey(task) === selectedPerformerKey);
+    }
+    // Deduplicate by unique task_id
+    const seen = new Set();
+    return list.filter((task) => {
+      const id = String(task.task_id || '').trim();
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }
+
+  function populatePerformerFilter() {
+    const select = byId('ir-performer-picker');
+    if (!select) return;
+    rebuildPerformerAliasMap();
+    const groups = new Map();
+    const seenTasksPerGroup = new Map();
+
+    catalogTasks.forEach((task) => {
+      const key = performerKey(task);
+      if (!key) return;
+      const tid = String(task.task_id || '').trim();
+      let taskSet = seenTasksPerGroup.get(key);
+      if (!taskSet) {
+        taskSet = new Set();
+        seenTasksPerGroup.set(key, taskSet);
+      }
+      if (tid && taskSet.has(tid)) return;
+      if (tid) taskSet.add(tid);
+
+      const existing = groups.get(key) || { key, label: performerLabel(task), count: 0 };
+      const currentLabel = performerLabel(task);
+      if (currentLabel.includes('(') && !existing.label.includes('(')) {
+        existing.label = currentLabel;
+      }
+      existing.count += 1;
+      groups.set(key, existing);
+    });
+
+    const previous = selectedPerformerKey;
+    select.replaceChildren();
+    const all = document.createElement('option');
+    all.value = '';
+    all.textContent = catalogTasks.length ? `All performers (${catalogTasks.length})` : 'All performers';
+    select.appendChild(all);
+    [...groups.values()]
+      .sort((a, b) => a.label.localeCompare(b.label))
+      .forEach((group) => {
+        const option = document.createElement('option');
+        option.value = group.key;
+        option.textContent = `${group.label} (${group.count})`;
+        select.appendChild(option);
+      });
+    selectedPerformerKey = previous && groups.has(previous) ? previous : '';
+    select.value = selectedPerformerKey;
+    select.disabled = catalogTasks.length === 0;
+    const status = byId('ir-performer-status');
+    if (status) {
+      status.textContent = groups.size
+        ? `${groups.size} associate${groups.size === 1 ? '' : 's'} performed tasks in this list.`
+        : 'No performer was returned for these tasks.';
+    }
+  }
+
   function taskOptionLabel(task) {
     const store = task.store_name || task.store_custom_id || `Store ${task.store_id || 'unknown'}`;
     const title = task.title && task.title !== store ? task.title : '';
@@ -310,6 +479,7 @@
       task.task_date || 'Unknown date',
       store,
       title,
+      performerLabel(task),
       task.status_label || task.status || 'Unknown',
     ].filter(Boolean).join(' · ');
   }
@@ -322,6 +492,8 @@
       task.store_custom_id,
       task.store_id,
       task.title,
+      task.performer,
+      task.performer_username,
       task.status_label,
       task.status,
     ].join(' ').toLowerCase();
@@ -347,26 +519,37 @@
     const list = byId('ir-task-dropdown');
     const field = byId('ir-task-search');
     if (!list || !field) return;
-    const selectedTask = catalogTasks.find((task) => String(task.task_id) === selectedCatalogTaskId);
+    const tasks = visibleCatalogTasks();
+    const selectedTask = tasks.find((task) => String(task.task_id) === selectedCatalogTaskId);
     const typed = field.value.trim();
     const showingSelection = selectedTask && typed === taskOptionLabel(selectedTask);
     const needle = showingSelection ? '' : typed.toLowerCase();
     const words = needle.split(/\s+/).filter(Boolean);
     const matches = words.length
-      ? catalogTasks.filter((task) => {
+      ? tasks.filter((task) => {
         const haystack = taskSearchText(task);
         return words.every((word) => haystack.includes(word));
       })
-      : catalogTasks;
+      : tasks;
+
+    // Deduplicate matches by task_id to guarantee no duplicate tasks are rendered
+    const seenMatches = new Set();
+    const uniqueMatches = [];
+    for (const t of matches) {
+      const idStr = String(t.task_id || '').trim();
+      if (!idStr || seenMatches.has(idStr)) continue;
+      seenMatches.add(idStr);
+      uniqueMatches.push(t);
+    }
 
     list.replaceChildren();
-    if (!matches.length) {
+    if (!uniqueMatches.length) {
       const empty = document.createElement('li');
       empty.className = 'ir-task-option ir-task-option--empty';
-      empty.textContent = catalogTasks.length ? `No tasks match “${typed}”` : 'No recent Intelligent Reset tasks found';
+      empty.textContent = tasks.length ? `No tasks match “${typed}”` : 'No recent Intelligent Reset tasks found';
       list.appendChild(empty);
     }
-    matches.forEach((task, index) => {
+    uniqueMatches.forEach((task, index) => {
       const item = document.createElement('li');
       item.id = `ir-task-option-${task.task_id}`;
       item.className = 'ir-task-option';
@@ -384,7 +567,7 @@
     setText(
       'ir-recent-task-status',
       needle
-        ? (matches.length ? `${matches.length} of ${catalogTasks.length} tasks match.` : `No tasks match “${typed}”.`)
+        ? (uniqueMatches.length ? `${uniqueMatches.length} of ${tasks.length} tasks match.` : `No tasks match “${typed}”.`)
         : catalogStatusNote,
     );
   }
@@ -403,13 +586,53 @@
     field.setAttribute('aria-activedescendant', options[next].id);
   }
 
+  function statusForVisibleTasks(visible) {
+    if (!selectedPerformerKey) return unfilteredCatalogNote;
+    const performerName = ((byId('ir-performer-picker') || {}).selectedOptions?.[0]?.textContent || 'this associate')
+      .replace(/\s+\(\d+\)$/, '');
+    return `${visible.length} task${visible.length === 1 ? '' : 's'} performed by ${performerName}.`;
+  }
+
+  function onPerformerChange(value) {
+    selectedPerformerKey = String(value || '');
+    const visible = visibleCatalogTasks();
+    catalogStatusNote = statusForVisibleTasks(visible);
+    setTaskFieldState(
+      visible.length ? 'Type to search by task ID, store, date, title, performer, or status' : 'No tasks for this associate',
+      visible.length > 0,
+    );
+    const currentStillVisible = visible.some((task) => String(task.task_id) === selectedCatalogTaskId);
+    if (!currentStillVisible && visible[0]) {
+      chooseCatalogTask(visible[0].task_id);
+      return;
+    }
+    if (!visible.length) {
+      selectedCatalogTaskId = '';
+      const field = byId('ir-task-search');
+      if (field) field.value = '';
+    }
+    paintTaskDropdown();
+    setText('ir-recent-task-status', catalogStatusNote);
+  }
+
   function chooseCatalogTask(taskId) {
-    const task = catalogTasks.find((entry) => String(entry.task_id) === String(taskId));
+    const task = visibleCatalogTasks().find((entry) => String(entry.task_id) === String(taskId))
+      || catalogTasks.find((entry) => String(entry.task_id) === String(taskId));
     const field = byId('ir-task-search');
     if (!task) return;
     selectedCatalogTaskId = String(task.task_id);
     if (field) field.value = taskOptionLabel(task);
     setTaskListOpen(false);
+
+    // If task has a performer and it differs from currently selected performer, sync the performer dropdown
+    const pKey = performerKey(task);
+    if (pKey && selectedPerformerKey && selectedPerformerKey !== pKey) {
+      selectedPerformerKey = pKey;
+      const perfPicker = byId('ir-performer-picker');
+      if (perfPicker) perfPicker.value = pKey;
+      catalogStatusNote = statusForVisibleTasks(visibleCatalogTasks());
+    }
+
     setText('ir-recent-task-status', catalogStatusNote);
     const input = byId('ir-simple-task-input');
     if (input) input.value = task.task_id;
@@ -418,7 +641,7 @@
 
   function restoreSelectedTaskLabel() {
     const field = byId('ir-task-search');
-    const task = catalogTasks.find((entry) => String(entry.task_id) === selectedCatalogTaskId);
+    const task = visibleCatalogTasks().find((entry) => String(entry.task_id) === selectedCatalogTaskId);
     if (field) field.value = task ? taskOptionLabel(task) : '';
     setText('ir-recent-task-status', catalogStatusNote);
   }
@@ -478,38 +701,54 @@
 
     catalogTasks = [];
     catalogStatusNote = '';
+    unfilteredCatalogNote = '';
     selectedCatalogTaskId = '';
+    selectedPerformerKey = '';
+    const performerSelect = byId('ir-performer-picker');
+    if (performerSelect) {
+      performerSelect.disabled = true;
+      performerSelect.value = '';
+    }
     const search = byId('ir-task-search');
     if (search) search.value = '';
     setTaskListOpen(false);
     setTaskFieldState('Loading recent Intelligent Reset tasks…', false);
     setText('ir-recent-task-status', 'Loading tasks performed in the last 7 days…');
 
+    setGlobalProgressBar(true);
     try {
       const historyUrl = `/api/runner/ir_history?instance=${encodeURIComponent(inst)}&range=7d&status=in_progress,completed,incomplete`;
       const res = await fetch(historyUrl, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.status !== 'success') throw new Error(data.message || 'Task list unavailable');
-      const tasks = (Array.isArray(data.tasks) ? data.tasks : [])
-        .filter((task) => {
-          const type = String(task.task_type || '').toLowerCase();
-          // Audited tasks keep a blank type after the retailer session expires.
-          return !type || type.includes('intelligent reset');
-        })
-        .sort((a, b) => String(b.task_date || '').localeCompare(String(a.task_date || '')) || Number(b.task_id || 0) - Number(a.task_id || 0));
+      const rawTasks = Array.isArray(data.tasks) ? data.tasks : [];
+      const seenTaskIds = new Set();
+      const uniqueTasks = [];
+      for (const task of rawTasks) {
+        const id = String(task.task_id || '').trim();
+        if (!id || seenTaskIds.has(id)) continue;
+        seenTaskIds.add(id);
+        const type = String(task.task_type || '').toLowerCase();
+        // Audited tasks keep a blank type after the retailer session expires.
+        if (!type || type.includes('intelligent reset')) {
+          uniqueTasks.push(task);
+        }
+      }
+      uniqueTasks.sort((a, b) => String(b.task_date || '').localeCompare(String(a.task_date || '')) || Number(b.task_id || 0) - Number(a.task_id || 0));
 
-      catalogTasks = tasks;
+      catalogTasks = uniqueTasks;
+      populatePerformerFilter();
       setTaskFieldState(
-        tasks.length
-          ? 'Type to search by task ID, store, date, title, or status'
+        catalogTasks.length
+          ? 'Type to search by task ID, store, date, title, performer, or status'
           : (data.remote_error ? 'Recent tasks unavailable' : 'No recent Intelligent Reset tasks found'),
-        tasks.length > 0,
+        catalogTasks.length > 0,
       );
 
       if (datalist) {
         datalist.innerHTML = '';
-        tasks.forEach((task) => {
+        uniqueTasks.forEach((task) => {
           const opt = document.createElement('option');
           opt.value = task.task_id;
           opt.label = task.title || `Task #${task.task_id}`;
@@ -518,14 +757,16 @@
       }
 
       const wanted = String(preferredTaskId || '');
-      const selected = tasks.find((task) => String(task.task_id) === wanted) || tasks[0];
-      catalogStatusNote = [
+      const visible = visibleCatalogTasks();
+      const selected = visible.find((task) => String(task.task_id) === wanted) || visible[0];
+      unfilteredCatalogNote = [
         data.host_note,
-        tasks.length
-          ? `${tasks.length} recent Intelligent Reset task${tasks.length === 1 ? '' : 's'} found.`
+        catalogTasks.length
+          ? `${catalogTasks.length} recent Intelligent Reset task${catalogTasks.length === 1 ? '' : 's'} found.`
           : (data.remote_error || 'No recently performed Intelligent Reset tasks were found.'),
-        tasks.length ? data.remote_error : '',
+        catalogTasks.length ? data.remote_error : '',
       ].filter(Boolean).join(' ');
+      catalogStatusNote = unfilteredCatalogNote;
       setText('ir-recent-task-status', catalogStatusNote);
       if (selected) {
         selectedCatalogTaskId = String(selected.task_id);
@@ -536,7 +777,11 @@
       } else {
         renderNoSelectedTask(data.remote_error || 'No recently performed Intelligent Reset tasks were found for this instance.');
       }
-      if (data.remote_error) showAuthAlertBanner(inst, data.remote_error);
+      if (data.remote_error) {
+        showAuthAlertBanner(inst, data.remote_error);
+      } else {
+        hideAuthAlertBanner();
+      }
     } catch (e) {
       console.warn('Could not load task catalog', e);
       catalogTasks = [];
@@ -544,6 +789,8 @@
       setText('ir-recent-task-status', 'Recent tasks could not be loaded. Check the instance sign-in.');
       renderNoSelectedTask('Sign in to load recently performed Intelligent Reset tasks for this instance.');
       showAuthAlertBanner(inst, `Sign in to ${inst.toUpperCase()} to load recent Intelligent Reset tasks.`);
+    } finally {
+      setGlobalProgressBar(false);
     }
   }
 
@@ -677,6 +924,40 @@
     }
   }
 
+  function setGlobalProgressBar(active) {
+    const bar = byId('ir-flow-global-progress');
+    if (bar) bar.style.display = active ? 'block' : 'none';
+  }
+
+  function renderTaskLoadingState(taskId, instance) {
+    const instName = (instance || '').toUpperCase();
+    const isLatest = taskId === 'latest';
+    const displayLabel = isLatest ? `Latest (${instName})` : `#${taskId}`;
+
+    setText('ir-exec-verdict-title', `Loading Task ${displayLabel}…`);
+    setText('ir-exec-verdict-desc', `Connecting to ${instName} backend, retrieving planogram items, movement sequence, associate audit trail, and Digital Shelf history…`);
+    const icon = byId('ir-exec-verdict-icon');
+    if (icon) icon.textContent = '⏳';
+
+    const card = byId('ir-exec-verdict-card');
+    if (card) {
+      card.className = 'ir-exec-verdict ir-exec-verdict--review';
+    }
+
+    setText('ir-overview-generated', '…');
+    setText('ir-overview-performed', '…');
+    setText('ir-overview-duration', '…');
+    setText('ir-overview-challenges', '…');
+
+    const reconRateBadge = byId('ir-recon-rate-badge');
+    if (reconRateBadge) {
+      reconRateBadge.textContent = 'Fetching records…';
+      reconRateBadge.className = 'badge badge-blue';
+    }
+    setText('ir-recon-performed-count', '…');
+    setText('ir-recon-unperformed-count', '…');
+  }
+
   async function loadTask(taskId, instance) {
     const inst = instance || (byId('ir-instance-picker') ? byId('ir-instance-picker').value : 'harr') || 'harr';
     const targetId = taskId || (byId('ir-simple-task-input') ? byId('ir-simple-task-input').value.trim() : 'latest') || 'latest';
@@ -704,6 +985,8 @@
     if (statusBadge) statusBadge.textContent = targetId === 'latest' ? `Fetching Latest (${inst.toUpperCase()})…` : `Loading Task #${targetId} (${inst.toUpperCase()})…`;
 
     checkAuthStatus(inst);
+    setGlobalProgressBar(true);
+    renderTaskLoadingState(targetId, inst);
 
     try {
       const resp = await fetch(`/api/runner/task_flow?task_id=${encodeURIComponent(targetId)}&instance=${encodeURIComponent(inst)}`);
@@ -731,6 +1014,8 @@
       if (String(err).includes('401') || String(err).includes('Authentication')) {
         showAuthAlertBanner(inst, `Authentication required for ${inst.toUpperCase()}. Please provide Username & Password or Auth Token.`);
       }
+    } finally {
+      setGlobalProgressBar(false);
     }
   }
 
@@ -794,6 +1079,38 @@
     return [state, item.reason].filter(Boolean).join(' · ') || 'Not recorded';
   }
 
+  function renderDiscrepancyBadge(item) {
+    if (!item) return '';
+    const fromSh = item.from_shelf;
+    const toSh = item.to_shelf;
+    const fromPos = item.from_pos != null ? String(item.from_pos).trim() : '';
+    const toPos = item.to_pos != null ? String(item.to_pos).trim() : '';
+    const fromBay = String(item.from_bay || '').trim();
+    const toBay = String(item.to_bay || '').trim();
+    const isMove = (item.action_type || '').toUpperCase().includes('MOVE');
+
+    if (item.discrepancy_type === 'relative_sequence_ok' || (isMove && fromSh && toSh && fromSh == toSh && fromPos && toPos && fromPos !== toPos)) {
+      const tooltip = item.discrepancy_detail || `Digital Shelf reported this product OK because SequenceMatcher preserved relative shelf order (Threshold=0), while IR generated an intra-shelf Move to adjust coordinate from Pos ${fromPos} to Pos ${toPos}.`;
+      return `
+        <div style="margin-top: 4px;">
+          <span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: help;" title="${tooltip}">
+            ⚠️ Rel-Seq OK (Threshold=0) · Pos ${fromPos} → ${toPos}
+          </span>
+        </div>
+      `;
+    }
+    if (item.discrepancy_type === 'redundant_same_slot' || (isMove && fromSh && toSh && fromSh == toSh && fromPos && toPos && fromPos === toPos && (!fromBay || !toBay || fromBay === toBay))) {
+      return `
+        <div style="margin-top: 4px;">
+          <span class="badge" style="background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: help;" title="Product is already in its planogram slot; move instruction is redundant (Invariant 9).">
+            ⚠️ Redundant Same-Slot Move
+          </span>
+        </div>
+      `;
+    }
+    return '';
+  }
+
   function openInsightDialog({ title, subtitle, summary = [], items = [] }) {
     const dialog = byId('ir-insight-dialog');
     const body = byId('ir-insight-dialog-body');
@@ -828,8 +1145,19 @@
       upc.textContent = item.upc ? `UPC ${item.upc}` : 'UPC unavailable';
       productCell.append(product, upc);
 
+      const actionCell = document.createElement('td');
+      const actionLabel = document.createElement('div');
+      actionLabel.textContent = item.action_type || 'Action unavailable';
+      actionCell.appendChild(actionLabel);
+      const discBadgeHtml = renderDiscrepancyBadge(item);
+      if (discBadgeHtml) {
+        const wrap = document.createElement('div');
+        wrap.innerHTML = discBadgeHtml;
+        actionCell.appendChild(wrap.firstElementChild);
+      }
+      row.appendChild(actionCell);
+
       [
-        item.action_type || 'Action unavailable',
         formatActionLocation(item, 'from'),
         formatActionLocation(item, 'to'),
         formatActionStatus(item),
@@ -884,10 +1212,33 @@
 
   function renderTaskInsights(meta, batches, initialScore, finalScore, performedEvidence, performedLoaded, evidenceInfo = {}) {
     const generated = [];
+    const postGenerated = [];
     let performed = [];
     const challenges = [];
     const rejectedGroups = new Map();
     const rawStatus = String(meta.status || '').toLowerCase();
+    const postPhoto = evidenceInfo.postPhoto || {};
+
+    function appendBatchRows(batchMap, target) {
+      Object.values(batchMap || {}).forEach((batch) => {
+        const items = Array.isArray(batch.items) ? batch.items : [];
+        const count = items.length || Number(batch.item_count || 0) || 1;
+        const type = String(batch.action_type || batch.action || 'Action').replaceAll('_', ' ');
+        const state = String(batch.state || '').toUpperCase();
+        const reason = String(batch.reason || '').trim();
+        const example = items[0] || {};
+        const detail = example.product_name || example.product_title || example.title || example.upc || reason || 'Product details unavailable';
+        const detailItems = items.map((item) => ({
+          ...item,
+          action_type: type,
+          from_bay: item.from_bay || batch.bay,
+          to_bay: item.to_bay || batch.bay,
+          reason: item.reason || reason,
+          state: item.state || state,
+        }));
+        target.push({ type, count, detail, state, items: detailItems });
+      });
+    }
 
     Object.values(batches || {}).forEach((batch) => {
       const items = Array.isArray(batch.items) ? batch.items : [];
@@ -919,6 +1270,7 @@
         rejectedGroups.set(key, group);
       }
     });
+    appendBatchRows(postPhoto.action_batches, postGenerated);
     rejectedGroups.forEach(({ type, reason, count, items }) => {
       const label = type.replace(/^ACTION\s+/i, '').toLowerCase();
       challenges.push({
@@ -928,7 +1280,55 @@
       });
     });
 
+    const allGeneratedItems = generated.flatMap((row) => row.items || []);
+    const relSeqOkItems = allGeneratedItems.filter((item) => {
+      const fromSh = item.from_shelf;
+      const toSh = item.to_shelf;
+      const fromPos = item.from_pos != null ? String(item.from_pos).trim() : '';
+      const toPos = item.to_pos != null ? String(item.to_pos).trim() : '';
+      const isMove = (item.action_type || '').toUpperCase().includes('MOVE');
+      return item.discrepancy_type === 'relative_sequence_ok' ||
+        (isMove && fromSh && toSh && fromSh == toSh && fromPos && toPos && fromPos !== toPos);
+    });
+    if (relSeqOkItems.length > 0) {
+      challenges.push({
+        text: `${relSeqOkItems.length} product${relSeqOkItems.length === 1 ? '' : 's'} marked OK in Digital Shelf (SequenceMatcher threshold=0) require intra-shelf slot adjustments in IR.`,
+        items: relSeqOkItems,
+        source: 'Digital Shelf relative sequence vs IR slot coordinate comparison',
+        summary: [
+          ['Why Digital Shelf shows OK', 'SequenceMatcher preserved relative left-to-right order on the shelf, and COMPARISON_POSITION_MATCH_THRESHOLD defaults to 0, which skips coordinate checking.'],
+          ['Why IR generated a Move', 'The product physical slot index changed (e.g. Pos 4 → Pos 5), requiring an intra-shelf horizontal slide.'],
+          ['Products affected', String(relSeqOkItems.length)],
+        ],
+      });
+    }
+
+    const redundantSameSlotItems = allGeneratedItems.filter((item) => {
+      const fromSh = item.from_shelf;
+      const toSh = item.to_shelf;
+      const fromPos = item.from_pos != null ? String(item.from_pos).trim() : '';
+      const toPos = item.to_pos != null ? String(item.to_pos).trim() : '';
+      const fromBay = String(item.from_bay || '').trim();
+      const toBay = String(item.to_bay || '').trim();
+      const isMove = (item.action_type || '').toUpperCase().includes('MOVE');
+      return item.discrepancy_type === 'redundant_same_slot' ||
+        (isMove && fromSh && toSh && fromSh == toSh && fromPos && toPos && fromPos === toPos && (!fromBay || !toBay || fromBay === toBay));
+    });
+    if (redundantSameSlotItems.length > 0) {
+      challenges.push({
+        text: `${redundantSameSlotItems.length} redundant same-slot move${redundantSameSlotItems.length === 1 ? '' : 's'} generated for products already in their target slot (Invariant 9).`,
+        items: redundantSameSlotItems,
+        source: 'Shelf Invariant Engine (Invariant 9: In-Place Preservation)',
+        summary: [
+          ['Defect description', 'The product is already placed at the exact planogram coordinates. Re-generating a move instruction creates unnecessary associate touches.'],
+          ['Invariant rule', 'Rule 9: In-Place Preservation (Zero Redundant Same-Slot Moves)'],
+          ['Products affected', String(redundantSameSlotItems.length)],
+        ],
+      });
+    }
+
     const generatedCount = generated.reduce((sum, row) => sum + row.count, 0);
+    const postGeneratedCount = postGenerated.reduce((sum, row) => sum + row.count, 0);
     if (performedLoaded) {
       performed = (performedEvidence || []).map((item) => ({
         type: item.action_taken || item.action_type || 'Performed action',
@@ -964,7 +1364,49 @@
       return [...grouped.values()].sort((a, b) => b.count - a.count);
     }
     const generatedSummary = groupRows(generated);
+    const postGeneratedSummary = groupRows(postGenerated);
     const performedSummary = groupRows(performed);
+
+    let rawUnperformedItems = [];
+    if (Array.isArray(evidenceInfo.unperformedActions) && evidenceInfo.unperformedActions.length > 0) {
+      rawUnperformedItems = evidenceInfo.unperformedActions;
+    } else if (Array.isArray(evidenceInfo.allDigitalActions) && evidenceInfo.allDigitalActions.length > 0) {
+      rawUnperformedItems = evidenceInfo.allDigitalActions.filter((item) => {
+        const actTaken = (item.action_taken || '').trim();
+        const actType = (item.action_type || '').trim().toLowerCase();
+        return (!actTaken || actTaken === '-') && actType !== 'ok';
+      });
+    } else {
+      const allGen = generated.flatMap((row) => row.items || []);
+      rawUnperformedItems = allGen.filter((item) => {
+        const st = String(item.state || '').toUpperCase();
+        return !st.includes('ACCEPT') && !st.includes('COMPLET') && !st.includes('DONE') && !st.includes('PERFORM');
+      });
+    }
+
+    const unperformedRows = rawUnperformedItems.map((item) => {
+      const aType = (item.action_type || 'Unconfirmed action').replaceAll('_', ' ');
+      return {
+        type: aType,
+        count: 1,
+        detail: item.product_name || item.upc || `Section ${item.section || item.from_bay || 'unknown'}`,
+        state: 'NO_RECORD',
+        items: [{
+          product_name: item.product_name || item.title || 'Product',
+          upc: item.upc,
+          action_type: item.action_type || aType,
+          from_bay: item.section || item.from_bay || '—',
+          from_pos: item.rog_position || item.from_pos || '—',
+          to_bay: item.section || item.to_bay || '—',
+          to_pos: item.pog_position || item.to_pos || '—',
+          state: 'No Record in System',
+          reason: item.reason || `Action Type '${item.action_type}' needed, but Action Taken is '-' (no completion record in associate logs)`,
+        }],
+      };
+    });
+    const unperformedSummary = groupRows(unperformedRows);
+    const unperformedCount = rawUnperformedItems.length;
+
     if (['incomplete', 'failed', 'cancelled'].includes(rawStatus)) {
       challenges.push({
         text: `The task finished with status “${meta.status}”.`,
@@ -1027,9 +1469,13 @@
       let text = '';
       let state = '';
       if (performedLoaded && !taskStillOpen && shelfSplitKnown && unconfirmedShelf === 0) {
-        text = duplicateCount
-          ? `The associate performed all ${requiredCount} required actions. ${generatedCount} rows were generated because ${duplicateCount} repeat an action already on the list. Those repeats do not need another action on mobile.`
-          : `The associate performed all ${requiredCount} required actions.`;
+        const preResult = duplicateCount
+          ? `The associate performed all ${requiredCount} pre-photo actions. ${duplicateCount} repeated pre-photo rows were not extra mobile work.`
+          : `The associate performed all ${requiredCount} pre-photo actions.`;
+        const postResult = postPhoto.loaded
+          ? ` The post-photo scan generated ${postGeneratedCount} separate action row${postGeneratedCount === 1 ? '' : 's'}, shown below.`
+          : ` A separate post-photo action list is unavailable${postPhoto.error ? `: ${postPhoto.error}` : '.'}`;
+        text = `${preResult}${postResult}`;
         state = 'clear';
       } else if (performedLoaded && unconfirmedShelf > 0) {
         text = `${unconfirmedShelf} product${unconfirmedShelf === 1 ? '' : 's'} ${unconfirmedShelf === 1 ? 'was' : 'were'} not performed${unconfirmedTypes ? ` (${unconfirmedTypes})` : ''}. Action Taken is still blank, so the associate did not record that work. ${okNoAction} products were already correct and needed no action.`;
@@ -1043,11 +1489,129 @@
       result.dataset.state = state;
       result.textContent = text;
     }
+
+    // Populate Store Reset Execution Reconciliation Panel
+    setText('ir-recon-performed-count', performedCount);
+    setText('ir-recon-unperformed-count', unperformedCount);
+
+    const reconRateBadge = byId('ir-recon-rate-badge');
+    if (reconRateBadge) {
+      if (performedCount + unperformedCount > 0) {
+        const completionPct = Math.round((performedCount / (performedCount + unperformedCount)) * 100);
+        reconRateBadge.textContent = `${completionPct}% Completed (${performedCount}/${performedCount + unperformedCount})`;
+        reconRateBadge.className = completionPct >= 95 ? 'badge badge-green' : (completionPct > 50 ? 'badge badge-yellow' : 'badge badge-red');
+      } else {
+        reconRateBadge.textContent = taskStillOpen ? 'In Progress' : 'Reconciliation Ready';
+        reconRateBadge.className = 'badge badge-blue';
+      }
+    }
+
+    const perfDescEl = byId('ir-recon-performed-desc');
+    if (perfDescEl) {
+      if (performedLoaded && performedCount > 0) {
+        perfDescEl.textContent = `Associate logged and confirmed ${performedCount} physical shelf change(s) in system records (Action Taken verified in Digital Shelf).`;
+      } else if (taskStillOpen) {
+        perfDescEl.textContent = `Task is currently active on the store floor. Associate has not submitted completion records yet.`;
+      } else {
+        perfDescEl.textContent = `No completed actions were recorded by the associate for this reset session in Digital Shelf or mobile logs.`;
+      }
+    }
+
+    const unperfDescEl = byId('ir-recon-unperformed-desc');
+    if (unperfDescEl) {
+      if (unperformedCount > 0) {
+        unperfDescEl.textContent = `The pre-photo scan instructed ${unperformedCount} action(s), but our records have NO confirmation that the associate performed them (Action Taken is blank or '-').`;
+      } else if (performedLoaded && unperformedCount === 0 && !taskStillOpen) {
+        unperfDescEl.textContent = `Zero unperformed actions. All planogram adjustments were addressed and recorded.`;
+      } else if (taskStillOpen) {
+        unperfDescEl.textContent = `Task is still open. Actions not yet touched are pending execution.`;
+      } else {
+        unperfDescEl.textContent = `No unperformed actions recorded for this task.`;
+      }
+    }
+
+    // Performed Tags
+    const perfTagsContainer = byId('ir-recon-performed-tags');
+    if (perfTagsContainer) {
+      perfTagsContainer.replaceChildren();
+      if (performedSummary.length) {
+        performedSummary.forEach((group) => {
+          const tag = document.createElement('span');
+          tag.className = 'ir-recon-tag ir-recon-tag--performed';
+          tag.textContent = `${group.count} ${group.type}`;
+          perfTagsContainer.appendChild(tag);
+        });
+      }
+    }
+
+    // Unperformed Tags
+    const unperfTagsContainer = byId('ir-recon-unperformed-tags');
+    if (unperfTagsContainer) {
+      unperfTagsContainer.replaceChildren();
+      if (unperformedSummary.length) {
+        unperformedSummary.forEach((group) => {
+          const tag = document.createElement('span');
+          tag.className = 'ir-recon-tag ir-recon-tag--unperformed';
+          tag.textContent = `${group.count} ${group.type}`;
+          unperfTagsContainer.appendChild(tag);
+        });
+      }
+    }
+
+    // Baseline Note
+    const baseTextEl = byId('ir-recon-baseline-text');
+    if (baseTextEl) {
+      if (okNoAction > 0) {
+        baseTextEl.textContent = `Baseline Shelf Check: ${okNoAction} product(s) were already in their correct planogram positions before reset (marked OK with Action Taken “-”) and did not require associate action.`;
+      } else {
+        baseTextEl.textContent = `Baseline Shelf Check: All scanned products required planogram verification and adjustment.`;
+      }
+    }
+
+    // Wire Reconciliation Detail Buttons
+    const btnReconPerf = byId('btn-recon-view-performed');
+    if (btnReconPerf) {
+      btnReconPerf.onclick = () => openInsightDialog({
+        title: 'Actions User Performed (Confirmed in Records)',
+        subtitle: `${performedCount} action(s) confirmed by associate · Task #${meta.task_id || 'unknown'}`,
+        summary: [
+          ['Verification Source', 'Digital Shelf report & associate mobile logs'],
+          ['Total Confirmed Performed', String(performedCount)],
+          ['Record Status', 'Confirmed Completed (Action Taken logged)'],
+        ],
+        items: performed.flatMap((r) => r.items || []),
+      });
+    }
+
+    const btnReconUnperf = byId('btn-recon-view-unperformed');
+    if (btnReconUnperf) {
+      btnReconUnperf.onclick = () => openInsightDialog({
+        title: 'Actions With No Record (What User Did NOT Do)',
+        subtitle: `${unperformedCount} action(s) with no completion record · Task #${meta.task_id || 'unknown'}`,
+        summary: [
+          ['Verification Source', 'Pre-photo scan vs Digital Shelf Action Taken'],
+          ['Total Without Record', String(unperformedCount)],
+          ['Record Status', 'Missing Confirmation (Action Taken is blank or "-")'],
+          ['Associate Action', 'Associate did not record or touch these items'],
+        ],
+        items: rawUnperformedItems.map((item) => ({
+          product_name: item.product_name || item.title || 'Product',
+          upc: item.upc,
+          action_type: item.action_type || 'Action',
+          from_bay: item.section || item.from_bay || '—',
+          from_pos: item.rog_position || item.from_pos || '—',
+          to_bay: item.section || item.to_bay || '—',
+          to_pos: item.pog_position || item.to_pos || '—',
+          state: 'NO_RECORD',
+          reason: item.reason || `Action type '${item.action_type}' needed, but Action Taken is '-' (no completion record in system)`,
+        })),
+      });
+    }
     setText(
       'ir-overview-generated-help',
       duplicateCount
         ? `${requiredCount} to perform · ${duplicateCount} repeated rows, not extra work`
-        : 'Work requested by the system',
+        : 'Generated from the pre-photo scan',
     );
     setText(
       'ir-overview-performed-help',
@@ -1056,11 +1620,13 @@
         : (unconfirmedShelf > 0 ? `${unconfirmedShelf} not performed` : 'Recorded by the associate'),
     );
     setText('ir-generated-action-total', generatedCount);
+    setText('ir-post-action-total', postGeneratedCount);
     setText('ir-performed-action-total', performedCount);
-    setText('ir-overview-duration', typeof meta.wall_duration_min === 'number' ? `${meta.wall_duration_min} min` : 'Not recorded');
+    const durStr = formatDurationHoursMinutes(meta.wall_duration_min);
+    setText('ir-overview-duration', durStr || 'Not recorded');
     setText(
       'ir-overview-duration-help',
-      typeof meta.wall_duration_min === 'number'
+      durStr
         ? (meta.duration_source === 'task.logged_duration'
           ? 'From retailer logged duration'
           : 'From recorded task start and completion')
@@ -1075,9 +1641,9 @@
       durationButton.onclick = () => openInsightDialog({
         title: 'Reset duration calculation',
         subtitle: `Task #${meta.task_id || 'unknown'} timing evidence`,
-        summary: typeof meta.wall_duration_min === 'number'
+        summary: durStr
           ? [
-            ['Calculated duration', `${meta.wall_duration_min} minutes`],
+            ['Calculated duration', `${durStr} (${meta.wall_duration_min} minutes)`],
             ['Data source', meta.duration_source || 'Retailer task timing fields'],
             ['Started at', meta.duration_started_at],
             ['Completed at', meta.duration_completed_at],
@@ -1121,7 +1687,9 @@
           title: row.type,
           subtitle: `${row.count} action${row.count === 1 ? '' : 's'} · Task #${meta.task_id || 'unknown'}`,
           summary: [
-            ['Evidence source', id === 'ir-performed-action-list' ? 'Digital Shelf report' : 'Generated task action list'],
+            ['Evidence source', id === 'ir-performed-action-list'
+              ? 'Digital Shelf report'
+              : (id === 'ir-post-action-list' ? 'Post-photo action list' : 'Pre-photo action list')],
             ['Items shown', String(row.items.length)],
           ],
           items: row.items,
@@ -1186,6 +1754,13 @@
 
     renderRows('ir-generated-action-list', generatedSummary, 'No generated actions were returned for this task.');
     renderRows(
+      'ir-post-action-list',
+      postGeneratedSummary,
+      postPhoto.loaded
+        ? 'The post-photo action list is empty.'
+        : (postPhoto.error || 'A separate post-photo action list is unavailable for this task.'),
+    );
+    renderRows(
       'ir-performed-action-list',
       performedSummary,
       performedLoaded
@@ -1196,6 +1771,26 @@
             : 'No completion records: the associate app did not log any of the requested actions as done.')
         : 'Performed-action evidence is unavailable for this task.',
     );
+    renderRows(
+      'ir-unperformed-action-list',
+      unperformedSummary,
+      performedLoaded && unperformedCount === 0 && !taskStillOpen
+        ? 'Zero unperformed actions. All requested actions were completed and recorded!'
+        : (taskStillOpen ? 'Task is in progress. Actions not completed yet are not counted as missed.' : 'No unperformed actions recorded for this task.'),
+    );
+    const unperformedListEl = byId('ir-unperformed-action-list');
+    if (unperformedListEl && unperformedCount > 0 && !unperformedSummary.length) {
+      const unperfBtn = document.createElement('button');
+      unperfBtn.type = 'button';
+      unperfBtn.className = 'btn btn--outline btn--sm ir-evidence-button';
+      unperfBtn.textContent = 'View unconfirmed records';
+      unperfBtn.onclick = () => openInsightDialog({
+        title: 'Actions With No Record',
+        subtitle: `${unperformedCount} action(s) needed but Action Taken is '-' · Task #${meta.task_id || 'unknown'}`,
+        summary: describePerformedEvidence(evidenceInfo.evidence, evidenceInfo.error),
+      });
+      unperformedListEl.appendChild(unperfBtn);
+    }
     const performedList = byId('ir-performed-action-list');
     if (performedList && !performedSummary.length) {
       const evidenceButton = document.createElement('button');
@@ -1313,8 +1908,33 @@
       finalScore,
       data.performed_actions || [],
       data.performed_actions_loaded === true,
-      { evidence: data.performed_evidence, error: data.performed_actions_error },
+      {
+        evidence: data.performed_evidence,
+        error: data.performed_actions_error,
+        postPhoto: data.post_photo,
+        unperformedActions: data.unperformed_actions || [],
+        okNoActionItems: data.ok_no_action_items || [],
+        allDigitalActions: data.all_digital_actions || [],
+      },
     );
+
+    let rawUnperformedItems = [];
+    if (Array.isArray(data.unperformed_actions) && data.unperformed_actions.length > 0) {
+      rawUnperformedItems = data.unperformed_actions;
+    } else if (Array.isArray(data.all_digital_actions) && data.all_digital_actions.length > 0) {
+      rawUnperformedItems = data.all_digital_actions.filter((item) => {
+        const actTaken = (item.action_taken || '').trim();
+        const actType = (item.action_type || '').trim().toLowerCase();
+        return (!actTaken || actTaken === '-') && actType !== 'ok';
+      });
+    } else {
+      const allGen = Object.values(batches).flatMap((b) => b.items || []);
+      rawUnperformedItems = allGen.filter((item) => {
+        const st = String(item.state || '').toUpperCase();
+        return !st.includes('ACCEPT') && !st.includes('COMPLET') && !st.includes('DONE') && !st.includes('PERFORM');
+      });
+    }
+    const unperformedCount = rawUnperformedItems.length;
 
     // 2. Render Big Executive Verdict Banner
     const verdictCard = byId('ir-exec-verdict-card');
@@ -1322,6 +1942,7 @@
       const assocName = meta.performer_name || meta.performer || 'Store Associate';
       const storeLabel = `${meta.store_name} (${meta.store_code || meta.store_id})`;
       const totalTouched = meta.total_action_items || (movedCount + restockedCount + removedCount + exceptionCount);
+      const unperfNote = unperformedCount > 0 ? ` System records show ${unperformedCount} requested action(s) have NO record of completion (Action Taken is blank/unconfirmed).` : '';
 
       const kickerEl = byId('ir-exec-verdict-kicker');
       if (kickerEl) {
@@ -1334,31 +1955,32 @@
         byId('ir-exec-verdict-title').textContent = finalScore !== null
           ? `Reset Incomplete — ${finalScore}% Compliance (Stopped Early)`
           : `Reset Incomplete — Task Stopped Early`;
-        byId('ir-exec-verdict-desc').textContent = `${assocName} stopped before completing the full reset for ${meta.task_title}. ${totalTouched} action item(s) were touched, but final shelf verification was not completed or failed quality standards (95% standard required).`;
+        byId('ir-exec-verdict-desc').textContent = `${assocName} stopped before completing the full reset for ${meta.task_title}. ${totalTouched} action item(s) were touched, but final shelf verification was not completed or failed quality standards (95% standard required).${unperfNote}`;
       } else if (isInProgress) {
         verdictCard.className = 'ir-exec-verdict ir-exec-verdict--review';
         byId('ir-exec-verdict-icon').textContent = '⏳';
         byId('ir-exec-verdict-title').textContent = `Reset In Progress — Active Store Session`;
-        byId('ir-exec-verdict-desc').textContent = `${assocName} is actively working on ${meta.task_title}. Initial baseline shelf compliance was ${initialScore !== null ? initialScore + '%' : 'being evaluated'}. Final post-reset compliance will be evaluated once final photos are submitted.`;
+        byId('ir-exec-verdict-desc').textContent = `${assocName} is actively working on ${meta.task_title}. Initial baseline shelf compliance was ${initialScore !== null ? initialScore + '%' : 'being evaluated'}.${unperfNote} Final post-reset compliance will be evaluated once final photos are submitted.`;
       } else if (isPassed) {
         verdictCard.className = 'ir-exec-verdict ir-exec-verdict--pass';
         byId('ir-exec-verdict-icon').textContent = '✅';
         byId('ir-exec-verdict-title').textContent = `Reset Completed Successfully — ${finalScore}% Compliance`;
-        byId('ir-exec-verdict-desc').textContent = `${assocName} completed the reset for ${meta.task_title}. All ${totalTouched} requested items were adjusted and restocked. Final verification scored ${finalScore}%, passing the 95% quality standard.`;
+        byId('ir-exec-verdict-desc').textContent = `${assocName} completed the reset for ${meta.task_title}. All ${totalTouched} requested items were adjusted and restocked. Final verification scored ${finalScore}%, passing the 95% quality standard.${unperfNote}`;
       } else {
         verdictCard.className = 'ir-exec-verdict ir-exec-verdict--review';
         byId('ir-exec-verdict-icon').textContent = '⚠️';
         byId('ir-exec-verdict-title').textContent = finalScore !== null
           ? `Needs Store Attention — ${finalScore}% Compliance (Target: 95%)`
           : `Needs Store Attention — Verification Pending`;
-        byId('ir-exec-verdict-desc').textContent = `${assocName} performed adjustments on ${meta.task_title}. Shelf accuracy finished below the 95% release standard. Review flagged items below.`;
+        byId('ir-exec-verdict-desc').textContent = `${assocName} performed adjustments on ${meta.task_title}. Shelf accuracy finished below the 95% release standard.${unperfNote} Review flagged items below.`;
       }
 
       byId('ir-exec-meta-store').textContent = storeLabel;
       byId('ir-exec-meta-planogram').textContent = meta.task_title ? `${meta.task_title} (Task #${meta.task_id})` : 'Modular Reset';
       byId('ir-exec-meta-associate').textContent = assocName;
       byId('ir-exec-meta-date').textContent = meta.task_date || 'Recent';
-      byId('ir-exec-meta-time').textContent = meta.wall_duration_min ? `${meta.wall_duration_min} mins shift` : 'Shift time logged';
+      const shiftDur = formatDurationHoursMinutes(meta.wall_duration_min);
+      byId('ir-exec-meta-time').textContent = shiftDur ? `${shiftDur} shift` : 'Shift time logged';
     }
 
     // 3. Render 4 Key Stat Cards
@@ -1396,24 +2018,27 @@
       setText('ir-stat-work-sub', `${movedCount} moved • ${restockedCount} restocked • ${removedCount} removed`);
     }
 
-    setText('ir-stat-time-val', meta.wall_duration_min ? `${meta.wall_duration_min} mins` : '—');
+    const statDur = formatDurationHoursMinutes(meta.wall_duration_min);
+    setText('ir-stat-time-val', statDur || '—');
     setText('ir-stat-time-sub', 'Associate physical shift labor');
 
     const aiLatency = (firstBay && firstBay.ai_latency_sec) ? `${firstBay.ai_latency_sec}s` : '—';
     setText('ir-stat-ai-val', aiLatency);
     setText('ir-stat-ai-sub', 'Automated photo analysis');
 
-    // 4. Render 4 Work Cards
+    // 4. Render 5 Work Cards
     setText('ir-card-moved-count', movedCount);
     setText('ir-card-restocked-count', restockedCount);
     setText('ir-card-removed-count', removedCount);
     setText('ir-card-flagged-count', exceptionCount);
+    setText('ir-card-unperformed-count', unperformedCount);
 
     // Wire "View Items" button clicks
     wireCardClick('btn-view-moved', 'Moved into Place', movedItems, 'ACTION_MOVE');
     wireCardClick('btn-view-restocked', 'Restocked from Backroom', restockedItems, 'ACTION_ADD');
     wireCardClick('btn-view-removed', 'Removed from Shelf', removedItems, 'ACTION_REMOVE');
     wireCardClick('btn-view-flagged', 'Flagged / Exceptions', exceptionItems, 'EXCEPTION');
+    wireCardClick('btn-view-unperformed', 'Not Performed (No Record)', rawUnperformedItems, 'NO_RECORD');
 
     // 5. Render Step-by-Step Story (Human Narrative)
     renderStoryTimeline(events, meta);
@@ -1453,11 +2078,27 @@
     setText('ir-overview-duration-help', 'Recorded task timing');
     setText('ir-overview-challenges', '—');
     setText('ir-generated-action-total', '0');
+    setText('ir-post-action-total', '0');
     setText('ir-performed-action-total', '0');
+    setText('ir-unperformed-action-total', '0');
+    setText('ir-card-unperformed-count', '—');
+    setText('ir-recon-performed-count', '0');
+    setText('ir-recon-unperformed-count', '0');
+    const perfTags = byId('ir-recon-performed-tags');
+    if (perfTags) perfTags.replaceChildren();
+    const unperfTags = byId('ir-recon-unperformed-tags');
+    if (unperfTags) unperfTags.replaceChildren();
+    const reconRateBadge = byId('ir-recon-rate-badge');
+    if (reconRateBadge) {
+      reconRateBadge.textContent = 'Reconciliation Inactive';
+      reconRateBadge.className = 'badge badge-gray';
+    }
     setText('ir-challenge-total', '0');
     const emptyStates = {
       'ir-generated-action-list': 'Choose a recent task to see the work requested by the system.',
+      'ir-post-action-list': 'Choose a recent task to check its separate post-photo actions.',
       'ir-performed-action-list': 'Choose a recent task to see the associate activity recorded in Digital Shelf.',
+      'ir-unperformed-action-list': 'Choose a recent task to evaluate actions with no completion record.',
       'ir-challenge-list': 'Choose a recent task to evaluate execution challenges.',
     };
     Object.entries(emptyStates).forEach(([id, text]) => {
@@ -1507,7 +2148,10 @@
               </div>
             </td>
             <td>
-              <span class="status-pill status-pill--primary">${(item.action_type || defaultType).replace('ACTION_', '')}</span>
+              <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                <span class="status-pill status-pill--primary">${(item.action_type || defaultType).replace('ACTION_', '')}</span>
+                ${renderDiscrepancyBadge(item)}
+              </div>
             </td>
             <td>
               ${item.from_shelf ? `<span class="badge badge-gray">Shelf ${item.from_shelf}, Pos ${item.from_pos}</span>` : '<span style="color:var(--text-muted)">—</span>'}
@@ -2470,6 +3114,7 @@
     loadTaskFlow: loadTask,
     quickSelect,
     onInstanceChange,
+    onPerformerChange,
     loadCurrentInputs,
     switchSubView,
     openItemDrawer,
