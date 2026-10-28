@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261014g" />
+  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261023d" />
   <script>
     (function() {
       try {
@@ -109,6 +109,7 @@
       <button type="button" class="tab-btn tab-btn--runner-tab" role="tab" id="tab-shelf-mobile" data-tab="shelf-mobile" aria-controls="panel-shelf-mobile" aria-selected="false" title="Open Shelf-Reset Sequencing Mobile Assistant" style="border-color: rgba(16, 185, 129, 0.4); color: #34d399;">
         📱 Shelf Reset Mobile
       </button>
+
     </div>
   </nav>
   </div>
@@ -241,8 +242,15 @@
               <option value="custom">Custom instance…</option>
             </select>
           </div>
+          <div class="ir-browser-field">
+            <label for="ir-performer-picker">2. Performed by</label>
+            <select id="ir-performer-picker" class="ir-flow-input" onchange="window.IrTaskFlow.onPerformerChange(this.value)" disabled>
+              <option value="">All performers</option>
+            </select>
+            <span id="ir-performer-status" class="ir-browser-help">Choose an associate to narrow the task list.</span>
+          </div>
           <div class="ir-browser-field ir-browser-field--task">
-            <label for="ir-task-search">2. Recent performed task</label>
+            <label for="ir-task-search">3. Recent performed task</label>
             <div class="ir-task-combobox">
               <input id="ir-task-search" class="ir-flow-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ir-task-dropdown" placeholder="Select an instance to load tasks…" autocomplete="off" disabled />
               <ul id="ir-task-dropdown" class="ir-task-listbox" role="listbox" aria-label="Recent performed tasks" hidden></ul>
@@ -259,6 +267,11 @@
 
         <div class="ir-selection-status">
           <span id="ir-header-status-pill" class="meta-pill">Choose a task</span>
+        </div>
+
+        <!-- Live Loading & Progress Bar Indicator -->
+        <div id="ir-flow-global-progress" class="ir-flow-progress-wrap" style="display: none;" role="progressbar" aria-label="Loading task data" aria-valuemin="0" aria-valuemax="100">
+          <div class="ir-flow-progress-fill"></div>
         </div>
 
         <nav class="ir-subnav-bar" role="tablist" aria-label="Intelligent Reset views">
@@ -329,9 +342,9 @@
         <section class="ir-task-insights" aria-label="Selected task performance">
           <div class="ir-insight-metrics">
             <article class="ir-insight-metric">
-              <span>Actions generated</span>
+              <span>Pre-photo actions</span>
               <strong id="ir-overview-generated">—</strong>
-              <small id="ir-overview-generated-help">Work requested by the system</small>
+              <small id="ir-overview-generated-help">Generated from the pre-photo scan</small>
             </article>
             <article class="ir-insight-metric">
               <span>Actions performed</span>
@@ -351,19 +364,95 @@
             </article>
           </div>
 
-          <p id="ir-work-result" class="ir-work-result" hidden></p>
+          <!-- Store Reset Execution & Record Reconciliation Panel -->
+          <section id="ir-work-reconciliation" class="ir-work-reconciliation" aria-label="Reset execution record reconciliation">
+            <div class="ir-recon-header">
+              <div class="ir-recon-title-wrap">
+                <span class="ir-review-kicker">STORE RESET EXECUTION RECONCILIATION</span>
+                <h3 id="ir-recon-headline">What Associate Did vs. What Has No Record</h3>
+                <p id="ir-recon-subtext">Clear comparison of planogram work requested by the system against verified associate records and Digital Shelf confirmation.</p>
+              </div>
+              <div id="ir-recon-badges" class="ir-recon-badges">
+                <span id="ir-recon-rate-badge" class="badge badge-blue">Reconciliation Active</span>
+              </div>
+            </div>
+
+            <div class="ir-recon-cards">
+              <!-- Left: Actions Performed (What user did) -->
+              <div class="ir-recon-card ir-recon-card--performed">
+                <div class="ir-recon-card-header">
+                  <div class="ir-recon-card-icon">✅</div>
+                  <div class="ir-recon-card-heading">
+                    <h4>Actions User Performed</h4>
+                    <span class="ir-recon-card-status" id="ir-recon-performed-status">Confirmed in Records</span>
+                  </div>
+                  <strong id="ir-recon-performed-count" class="ir-recon-count">0</strong>
+                </div>
+                <p id="ir-recon-performed-desc" class="ir-recon-desc">
+                  Actions confirmed by the associate in mobile execution logs or Digital Shelf (Action Taken is recorded).
+                </p>
+                <div id="ir-recon-performed-tags" class="ir-recon-tags"></div>
+                <button type="button" id="btn-recon-view-performed" class="btn btn--outline btn--sm ir-recon-view-btn">
+                  View Performed Products ➔
+                </button>
+              </div>
+
+              <!-- Right: Actions With No Record (What user did NOT do) -->
+              <div class="ir-recon-card ir-recon-card--unperformed">
+                <div class="ir-recon-card-header">
+                  <div class="ir-recon-card-icon">❌</div>
+                  <div class="ir-recon-card-heading">
+                    <h4>Actions With No Record (Not Performed)</h4>
+                    <span class="ir-recon-card-status" id="ir-recon-unperformed-status">Missing Confirmation</span>
+                  </div>
+                  <strong id="ir-recon-unperformed-count" class="ir-recon-count">0</strong>
+                </div>
+                <p id="ir-recon-unperformed-desc" class="ir-recon-desc">
+                  Actions instructed by the pre-photo scan that have NO record of completion (Action Taken is blank or '-').
+                </p>
+                <div id="ir-recon-unperformed-tags" class="ir-recon-tags"></div>
+                <button type="button" id="btn-recon-view-unperformed" class="btn btn--outline btn--sm ir-recon-view-btn">
+                  View Products With No Record ➔
+                </button>
+              </div>
+            </div>
+
+            <!-- Baseline Note: Already Correct on Shelf -->
+            <div id="ir-recon-baseline-note" class="ir-recon-baseline">
+              <span class="ir-recon-info-icon">ℹ️</span>
+              <span id="ir-recon-baseline-text">
+                Baseline Shelf Check: Products marked OK with Action Taken “-” were already at their correct planogram positions and needed no associate action.
+              </span>
+            </div>
+            
+            <!-- Backward-compatibility element -->
+            <p id="ir-work-result" class="ir-work-result" hidden></p>
+          </section>
 
           <div class="ir-action-review-grid">
             <article class="ir-action-review">
               <header>
                 <div>
-                  <span class="ir-review-kicker">System request</span>
-                  <h3>Generated user actions</h3>
+                  <span class="ir-review-kicker">Pre-photo · system request</span>
+                  <h3>Pre-photo actions</h3>
                 </div>
                 <span id="ir-generated-action-total" class="meta-pill">0</span>
               </header>
               <div id="ir-generated-action-list" class="ir-review-list">
                 <p class="data-note">Select a task to see generated actions.</p>
+              </div>
+            </article>
+
+            <article class="ir-action-review">
+              <header>
+                <div>
+                  <span class="ir-review-kicker">Post-photo · verification</span>
+                  <h3>Post-photo actions</h3>
+                </div>
+                <span id="ir-post-action-total" class="meta-pill">0</span>
+              </header>
+              <div id="ir-post-action-list" class="ir-review-list">
+                <p class="data-note">Select a task to check for a separate post-photo action list.</p>
               </div>
             </article>
 
@@ -377,6 +466,19 @@
               </header>
               <div id="ir-performed-action-list" class="ir-review-list">
                 <p class="data-note">Select a task to see performed actions.</p>
+              </div>
+            </article>
+
+            <article class="ir-action-review ir-action-review--unperformed">
+              <header>
+                <div>
+                  <span class="ir-review-kicker">No record · not performed</span>
+                  <h3>Actions with no record</h3>
+                </div>
+                <span id="ir-unperformed-action-total" class="meta-pill meta-pill--warning">0</span>
+              </header>
+              <div id="ir-unperformed-action-list" class="ir-review-list">
+                <p class="data-note">Select a task to evaluate unperformed actions.</p>
               </div>
             </article>
 
@@ -548,6 +650,20 @@
               <div class="ir-work-card-title">Flagged / Skipped</div>
               <p class="ir-work-card-desc">Damaged barcodes, blocked shelf space, or missing shelf tags.</p>
               <button type="button" id="btn-view-flagged" class="btn btn--ghost btn--sm btn-block">
+                View Products ➔
+              </button>
+            </div>
+
+            <!-- Work Card 5: Not Performed / No Record -->
+            <div class="ir-work-card ir-work-card--unperformed">
+              <div class="ir-work-card-top">
+                <span class="ir-work-icon">❌</span>
+                <span class="ir-work-badge" style="background:#FEF2F2; color:#991B1B;">No Record</span>
+              </div>
+              <div class="ir-work-card-number" id="ir-card-unperformed-count">—</div>
+              <div class="ir-work-card-title">Not Performed / No Record</div>
+              <p class="ir-work-card-desc">System-instructed actions with no confirmation in mobile logs or Digital Shelf.</p>
+              <button type="button" id="btn-view-unperformed" class="btn btn--ghost btn--sm btn-block">
                 View Products ➔
               </button>
             </div>
@@ -1305,6 +1421,8 @@
         <iframe id="iframe-shelf-mobile" src="shelf_reset_mobile.html?v=20261014b" title="Shelf Reset Mobile Assistant" style="width:100%; height:calc(100vh - 170px); border:none; display:block; background:var(--surface);"></iframe>
       </section>
     </div>
+
+
   </main>
 
   <footer class="footer">
@@ -1394,7 +1512,7 @@
   <script src="assets/js/issue-bridge.js?v=20261007e"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20261007a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261014g"></script>
+  <script src="assets/js/ir-flow.js?v=20261015b"></script>
   <script src="assets/js/agent-center.js?v=20261012f"></script>
   <script src="assets/js/sentry-usage.js?v=20261012c"></script>
   <script src="assets/js/app.v16.js?v=20261012a"></script>
