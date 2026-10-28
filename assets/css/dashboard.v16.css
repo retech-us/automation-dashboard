@@ -616,12 +616,18 @@ h1 {
   flex-direction: column;
   margin-bottom: 0;
   border-radius: 12px;
+  background: #070b12 !important;
+  border: 1px solid #1e2c4a !important;
+  overflow: hidden;
 }
 
 #panel-shelf-mobile .panel__header {
-  padding: 6px 14px !important;
-  min-height: 36px;
+  padding: 6px 16px !important;
+  min-height: 38px;
   flex-shrink: 0;
+  background: #0e1526 !important;
+  border-bottom: 1px solid #1e2c4a !important;
+  color: #f8fafc !important;
 }
 
 #panel-shelf-mobile iframe {
@@ -630,10 +636,17 @@ h1 {
   min-height: 0 !important;
   width: 100%;
   border: none;
+  background: #070b12 !important;
 }
 
 body.shelf-mobile-active .footer {
   display: none !important;
+}
+
+body.shelf-mobile-active .container {
+  padding-top: 10px;
+  padding-bottom: 0;
+  max-width: 100%;
 }
 
 .empty-state {
@@ -7792,7 +7805,7 @@ code {
 
 .ir-task-browser {
   display: grid;
-  grid-template-columns: minmax(190px, .7fr) minmax(360px, 1.7fr) auto;
+  grid-template-columns: minmax(170px, .6fr) minmax(190px, .7fr) minmax(320px, 1.6fr) auto;
   gap: 12px;
   align-items: start;
   margin-top: 20px;
@@ -7907,6 +7920,48 @@ code {
   margin-top: 10px;
 }
 
+/* IR Flow Loading Bar & Progress */
+@keyframes irProgressAnim {
+  0% { left: -40%; width: 40%; }
+  50% { left: 25%; width: 60%; }
+  100% { left: 100%; width: 40%; }
+}
+
+.ir-flow-progress-wrap {
+  position: relative;
+  height: 3.5px;
+  width: 100%;
+  background: rgba(59, 130, 246, 0.12);
+  overflow: hidden;
+  margin: 10px 0 0 0;
+  border-radius: 999px;
+}
+
+.ir-flow-progress-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+  border-radius: 999px;
+  animation: irProgressAnim 1.35s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ir-skeleton-pulse {
+  display: inline-block;
+  min-width: 48px;
+  height: 0.95em;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.18) 25%, rgba(148, 163, 184, 0.42) 50%, rgba(148, 163, 184, 0.18) 75%);
+  background-size: 200% 100%;
+  animation: irSkeletonShimmer 1.5s infinite linear;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+@keyframes irSkeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .ir-control-center .ir-subnav-bar {
   margin: 16px -24px 0;
   padding: 0 24px;
@@ -7943,6 +7998,216 @@ code {
 
 .ir-work-result[data-state="warning"] {
   box-shadow: inset 3px 0 0 #f59e0b;
+}
+
+/* Store Reset Execution Reconciliation Panel */
+.ir-work-reconciliation {
+  margin: 14px 0 16px;
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .ir-work-reconciliation {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+
+.ir-recon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.ir-recon-title-wrap {
+  flex: 1;
+  min-width: 260px;
+}
+
+.ir-recon-headline {
+  margin: 3px 0 4px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+
+.ir-recon-subtext {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.ir-recon-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ir-recon-card {
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+[data-theme="light"] .ir-recon-card {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.ir-recon-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.ir-recon-card--performed {
+  border-left: 4px solid #10b981;
+}
+
+.ir-recon-card--unperformed {
+  border-left: 4px solid #ef4444;
+}
+
+.ir-recon-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ir-recon-card-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ir-recon-card-heading {
+  flex: 1;
+}
+
+.ir-recon-card-heading h4 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.ir-recon-card-status {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.ir-recon-card--performed .ir-recon-card-status {
+  color: #10b981;
+}
+
+.ir-recon-card--unperformed .ir-recon-card-status {
+  color: #ef4444;
+}
+
+.ir-recon-count {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+}
+
+.ir-recon-desc {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.ir-recon-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ir-recon-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.ir-recon-tag--performed {
+  color: #065f46;
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+[data-theme="dark"] .ir-recon-tag--performed {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.ir-recon-tag--unperformed {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+[data-theme="dark"] .ir-recon-tag--unperformed {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.ir-recon-view-btn {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.ir-recon-baseline {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  font-size: 11.5px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.ir-recon-info-icon {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.ir-work-card--unperformed:hover {
+  border-color: #ef4444;
+}
+
+.meta-pill--warning {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 .ir-insight-metrics {
