@@ -1046,7 +1046,9 @@
     setText('ir-comp-step-pre-val', '…');
     setText('ir-comp-step-action-val', '…');
     setText('ir-comp-step-post-val', '…');
+    setText('ir-comp-step-pre-sub', 'Initial Shelf Baseline');
     setText('ir-comp-step-action-sub', 'User Completed Actions');
+    setText('ir-comp-step-post-sub', 'Verified Final Shelf Quality');
     const actionValEl = byId('ir-comp-step-action-val');
     if (actionValEl) actionValEl.className = 'ir-comp-step-val is-action';
     const postValEl = byId('ir-comp-step-post-val');
@@ -2347,10 +2349,9 @@
       if (isIncomplete) {
         verdictCard.className = 'ir-exec-verdict ir-exec-verdict--fail';
         byId('ir-exec-verdict-icon').textContent = '❌';
-        byId('ir-exec-verdict-title').textContent = finalScore !== null
-          ? `Reset Incomplete — ${finalScore}% Compliance (Stopped Early)`
-          : `Reset Incomplete — Task Stopped Early`;
-        byId('ir-exec-verdict-desc').textContent = `${assocName} stopped before completing the full reset for ${meta.task_title}. ${totalTouched} action item(s) were touched, but final shelf verification was not completed or failed quality standards (95% standard required).${unperfNote}`;
+        byId('ir-exec-verdict-title').textContent = 'Reset Incomplete — Task Stopped Early';
+        const touchSummary = actualConfirmedCount > 0 ? `${actualConfirmedCount} action item(s) were completed` : '0 actions were performed';
+        byId('ir-exec-verdict-desc').textContent = `${assocName} stopped before completing the full reset for ${meta.task_title}. ${touchSummary}, and final post-photo shelf verification was not submitted (skipped).${unperfNote}`;
       } else if (isInProgress) {
         verdictCard.className = 'ir-exec-verdict ir-exec-verdict--review';
         byId('ir-exec-verdict-icon').textContent = '⏳';
@@ -2435,14 +2436,39 @@
         : 'ir-comp-step-val is-action';
     }
 
+    const hasVerifiedPostPhoto = Boolean(data.post_photo && data.post_photo.loaded && (data.post_photo.row_count > 0 || Object.keys(data.post_photo.action_batches || {}).length > 0));
+    const isPostSkipped = isIncomplete || (isInProgress && !hasVerifiedPostPhoto);
+    const effectivePostScore = isPostSkipped ? null : postScore;
+
     const preLabel = preScore !== null ? `${preScore}%` : '—';
     const actionLabel = actionScore !== null ? `${actionScore}%` : '—';
-    const postLabel = postScore !== null ? `${postScore}%` : (isIncomplete ? 'Stopped' : 'Pending');
+    const postLabel = effectivePostScore !== null
+      ? `${effectivePostScore}%`
+      : (isIncomplete ? 'Skipped' : (isInProgress ? 'Pending' : '—'));
+
+    let postSubtext = 'Verified Final Shelf Quality';
+    let postClass = 'ir-comp-step-val is-post';
+
+    if (isIncomplete) {
+      postSubtext = 'Post-Photo Skipped (Stopped Early)';
+      postClass = 'ir-comp-step-val is-post is-stopped';
+    } else if (isInProgress) {
+      postSubtext = 'Post-Photo Verification Pending';
+      postClass = 'ir-comp-step-val is-post is-pending';
+    } else if (effectivePostScore !== null && effectivePostScore < 95) {
+      postSubtext = 'Final Shelf Quality (Needs Attention)';
+      postClass = 'ir-comp-step-val is-post needs-attention';
+    } else {
+      postSubtext = 'Verified Final Shelf Quality';
+      postClass = 'ir-comp-step-val is-post';
+    }
 
     setText('ir-comp-step-pre-val', preLabel);
     setText('ir-comp-step-action-val', actionLabel);
     setText('ir-comp-step-post-val', postLabel);
+    setText('ir-comp-step-pre-sub', 'Initial Shelf Baseline');
     setText('ir-comp-step-action-sub', actionSubtext);
+    setText('ir-comp-step-post-sub', postSubtext);
 
     const actionValEl = byId('ir-comp-step-action-val');
     if (actionValEl) {
@@ -2451,19 +2477,15 @@
 
     const postValEl = byId('ir-comp-step-post-val');
     if (postValEl) {
-      if (postScore !== null && postScore < 95) {
-        postValEl.className = 'ir-comp-step-val is-post needs-attention';
-      } else {
-        postValEl.className = 'ir-comp-step-val is-post';
-      }
+      postValEl.className = postClass;
     }
 
     // 3. Render 4 Key Stat Cards
     if (isIncomplete) {
-      setText('ir-stat-lift-val', `${preLabel} ➔ ${actionLabel} ➔ ${postLabel}`);
-      setText('ir-stat-lift-badge', 'Stopped Early');
+      setText('ir-stat-lift-val', `${preLabel} ➔ ${actionLabel} ➔ Skipped`);
+      setText('ir-stat-lift-badge', 'Stopped Early (No Post-Photo)');
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = postScore !== null ? `${Math.min(postScore, 100)}%` : '0%';
+      if (progBar) progBar.style.width = '0%';
     } else if (isInProgress) {
       setText('ir-stat-lift-val', `${preLabel} ➔ ${actionLabel} ➔ Pending`);
       setText('ir-stat-lift-badge', 'In Progress');
@@ -2471,14 +2493,16 @@
       if (progBar) progBar.style.width = actionScore !== null ? `${Math.min(actionScore, 100)}%` : '0%';
     } else {
       setText('ir-stat-lift-val', `${preLabel} ➔ ${actionLabel} ➔ ${postLabel}`);
-      const liftText = (postScore !== null && preScore !== null) ? ` (+${postScore - preScore}% lift)` : '';
-      setText('ir-stat-lift-badge', (postScore !== null && postScore >= 95) ? `Passed 95%${liftText}` : (postScore !== null ? `Needs Attention (${postScore}%)` : 'Evaluating'));
+      const liftText = (effectivePostScore !== null && preScore !== null) ? ` (+${effectivePostScore - preScore}% lift)` : '';
+      setText('ir-stat-lift-badge', (effectivePostScore !== null && effectivePostScore >= 95) ? `Passed 95%${liftText}` : (effectivePostScore !== null ? `Needs Attention (${effectivePostScore}%)` : 'Evaluating'));
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = postScore !== null ? `${Math.min(postScore, 100)}%` : (actionScore !== null ? `${Math.min(actionScore, 100)}%` : '0%');
+      if (progBar) progBar.style.width = effectivePostScore !== null ? `${Math.min(effectivePostScore, 100)}%` : (actionScore !== null ? `${Math.min(actionScore, 100)}%` : '0%');
     }
     const liftSubEl = byId('ir-stat-lift-bar')?.parentElement?.nextElementSibling;
     if (liftSubEl) {
-      liftSubEl.textContent = `Pre-Compliance Baseline: ${preLabel} • After Action: ${actionLabel} • Post-Photo Compliance: ${postLabel}`;
+      liftSubEl.textContent = isIncomplete
+        ? `Pre-Compliance Baseline: ${preLabel} • After Action: ${actionLabel} • Post-Photo: Skipped`
+        : `Pre-Compliance Baseline: ${preLabel} • After Action: ${actionLabel} • Post-Photo Compliance: ${postLabel}`;
     }
 
     const totalWorkItems = meta.total_action_items || (movedCount + restockedCount + removedCount + exceptionCount);
@@ -2538,9 +2562,13 @@
     setText('ir-comp-step-pre-val', '—');
     setText('ir-comp-step-action-val', '—');
     setText('ir-comp-step-post-val', '—');
+    setText('ir-comp-step-pre-sub', 'Initial Shelf Baseline');
     setText('ir-comp-step-action-sub', 'User Completed Actions');
+    setText('ir-comp-step-post-sub', 'Verified Final Shelf Quality');
     const actionValElClear = byId('ir-comp-step-action-val');
     if (actionValElClear) actionValElClear.className = 'ir-comp-step-val is-action';
+    const postValElClear = byId('ir-comp-step-post-val');
+    if (postValElClear) postValElClear.className = 'ir-comp-step-val is-post';
     setText('ir-stat-lift-val', '—');
     setText('ir-stat-lift-badge', '—');
     const progBar = byId('ir-stat-lift-bar');

@@ -1768,10 +1768,10 @@ def synthesize_task_flow_from_raw_actions(
 
         initial_comp = float(meta.get("initial_compliance") or 35.0)
         final_comp_raw = meta.get("final_compliance")
-        if final_comp_raw is not None:
-            final_comp = float(final_comp_raw)
-        elif is_incomplete or is_in_progress:
+        if is_incomplete or is_in_progress:
             final_comp = None
+        elif final_comp_raw is not None:
+            final_comp = float(final_comp_raw)
         else:
             final_comp = 98.0
 
