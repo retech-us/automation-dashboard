@@ -1027,6 +1027,12 @@
       card.className = 'ir-exec-verdict ir-exec-verdict--review';
     }
 
+    setText('ir-exec-meta-store', '…');
+    setText('ir-exec-meta-planogram', '…');
+    setText('ir-exec-meta-associate', '…');
+    setText('ir-exec-meta-date', '…');
+    setText('ir-exec-meta-time', '…');
+
     setText('ir-overview-generated', '…');
     setText('ir-overview-performed', '…');
     setText('ir-overview-duration', '…');
@@ -1072,7 +1078,9 @@
     renderTaskLoadingState(targetId, inst);
 
     try {
-      const resp = await fetch(`/api/runner/task_flow?task_id=${encodeURIComponent(targetId)}&instance=${encodeURIComponent(inst)}`);
+      const resp = await fetch(`/api/runner/task_flow?task_id=${encodeURIComponent(targetId)}&instance=${encodeURIComponent(inst)}&force_live=1&_t=${Date.now()}`, {
+        cache: 'no-store'
+      });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       if (data.status === 'error' && (data.error_code === 'AUTH_REQUIRED' || (data.message && data.message.includes('Authentication')))) {
@@ -2290,11 +2298,11 @@
     // 3-Stage Compliance Calculation: Pre-Photo -> User Actions -> Post-Photo
     const preScore = (initialScore !== null && initialScore !== undefined)
       ? initialScore
-      : (meta.initial_compliance != null ? Math.round(meta.initial_compliance) : (firstBay && firstBay.initial_pre_compliance_pct != null ? Math.round(firstBay.initial_pre_compliance_pct) : 29));
+      : (meta.initial_compliance != null ? Math.round(meta.initial_compliance) : (firstBay && firstBay.initial_pre_compliance_pct != null ? Math.round(firstBay.initial_pre_compliance_pct) : null));
 
     const postScore = (finalScore !== null && finalScore !== undefined)
       ? finalScore
-      : (meta.final_compliance != null ? Math.round(meta.final_compliance) : (firstBay && firstBay.post_compliance_pct != null ? Math.round(firstBay.post_compliance_pct) : 93));
+      : (meta.final_compliance != null ? Math.round(meta.final_compliance) : (firstBay && firstBay.post_compliance_pct != null ? Math.round(firstBay.post_compliance_pct) : null));
 
     // After Action Compliance:
     // 1. If backend / Digital Shelf reports action_compliance_pct directly, use official value.
@@ -2306,18 +2314,23 @@
     const totalRequired = confirmedCount + unperformedCount;
     if (totalRequired > 0) {
       const execRate = confirmedCount / totalRequired;
-      calculatedActionScore = Math.min(100, Math.round(preScore + (100 - preScore) * execRate));
+      const baseForExec = preScore != null ? preScore : 0;
+      calculatedActionScore = Math.min(100, Math.round(baseForExec + (100 - baseForExec) * execRate));
     } else {
-      calculatedActionScore = preScore;
+      calculatedActionScore = preScore != null ? preScore : null;
     }
 
     const actionScore = (firstBay && firstBay.action_compliance_pct != null)
       ? Math.round(firstBay.action_compliance_pct)
       : (meta.action_compliance != null ? Math.round(meta.action_compliance) : calculatedActionScore);
 
-    setText('ir-comp-step-pre-val', `${preScore}%`);
-    setText('ir-comp-step-action-val', `${actionScore}%`);
-    setText('ir-comp-step-post-val', postScore !== null ? `${postScore}%` : 'Pending');
+    const preLabel = preScore !== null ? `${preScore}%` : '—';
+    const actionLabel = actionScore !== null ? `${actionScore}%` : '—';
+    const postLabel = postScore !== null ? `${postScore}%` : (isIncomplete ? 'Stopped' : 'Pending');
+
+    setText('ir-comp-step-pre-val', preLabel);
+    setText('ir-comp-step-action-val', actionLabel);
+    setText('ir-comp-step-post-val', postLabel);
 
     const postValEl = byId('ir-comp-step-post-val');
     if (postValEl) {
@@ -2330,24 +2343,25 @@
 
     // 3. Render 4 Key Stat Cards
     if (isIncomplete) {
-      setText('ir-stat-lift-val', `${preScore}% ➔ ${actionScore}% ➔ ${postScore !== null ? postScore + '%' : 'Stopped'}`);
+      setText('ir-stat-lift-val', `${preLabel} ➔ ${actionLabel} ➔ ${postLabel}`);
       setText('ir-stat-lift-badge', 'Stopped Early');
       const progBar = byId('ir-stat-lift-bar');
       if (progBar) progBar.style.width = postScore !== null ? `${Math.min(postScore, 100)}%` : '0%';
     } else if (isInProgress) {
-      setText('ir-stat-lift-val', `${preScore}% ➔ ${actionScore}% ➔ Pending`);
+      setText('ir-stat-lift-val', `${preLabel} ➔ ${actionLabel} ➔ Pending`);
       setText('ir-stat-lift-badge', 'In Progress');
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = `${Math.min(actionScore, 100)}%`;
+      if (progBar) progBar.style.width = actionScore !== null ? `${Math.min(actionScore, 100)}%` : '0%';
     } else {
-      setText('ir-stat-lift-val', `${preScore}% ➔ ${actionScore}% ➔ ${postScore}%`);
-      setText('ir-stat-lift-badge', postScore >= 95 ? `Passed 95% (+${postScore - preScore}% lift)` : `Needs Attention (${postScore}%)`);
+      setText('ir-stat-lift-val', `${preLabel} ➔ ${actionLabel} ➔ ${postLabel}`);
+      const liftText = (postScore !== null && preScore !== null) ? ` (+${postScore - preScore}% lift)` : '';
+      setText('ir-stat-lift-badge', (postScore !== null && postScore >= 95) ? `Passed 95%${liftText}` : (postScore !== null ? `Needs Attention (${postScore}%)` : 'Evaluating'));
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = `${Math.min(postScore, 100)}%`;
+      if (progBar) progBar.style.width = postScore !== null ? `${Math.min(postScore, 100)}%` : (actionScore !== null ? `${Math.min(actionScore, 100)}%` : '0%');
     }
     const liftSubEl = byId('ir-stat-lift-bar')?.parentElement?.nextElementSibling;
     if (liftSubEl) {
-      liftSubEl.textContent = `Pre-Compliance Baseline: ${preScore}% • After Action: ${actionScore}% • Post-Photo Compliance: ${postScore !== null ? postScore + '%' : 'Pending'}`;
+      liftSubEl.textContent = `Pre-Compliance Baseline: ${preLabel} • After Action: ${actionLabel} • Post-Photo Compliance: ${postLabel}`;
     }
 
     const totalWorkItems = meta.total_action_items || (movedCount + restockedCount + removedCount + exceptionCount);
