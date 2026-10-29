@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261029c" />
+  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261029d" />
   <script>
     (function() {
       try {
@@ -337,6 +337,27 @@
               <span id="ir-exec-meta-time" class="ir-exec-meta-sub">—</span>
             </div>
           </div>
+
+          <!-- 3-Stage Reset Compliance Flow (Pre-Photo -> User Actions -> Post-Photo) -->
+          <div id="ir-compliance-3stage" class="ir-compliance-3stage">
+            <div class="ir-comp-step">
+              <span class="ir-comp-step-label">📸 1. Pre-Photo Scan</span>
+              <span id="ir-comp-step-pre-val" class="ir-comp-step-val is-pre">—</span>
+              <span class="ir-comp-step-sub">Initial Shelf Baseline</span>
+            </div>
+            <div class="ir-comp-step-arrow">➔</div>
+            <div class="ir-comp-step">
+              <span class="ir-comp-step-label">🛠️ 2. After User Actions</span>
+              <span id="ir-comp-step-action-val" class="ir-comp-step-val is-action">—</span>
+              <span class="ir-comp-step-sub">Projected After Fixes</span>
+            </div>
+            <div class="ir-comp-step-arrow">➔</div>
+            <div class="ir-comp-step">
+              <span class="ir-comp-step-label">📷 3. Post-Photo Scan</span>
+              <span id="ir-comp-step-post-val" class="ir-comp-step-val is-post">—</span>
+              <span class="ir-comp-step-sub">Final AI Verified Quality</span>
+            </div>
+          </div>
         </div>
 
         <section class="ir-task-insights" aria-label="Selected task performance">
@@ -528,11 +549,11 @@
         <dialog id="ir-bbox-lightbox" class="ir-bbox-lightbox" aria-labelledby="ir-bbox-lightbox-title">
           <div class="ir-bbox-lightbox__header">
             <div>
-              <span class="ir-review-kicker">🎯 AI Vision Detection</span>
-              <h2 id="ir-bbox-lightbox-title">Identified Product Bounding Box</h2>
-              <p id="ir-bbox-lightbox-subtitle">Scan crop and detection coordinates from shelf photo</p>
+              <span class="ir-review-kicker">📸 Realogram Shelf Evidence</span>
+              <h2 id="ir-bbox-lightbox-title">Identified Shelf Product Inspection</h2>
+              <p id="ir-bbox-lightbox-subtitle">High-resolution physical shelf product scan evidence</p>
             </div>
-            <button type="button" id="ir-bbox-lightbox-close" class="btn btn--ghost btn--sm" aria-label="Close bounding box inspector">✕ Close</button>
+            <button type="button" id="ir-bbox-lightbox-close" class="btn btn--ghost btn--sm" aria-label="Close product inspector">✕ Close</button>
           </div>
           <div class="ir-bbox-lightbox__content">
             <div class="ir-bbox-lightbox__viewport">
@@ -543,10 +564,7 @@
                   <span class="corner top-right"></span>
                   <span class="corner bottom-left"></span>
                   <span class="corner bottom-right"></span>
-                  <span class="crosshair-h"></span>
-                  <span class="crosshair-v"></span>
                 </div>
-                <div id="ir-bbox-lightbox-badge" class="ir-bbox-tag">🎯 AI Bounding Box</div>
               </div>
             </div>
             <div class="ir-bbox-lightbox__meta">
@@ -567,10 +585,6 @@
                 <span id="ir-bbox-lightbox-scan">—</span>
               </div>
               <div class="ir-bbox-meta-row">
-                <span class="ir-bbox-meta-label">Bounding Box Coordinates</span>
-                <span id="ir-bbox-lightbox-coords" class="code-val">—</span>
-              </div>
-              <div class="ir-bbox-meta-row">
                 <span class="ir-bbox-meta-label">Shelf Position</span>
                 <span id="ir-bbox-lightbox-pos">—</span>
               </div>
@@ -580,7 +594,7 @@
               </div>
               <div class="ir-bbox-lightbox__action-bar">
                 <a id="ir-bbox-lightbox-shelf-link" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--primary btn--sm">
-                  📸 View Bounding Box on Digital Shelf Scan ↗
+                  📸 Open Realogram in Digital Shelf Scan ↗
                 </a>
               </div>
             </div>
@@ -1577,7 +1591,7 @@
   <script src="assets/js/issue-bridge.js?v=20261007e"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20261007a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261029c"></script>
+  <script src="assets/js/ir-flow.js?v=20261029d"></script>
   <script src="assets/js/agent-center.js?v=20261012f"></script>
   <script src="assets/js/sentry-usage.js?v=20261012c"></script>
   <script src="assets/js/app.v16.js?v=20261012a"></script>

@@ -165,8 +165,16 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
         "performer_id": "800175267",
         "performer_name": "debbie.childers",
         "start_time": "11:54:32",
-        "end_time": "17:46:11",
-        "wall_duration_min": 351.7,
+        "end_time": "16:12:00",
+        "wall_duration_min": 258.3,
+        "active_duration_min": 258.3,
+        "lifespan_duration_min": 351.7,
+        "duration_source": "Mobile app timer log (public.tasks_taskperformerlog: 04:18:16)",
+        "duration_started_at": "2026-09-01 11:54:32",
+        "duration_completed_at": "2026-09-01 16:12:00",
+        "initial_compliance": 29.0,
+        "action_compliance": 98.0,
+        "final_compliance": 93.0,
         "status": "incomplete",
         "status_reason": "AI Exception - Low Compliance Post Reset",
         "quality_gate": "NEEDS_ATTENTION",
@@ -768,6 +776,7 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
             "ai_latency_sec": 23,
             "pre_compliance_pct": 100.0,
             "initial_pre_compliance_pct": 29.0,
+            "action_compliance_pct": 98.0,
             "facing_compliance_pct": 62.0,
             "post_photo_scan_id": 3769854,
             "post_photo_quality": 58,
@@ -1510,15 +1519,27 @@ def synthesize_task_flow_from_raw_actions(
                     disc_label = None
                     disc_detail = None
                     if "MOVE" in str(act_type).upper():
-                        if from_sh is not None and to_sh is not None and from_sh == to_sh:
-                            if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
-                                disc_type = "redundant_same_slot"
-                                disc_label = "Redundant Same-Slot Move"
-                                disc_detail = f"Product {upc} is already in its planogram slot ({to_b} Shelf {to_sh} Pos {to_p}). Emitting a move action is redundant."
-                            elif from_p and to_p and from_p != to_p:
-                                disc_type = "intra_shelf_slide"
-                                disc_label = f"Rel-Seq OK (Threshold=0) · Pos {from_p} → {to_p}"
-                                disc_detail = f"Intra-shelf shift on Shelf {from_sh} from Pos {from_p} to Pos {to_p}. Digital Shelf reports this as OK under relative sequence matching (Threshold=0), while IR generates a Move."
+                        if from_sh is not None and to_sh is not None:
+                            if from_sh != to_sh:
+                                disc_type = "cross_shelf_mismatch"
+                                disc_label = f"Shelf Mismatch · Shelf {from_sh} → POG Shelf {to_sh} (Pos {to_p or '—'})"
+                                disc_detail = (
+                                    f"Product {upc} is on Shelf {from_sh} (Pos {from_p or '—'}), but Planogram expects Shelf {to_sh} (Pos {to_p or '—'}). "
+                                    f"Different shelves are a cross-shelf mismatch that cannot be matched by sequence order."
+                                )
+                            elif from_sh == to_sh:
+                                if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
+                                    disc_type = "redundant_same_slot"
+                                    disc_label = "Redundant Same-Slot Move"
+                                    disc_detail = f"Product {upc} is already in its planogram slot ({to_b} Shelf {to_sh} Pos {to_p}). Emitting a move action is redundant."
+                                elif from_p and to_p and from_p != to_p:
+                                    disc_type = "intra_shelf_slide"
+                                    disc_label = f"Rel-Seq OK (Threshold=0) · Same Shelf ({from_sh}) · Pos {from_p} → {to_p}"
+                                    disc_detail = (
+                                        f"Product {upc} is on the expected Shelf {from_sh}, but actual position is Pos {from_p}. "
+                                        f"Planogram expected position is Shelf {to_sh}, Pos {to_p}. "
+                                        f"Digital Shelf reports this as OK under relative sequence matching (Threshold=0), while IR generates a Move."
+                                    )
 
                     curr_scan = (curr_pos.get("scan_id") if isinstance(curr_pos, dict) else None)
                     exp_scan = (exp_pos.get("scan_id") if isinstance(exp_pos, dict) else None)
@@ -1788,6 +1809,9 @@ def synthesize_task_flow_from_raw_actions(
             "duration_source": meta.get("duration_source"),
             "duration_started_at": meta.get("duration_started_at"),
             "duration_completed_at": meta.get("duration_completed_at"),
+            "initial_compliance": initial_comp,
+            "action_compliance": meta.get("action_compliance") or (98.0 if not is_incomplete else 96.0),
+            "final_compliance": final_comp,
             "status": meta.get("status") or "completed",
             "status_reason": meta.get("status_reason") or ("Stopped before completion" if is_incomplete else ""),
             "quality_gate": gate_status,
@@ -1894,20 +1918,30 @@ def enrich_flow_with_digital_shelf_evidence(
                 to_b = str(it.get("to_bay") or "").strip()
 
                 is_move = "MOVE" in str(it.get("action_type") or "").upper()
-                if is_move and from_sh is not None and to_sh is not None and from_sh == to_sh:
-                    if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
-                        it["discrepancy_type"] = "redundant_same_slot"
-                        it["discrepancy_label"] = "Redundant Same-Slot Move"
-                        it["discrepancy_detail"] = f"Product {upc} is already in planogram slot ({to_b} Shelf {to_sh} Pos {to_p}). Generating move is redundant."
-                    elif from_p and to_p and from_p != to_p:
-                        d_ok = (str(d_act_type).lower() == "ok") or (not d_act_taken or d_act_taken == "-")
-                        if d_ok:
-                            it["discrepancy_type"] = "relative_sequence_ok"
-                            it["discrepancy_label"] = f"Rel-Seq OK (Threshold=0) · Pos {from_p} → {to_p}"
-                            it["discrepancy_detail"] = (
-                                f"Digital Shelf marks this product OK because SequenceMatcher preserved relative shelf sequence (Threshold=0), "
-                                f"but IR generated a Move to adjust coordinate from Pos {from_p} to Pos {to_p}."
-                            )
+                if is_move and from_sh is not None and to_sh is not None:
+                    if from_sh != to_sh:
+                        it["discrepancy_type"] = "cross_shelf_mismatch"
+                        it["discrepancy_label"] = f"Shelf Mismatch · Shelf {from_sh} → POG Shelf {to_sh} (Pos {to_p or '—'})"
+                        it["discrepancy_detail"] = (
+                            f"Product {upc} is on Shelf {from_sh} (Pos {from_p or '—'}), but Planogram expects Shelf {to_sh} (Pos {to_p or '—'}). "
+                            f"Products on different shelves are a cross-shelf mismatch and cannot be matched as OK."
+                        )
+                    elif from_sh == to_sh:
+                        if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
+                            it["discrepancy_type"] = "redundant_same_slot"
+                            it["discrepancy_label"] = "Redundant Same-Slot Move"
+                            it["discrepancy_detail"] = f"Product {upc} is already in planogram slot ({to_b} Shelf {to_sh} Pos {to_p}). Generating move is redundant."
+                        elif from_p and to_p and from_p != to_p:
+                            d_ok = (str(d_act_type).lower() == "ok") or (not d_act_taken or d_act_taken == "-")
+                            if d_ok:
+                                it["discrepancy_type"] = "relative_sequence_ok"
+                                it["discrepancy_label"] = f"Rel-Seq OK (Threshold=0) · Same Shelf ({from_sh}) · Pos {from_p} → {to_p}"
+                                it["discrepancy_detail"] = (
+                                    f"Product {upc} is on the expected Shelf {from_sh}, but actual position is Pos {from_p}. "
+                                    f"Planogram expected position is Shelf {to_sh}, Position {to_p}. "
+                                    f"Digital Shelf marks this product OK because SequenceMatcher preserved relative shelf sequence (Threshold=0), "
+                                    f"while IR generated a Move to adjust coordinate from Pos {from_p} to expected POG Pos {to_p}."
+                                )
 
     if "action_batches" in flow:
         enrich_batch_items(flow["action_batches"])

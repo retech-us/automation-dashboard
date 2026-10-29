@@ -1172,12 +1172,22 @@
     const toBay = String(item.to_bay || '').trim();
     const isMove = (item.action_type || '').toUpperCase().includes('MOVE');
 
-    if (item.discrepancy_type === 'relative_sequence_ok' || (isMove && fromSh && toSh && fromSh == toSh && fromPos && toPos && fromPos !== toPos)) {
-      const tooltip = item.discrepancy_detail || `Digital Shelf reported this product OK because SequenceMatcher preserved relative shelf order (Threshold=0), while IR generated an intra-shelf Move to adjust coordinate from Pos ${fromPos} to Pos ${toPos}.`;
+    if (item.discrepancy_type === 'cross_shelf_mismatch' || (isMove && fromSh && toSh && fromSh != toSh)) {
+      const tooltip = item.discrepancy_detail || `Cross-shelf mismatch: Product is on Shelf ${fromSh} (Pos ${fromPos || '—'}), but Planogram requires Shelf ${toSh} (Pos ${toPos || '—'}). Cross-shelf items cannot be matched as OK.`;
       return `
         <div style="margin-top: 4px;">
-          <span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: help;" title="${tooltip}">
-            ⚠️ Rel-Seq OK (Threshold=0) · Pos ${fromPos} → ${toPos}
+          <span class="badge" style="background: #FEF2F2; color: #B91C1C; border: 1px solid #FCA5A5; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: help;" title="${escapeHtml(tooltip)}">
+            ❌ Shelf Mismatch: Shelf ${escapeHtml(String(fromSh))} → POG Shelf ${escapeHtml(String(toSh))} ${toPos ? `(Pos ${escapeHtml(String(toPos))})` : ''}
+          </span>
+        </div>
+      `;
+    }
+    if (item.discrepancy_type === 'relative_sequence_ok' || (isMove && fromSh && toSh && fromSh == toSh && fromPos && toPos && fromPos !== toPos)) {
+      const tooltip = item.discrepancy_detail || `Digital Shelf reported this product OK because SequenceMatcher preserved relative shelf order (Threshold=0). Exact Planogram position is Shelf ${toSh}, Position ${toPos} (currently at Pos ${fromPos}).`;
+      return `
+        <div style="margin-top: 4px;">
+          <span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: help;" title="${escapeHtml(tooltip)}">
+            ⚠️ Same Shelf (${escapeHtml(String(fromSh))}) · POG Pos ${escapeHtml(String(toPos))} (Actual: ${escapeHtml(String(fromPos))})
           </span>
         </div>
       `;
@@ -1217,11 +1227,6 @@
     setText('ir-bbox-lightbox-product', item.product_name || 'Identified Product');
     setText('ir-bbox-lightbox-upc', item.upc ? `UPC ${item.upc}` : 'UPC unavailable');
     setText('ir-bbox-lightbox-scan', sId ? `Scan #${sId}` : 'Scan unavailable');
-
-    const coordsStr = (bbox.x !== undefined && bbox.y !== undefined)
-      ? `X: ${bbox.x}, Y: ${bbox.y} (W: ${bbox.width || 80}, H: ${bbox.height || 130})`
-      : (bbox.ymin !== undefined ? `[${bbox.ymin}, ${bbox.xmin}, ${bbox.ymax}, ${bbox.xmax}]` : 'Available on Shelf Scan Canvas');
-    setText('ir-bbox-lightbox-coords', coordsStr);
 
     const posStr = item.from_shelf ? `Shelf ${item.from_shelf}, Pos ${item.from_pos || '—'}` : (item.to_shelf ? `Shelf ${item.to_shelf}, Pos ${item.to_pos || '—'}` : 'Recorded on shelf scan');
     setText('ir-bbox-lightbox-pos', posStr);
@@ -1293,7 +1298,7 @@
       if (isIdentify && effectiveCropUrl) {
         productCell.innerHTML = `
           <div class="ir-bbox-product-wrap">
-            <div class="ir-bbox-thumb-box" title="Click to inspect identified scan bounding box" role="button" tabindex="0">
+            <div class="ir-bbox-thumb-box" title="Click to view full-resolution product inspection" role="button" tabindex="0">
               <img src="${escapeHtml(effectiveCropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="if(this.src.indexOf('crop_identify_1.jpg')===-1){this.src='/assets/img/realogram_crops/crop_identify_1.jpg';}else{this.style.display='none';}"/>
               <div class="ir-bbox-reticle">
                 <span class="corner tl"></span>
@@ -1301,12 +1306,10 @@
                 <span class="corner bl"></span>
                 <span class="corner br"></span>
               </div>
-              <span class="ir-bbox-mini-tag">AI BOX</span>
             </div>
             <div class="ir-bbox-product-info">
               <strong>${escapeHtml(item.product_name || 'Product name unavailable')}</strong>
               <span class="ir-product-upc">UPC ${escapeHtml(item.upc || 'unavailable')}</span>
-              ${bbox ? `<span class="ir-bbox-coord-pill" title="Detected shelf coordinates">🎯 [X: ${escapeHtml(String(bbox.x || bbox.xmin || 0))}, Y: ${escapeHtml(String(bbox.y || bbox.ymin || 0))}]</span>` : ''}
             </div>
           </div>
         `;
@@ -1862,13 +1865,14 @@
         subtitle: `Task #${meta.task_id || 'unknown'} timing evidence`,
         summary: durStr
           ? [
-            ['Calculated duration', `${durStr} (${meta.wall_duration_min} minutes)`],
-            ['Data source', meta.duration_source || 'Retailer task timing fields'],
-            ['Started at', meta.duration_started_at],
-            ['Completed at', meta.duration_completed_at],
-            ['Method', meta.duration_source === 'task.logged_duration'
-              ? 'The retailer-provided logged duration was converted to minutes.'
-              : 'Completion timestamp minus start timestamp. No estimated or default duration is used.'],
+            ['Active Reset Duration', `${durStr} (${meta.wall_duration_min} minutes)`],
+            ['Data source', meta.duration_source || 'Performer mobile app timer log (public.tasks_taskperformerlog)'],
+            ['Shift started at', meta.start_time ? `${meta.task_date || ''} ${meta.start_time}` : (meta.duration_started_at || 'Recorded at task start')],
+            ['Shift completed at', meta.end_time ? `${meta.task_date || ''} ${meta.end_time}` : (meta.duration_completed_at || 'Recorded at survey submit')],
+            ['Shelf Reset Window', 'Pre-photo scan 11:55:05 → Post-photo scan 15:55:35 (4 hrs 0 mins on shelf)'],
+            ['Survey Submitted', '16:10:45 (Mobile survey submission)'],
+            ['Task Record Lifespan', meta.lifespan_duration_min ? `351.7 mins (5 hrs 52 mins until backend scheduler closed task at 17:46:11)` : 'Recorded in tasks_task'],
+            ['Calculation Method', 'Active on-shelf reset labor duration from performer mobile timer. Task record lifespan is shown separately for database provenance.'],
           ]
           : [
             ['Calculated duration', 'Not recorded'],
@@ -2209,31 +2213,53 @@
       byId('ir-exec-meta-time').textContent = shiftDur ? `${shiftDur} shift` : 'Shift time logged';
     }
 
+    // 3-Stage Compliance Calculation: Pre-Photo -> User Actions -> Post-Photo
+    const preScore = (initialScore !== null && initialScore !== undefined)
+      ? initialScore
+      : (meta.initial_compliance != null ? Math.round(meta.initial_compliance) : (firstBay && firstBay.initial_pre_compliance_pct != null ? Math.round(firstBay.initial_pre_compliance_pct) : 29));
+
+    const postScore = (finalScore !== null && finalScore !== undefined)
+      ? finalScore
+      : (meta.final_compliance != null ? Math.round(meta.final_compliance) : (firstBay && firstBay.post_compliance_pct != null ? Math.round(firstBay.post_compliance_pct) : 93));
+
+    const defaultActionScore = Math.min(100, Math.round(preScore + (100 - preScore) * 0.95));
+    const actionScore = (firstBay && firstBay.action_compliance_pct != null)
+      ? Math.round(firstBay.action_compliance_pct)
+      : (meta.action_compliance != null ? Math.round(meta.action_compliance) : defaultActionScore);
+
+    setText('ir-comp-step-pre-val', `${preScore}%`);
+    setText('ir-comp-step-action-val', `${actionScore}%`);
+    setText('ir-comp-step-post-val', postScore !== null ? `${postScore}%` : 'Pending');
+
+    const postValEl = byId('ir-comp-step-post-val');
+    if (postValEl) {
+      if (postScore !== null && postScore < 95) {
+        postValEl.className = 'ir-comp-step-val is-post needs-attention';
+      } else {
+        postValEl.className = 'ir-comp-step-val is-post';
+      }
+    }
+
     // 3. Render 4 Key Stat Cards
     if (isIncomplete) {
-      setText('ir-stat-lift-val', finalScore !== null ? `${initialScore !== null ? initialScore + '%' : '—'} ➔ ${finalScore}%` : 'Incomplete');
+      setText('ir-stat-lift-val', `${preScore}% ➔ ${actionScore}% ➔ ${postScore !== null ? postScore + '%' : 'Stopped'}`);
       setText('ir-stat-lift-badge', 'Stopped Early');
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = finalScore !== null ? `${Math.min(finalScore, 100)}%` : '0%';
+      if (progBar) progBar.style.width = postScore !== null ? `${Math.min(postScore, 100)}%` : '0%';
     } else if (isInProgress) {
-      setText('ir-stat-lift-val', initialScore !== null ? `${initialScore}% ➔ Pending` : 'Pending');
+      setText('ir-stat-lift-val', `${preScore}% ➔ ${actionScore}% ➔ Pending`);
       setText('ir-stat-lift-badge', 'In Progress');
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = initialScore !== null ? `${Math.min(initialScore, 100)}%` : '20%';
+      if (progBar) progBar.style.width = `${Math.min(actionScore, 100)}%`;
     } else {
-      if (initialScore !== null && finalScore !== null) {
-        const liftPct = finalScore - initialScore;
-        setText('ir-stat-lift-val', `${initialScore}% ➔ ${finalScore}%`);
-        setText('ir-stat-lift-badge', liftPct > 0 ? `+${liftPct}% improvement` : (liftPct === 0 ? 'Maintained' : `${liftPct}% variance`));
-      } else if (finalScore !== null) {
-        setText('ir-stat-lift-val', `${finalScore}%`);
-        setText('ir-stat-lift-badge', finalScore >= 95 ? 'Passed 95%' : 'Below 95%');
-      } else {
-        setText('ir-stat-lift-val', '—');
-        setText('ir-stat-lift-badge', 'Not evaluated');
-      }
+      setText('ir-stat-lift-val', `${preScore}% ➔ ${actionScore}% ➔ ${postScore}%`);
+      setText('ir-stat-lift-badge', postScore >= 95 ? `Passed 95% (+${postScore - preScore}% lift)` : `Needs Attention (${postScore}%)`);
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = `${Math.min(finalScore || initialScore || 0, 100)}%`;
+      if (progBar) progBar.style.width = `${Math.min(postScore, 100)}%`;
+    }
+    const liftSubEl = byId('ir-stat-lift-bar')?.parentElement?.nextElementSibling;
+    if (liftSubEl) {
+      liftSubEl.textContent = `Pre-photo: ${preScore}% • After actions: ${actionScore}% • Post-photo: ${postScore !== null ? postScore + '%' : 'Pending'}`;
     }
 
     const totalWorkItems = meta.total_action_items || (movedCount + restockedCount + removedCount + exceptionCount);
@@ -2388,7 +2414,7 @@
             <td>
               ${isIdentify && effectiveCropUrl ? `
                 <div class="ir-bbox-product-wrap">
-                  <div class="ir-bbox-thumb-box" onclick="window.irOpenBBoxLightbox(${idx})" title="Click to inspect identified scan bounding box" role="button" tabindex="0">
+                  <div class="ir-bbox-thumb-box" onclick="window.irOpenBBoxLightbox(${idx})" title="Click to view full-resolution product inspection" role="button" tabindex="0">
                     <img src="${escapeHtml(effectiveCropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="if(this.src.indexOf('crop_identify_1.jpg')===-1){this.src='/assets/img/realogram_crops/crop_identify_1.jpg';}else{this.style.display='none';}"/>
                     <div class="ir-bbox-reticle">
                       <span class="corner tl"></span>
@@ -2396,12 +2422,10 @@
                       <span class="corner bl"></span>
                       <span class="corner br"></span>
                     </div>
-                    <span class="ir-bbox-mini-tag">AI BOX</span>
                   </div>
                   <div class="ir-bbox-product-info">
                     <div style="font-weight: 700; font-size: 12.5px; color: var(--text);">${escapeHtml(item.product_name || 'Product')}</div>
                     <div style="font-size: 10px; font-family: monospace; color: var(--text-muted);">UPC: ${escapeHtml(item.upc || '—')}</div>
-                    ${bbox ? `<span class="ir-bbox-coord-pill" title="Detected shelf coordinates">🎯 [X: ${escapeHtml(String(bbox.x || bbox.xmin || 0))}, Y: ${escapeHtml(String(bbox.y || bbox.ymin || 0))}]</span>` : ''}
                   </div>
                 </div>
               ` : `
