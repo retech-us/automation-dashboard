@@ -2168,25 +2168,94 @@
             : 'No completion records: the associate app did not log any of the requested actions as done.')
         : 'Performed-action evidence is unavailable for this task.',
     );
-    renderRows(
-      'ir-unperformed-action-list',
-      unperformedSummary,
-      performedLoaded && unperformedCount === 0 && !taskStillOpen
-        ? 'Zero unperformed actions. All requested actions were completed and recorded!'
-        : (taskStillOpen ? 'Task is in progress. Actions not completed yet are not counted as missed.' : 'No unperformed actions recorded for this task.'),
-    );
-    const unperformedListEl = byId('ir-unperformed-action-list');
-    if (unperformedListEl && unperformedCount > 0 && !unperformedSummary.length) {
-      const unperfBtn = document.createElement('button');
-      unperfBtn.type = 'button';
-      unperfBtn.className = 'btn btn--outline btn--sm ir-evidence-button';
-      unperfBtn.textContent = 'View unconfirmed records';
-      unperfBtn.onclick = () => openInsightDialog({
-        title: 'Actions With No Record',
-        subtitle: `${unperformedCount} action(s) needed but Action Taken is '-' · Task #${meta.task_id || 'unknown'}`,
-        summary: describePerformedEvidence(evidenceInfo.evidence, evidenceInfo.error),
+    const hasPostPhotoUploaded = Boolean(postPhoto && postPhoto.loaded && !postPhoto.error);
+    const unperfCard = byId('ir-unperformed-action-card');
+    const reviewGrid = byId('ir-action-review-grid');
+    const unperfKicker = byId('ir-unperformed-kicker');
+    const unperfHeading = byId('ir-unperformed-heading');
+
+    if (!hasPostPhotoUploaded) {
+      // User did not upload post photo (task incomplete, stopped early, or post-photo skipped/error):
+      // Hide this review box. Pre-photo unperformed actions are already clearly shown in the reconciliation card above.
+      if (unperfCard) unperfCard.hidden = true;
+      if (reviewGrid) reviewGrid.classList.add('has-hidden-unperformed');
+      setText('ir-unperformed-action-total', '0');
+      const unperformedListEl = byId('ir-unperformed-action-list');
+      if (unperformedListEl) unperformedListEl.replaceChildren();
+    } else {
+      // User uploaded a post photo:
+      // Show this box to display actions not taken in post-photo if post photo was uploaded
+      if (unperfCard) unperfCard.hidden = false;
+      if (reviewGrid) reviewGrid.classList.remove('has-hidden-unperformed');
+      if (unperfKicker) unperfKicker.textContent = 'Post-photo · not performed';
+      if (unperfHeading) unperfHeading.textContent = 'Actions with no record';
+
+      const postItems = postGenerated.flatMap((row) => row.items || []);
+      const postUnperformedItems = postItems.filter((item) => {
+        const actTaken = (item.action_taken || '').trim();
+        const st = String(item.state || '').toUpperCase();
+        return (!actTaken || actTaken === '-') && !st.includes('COMPLET') && !st.includes('DONE') && !st.includes('PERFORM');
       });
-      unperformedListEl.appendChild(unperfBtn);
+
+      const postUnperformedRows = postUnperformedItems.map((item) => {
+        const aType = (item.action_type || 'Post-photo action').replaceAll('_', ' ');
+        const sId = item.scan_id || resolveItemScanId(item) || currentPostScanId();
+        const sUrl = item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, meta);
+        return {
+          type: aType,
+          count: 1,
+          detail: item.product_name || item.product_title || item.upc || `Section ${item.section || item.from_bay || 'unknown'}`,
+          state: 'NO_RECORD',
+          scan_id: sId,
+          digital_shelf_url: sUrl,
+          items: [{
+            scan_id: sId,
+            digital_shelf_url: sUrl,
+            product_name: item.product_name || item.product_title || item.title || 'Product',
+            upc: item.upc,
+            action_type: item.action_type || aType,
+            from_bay: item.section || item.from_bay || '—',
+            from_pos: item.rog_position || item.from_pos || '—',
+            to_bay: item.section || item.to_bay || '—',
+            to_pos: item.pog_position || item.to_pos || '—',
+            state: 'No Record in Post-Photo',
+            reason: item.reason || `Action type '${item.action_type}' required in post-photo, but no associate action was taken`,
+          }],
+        };
+      });
+
+      const postUnperformedSummary = groupRows(postUnperformedRows);
+      const postUnperformedCount = postUnperformedItems.length;
+
+      setText('ir-unperformed-action-total', postUnperformedCount);
+
+      renderRows(
+        'ir-unperformed-action-list',
+        postUnperformedSummary,
+        postUnperformedCount === 0
+          ? 'Zero unperformed actions. All post-photo actions were addressed and verified!'
+          : 'No post-photo unperformed actions recorded.',
+      );
+
+      const unperformedListEl = byId('ir-unperformed-action-list');
+      if (unperformedListEl && postUnperformedCount > 0 && !postUnperformedSummary.length) {
+        const unperfBtn = document.createElement('button');
+        unperfBtn.type = 'button';
+        unperfBtn.className = 'btn btn--outline btn--sm ir-evidence-button';
+        unperfBtn.textContent = 'View post-photo unconfirmed records';
+        unperfBtn.onclick = () => openInsightDialog({
+          title: 'Post-Photo Actions With No Record',
+          subtitle: `${postUnperformedCount} action(s) needed in post-photo with no completion record · Task #${meta.task_id || 'unknown'}`,
+          summary: [
+            ['Evidence Source', 'Post-photo verification scan'],
+            ['Scan ID', currentPostScanId() ? `#${currentPostScanId()}` : 'Available per item'],
+            ['Total Without Record', String(postUnperformedCount)],
+            ['Status', 'No associate action was recorded for these post-photo items'],
+          ],
+          items: postUnperformedItems,
+        });
+        unperformedListEl.appendChild(unperfBtn);
+      }
     }
     const performedList = byId('ir-performed-action-list');
     if (performedList && !performedSummary.length) {
@@ -2590,6 +2659,14 @@
     setText('ir-post-action-total', '0');
     setText('ir-performed-action-total', '0');
     setText('ir-unperformed-action-total', '0');
+    const unperfCard = byId('ir-unperformed-action-card');
+    if (unperfCard) unperfCard.hidden = false;
+    const reviewGrid = byId('ir-action-review-grid');
+    if (reviewGrid) reviewGrid.classList.remove('has-hidden-unperformed');
+    const unperfKicker = byId('ir-unperformed-kicker');
+    if (unperfKicker) unperfKicker.textContent = 'No record · not performed';
+    const unperfHeading = byId('ir-unperformed-heading');
+    if (unperfHeading) unperfHeading.textContent = 'Actions with no record';
     setText('ir-card-unperformed-count', '—');
     setText('ir-recon-performed-count', '0');
     setText('ir-recon-unperformed-count', '0');

@@ -8308,6 +8308,14 @@ code {
   background: var(--surface);
 }
 
+.ir-action-review[hidden] {
+  display: none !important;
+}
+
+.ir-action-review-grid.has-hidden-unperformed .ir-action-review:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
 .ir-action-review--challenges {
   grid-column: 1 / -1;
 }
