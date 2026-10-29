@@ -3172,48 +3172,89 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             else:
                 final_comp = None
 
+            # Store timezone conversion
+            store_tz_name = (st.get("timezone") if isinstance(st, dict) else None) or "America/New_York"
+            try:
+                import zoneinfo
+                store_tz = zoneinfo.ZoneInfo(store_tz_name)
+            except Exception:
+                store_tz = datetime.timezone.utc
+
             # Duration: use recorded evidence only. Never substitute a demo duration.
             duration_val = None
+            duration_sec = None
             duration_source = None
             duration_started_at = None
             duration_completed_at = None
+            start_time_str = None
+            end_time_str = None
+
+            completed_dt = None
+            started_dt = None
+
+            # 1. Determine completed datetime
+            raw_comp = (
+                task_obj.get("completed_at")
+                or task_obj.get("finished_at")
+                or task_obj.get("end_at")
+            )
+            raw_upd = task_obj.get("updated_at")
+            if raw_comp:
+                try:
+                    completed_dt = datetime.datetime.fromisoformat(str(raw_comp).replace("Z", "+00:00")).astimezone(store_tz)
+                except Exception:
+                    pass
+            elif raw_upd and status_slug in ("completed", "done", "finished"):
+                try:
+                    completed_dt = datetime.datetime.fromisoformat(str(raw_upd).replace("Z", "+00:00")).astimezone(store_tz)
+                except Exception:
+                    pass
+
+            # 2. Determine started datetime
+            raw_started = (
+                task_obj.get("started_at")
+                or task_obj.get("start_at")
+            )
+            if raw_started:
+                try:
+                    started_dt = datetime.datetime.fromisoformat(str(raw_started).replace("Z", "+00:00")).astimezone(store_tz)
+                except Exception:
+                    pass
+
+            # 3. Parse logged_duration if available
             logged_dur = task_obj.get("logged_duration")
             if logged_dur and isinstance(logged_dur, str):
                 import re
                 m_h = re.search(r"(\d+)H", logged_dur)
                 m_m = re.search(r"(\d+)M", logged_dur)
-                total_min = 0
+                m_s = re.search(r"(\d+)S", logged_dur)
+                total_sec = 0
                 if m_h:
-                    total_min += int(m_h.group(1)) * 60
+                    total_sec += int(m_h.group(1)) * 3600
                 if m_m:
-                    total_min += int(m_m.group(1))
-                if 0 < total_min < 300:
-                    duration_val = float(total_min)
+                    total_sec += int(m_m.group(1)) * 60
+                if m_s:
+                    total_sec += int(m_s.group(1))
+                if 0 < total_sec < 300 * 60:
+                    duration_sec = total_sec
+                    duration_val = round(total_sec / 60.0, 1)
                     duration_source = "task.logged_duration"
-            if duration_val is None:
-                started = (
-                    task_obj.get("started_at")
-                    or task_obj.get("start_at")
-                    or task_obj.get("start")
-                )
-                completed = (
-                    task_obj.get("completed_at")
-                    or task_obj.get("finished_at")
-                    or task_obj.get("end_at")
-                    or task_obj.get("end")
-                )
-                if started and completed:
-                    try:
-                        started_dt = datetime.datetime.fromisoformat(str(started).replace("Z", "+00:00"))
-                        completed_dt = datetime.datetime.fromisoformat(str(completed).replace("Z", "+00:00"))
-                        elapsed = (completed_dt - started_dt).total_seconds() / 60.0
-                        if 0 < elapsed < 24 * 60:
-                            duration_val = round(elapsed, 1)
-                            duration_source = "task start and completion timestamps"
-                            duration_started_at = str(started)
-                            duration_completed_at = str(completed)
-                    except (TypeError, ValueError):
-                        pass
+                    if completed_dt and not started_dt:
+                        started_dt = completed_dt - datetime.timedelta(seconds=total_sec)
+
+            if duration_val is None and started_dt and completed_dt:
+                elapsed = (completed_dt - started_dt).total_seconds() / 60.0
+                if 0 < elapsed < 24 * 60:
+                    duration_sec = int((completed_dt - started_dt).total_seconds())
+                    duration_val = round(elapsed, 1)
+                    duration_source = "task start and completion timestamps"
+
+            if started_dt:
+                duration_started_at = started_dt.strftime("%Y-%m-%d %H:%M:%S")
+                start_time_str = started_dt.strftime("%H:%M:%S")
+            if completed_dt:
+                duration_completed_at = completed_dt.strftime("%Y-%m-%d %H:%M:%S")
+                end_time_str = completed_dt.strftime("%H:%M:%S")
 
             meta_override = {
                 "retailer": "Harris Teeter" if "harr" in instance.lower() else "Kroger",
@@ -3229,9 +3270,12 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "final_compliance": final_comp,
                 "initial_compliance": 35.0 if (final_comp is not None and final_comp >= 90) else 25.0,
                 "wall_duration_min": duration_val,
+                "duration_sec": duration_sec,
                 "duration_source": duration_source,
                 "duration_started_at": duration_started_at,
                 "duration_completed_at": duration_completed_at,
+                "start_time": start_time_str,
+                "end_time": end_time_str,
             }
 
             disk_task_path = os.path.join(os.path.dirname(__file__), "data", "ir_tasks", f"{task_id}.json")
