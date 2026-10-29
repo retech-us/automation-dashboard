@@ -1921,7 +1921,7 @@ def synthesize_task_flow_from_raw_actions(
             "duration_started_at": meta.get("duration_started_at") or (base_time.strftime("%Y-%m-%d %H:%M:%S") if base_time else None),
             "duration_completed_at": meta.get("duration_completed_at") or (comp_time.strftime("%Y-%m-%d %H:%M:%S") if comp_time else None),
             "initial_compliance": initial_comp,
-            "action_compliance": meta.get("action_compliance") or (98.0 if not is_incomplete else 96.0),
+            "action_compliance": meta.get("action_compliance") if meta.get("action_compliance") is not None else (initial_comp if is_incomplete else None),
             "final_compliance": final_comp,
             "status": meta.get("status") or "completed",
             "status_reason": meta.get("status_reason") or ("Stopped before completion" if is_incomplete else ""),
