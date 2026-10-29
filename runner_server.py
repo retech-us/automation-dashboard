@@ -3386,14 +3386,55 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                                 digital_by_pos_map[(d_scan, int(sh_s.strip()), str(pos_s).strip())] = d_it
                             except Exception:
                                 pass
+                # Crop purple-box shelf images for identify actions directly from the linked scan
+                scan_merged_cache = {}
                 for act in raw_actions:
                     act_type_str = str(act.get("action") or "").upper()
-                    if "IDENTIFY" in act_type_str or not act.get("displayed_upc") or str(act.get("displayed_upc") or "").strip() in ("", "000000000000"):
-                        cur_p = act.get("current_position") or {}
-                        cur_sh = cur_p.get("shelf")
-                        cur_pos = str(cur_p.get("position") or "").strip()
-                        cur_sec = str((cur_p.get("section_info") or {}).get("name") or "").replace("bay", "").strip()
-                        cur_scan = cur_p.get("scan_id")
+                    is_act_identify = "IDENTIFY" in act_type_str
+                    cur_p = act.get("current_position") or {}
+                    cur_sh = cur_p.get("shelf")
+                    cur_pos = str(cur_p.get("position") or "").strip()
+                    cur_sec = str((cur_p.get("section_info") or {}).get("name") or "").replace("bay", "").strip()
+                    cur_scan = cur_p.get("scan_id")
+
+                    if is_act_identify and cur_scan:
+                        c_coords = cur_p.get("coordinates")
+                        crop_fname = f"crop_identify_scan_{cur_scan}_s{cur_sh}_p{cur_pos}.jpg"
+                        crop_fpath = os.path.join(os.path.dirname(__file__), "assets", "img", "realogram_crops", crop_fname)
+                        if os.path.exists(crop_fpath) and os.path.getsize(crop_fpath) > 100:
+                            act["crop_image_url"] = f"/assets/img/realogram_crops/{crop_fname}"
+                            act["image"] = f"/assets/img/realogram_crops/{crop_fname}"
+                        elif c_coords and isinstance(c_coords, (list, tuple)) and len(c_coords) == 2:
+                            try:
+                                from PIL import Image
+                                import io
+                                if cur_scan not in scan_merged_cache:
+                                    s_req = urllib.request.Request(f"{base_url}/api/v4/processing/actions/{cur_scan}/", headers=headers)
+                                    with urllib.request.urlopen(s_req, context=ssl_ctx, timeout=8) as s_resp:
+                                        s_data = json.loads(s_resp.read().decode("utf-8"))
+                                        scan_merged_cache[cur_scan] = s_data.get("merged_image")
+                                m_url = scan_merged_cache.get(cur_scan)
+                                if m_url:
+                                    m_req = urllib.request.Request(m_url, headers={"User-Agent": "Mozilla/5.0"})
+                                    with urllib.request.urlopen(m_req, context=ssl_ctx, timeout=12) as m_resp:
+                                        m_img = Image.open(io.BytesIO(m_resp.read()))
+                                        c1_0, c1_1 = float(c_coords[0][0]), float(c_coords[0][1])
+                                        c2_0, c2_1 = float(c_coords[1][0]), float(c_coords[1][1])
+                                        x1, x2 = min(c1_0, c2_0), max(c1_0, c2_0)
+                                        y1, y2 = min(c1_1, c2_1), max(c1_1, c2_1)
+                                        if y2 > m_img.height or x2 > m_img.width:
+                                            if max(c1_1, c2_1) <= m_img.width and max(c1_0, c2_0) <= m_img.height:
+                                                x1, x2 = min(c1_1, c2_1), max(c1_1, c2_1)
+                                                y1, y2 = min(c1_0, c2_0), max(c1_0, c2_0)
+                                        c_crop = m_img.crop((int(x1), int(y1), int(x2), int(y2)))
+                                        os.makedirs(os.path.dirname(crop_fpath), exist_ok=True)
+                                        c_crop.save(crop_fpath, quality=92)
+                                        act["crop_image_url"] = f"/assets/img/realogram_crops/{crop_fname}"
+                                        act["image"] = f"/assets/img/realogram_crops/{crop_fname}"
+                            except Exception:
+                                pass
+
+                    if is_act_identify or not act.get("displayed_upc") or str(act.get("displayed_upc") or "").strip() in ("", "000000000000"):
                         matched_d = (
                             digital_by_pos_map.get((cur_scan, cur_sec, cur_sh, cur_pos))
                             or digital_by_pos_map.get((cur_scan, cur_sh, cur_pos))
@@ -3406,7 +3447,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                                 act["upc"] = matched_d.upc
                             d_prod = (matched_d.raw or {}).get("product") or {}
                             d_img = (d_prod.get("image") if isinstance(d_prod, dict) else None) or (matched_d.raw or {}).get("crop_image_url")
-                            if d_img:
+                            if d_img and not act.get("crop_image_url"):
                                 act["image"] = d_img
                                 act["crop_image_url"] = d_img
                             pog_p = str(getattr(matched_d, "pog_position", "") or "").strip()

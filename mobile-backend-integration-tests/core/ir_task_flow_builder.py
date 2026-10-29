@@ -1635,13 +1635,33 @@ def synthesize_task_flow_from_raw_actions(
                             "width": raw_coords.get("width") or raw_coords.get("w") or 80.0,
                             "height": raw_coords.get("height") or raw_coords.get("h") or 130.0,
                         }
-                    elif isinstance(raw_coords, (list, tuple)) and len(raw_coords) >= 4:
-                        bbox_data = {
-                            "ymin": raw_coords[0],
-                            "xmin": raw_coords[1],
-                            "ymax": raw_coords[2],
-                            "xmax": raw_coords[3],
-                        }
+                    elif isinstance(raw_coords, (list, tuple)):
+                        if len(raw_coords) == 2 and isinstance(raw_coords[0], (list, tuple)) and isinstance(raw_coords[1], (list, tuple)):
+                            c1_0, c1_1 = float(raw_coords[0][0]), float(raw_coords[0][1])
+                            c2_0, c2_1 = float(raw_coords[1][0]), float(raw_coords[1][1])
+                            x1, x2 = min(c1_0, c2_0), max(c1_0, c2_0)
+                            y1, y2 = min(c1_1, c2_1), max(c1_1, c2_1)
+                            bbox_data = {
+                                "ymin": y1,
+                                "xmin": x1,
+                                "ymax": y2,
+                                "xmax": x2,
+                                "x": x1,
+                                "y": y1,
+                                "width": x2 - x1,
+                                "height": y2 - y1,
+                            }
+                        elif len(raw_coords) >= 4:
+                            bbox_data = {
+                                "ymin": raw_coords[0],
+                                "xmin": raw_coords[1],
+                                "ymax": raw_coords[2],
+                                "xmax": raw_coords[3],
+                                "x": raw_coords[1],
+                                "y": raw_coords[0],
+                                "width": raw_coords[3] - raw_coords[1],
+                                "height": raw_coords[2] - raw_coords[0],
+                            }
 
                     is_identify = "IDENTIFY" in str(act_type or "").upper()
                     if is_identify:
@@ -1662,7 +1682,11 @@ def synthesize_task_flow_from_raw_actions(
                     )
                     crop_img = raw_crop
                     if is_identify:
-                        if not crop_img:
+                        ws_dir = Path(__file__).resolve().parent.parent.parent
+                        scan_crop_rel = f"/assets/img/realogram_crops/crop_identify_scan_{item_scan_id}_s{from_sh}_p{from_p}.jpg"
+                        if (ws_dir / scan_crop_rel.lstrip("/")).exists():
+                            crop_img = scan_crop_rel
+                        elif not crop_img or "master_data/cropped_images" in str(crop_img) or "others/01a" in str(crop_img):
                             b_str = str(curr_section or bay or "").lower()
                             if ("1" in b_str) and from_sh == 8 and str(from_p).strip() == "11":
                                 crop_img = "/assets/img/realogram_crops/crop_bay1_s8_p11.jpg"
@@ -2065,12 +2089,22 @@ def enrich_flow_with_digital_shelf_evidence(
                 if not img_url and isinstance(raw_obj, dict):
                     img_url = raw_obj.get("crop_image_url") or raw_obj.get("crop_image") or raw_obj.get("cropped_image_url")
 
-                if img_url:
+                if img_url and not is_identify:
                     it["image"] = img_url
                     it["crop_image_url"] = img_url
                     it["cropped_image_url"] = img_url
 
                 if is_identify:
+                    ws_dir = Path(__file__).resolve().parent.parent.parent
+                    it_scan_val = it.get("scan_id")
+                    it_sh_val = it.get("from_shelf")
+                    it_p_val = it.get("from_pos")
+                    shelf_crop = f"/assets/img/realogram_crops/crop_identify_scan_{it_scan_val}_s{it_sh_val}_p{it_p_val}.jpg"
+                    if (ws_dir / shelf_crop.lstrip("/")).exists():
+                        it["image"] = shelf_crop
+                        it["crop_image_url"] = shelf_crop
+                        it["cropped_image_url"] = shelf_crop
+
                     if it.get("to_shelf") is None and it.get("from_shelf") is not None:
                         it["to_shelf"] = it.get("from_shelf")
                     if not it.get("to_pos") and it.get("from_pos"):

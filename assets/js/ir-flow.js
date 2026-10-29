@@ -1254,7 +1254,18 @@
 
   function resolveIdentifyCrop(item) {
     if (!item) return '/assets/img/realogram_crops/crop_identify_1.jpg';
+    const sId = item.scan_id || resolveItemScanId(item);
+    const sh = item.from_shelf;
+    const pos = item.from_pos;
+
+    // Highest priority: Real purple-box crop from the linked shelf scan
     const cUrl = item.crop_image_url || item.crop_image || item.cropped_image_url;
+    if (cUrl && typeof cUrl === 'string' && (cUrl.includes('crop_identify_scan_') || cUrl.includes('real_crop_') || cUrl.includes('crop_bay'))) {
+      return cUrl;
+    }
+    if (sId && sh != null && pos != null) {
+      return `/assets/img/realogram_crops/crop_identify_scan_${sId}_s${sh}_p${pos}.jpg`;
+    }
     if (cUrl && typeof cUrl === 'string' && (cUrl.startsWith('http') || cUrl.startsWith('/'))) {
       return cUrl;
     }
@@ -1263,11 +1274,9 @@
       return img;
     }
     const b = String(item.from_bay || '').toLowerCase();
-    const sh = Number(item.from_shelf);
-    const pos = String(item.from_pos || '').trim();
-    if (b.includes('1') && sh === 8 && pos === '11') return '/assets/img/realogram_crops/crop_bay1_s8_p11.jpg';
-    if (b.includes('1') && sh === 8 && pos === '12') return '/assets/img/realogram_crops/crop_bay1_s8_p12.jpg';
-    if (b.includes('2') && sh === 8 && pos === '16') return '/assets/img/realogram_crops/crop_bay2_s8_p16.jpg';
+    if (b.includes('1') && sh === 8 && String(pos).trim() === '11') return '/assets/img/realogram_crops/crop_bay1_s8_p11.jpg';
+    if (b.includes('1') && sh === 8 && String(pos).trim() === '12') return '/assets/img/realogram_crops/crop_bay1_s8_p12.jpg';
+    if (b.includes('2') && sh === 8 && String(pos).trim() === '16') return '/assets/img/realogram_crops/crop_bay2_s8_p16.jpg';
     const seed = Number(item.ledger_id || item.product_report_id || 1);
     const num = (Math.abs(seed) % 5) + 1;
     return `/assets/img/realogram_crops/crop_identify_${num}.jpg`;
