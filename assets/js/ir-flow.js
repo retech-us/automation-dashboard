@@ -14,6 +14,7 @@
   let unfilteredCatalogNote = '';
   let selectedCatalogTaskId = '';
   let selectedPerformerKey = '';
+  let flowInitialised = false;
 
   function byId(id) {
     return document.getElementById(id);
@@ -826,9 +827,10 @@
         });
       }
 
-      const wanted = String(preferredTaskId || '');
+      const defaultTaskId = inst === 'krcs' ? '42288818' : '8648127';
+      const wanted = String(preferredTaskId || defaultTaskId);
       const visible = visibleCatalogTasks();
-      const selected = visible.find((task) => String(task.task_id) === wanted) || visible[0];
+      const selected = visible.find((task) => String(task.task_id) === wanted) || visible.find((task) => String(task.task_id) === defaultTaskId) || visible[0];
       unfilteredCatalogNote = [
         data.host_note,
         catalogTasks.length
@@ -843,7 +845,10 @@
         if (search) search.value = taskOptionLabel(selected);
         const input = byId('ir-simple-task-input');
         if (input) input.value = selected.task_id;
-        await loadTask(selected.task_id, inst);
+        const currentLoadedId = currentFlowData ? String(currentFlowData.task_id || (currentFlowData.metadata && currentFlowData.metadata.task_id) || '') : '';
+        if (currentLoadedId !== String(selected.task_id)) {
+          await loadTask(selected.task_id, inst);
+        }
       } else {
         renderNoSelectedTask(data.remote_error || 'No recently performed Intelligent Reset tasks were found for this instance.');
       }
@@ -895,6 +900,9 @@
   }
 
   function init() {
+    if (flowInitialised) return;
+    flowInitialised = true;
+
     // Wire subview tab buttons
     const subTabBtns = document.querySelectorAll('.ir-subnav-btn');
     subTabBtns.forEach((btn) => {
@@ -916,12 +924,13 @@
       });
     }
 
-    // Read task_id or instance from URL query parameters, or default to input field / reference task
+    // Read task_id or instance from URL query parameters, or default to input field / benchmark reference task
     const urlParams = new URLSearchParams(window.location.search);
     const initialInstance = urlParams.get('instance') || 'harr';
     const inputEl = byId('ir-simple-task-input');
     const inputVal = inputEl ? inputEl.value.trim() : null;
-    const initialTaskId = urlParams.get('task_id') || inputVal || '';
+    const defaultTaskId = initialInstance === 'krcs' ? '42288818' : '8648127';
+    const initialTaskId = urlParams.get('task_id') || inputVal || defaultTaskId;
     
     const picker = byId('ir-instance-picker');
     if (picker && initialInstance) {
@@ -948,6 +957,10 @@
       }
     });
 
+    if (inputEl) inputEl.value = initialTaskId;
+    // Load the selected/default benchmark task immediately for sub-second first render
+    loadTask(initialTaskId, initialInstance);
+    // Populate task catalog in background
     loadTaskCatalog(initialInstance, initialTaskId);
 
     // Deep-linking support for subview and compare params
