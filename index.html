@@ -518,88 +518,7 @@
           </div>
         </section>
 
-        <dialog id="ir-insight-dialog" class="ir-insight-dialog" aria-labelledby="ir-insight-dialog-title">
-          <div class="ir-insight-dialog__header">
-            <div>
-              <span class="ir-review-kicker">Task evidence</span>
-              <h2 id="ir-insight-dialog-title">Action details</h2>
-              <p id="ir-insight-dialog-subtitle"></p>
-            </div>
-            <button type="button" id="ir-insight-dialog-close" class="btn btn--ghost btn--sm" aria-label="Close action details" onclick="document.getElementById('ir-insight-dialog').close()">✕ Close</button>
-          </div>
-          <div id="ir-insight-dialog-summary" class="ir-insight-dialog__summary"></div>
-          <div id="ir-insight-dialog-table-wrap" class="ir-insight-dialog__table-wrap">
-            <table class="ir-insight-detail-table">
-              <thead>
-                <tr>
-                  <th>Product / UPC</th>
-                  <th class="ir-col-scan">Scan / Digital Shelf</th>
-                  <th>Action</th>
-                  <th>From</th>
-                  <th>To</th>
-                  <th>Status / reason</th>
-                </tr>
-              </thead>
-              <tbody id="ir-insight-dialog-body"></tbody>
-            </table>
-          </div>
-        </dialog>
 
-        <!-- Bounding Box Inspector Lightbox for Identified Products -->
-        <dialog id="ir-bbox-lightbox" class="ir-bbox-lightbox" aria-labelledby="ir-bbox-lightbox-title">
-          <div class="ir-bbox-lightbox__header">
-            <div>
-              <span class="ir-review-kicker">📸 Realogram Shelf Evidence</span>
-              <h2 id="ir-bbox-lightbox-title">Identified Shelf Product Inspection</h2>
-              <p id="ir-bbox-lightbox-subtitle">High-resolution physical shelf product scan evidence</p>
-            </div>
-            <button type="button" id="ir-bbox-lightbox-close" class="btn btn--ghost btn--sm" aria-label="Close product inspector" onclick="document.getElementById('ir-bbox-lightbox').close()">✕ Close</button>
-          </div>
-          <div class="ir-bbox-lightbox__content">
-            <div class="ir-bbox-lightbox__viewport">
-              <div class="ir-bbox-lightbox__image-frame">
-                <img id="ir-bbox-lightbox-img" src="" alt="Identified Product Scan Crop" />
-                <div class="ir-bbox-lightbox__viewfinder">
-                  <span class="corner top-left"></span>
-                  <span class="corner top-right"></span>
-                  <span class="corner bottom-left"></span>
-                  <span class="corner bottom-right"></span>
-                </div>
-              </div>
-            </div>
-            <div class="ir-bbox-lightbox__meta">
-              <div class="ir-bbox-meta-row">
-                <span class="ir-bbox-meta-label">Product</span>
-                <strong id="ir-bbox-lightbox-product">—</strong>
-              </div>
-              <div class="ir-bbox-meta-row">
-                <span class="ir-bbox-meta-label">UPC</span>
-                <span id="ir-bbox-lightbox-upc" class="code-val">—</span>
-              </div>
-              <div class="ir-bbox-meta-row">
-                <span class="ir-bbox-meta-label">Action</span>
-                <span id="ir-bbox-lightbox-action" class="status-pill status-pill--purple">🔍 IDENTIFY</span>
-              </div>
-              <div class="ir-bbox-meta-row">
-                <span class="ir-bbox-meta-label">Scan ID</span>
-                <span id="ir-bbox-lightbox-scan">—</span>
-              </div>
-              <div class="ir-bbox-meta-row">
-                <span class="ir-bbox-meta-label">Shelf Position</span>
-                <span id="ir-bbox-lightbox-pos">—</span>
-              </div>
-              <div class="ir-bbox-meta-row">
-                <span class="ir-bbox-meta-label">Detection Status / Reason</span>
-                <span id="ir-bbox-lightbox-reason" style="color: var(--warn, #f59e0b);">—</span>
-              </div>
-              <div class="ir-bbox-lightbox__action-bar">
-                <a id="ir-bbox-lightbox-shelf-link" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--primary btn--sm">
-                  📸 Open Realogram in Digital Shelf Scan ↗
-                </a>
-              </div>
-            </div>
-          </div>
-        </dialog>
 
         <!-- Live quality findings from the runner snapshot (was previously rendered but hidden) -->
         <section class="panel ir-quality-panel ir-summary-secondary" aria-label="Intelligent Reset quality findings">
@@ -1583,6 +1502,90 @@
       </div>
     </div>
   </div>
+
+  <!-- Task Evidence Modal Dialog (Root level) -->
+  <dialog id="ir-insight-dialog" class="ir-insight-dialog" aria-labelledby="ir-insight-dialog-title">
+    <div class="ir-insight-dialog__header">
+      <div>
+        <span class="ir-review-kicker">Task evidence</span>
+        <h2 id="ir-insight-dialog-title">Action details</h2>
+        <p id="ir-insight-dialog-subtitle"></p>
+      </div>
+      <button type="button" id="ir-insight-dialog-close" class="btn btn--ghost btn--sm" aria-label="Close action details" onclick="window.irCloseDialog('ir-insight-dialog')">✕ Close</button>
+    </div>
+    <div id="ir-insight-dialog-summary" class="ir-insight-dialog__summary"></div>
+    <div id="ir-insight-dialog-table-wrap" class="ir-insight-dialog__table-wrap">
+      <table class="ir-insight-detail-table">
+        <thead>
+          <tr>
+            <th>Product / UPC</th>
+            <th class="ir-col-scan">Scan / Digital Shelf</th>
+            <th>Action</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Status / reason</th>
+          </tr>
+        </thead>
+        <tbody id="ir-insight-dialog-body"></tbody>
+      </table>
+    </div>
+  </dialog>
+
+  <!-- Bounding Box Inspector Lightbox for Identified Products (Root level) -->
+  <dialog id="ir-bbox-lightbox" class="ir-bbox-lightbox" aria-labelledby="ir-bbox-lightbox-title">
+    <div class="ir-bbox-lightbox__header">
+      <div>
+        <span class="ir-review-kicker">📸 Realogram Shelf Evidence</span>
+        <h2 id="ir-bbox-lightbox-title">Identified Shelf Product Inspection</h2>
+        <p id="ir-bbox-lightbox-subtitle">High-resolution physical shelf product scan evidence</p>
+      </div>
+      <button type="button" id="ir-bbox-lightbox-close" class="btn btn--ghost btn--sm" aria-label="Close product inspector" onclick="window.irCloseDialog('ir-bbox-lightbox')">✕ Close</button>
+    </div>
+    <div class="ir-bbox-lightbox__content">
+      <div class="ir-bbox-lightbox__viewport">
+        <div class="ir-bbox-lightbox__image-frame">
+          <img id="ir-bbox-lightbox-img" src="" alt="Identified Product Scan Crop" />
+          <div class="ir-bbox-lightbox__viewfinder">
+            <span class="corner top-left"></span>
+            <span class="corner top-right"></span>
+            <span class="corner bottom-left"></span>
+            <span class="corner bottom-right"></span>
+          </div>
+        </div>
+      </div>
+      <div class="ir-bbox-lightbox__meta">
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">Product</span>
+          <strong id="ir-bbox-lightbox-product">—</strong>
+        </div>
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">UPC</span>
+          <span id="ir-bbox-lightbox-upc" class="code-val">—</span>
+        </div>
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">Action</span>
+          <span id="ir-bbox-lightbox-action" class="status-pill status-pill--purple">🔍 IDENTIFY</span>
+        </div>
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">Scan ID</span>
+          <span id="ir-bbox-lightbox-scan">—</span>
+        </div>
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">Shelf Position</span>
+          <span id="ir-bbox-lightbox-pos">—</span>
+        </div>
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">Detection Status / Reason</span>
+          <span id="ir-bbox-lightbox-reason" style="color: var(--warn, #f59e0b);">—</span>
+        </div>
+        <div class="ir-bbox-lightbox__action-bar">
+          <a id="ir-bbox-lightbox-shelf-link" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--primary btn--sm">
+            📸 Open Realogram in Digital Shelf Scan ↗
+          </a>
+        </div>
+      </div>
+    </div>
+  </dialog>
 
   <script src="assets/bootstrap.js?v=20260901a"></script>
   <script src="assets/js/auth-gate.js?v=20260923b"></script>

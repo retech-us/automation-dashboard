@@ -1225,6 +1225,18 @@
     return `/assets/img/realogram_crops/crop_identify_${num}.jpg`;
   }
 
+  window.irCloseDialog = function(dialogId) {
+    const d = byId(dialogId);
+    if (!d) return;
+    try {
+      if (typeof d.close === 'function') {
+        d.close();
+      }
+    } catch (_) {}
+    d.removeAttribute('open');
+    d.style.display = 'none';
+  };
+
   function openBBoxLightbox(item, scanId, scanUrl) {
     const dialog = byId('ir-bbox-lightbox');
     if (!dialog) return;
@@ -1232,6 +1244,8 @@
     if (dialog.open) {
       try { dialog.close(); } catch (_) {}
     }
+    dialog.removeAttribute('open');
+    dialog.style.display = 'none';
 
     const sId = scanId || (item && item.scan_id) || resolveItemScanId(item);
     const sUrl = scanUrl || (item && item.digital_shelf_url) || buildDigitalShelfScanUrl(sId, item, currentFlowData && currentFlowData.metadata);
@@ -1274,13 +1288,14 @@
     if (closeBtn) {
       closeBtn.onclick = (e) => {
         if (e) e.preventDefault();
-        dialog.close();
+        window.irCloseDialog('ir-bbox-lightbox');
       };
     }
     dialog.onclick = (e) => {
-      if (e.target === dialog) dialog.close();
+      if (e.target === dialog) window.irCloseDialog('ir-bbox-lightbox');
     };
 
+    dialog.style.display = 'flex';
     try {
       if (!dialog.open) dialog.showModal();
     } catch (err) {
@@ -1312,11 +1327,11 @@
     if (closeBtn) {
       closeBtn.onclick = (e) => {
         if (e) e.preventDefault();
-        dialog.close();
+        window.irCloseDialog('ir-insight-dialog');
       };
     }
     dialog.onclick = (event) => {
-      if (event.target === dialog) dialog.close();
+      if (event.target === dialog) window.irCloseDialog('ir-insight-dialog');
     };
 
     setText('ir-insight-dialog-title', title);
@@ -1435,6 +1450,7 @@
       body.appendChild(row);
     });
 
+    dialog.style.display = 'flex';
     try {
       if (!dialog.open) dialog.showModal();
     } catch (err) {
@@ -2280,10 +2296,24 @@
       ? finalScore
       : (meta.final_compliance != null ? Math.round(meta.final_compliance) : (firstBay && firstBay.post_compliance_pct != null ? Math.round(firstBay.post_compliance_pct) : 93));
 
-    const defaultActionScore = Math.min(100, Math.round(preScore + (100 - preScore) * 0.95));
+    // After Action Compliance:
+    // 1. If backend / Digital Shelf reports action_compliance_pct directly, use official value.
+    // 2. Otherwise, calculate dynamically from verified actions vs total actions requested:
+    //    Execution Rate = Confirmed Actions / Total Required Actions
+    //    After Action Compliance = Pre-Compliance + ((100 - Pre-Compliance) * Execution Rate)
+    let calculatedActionScore = null;
+    const confirmedCount = movedCount + restockedCount + removedCount;
+    const totalRequired = confirmedCount + unperformedCount;
+    if (totalRequired > 0) {
+      const execRate = confirmedCount / totalRequired;
+      calculatedActionScore = Math.min(100, Math.round(preScore + (100 - preScore) * execRate));
+    } else {
+      calculatedActionScore = preScore;
+    }
+
     const actionScore = (firstBay && firstBay.action_compliance_pct != null)
       ? Math.round(firstBay.action_compliance_pct)
-      : (meta.action_compliance != null ? Math.round(meta.action_compliance) : defaultActionScore);
+      : (meta.action_compliance != null ? Math.round(meta.action_compliance) : calculatedActionScore);
 
     setText('ir-comp-step-pre-val', `${preScore}%`);
     setText('ir-comp-step-action-val', `${actionScore}%`);

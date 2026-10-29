@@ -8379,7 +8379,13 @@ button.ir-review-row {
   background: rgba(16, 185, 129, .07);
 }
 
+.ir-insight-dialog:not([open]) {
+  display: none !important;
+}
+
 .ir-insight-dialog {
+  display: flex;
+  flex-direction: column;
   position: fixed;
   inset: 0;
   margin: auto;
@@ -8771,7 +8777,13 @@ button.ir-review-row {
 }
 
 /* Lightbox Dialog */
+.ir-bbox-lightbox:not([open]) {
+  display: none !important;
+}
+
 .ir-bbox-lightbox {
+  display: flex;
+  flex-direction: column;
   position: fixed;
   inset: 0;
   margin: auto;
