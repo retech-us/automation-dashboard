@@ -834,10 +834,13 @@
         });
       }
 
-      const defaultTaskId = inst === 'krcs' ? '42288818' : '8648127';
+      const defaultTaskId = inst === 'krcs' ? '42288818' : '9063802';
       const wanted = String(preferredTaskId || defaultTaskId);
       const visible = visibleCatalogTasks();
-      const selected = visible.find((task) => String(task.task_id) === wanted) || visible.find((task) => String(task.task_id) === defaultTaskId) || visible[0];
+      const selected = visible.find((task) => String(task.task_id) === wanted)
+        || visible.find((task) => String(task.task_id) === defaultTaskId)
+        || visible.find((task) => (task.status || '').toLowerCase() === 'completed')
+        || visible[0];
       unfilteredCatalogNote = [
         data.host_note,
         catalogTasks.length
@@ -936,7 +939,7 @@
     const initialInstance = urlParams.get('instance') || 'harr';
     const inputEl = byId('ir-simple-task-input');
     const inputVal = inputEl ? inputEl.value.trim() : null;
-    const defaultTaskId = initialInstance === 'krcs' ? '42288818' : '8648127';
+    const defaultTaskId = initialInstance === 'krcs' ? '42288818' : '9063802';
     const initialTaskId = urlParams.get('task_id') || inputVal || defaultTaskId;
     
     const picker = byId('ir-instance-picker');
