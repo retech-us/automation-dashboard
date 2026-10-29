@@ -789,6 +789,10 @@ class HistoryUiContractTests(unittest.TestCase):
         self.assertIn("ir-recon-performed-count", script)
         self.assertIn("ir-recon-unperformed-count", script)
         self.assertIn("ir-unperformed-action-total", script)
+        self.assertIn("ir-unperformed-action-card", index_html)
+        self.assertIn("ir-unperformed-action-card", script)
+        self.assertIn("hasPostPhotoUploaded", script)
+        self.assertIn("has-hidden-unperformed", script)
         self.assertNotIn("const DEFAULT_INSTANCE_TASKS", script)
 
 
