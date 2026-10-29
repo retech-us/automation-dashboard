@@ -1253,33 +1253,25 @@
   }
 
   function resolveIdentifyCrop(item) {
-    if (!item) return '/assets/img/realogram_crops/crop_identify_1.jpg';
-    const sId = item.scan_id || resolveItemScanId(item);
-    const sh = item.from_shelf;
-    const pos = item.from_pos;
-
-    // Highest priority: Real purple-box crop from the linked shelf scan
+    if (!item) return '';
+    // Priority 1: Already provided live crop URL or API URL
     const cUrl = item.crop_image_url || item.crop_image || item.cropped_image_url;
-    if (cUrl && typeof cUrl === 'string' && (cUrl.includes('crop_identify_scan_') || cUrl.includes('real_crop_') || cUrl.includes('crop_bay'))) {
-      return cUrl;
-    }
-    if (sId && sh != null && pos != null) {
-      return `/assets/img/realogram_crops/crop_identify_scan_${sId}_s${sh}_p${pos}.jpg`;
-    }
-    if (cUrl && typeof cUrl === 'string' && (cUrl.startsWith('http') || cUrl.startsWith('/'))) {
+    if (cUrl && typeof cUrl === 'string' && (cUrl.startsWith('http') || cUrl.startsWith('/api/'))) {
       return cUrl;
     }
     const img = item.image;
-    if (img && typeof img === 'string' && (img.startsWith('http') || img.startsWith('/'))) {
+    if (img && typeof img === 'string' && (img.startsWith('http') || img.startsWith('/api/'))) {
       return img;
     }
-    const b = String(item.from_bay || '').toLowerCase();
-    if (b.includes('1') && sh === 8 && String(pos).trim() === '11') return '/assets/img/realogram_crops/crop_bay1_s8_p11.jpg';
-    if (b.includes('1') && sh === 8 && String(pos).trim() === '12') return '/assets/img/realogram_crops/crop_bay1_s8_p12.jpg';
-    if (b.includes('2') && sh === 8 && String(pos).trim() === '16') return '/assets/img/realogram_crops/crop_bay2_s8_p16.jpg';
-    const seed = Number(item.ledger_id || item.product_report_id || 1);
-    const num = (Math.abs(seed) % 5) + 1;
-    return `/assets/img/realogram_crops/crop_identify_${num}.jpg`;
+    // Priority 2: Construct live scan crop endpoint from Digital Shelf scan metadata
+    const sId = item.scan_id || resolveItemScanId(item);
+    const sh = item.from_shelf != null ? item.from_shelf : item.to_shelf;
+    const pos = item.from_pos != null ? item.from_pos : item.to_pos;
+    const itemId = item.item_id || item.realogram_item_id || '';
+    if (sId && sh != null && pos != null) {
+      return `/api/runner/scan_crop?scan_id=${encodeURIComponent(sId)}&item_id=${encodeURIComponent(itemId)}&shelf=${encodeURIComponent(sh)}&pos=${encodeURIComponent(pos)}`;
+    }
+    return '';
   }
 
   window.irCloseDialog = function(dialogId) {
@@ -1313,9 +1305,10 @@
       imgEl.src = cropImg;
       imgEl.alt = (item && item.product_name) || 'Scan crop';
       imgEl.onerror = () => {
-        if (!imgEl.src.includes('crop_identify_1.jpg')) {
-          imgEl.src = '/assets/img/realogram_crops/crop_identify_1.jpg';
-        }
+        imgEl.style.display = 'none';
+      };
+      imgEl.onload = () => {
+        imgEl.style.display = 'block';
       };
     }
 
@@ -1428,7 +1421,7 @@
         productCell.innerHTML = `
           <div class="ir-bbox-product-wrap">
             <div class="ir-bbox-thumb-box" data-idx="${itemIdx}" onclick="window.irOpenInsightItemLightbox(${itemIdx})" title="Click to pop out full-resolution product inspection" role="button" tabindex="0">
-              <img src="${escapeHtml(effectiveCropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="if(this.src.indexOf('crop_identify_1.jpg')===-1){this.src='/assets/img/realogram_crops/crop_identify_1.jpg';}else{this.style.display='none';}"/>
+              <img src="${escapeHtml(effectiveCropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="this.style.display='none';"/>
               <div class="ir-bbox-reticle">
                 <span class="corner tl"></span>
                 <span class="corner tr"></span>
@@ -2601,7 +2594,7 @@
               ${isIdentify && effectiveCropUrl ? `
                 <div class="ir-bbox-product-wrap">
                   <div class="ir-bbox-thumb-box" onclick="window.irOpenBBoxLightbox(${idx})" title="Click to view full-resolution product inspection" role="button" tabindex="0">
-                    <img src="${escapeHtml(effectiveCropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="if(this.src.indexOf('crop_identify_1.jpg')===-1){this.src='/assets/img/realogram_crops/crop_identify_1.jpg';}else{this.style.display='none';}"/>
+                    <img src="${escapeHtml(effectiveCropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="this.style.display='none';"/>
                     <div class="ir-bbox-reticle">
                       <span class="corner tl"></span>
                       <span class="corner tr"></span>
