@@ -1584,22 +1584,14 @@ def synthesize_task_flow_from_raw_actions(
                     disc_label = None
                     disc_detail = None
                     # Restock items occupy the same slot in planogram and realogram; they are not redundant moves.
-                    # AI discrepancies are strictly when there is a difference in shelf count/level (from_sh != to_sh),
-                    # not intra-shelf product position differences.
+                    # Product on a different shelf is simply not on correct shelf as per planogram (ACTION MOVE),
+                    # not a shelf discrepancy. Shelf discrepancy is fixture shelf count difference between realogram and planogram.
                     if "MOVE" in str(act_type).upper() and not is_restock:
-                        if from_sh is not None and to_sh is not None:
-                            if from_sh != to_sh:
-                                disc_type = "cross_shelf_mismatch"
-                                disc_label = f"Shelf Mismatch · ROG Shelf {from_sh} ≠ POG Shelf {to_sh}"
-                                disc_detail = (
-                                    f"Product {upc} is on Shelf {from_sh} (Pos {from_p or '—'}), but Planogram expects Shelf {to_sh} (Pos {to_p or '—'}). "
-                                    f"Shelf count difference between realogram and planogram."
-                                )
-                            elif from_sh == to_sh:
-                                if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
-                                    disc_type = "redundant_same_slot"
-                                    disc_label = "Redundant Same-Slot Move"
-                                    disc_detail = f"Product {upc} is already in its planogram slot ({to_b} Shelf {to_sh} Pos {to_p}). Emitting a move action is redundant."
+                        if from_sh is not None and to_sh is not None and from_sh == to_sh:
+                            if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
+                                disc_type = "redundant_same_slot"
+                                disc_label = "Redundant Same-Slot Move"
+                                disc_detail = f"Product {upc} is already in its planogram slot ({to_b} Shelf {to_sh} Pos {to_p}). Emitting a move action is redundant."
 
                     curr_scan = (curr_pos.get("scan_id") if isinstance(curr_pos, dict) else None)
                     exp_scan = (exp_pos.get("scan_id") if isinstance(exp_pos, dict) else None)
@@ -1784,6 +1776,23 @@ def synthesize_task_flow_from_raw_actions(
         else:
             gate_status = "REVIEW"
 
+        # Shelf Discrepancy: check number of shelves in planogram vs number of shelves in realogram
+        bay_rog_shelves = set()
+        bay_pog_shelves = set()
+        for itm in bay_items:
+            cp = itm.get("current_position") or {}
+            ep = itm.get("expected_position") or {}
+            cur_s = cp.get("shelf")
+            exp_s = ep.get("shelf")
+            if cur_s is not None and str(cur_s).isdigit() and int(cur_s) > 0:
+                bay_rog_shelves.add(int(cur_s))
+            if exp_s is not None and str(exp_s).isdigit() and int(exp_s) > 0:
+                bay_pog_shelves.add(int(exp_s))
+
+        rog_sh_count = max(bay_rog_shelves) if bay_rog_shelves else 0
+        pog_sh_count = max(bay_pog_shelves) if bay_pog_shelves else 0
+        has_shelf_disc = bool(rog_sh_count > 0 and pog_sh_count > 0 and rog_sh_count != pog_sh_count)
+
         bay_summaries[bay] = {
             "bay_name": bay,
             "pre_photo_scan_id": scan_id,
@@ -1795,6 +1804,10 @@ def synthesize_task_flow_from_raw_actions(
             "compliance_lift_pct": round(final_comp - initial_comp, 1) if final_comp is not None else 0.0,
             "action_batches_count": len([b for b in action_batches.values() if b.bay == bay]),
             "action_items_count": len(bay_items),
+            "rog_shelf_count": rog_sh_count,
+            "pog_shelf_count": pog_sh_count,
+            "has_shelf_discrepancy": has_shelf_disc,
+            "shelf_discrepancy_diff": (rog_sh_count - pog_sh_count) if has_shelf_disc else 0,
             "gate_status": gate_status,
         }
 
@@ -2171,19 +2184,11 @@ def enrich_flow_with_digital_shelf_evidence(
                     or "RESTOCK" in str(it.get("reason") or "").upper()
                     or bool(it.get("is_new_restock_item"))
                 )
-                if is_move and not is_restock and from_sh is not None and to_sh is not None:
-                    if from_sh != to_sh:
-                        it["discrepancy_type"] = "cross_shelf_mismatch"
-                        it["discrepancy_label"] = f"Shelf Mismatch · ROG Shelf {from_sh} ≠ POG Shelf {to_sh}"
-                        it["discrepancy_detail"] = (
-                            f"Product {upc} is on Shelf {from_sh} (Pos {from_p or '—'}), but Planogram expects Shelf {to_sh} (Pos {to_p or '—'}). "
-                            f"Shelf count difference between realogram and planogram."
-                        )
-                    elif from_sh == to_sh:
-                        if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
-                            it["discrepancy_type"] = "redundant_same_slot"
-                            it["discrepancy_label"] = "Redundant Same-Slot Move"
-                            it["discrepancy_detail"] = f"Product {upc} is already in planogram slot ({to_b} Shelf {to_sh} Pos {to_p}). Generating move is redundant."
+                if is_move and not is_restock and from_sh is not None and to_sh is not None and from_sh == to_sh:
+                    if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
+                        it["discrepancy_type"] = "redundant_same_slot"
+                        it["discrepancy_label"] = "Redundant Same-Slot Move"
+                        it["discrepancy_detail"] = f"Product {upc} is already in planogram slot ({to_b} Shelf {to_sh} Pos {to_p}). Generating move is redundant."
 
     if "action_batches" in flow:
         enrich_batch_items(flow["action_batches"])

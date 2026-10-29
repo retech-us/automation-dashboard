@@ -199,11 +199,18 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
         # 3. Restock items naturally occupy the same slot in planogram and realogram; NEVER redundant
         self.assertIsNone(restock_item["discrepancy_type"])
 
-        # 4. Difference in shelf count between Realogram and Planogram IS an AI discrepancy
-        self.assertEqual(shelf_mismatch_item["discrepancy_type"], "cross_shelf_mismatch")
-        self.assertIn("ROG Shelf 4 ≠ POG Shelf 5", shelf_mismatch_item["discrepancy_label"])
+        # 4. Product moving across shelves is simply not on correct shelf as per planogram (ACTION MOVE),
+        # not an item-level shelf discrepancy badge.
+        self.assertIsNone(shelf_mismatch_item["discrepancy_type"])
 
-    def test_enrich_flow_with_digital_shelf_cross_shelf_mismatch(self):
+        # 5. When realogram and planogram have the same shelf count (both max 5), there is no shelf discrepancy
+        bay1 = flow["bay_summaries"]["Bay 1"]
+        self.assertEqual(bay1["rog_shelf_count"], 5)
+        self.assertEqual(bay1["pog_shelf_count"], 5)
+        self.assertFalse(bay1["has_shelf_discrepancy"])
+        self.assertEqual(bay1["shelf_discrepancy_diff"], 0)
+
+    def test_enrich_flow_with_digital_shelf_shelf_count_check(self):
         raw_actions = [
             {
                 "id": 101,
@@ -231,10 +238,13 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
         all_items = [it for b in enriched["action_batches"].values() for it in b["items"]]
         cran_item = next(it for it in all_items if it["upc"] == "011110636584")
 
-        self.assertEqual(cran_item["discrepancy_type"], "cross_shelf_mismatch")
+        self.assertIsNone(cran_item["discrepancy_type"])
         self.assertEqual(cran_item["digital_action_type"], "move")
         self.assertEqual(cran_item["digital_action_taken"], "move")
-        self.assertIn("ROG Shelf 4 ≠ POG Shelf 5", cran_item["discrepancy_label"])
+        bay1 = enriched["bay_summaries"]["Bay 1"]
+        self.assertEqual(bay1["rog_shelf_count"], 4)
+        self.assertEqual(bay1["pog_shelf_count"], 5)
+        self.assertTrue(bay1["has_shelf_discrepancy"])
 
     def test_format_duration_hm(self):
         self.assertEqual(format_duration_hm(None), "not recorded")
