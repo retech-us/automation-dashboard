@@ -1343,8 +1343,6 @@
       const actionCell = document.createElement('td');
       const actionLabel = document.createElement('div');
       actionLabel.className = 'ir-action-label-wrap';
-      const rawAct = item.action_type || 'Action unavailable';
-      const isIdentify = String(rawAct).toUpperCase().includes('IDENTIFY');
       if (isIdentify) {
         actionLabel.innerHTML = `<span class="status-pill status-pill--purple" style="font-weight:700;">🔍 ${escapeHtml(rawAct)}</span>`;
       } else {
