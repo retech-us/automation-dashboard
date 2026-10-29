@@ -3225,22 +3225,25 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             logged_dur = task_obj.get("logged_duration")
             if logged_dur and isinstance(logged_dur, str):
                 import re
+                m_d = re.search(r"(\d+)D", logged_dur)
                 m_h = re.search(r"(\d+)H", logged_dur)
                 m_m = re.search(r"(\d+)M", logged_dur)
-                m_s = re.search(r"(\d+)S", logged_dur)
-                total_sec = 0
+                m_s = re.search(r"(\d+(?:\.\d+)?)S", logged_dur)
+                total_sec = 0.0
+                if m_d:
+                    total_sec += float(m_d.group(1)) * 86400
                 if m_h:
-                    total_sec += int(m_h.group(1)) * 3600
+                    total_sec += float(m_h.group(1)) * 3600
                 if m_m:
-                    total_sec += int(m_m.group(1)) * 60
+                    total_sec += float(m_m.group(1)) * 60
                 if m_s:
-                    total_sec += int(m_s.group(1))
-                if 0 < total_sec < 300 * 60:
-                    duration_sec = total_sec
+                    total_sec += float(m_s.group(1))
+                if 0 < total_sec < 24 * 3600:
+                    duration_sec = int(round(total_sec))
                     duration_val = round(total_sec / 60.0, 1)
                     duration_source = "task.logged_duration"
                     if completed_dt and not started_dt:
-                        started_dt = completed_dt - datetime.timedelta(seconds=total_sec)
+                        started_dt = completed_dt - datetime.timedelta(seconds=duration_sec)
 
             if duration_val is None and started_dt and completed_dt:
                 elapsed = (completed_dt - started_dt).total_seconds() / 60.0
