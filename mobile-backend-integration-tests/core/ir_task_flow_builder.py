@@ -1644,6 +1644,16 @@ def synthesize_task_flow_from_raw_actions(
                         }
 
                     is_identify = "IDENTIFY" in str(act_type or "").upper()
+                    if is_identify:
+                        if to_sh is None and from_sh is not None:
+                            to_sh = from_sh
+                        if not to_p and from_p:
+                            to_p = from_p
+                        if not exp_section and curr_section:
+                            exp_section = curr_section
+                        if not to_b and from_b:
+                            to_b = from_b
+
                     raw_crop = (
                         item.get("crop_image_url")
                         or item.get("crop_image")
@@ -1652,7 +1662,7 @@ def synthesize_task_flow_from_raw_actions(
                     )
                     crop_img = raw_crop
                     if is_identify:
-                        if not crop_img or "bucket-us-west-2-mgmt-media-r3us-harr" in str(crop_img).lower():
+                        if not crop_img:
                             b_str = str(curr_section or bay or "").lower()
                             if ("1" in b_str) and from_sh == 8 and str(from_p).strip() == "11":
                                 crop_img = "/assets/img/realogram_crops/crop_bay1_s8_p11.jpg"
@@ -1682,7 +1692,11 @@ def synthesize_task_flow_from_raw_actions(
                         to_bay=(
                             f"Bay {exp_section}"
                             if exp_section and not str(exp_section).lower().startswith("bay")
-                            else exp_section or bay
+                            else (
+                                f"Bay {curr_section}"
+                                if is_identify and curr_section and not str(curr_section).lower().startswith("bay")
+                                else (exp_section or (curr_section if is_identify else None) or bay)
+                            )
                         ),
                         actor=performer,
                         state=state,
@@ -1958,23 +1972,124 @@ def enrich_flow_with_digital_shelf_evidence(
         return flow
 
     digital_by_upc: Dict[str, Any] = {}
+    digital_by_pos: Dict[Tuple[Any, ...], Any] = {}
+    digital_by_pos_no_sec: Dict[Tuple[Any, ...], Any] = {}
+    digital_by_sec_pos: Dict[Tuple[Any, ...], Any] = {}
+
     for item in digital_items:
         upc = str(getattr(item, "upc", "") or (item.get("upc") if isinstance(item, dict) else "")).strip()
-        if upc:
+        if upc and upc != "000000000000":
             digital_by_upc[upc] = item
+
+        scan_id = getattr(item, "scan_id", None) or (item.get("scan_id") if isinstance(item, dict) else None)
+        try:
+            s_id_int = int(scan_id) if scan_id is not None else None
+        except (TypeError, ValueError):
+            s_id_int = None
+
+        sec = str(getattr(item, "section", "") or (item.get("section") if isinstance(item, dict) else "")).strip().lower()
+        sec_clean = sec.replace("bay", "").strip()
+
+        pog_pos = str(getattr(item, "pog_position", "") or (item.get("pog_position") if isinstance(item, dict) else "")).strip()
+        rog_pos = str(getattr(item, "rog_position", "") or (item.get("rog_position") if isinstance(item, dict) else "")).strip()
+
+        for pos_str in (pog_pos, rog_pos):
+            if ":" in pos_str:
+                sh_part, p_part = pos_str.split(":", 1)
+                try:
+                    sh_int = int(sh_part.strip())
+                    p_clean = str(p_part).strip()
+                    if s_id_int is not None and sec_clean:
+                        digital_by_pos[(s_id_int, sec_clean, sh_int, p_clean)] = item
+                    if s_id_int is not None:
+                        digital_by_pos_no_sec[(s_id_int, sh_int, p_clean)] = item
+                    if sec_clean:
+                        digital_by_sec_pos[(sec_clean, sh_int, p_clean)] = item
+                except (ValueError, TypeError):
+                    pass
 
     def enrich_batch_items(batches: Dict[str, Any]):
         for batch in batches.values():
             items = batch.get("items") or []
             for it in items:
+                act_type_str = str(it.get("action_type") or "").upper()
+                is_identify = "IDENTIFY" in act_type_str
                 upc = str(it.get("upc") or "").strip()
-                d_item = digital_by_upc.get(upc)
+                d_item = digital_by_upc.get(upc) if (upc and upc != "000000000000") else None
+
+                if not d_item:
+                    it_scan = it.get("scan_id")
+                    try:
+                        it_scan_int = int(it_scan) if it_scan is not None else None
+                    except (TypeError, ValueError):
+                        it_scan_int = None
+
+                    it_sh = it.get("from_shelf") if it.get("from_shelf") is not None else it.get("to_shelf")
+                    it_p = str(it.get("from_pos") or it.get("to_pos") or "").strip()
+                    it_bay = str(it.get("from_bay") or it.get("to_bay") or "").strip().lower()
+                    it_sec = it_bay.replace("bay", "").strip()
+
+                    if it_sh is not None and it_p:
+                        try:
+                            it_sh_int = int(it_sh)
+                        except (ValueError, TypeError):
+                            it_sh_int = None
+                        if it_sh_int is not None:
+                            d_item = (
+                                digital_by_pos.get((it_scan_int, it_sec, it_sh_int, it_p))
+                                or digital_by_pos_no_sec.get((it_scan_int, it_sh_int, it_p))
+                                or digital_by_sec_pos.get((it_sec, it_sh_int, it_p))
+                            )
+
                 if not d_item:
                     continue
+
                 d_act_type = getattr(d_item, "action_type", None) or (d_item.get("action_type") if isinstance(d_item, dict) else "")
                 d_act_taken = getattr(d_item, "action_taken", None) or (d_item.get("action_taken") if isinstance(d_item, dict) else "")
                 it["digital_action_type"] = d_act_type
                 it["digital_action_taken"] = d_act_taken
+
+                d_name = getattr(d_item, "product_name", None) or (d_item.get("product_name") if isinstance(d_item, dict) else "")
+                if d_name and (not it.get("product_name") or "000000000000" in str(it.get("product_name")) or str(it.get("product_name")).startswith("PRODUCT ")):
+                    it["product_name"] = d_name
+
+                d_upc = getattr(d_item, "upc", None) or (d_item.get("upc") if isinstance(d_item, dict) else "")
+                if d_upc and (not it.get("upc") or str(it.get("upc")).strip() in ("", "000000000000")):
+                    it["upc"] = d_upc
+
+                raw_obj = getattr(d_item, "raw", None) or (d_item.get("raw") if isinstance(d_item, dict) else {}) or {}
+                prod = raw_obj.get("product") if isinstance(raw_obj, dict) else {}
+                img_url = None
+                if isinstance(prod, dict):
+                    img_url = prod.get("image") or prod.get("image_url")
+                if not img_url and isinstance(raw_obj, dict):
+                    img_url = raw_obj.get("crop_image_url") or raw_obj.get("crop_image") or raw_obj.get("cropped_image_url")
+
+                if img_url:
+                    it["image"] = img_url
+                    it["crop_image_url"] = img_url
+                    it["cropped_image_url"] = img_url
+
+                if is_identify:
+                    if it.get("to_shelf") is None and it.get("from_shelf") is not None:
+                        it["to_shelf"] = it.get("from_shelf")
+                    if not it.get("to_pos") and it.get("from_pos"):
+                        it["to_pos"] = it.get("from_pos")
+                    if not it.get("to_bay") and it.get("from_bay"):
+                        it["to_bay"] = it.get("from_bay")
+
+                    pog_pos_str = str(getattr(d_item, "pog_position", "") or (d_item.get("pog_position") if isinstance(d_item, dict) else "") or "").strip()
+                    if ":" in pog_pos_str:
+                        p_sh, p_pos = pog_pos_str.split(":", 1)
+                        try:
+                            it["to_shelf"] = int(p_sh.strip())
+                            it["to_pos"] = str(p_pos).strip()
+                        except (ValueError, TypeError):
+                            pass
+                    d_sec_val = getattr(d_item, "section", None) or (d_item.get("section") if isinstance(d_item, dict) else None)
+                    if d_sec_val:
+                        sec_str = str(d_sec_val).strip()
+                        it["to_bay"] = f"Bay {sec_str}" if not sec_str.lower().startswith("bay") else sec_str
 
                 d_scan = getattr(d_item, "scan_id", None) or (d_item.get("scan_id") if isinstance(d_item, dict) else None)
                 if d_scan and not it.get("scan_id"):

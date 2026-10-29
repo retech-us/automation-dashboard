@@ -1185,7 +1185,19 @@
     const action = String(item.action_type || '').toUpperCase();
     if (prefix === 'from' && action.includes('ADD')) return 'Backroom / not on shelf yet';
     if (prefix === 'to' && action.includes('REMOVE')) return 'Taken off the shelf';
-    if (prefix === 'to' && action.includes('IDENTIFY')) return 'Stays in place (identify only)';
+    if (prefix === 'to' && action.includes('IDENTIFY')) {
+      const fromBay = item.from_bay;
+      const fromShelf = item.from_shelf;
+      const fromPos = item.from_pos;
+      if (fromShelf !== null && fromShelf !== undefined && fromShelf !== '') {
+        const pParts = [];
+        if (fromBay) pParts.push(String(fromBay));
+        pParts.push(`Shelf ${fromShelf}`);
+        if (fromPos !== null && fromPos !== undefined && fromPos !== '') pParts.push(`Position ${fromPos}`);
+        return pParts.join(' · ');
+      }
+      return 'Stays in place (identify only)';
+    }
     return parts.join(' · ') || 'Not recorded';
   }
 
@@ -1243,11 +1255,11 @@
   function resolveIdentifyCrop(item) {
     if (!item) return '/assets/img/realogram_crops/crop_identify_1.jpg';
     const cUrl = item.crop_image_url || item.crop_image || item.cropped_image_url;
-    if (cUrl && typeof cUrl === 'string' && !cUrl.includes('bucket-us-west-2-mgmt-media-r3us-harr')) {
+    if (cUrl && typeof cUrl === 'string' && (cUrl.startsWith('http') || cUrl.startsWith('/'))) {
       return cUrl;
     }
     const img = item.image;
-    if (img && typeof img === 'string' && !img.includes('bucket-us-west-2-mgmt-media-r3us-harr')) {
+    if (img && typeof img === 'string' && (img.startsWith('http') || img.startsWith('/'))) {
       return img;
     }
     const b = String(item.from_bay || '').toLowerCase();
