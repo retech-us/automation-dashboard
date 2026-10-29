@@ -1234,17 +1234,9 @@
     const toBay = String(item.to_bay || '').trim();
     const isMove = (item.action_type || '').toUpperCase().includes('MOVE');
 
-    // AI Discrepancy is strictly when there is a difference in vertical shelf between Realogram and Planogram
-    if (item.discrepancy_type === 'cross_shelf_mismatch' || (isMove && fromSh != null && toSh != null && fromSh != toSh)) {
-      const tooltip = item.discrepancy_detail || `Shelf Discrepancy: Product detected on Realogram Shelf ${fromSh}, but Planogram specifies Shelf ${toSh}. Difference in shelf between Realogram and Planogram.`;
-      return `
-        <div style="margin-top: 4px;">
-          <span class="badge" style="background: #FEF2F2; color: #B91C1C; border: 1px solid #FCA5A5; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: help;" title="${escapeHtml(tooltip)}">
-            ⚠️ Shelf Discrepancy: ROG Shelf ${escapeHtml(String(fromSh))} ≠ POG Shelf ${escapeHtml(String(toSh))}
-          </span>
-        </div>
-      `;
-    }
+    // Note: Product located on a different shelf (fromSh != toSh) is simply a product not on the correct
+    // shelf as per planogram (addressed via ACTION MOVE). It is NOT a shelf discrepancy.
+    // A true Shelf Discrepancy is when the physical shelf count in realogram differs from the planogram shelf count.
     if (item.discrepancy_type === 'redundant_same_slot' || (isMove && fromSh && toSh && fromSh == toSh && fromPos && toPos && fromPos === toPos && (!fromBay || !toBay || fromBay === toBay))) {
       return `
         <div style="margin-top: 4px;">
@@ -1657,30 +1649,62 @@
       });
     }
 
-    // AI Discrepancy: Difference in shelf count / level between Realogram and Planogram (not product horizontal position)
-    const crossShelfMismatchItems = allGeneratedItems.filter((item) => {
-      const isRestock = (item.action_type || '').toUpperCase().includes('ADD') ||
-        (item.action_type || '').toUpperCase().includes('RESTOCK') ||
-        (item.reason || '').toUpperCase().includes('RESTOCK') ||
-        Boolean(item.is_new_restock_item);
-      if (isRestock) return false;
+    // Real Shelf Discrepancy: check number of shelves in planogram vs number of shelves in realogram (not product position)
+    // E.g. in planogram we have 6 shelves, and in realogram we have more or less than 6 shelves
+    const shelfDiscrepancies = [];
+    const bayShelfMap = new Map();
 
-      const fromSh = item.from_shelf;
-      const toSh = item.to_shelf;
-      const isMove = (item.action_type || '').toUpperCase().includes('MOVE');
-      return item.discrepancy_type === 'cross_shelf_mismatch' || (isMove && fromSh != null && toSh != null && fromSh != toSh);
+    // 1. Gather shelf counts from bay_summaries if present
+    Object.entries(data.bay_summaries || meta.bay_summaries || {}).forEach(([bName, bData]) => {
+      const pCount = Number(bData.pog_shelf_count || 0);
+      const rCount = Number(bData.rog_shelf_count || 0);
+      if (bData.has_shelf_discrepancy || (pCount > 0 && rCount > 0 && pCount !== rCount)) {
+        shelfDiscrepancies.push({
+          bay: bName,
+          pogCount: pCount,
+          rogCount: rCount,
+        });
+      }
     });
-    if (crossShelfMismatchItems.length > 0) {
-      challenges.push({
-        text: `⚠️ AI Exception: ${crossShelfMismatchItems.length} shelf discrepancy detected between Realogram and Planogram (physical shelf level differs from planogram shelf).`,
-        items: crossShelfMismatchItems,
-        source: 'Realogram vs. Planogram Shelf Mismatch',
-        summary: [
-          ['AI Exception type', 'Shelf-Level Planogram Discrepancy'],
-          ['Detection logic', 'Computer Vision detected the physical product on one shelf, but the Planogram specifies placement on a different vertical shelf.'],
-          ['Rule enforcement', 'Discrepancy is based on shelf count difference between Realogram and Planogram, not intra-shelf product position.'],
-          ['Products affected', String(crossShelfMismatchItems.length)],
-        ],
+
+    // 2. Also analyze all generated items across bays to compute physical realogram shelf count vs planogram shelf count
+    if (!shelfDiscrepancies.length) {
+      allGeneratedItems.forEach((item) => {
+        const b = item.from_bay || item.to_bay || 'Bay 1';
+        const entry = bayShelfMap.get(b) || { rog: new Set(), pog: new Set() };
+        const fs = item.from_shelf != null ? Number(item.from_shelf) : null;
+        const ts = item.to_shelf != null ? Number(item.to_shelf) : null;
+        if (fs != null && !Number.isNaN(fs) && fs > 0) entry.rog.add(fs);
+        if (ts != null && !Number.isNaN(ts) && ts > 0) entry.pog.add(ts);
+        bayShelfMap.set(b, entry);
+      });
+      bayShelfMap.forEach((entry, b) => {
+        const rMax = entry.rog.size ? Math.max(...entry.rog) : 0;
+        const pMax = entry.pog.size ? Math.max(...entry.pog) : 0;
+        if (rMax > 0 && pMax > 0 && rMax !== pMax) {
+          shelfDiscrepancies.push({ bay: b, pogCount: pMax, rogCount: rMax });
+        }
+      });
+    }
+
+    if (shelfDiscrepancies.length > 0) {
+      shelfDiscrepancies.forEach((disc) => {
+        const diff = disc.rogCount - disc.pogCount;
+        const diffLabel = diff > 0 ? `${diff} extra shelf` : `${Math.abs(diff)} missing shelf`;
+        challenges.push({
+          text: `⚠️ Shelf Discrepancy: ${disc.bay} has ${disc.rogCount} physical shelves in Realogram, but Planogram specifies ${disc.pogCount} shelves (${diffLabel}).`,
+          items: allGeneratedItems.filter((it) => (it.from_bay || it.to_bay) === disc.bay),
+          source: 'Fixture Architecture (Realogram vs. Planogram Shelf Count)',
+          summary: [
+            ['Discrepancy Type', 'Physical Shelf Count Mismatch (Fixture Architecture)'],
+            ['Bay', disc.bay],
+            ['Realogram Shelf Count', `${disc.rogCount} physical shelves detected in scan`],
+            ['Planogram Shelf Count', `${disc.pogCount} shelves defined in planogram`],
+            ['Discrepancy Detail', diff < 0
+              ? `The physical fixture has fewer shelves (${disc.rogCount}) than the planogram specifies (${disc.pogCount}). Products scheduled for shelf ${disc.rogCount + 1} and above cannot be placed correctly.`
+              : `The physical fixture has ${diff} additional shelves (${disc.rogCount}) compared to the planogram (${disc.pogCount}).`],
+          ],
+        });
       });
     }
 
