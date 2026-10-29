@@ -8741,7 +8741,39 @@ button.ir-review-row {
   outline: none;
 }
 
+.ir-bbox-thumb-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: rgba(168, 85, 247, 0.08);
+  color: #c084fc;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ir-bbox-thumb-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.ir-bbox-thumb-loc {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: #e9d5ff;
+}
+
+[data-theme="light"] .ir-bbox-thumb-loc {
+  color: #7e22ce;
+}
+
 .ir-bbox-thumb-img {
+  position: relative;
+  z-index: 2;
   width: 100%;
   height: 100%;
   object-fit: cover;

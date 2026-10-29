@@ -1421,9 +1421,17 @@
       const scanUrl = buildDigitalShelfScanUrl(itemScanId, item, currentFlowData && currentFlowData.metadata);
 
       if (isIdentify && effectiveCropUrl) {
+        const sh = item.from_shelf != null ? item.from_shelf : item.to_shelf;
+        const pos = item.from_pos != null ? item.from_pos : item.to_pos;
+        const locLabel = (sh != null && pos != null) ? `S${sh}:P${pos}` : (sh != null ? `Sh ${sh}` : 'Item');
+
         productCell.innerHTML = `
           <div class="ir-bbox-product-wrap">
             <div class="ir-bbox-thumb-box" data-idx="${itemIdx}" onclick="window.irOpenInsightItemLightbox(${itemIdx})" title="Click to pop out full-resolution product inspection" role="button" tabindex="0">
+              <div class="ir-bbox-thumb-placeholder">
+                <span class="ir-bbox-thumb-icon">📦</span>
+                <span class="ir-bbox-thumb-loc">${escapeHtml(locLabel)}</span>
+              </div>
               <img src="${escapeHtml(effectiveCropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="this.style.display='none';"/>
               <div class="ir-bbox-reticle">
                 <span class="corner tl"></span>

@@ -4570,6 +4570,26 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         # Fallback to local / benchmark reference builder
         return get_task_flow(task_id, instance=instance)
 
+    def _send_svg_crop_fallback(self, scan_id: int, shelf: Optional[int], pos_str: str, message: str = "Scan Item Crop"):
+        sh_lbl = f"Shelf {shelf}" if shelf is not None else ""
+        pos_lbl = f"Pos {pos_str}" if pos_str else ""
+        loc_lbl = f"{sh_lbl} {pos_lbl}".strip() or message
+        svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="160" height="190" viewBox="0 0 160 190" fill="none">
+  <rect width="160" height="190" fill="#130e24"/>
+  <rect x="8" y="8" width="144" height="174" rx="8" stroke="#a855f7" stroke-width="2" stroke-dasharray="4 4" fill="rgba(168,85,247,0.12)"/>
+  <circle cx="80" cy="68" r="32" fill="rgba(168,85,247,0.2)"/>
+  <text x="80" y="76" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="28" text-anchor="middle" fill="#c084fc">🔍</text>
+  <text x="80" y="122" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#f3e8ff">{loc_lbl}</text>
+  <text x="80" y="142" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="10" text-anchor="middle" fill="#a855f7">Scan #{scan_id}</text>
+</svg>"""
+        svg_bytes = svg.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "image/svg+xml")
+        self.send_header("Content-Length", str(len(svg_bytes)))
+        self.send_header("Cache-Control", "public, max-age=3600")
+        self.end_headers()
+        self.wfile.write(svg_bytes)
+
     def _handle_scan_crop(self, query_params: Dict[str, List[str]]):
         """Stream on-the-fly realogram crop of purple unidentified box from live shelf scan image."""
         scan_id_str = (query_params.get("scan_id") or [""])[0].strip()
@@ -4579,7 +4599,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         inst = (query_params.get("instance") or query_params.get("base_url") or [""])[0].strip()
 
         if not scan_id_str or not scan_id_str.isdigit():
-            self.send_error(400, "Missing or invalid scan_id")
+            self._send_svg_crop_fallback(0, None, "", "Invalid scan ID")
             return
 
         scan_id = int(scan_id_str)
@@ -4614,7 +4634,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
             merged_image_url = s_data.get("merged_image")
             if not merged_image_url:
-                self.send_error(404, "Scan has no merged_image")
+                self._send_svg_crop_fallback(scan_id, shelf, pos_str, "No merged image")
                 return
 
             target_coords = None
@@ -4647,7 +4667,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                             break
 
             if not target_coords or not isinstance(target_coords, (list, tuple)) or len(target_coords) != 2:
-                self.send_error(404, "Item bounding box coordinates not found on shelf scan")
+                self._send_svg_crop_fallback(scan_id, shelf, pos_str, "Unidentified item")
                 return
 
             m_bytes = SCAN_IMAGE_BYTES_CACHE.get(scan_id)
@@ -4693,7 +4713,8 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(crop_bytes)
         except Exception as e:
-            self.send_error(500, f"Error cropping scan image: {e}")
+            print(f"[_handle_scan_crop] Falling back to SVG crop placeholder for scan {scan_id}: {e}")
+            self._send_svg_crop_fallback(scan_id, shelf, pos_str)
 
     def _handle_task_fields(self, query: Dict[str, List[str]]) -> Dict[str, Any]:
         """Report the real shape of a task row so filters are built on facts, not guesses."""
