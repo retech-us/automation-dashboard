@@ -1046,6 +1046,9 @@
     setText('ir-comp-step-pre-val', '…');
     setText('ir-comp-step-action-val', '…');
     setText('ir-comp-step-post-val', '…');
+    setText('ir-comp-step-action-sub', 'User Completed Actions');
+    const actionValEl = byId('ir-comp-step-action-val');
+    if (actionValEl) actionValEl.className = 'ir-comp-step-val is-action';
     const postValEl = byId('ir-comp-step-post-val');
     if (postValEl) postValEl.className = 'ir-comp-step-val is-post';
 
@@ -2377,24 +2380,52 @@
       : (meta.final_compliance != null ? Math.round(meta.final_compliance) : (firstBay && firstBay.post_compliance_pct != null ? Math.round(firstBay.post_compliance_pct) : null));
 
     // After Action Compliance:
-    // 1. If backend / Digital Shelf reports action_compliance_pct directly, use official value.
-    // 2. Otherwise, calculate dynamically from verified actions vs total actions requested:
-    //    Execution Rate = Confirmed Actions / Total Required Actions
-    //    After Action Compliance = Pre-Compliance + ((100 - Pre-Compliance) * Execution Rate)
-    let calculatedActionScore = null;
-    const confirmedCount = movedCount + restockedCount + removedCount;
-    const totalRequired = confirmedCount + unperformedCount;
-    if (totalRequired > 0) {
-      const execRate = confirmedCount / totalRequired;
-      const baseForExec = preScore != null ? preScore : 0;
-      calculatedActionScore = Math.min(100, Math.round(baseForExec + (100 - baseForExec) * execRate));
+    // Extract actual confirmed actions completed by user vs unperformed/pending actions:
+    let rawPerformedItems = [];
+    if (data.performed_actions_loaded === true && Array.isArray(data.performed_actions)) {
+      rawPerformedItems = data.performed_actions;
+    } else if (Array.isArray(data.all_digital_actions) && data.all_digital_actions.length > 0) {
+      rawPerformedItems = data.all_digital_actions.filter((item) => {
+        const actTaken = (item.action_taken || '').trim();
+        const actType = (item.action_type || '').trim().toLowerCase();
+        return actTaken && actTaken !== '-' && actType !== 'ok';
+      });
     } else {
-      calculatedActionScore = preScore != null ? preScore : null;
+      const allGen = Object.values(batches).flatMap((b) => b.items || []);
+      rawPerformedItems = allGen.filter((item) => {
+        const st = String(item.state || '').toUpperCase();
+        return st.includes('ACCEPT') || st.includes('COMPLET') || st.includes('DONE') || st.includes('PERFORM');
+      });
     }
+    const actualConfirmedCount = rawPerformedItems.length;
 
-    const actionScore = (firstBay && firstBay.action_compliance_pct != null)
-      ? Math.round(firstBay.action_compliance_pct)
-      : (meta.action_compliance != null ? Math.round(meta.action_compliance) : calculatedActionScore);
+    const totalBatchItems = movedCount + restockedCount + removedCount + exceptionCount;
+    const totalRequiredActions = Math.max(actualConfirmedCount + unperformedCount, totalBatchItems, Number(meta.total_action_items || 0));
+
+    let actionScore = null;
+    let actionSubtext = 'User Completed Actions';
+    let actionClass = 'ir-comp-step-val is-action';
+
+    if (totalRequiredActions === 0) {
+      actionScore = preScore !== null ? preScore : (postScore !== null ? postScore : 100);
+      actionSubtext = 'No Actions Required';
+      actionClass = 'ir-comp-step-val is-action';
+    } else if (actualConfirmedCount === 0) {
+      // User performed ZERO actions (or stopped early without touching items)
+      // Never jump to fake 96% or 98%! Must stay at pre-action baseline with warning.
+      actionScore = preScore !== null ? preScore : 0;
+      actionSubtext = `0 of ${totalRequiredActions} Actions Completed (None performed)`;
+      actionClass = 'ir-comp-step-val is-action needs-attention';
+    } else {
+      // User performed confirmed actions:
+      const execRate = Math.min(1.0, actualConfirmedCount / totalRequiredActions);
+      const baseForExec = preScore !== null ? preScore : 0;
+      actionScore = Math.min(100, Math.round(baseForExec + (100 - baseForExec) * execRate));
+      actionSubtext = `${actualConfirmedCount} of ${totalRequiredActions} Actions Completed`;
+      actionClass = (actualConfirmedCount < totalRequiredActions)
+        ? 'ir-comp-step-val is-action has-partial'
+        : 'ir-comp-step-val is-action';
+    }
 
     const preLabel = preScore !== null ? `${preScore}%` : '—';
     const actionLabel = actionScore !== null ? `${actionScore}%` : '—';
@@ -2403,6 +2434,12 @@
     setText('ir-comp-step-pre-val', preLabel);
     setText('ir-comp-step-action-val', actionLabel);
     setText('ir-comp-step-post-val', postLabel);
+    setText('ir-comp-step-action-sub', actionSubtext);
+
+    const actionValEl = byId('ir-comp-step-action-val');
+    if (actionValEl) {
+      actionValEl.className = actionClass;
+    }
 
     const postValEl = byId('ir-comp-step-post-val');
     if (postValEl) {
@@ -2493,6 +2530,9 @@
     setText('ir-comp-step-pre-val', '—');
     setText('ir-comp-step-action-val', '—');
     setText('ir-comp-step-post-val', '—');
+    setText('ir-comp-step-action-sub', 'User Completed Actions');
+    const actionValElClear = byId('ir-comp-step-action-val');
+    if (actionValElClear) actionValElClear.className = 'ir-comp-step-val is-action';
     setText('ir-stat-lift-val', '—');
     setText('ir-stat-lift-badge', '—');
     const progBar = byId('ir-stat-lift-bar');

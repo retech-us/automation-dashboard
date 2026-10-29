@@ -3572,6 +3572,18 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 for item in digital_items
                 if (not item.action_taken or item.action_taken == "-") and str(item.action_type or "").casefold() == "ok"
             ]
+            perf_cnt = len(flow.get("performed_actions") or [])
+            unperf_cnt = len(flow.get("unperformed_actions") or [])
+            tot_req = perf_cnt + unperf_cnt
+            init_c = flow.get("metadata", {}).get("initial_compliance")
+            if init_c is None:
+                init_c = 25.0
+            if tot_req > 0:
+                exec_rate = perf_cnt / tot_req
+                calc_action_comp = round(min(100.0, init_c + (100.0 - init_c) * exec_rate), 1)
+                flow["metadata"]["action_compliance"] = calc_action_comp
+            elif is_incomplete or perf_cnt == 0:
+                flow["metadata"]["action_compliance"] = init_c
             return flow
         except Exception as e:
             print(f"[task_flow] Could not fetch live data for task {task_id}: {e}")
