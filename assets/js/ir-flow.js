@@ -2402,20 +2402,36 @@
       }
     });
 
-    // Extract Before vs After compliance truthfully
-    let initialScore = null;
-    let finalScore = null;
-    const firstBay = Object.values(baySummaries)[0];
-    if (firstBay) {
-      if (firstBay.initial_pre_compliance_pct !== null && firstBay.initial_pre_compliance_pct !== undefined) {
-        initialScore = Math.round(firstBay.initial_pre_compliance_pct);
-      } else if (firstBay.pre_compliance_pct !== null && firstBay.pre_compliance_pct !== undefined) {
-        initialScore = Math.round(firstBay.pre_compliance_pct);
-      } else if (firstBay.compliance_pct !== null && firstBay.compliance_pct !== undefined) {
-        initialScore = Math.round(firstBay.compliance_pct);
+    // Extract Consolidated Pre (baseline), Action (after action taken), and Post compliance across all bays
+    let initialScore = meta.initial_compliance != null ? Math.round(Number(meta.initial_compliance)) : null;
+    let actionScoreOverride = meta.action_compliance != null ? Math.round(Number(meta.action_compliance)) : null;
+    let finalScore = meta.final_compliance != null ? Math.round(Number(meta.final_compliance)) : null;
+
+    const allBays = Object.values(baySummaries || {});
+    if (allBays.length > 0) {
+      if (initialScore === null) {
+        const preVals = allBays
+          .map((b) => (b.initial_pre_compliance_pct != null ? b.initial_pre_compliance_pct : b.pre_compliance_pct))
+          .filter((v) => v != null && !isNaN(v));
+        if (preVals.length > 0) {
+          initialScore = Math.round(preVals.reduce((a, b) => a + Number(b), 0) / preVals.length);
+        }
       }
-      if (firstBay.post_compliance_pct !== null && firstBay.post_compliance_pct !== undefined) {
-        finalScore = Math.round(firstBay.post_compliance_pct);
+      if (actionScoreOverride === null) {
+        const actVals = allBays
+          .map((b) => (b.action_compliance_pct != null ? b.action_compliance_pct : b.compliance_pct))
+          .filter((v) => v != null && !isNaN(v));
+        if (actVals.length > 0) {
+          actionScoreOverride = Math.round(actVals.reduce((a, b) => a + Number(b), 0) / actVals.length);
+        }
+      }
+      if (finalScore === null) {
+        const postVals = allBays
+          .map((b) => b.post_compliance_pct)
+          .filter((v) => v != null && !isNaN(v));
+        if (postVals.length > 0) {
+          finalScore = Math.round(postVals.reduce((a, b) => a + Number(b), 0) / postVals.length);
+        }
       }
     }
     
@@ -2439,6 +2455,7 @@
         okNoActionItems: data.ok_no_action_items || [],
         allDigitalActions: data.all_digital_actions || [],
         baySummaries: data.bay_summaries || {},
+        actionScore: actionScoreOverride,
       },
     );
 
@@ -2536,20 +2553,28 @@
     // 3-Stage Compliance Calculation: Pre-Photo -> User Actions -> Post-Photo
     const preScore = (initialScore !== null && initialScore !== undefined)
       ? initialScore
-      : (meta.initial_compliance != null ? Math.round(meta.initial_compliance) : (firstBay && firstBay.initial_pre_compliance_pct != null ? Math.round(firstBay.initial_pre_compliance_pct) : null));
+      : (meta.initial_compliance != null ? Math.round(Number(meta.initial_compliance)) : null);
 
     const postScore = (finalScore !== null && finalScore !== undefined)
       ? finalScore
-      : (meta.final_compliance != null ? Math.round(meta.final_compliance) : (firstBay && firstBay.post_compliance_pct != null ? Math.round(firstBay.post_compliance_pct) : null));
+      : (meta.final_compliance != null ? Math.round(Number(meta.final_compliance)) : null);
+
+    const actionOverride = (evidenceInfo && evidenceInfo.actionScore != null)
+      ? evidenceInfo.actionScore
+      : (meta.action_compliance != null ? Math.round(Number(meta.action_compliance)) : null);
 
     const totalBatchItems = movedCount + restockedCount + removedCount + exceptionCount;
     const totalRequiredActions = Math.max(actualConfirmedCount + unperformedCount, totalBatchItems, Number(meta.total_action_items || 0));
 
     let actionScore = null;
-    let actionSubtext = 'User Completed Actions';
+    let actionSubtext = 'Compliance After Action Taken';
     let actionClass = 'ir-comp-step-val is-action';
 
-    if (totalRequiredActions === 0) {
+    if (actionOverride !== null) {
+      actionScore = actionOverride;
+      actionSubtext = `${actionScore}% Pre-Photo After Action Taken`;
+      actionClass = (actionScore >= 90) ? 'ir-comp-step-val is-action' : 'ir-comp-step-val is-action has-partial';
+    } else if (totalRequiredActions === 0) {
       actionScore = preScore !== null ? preScore : (postScore !== null ? postScore : 100);
       actionSubtext = 'No Actions Required';
       actionClass = 'ir-comp-step-val is-action';

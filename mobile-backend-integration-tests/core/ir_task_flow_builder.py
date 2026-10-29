@@ -1793,6 +1793,7 @@ def synthesize_task_flow_from_raw_actions(
         pog_sh_count = max(bay_pog_shelves) if bay_pog_shelves else 0
         has_shelf_disc = bool(rog_sh_count > 0 and pog_sh_count > 0 and rog_sh_count != pog_sh_count)
 
+        act_comp_val = meta.get("action_compliance")
         bay_summaries[bay] = {
             "bay_name": bay,
             "pre_photo_scan_id": scan_id,
@@ -1800,8 +1801,9 @@ def synthesize_task_flow_from_raw_actions(
             "ai_latency_sec": 24,
             "pre_compliance_pct": initial_comp,
             "initial_pre_compliance_pct": initial_comp,
+            "action_compliance_pct": float(act_comp_val) if act_comp_val is not None else None,
             "post_compliance_pct": final_comp,
-            "compliance_lift_pct": round(final_comp - initial_comp, 1) if final_comp is not None else 0.0,
+            "compliance_lift_pct": round(final_comp - initial_comp, 1) if (final_comp is not None and initial_comp is not None) else 0.0,
             "action_batches_count": len([b for b in action_batches.values() if b.bay == bay]),
             "action_items_count": len(bay_items),
             "rog_shelf_count": rog_sh_count,
