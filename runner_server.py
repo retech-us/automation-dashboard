@@ -3364,11 +3364,67 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                                 act["coordinates"] = matched_s["coordinates"]
                             if not act.get("image") and matched_s.get("image"):
                                 act["image"] = matched_s["image"]
-                        elif str(act.get("action") or "").upper().endswith("IDENTIFY") and not act.get("coordinates"):
-                            act["coordinates"] = {"x": 756.0 + (i % 5) * 80.0, "y": 702.0, "width": 78.0, "height": 132.0}
-                            act["image"] = "https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/fef66c30-9f6d-48b0-9969-4708b35a9072.png"
                 except Exception:
                     pass
+
+            digital_items, digital_loaded, digital_error, _ = load_digital_report_actions(
+                base_url,
+                token,
+                raw_actions,
+            )
+            # Enrich raw_actions with linked scan digital report items (e.g. identify actions)
+            if digital_items:
+                digital_by_pos_map = {}
+                for d_it in digital_items:
+                    d_scan = getattr(d_it, "scan_id", None)
+                    d_sec = str(getattr(d_it, "section", "") or "").replace("bay", "").strip()
+                    for p_str in (getattr(d_it, "pog_position", ""), getattr(d_it, "rog_position", "")):
+                        if ":" in str(p_str or ""):
+                            sh_s, pos_s = str(p_str).split(":", 1)
+                            try:
+                                digital_by_pos_map[(d_scan, d_sec, int(sh_s.strip()), str(pos_s).strip())] = d_it
+                                digital_by_pos_map[(d_scan, int(sh_s.strip()), str(pos_s).strip())] = d_it
+                            except Exception:
+                                pass
+                for act in raw_actions:
+                    act_type_str = str(act.get("action") or "").upper()
+                    if "IDENTIFY" in act_type_str or not act.get("displayed_upc") or str(act.get("displayed_upc") or "").strip() in ("", "000000000000"):
+                        cur_p = act.get("current_position") or {}
+                        cur_sh = cur_p.get("shelf")
+                        cur_pos = str(cur_p.get("position") or "").strip()
+                        cur_sec = str((cur_p.get("section_info") or {}).get("name") or "").replace("bay", "").strip()
+                        cur_scan = cur_p.get("scan_id")
+                        matched_d = (
+                            digital_by_pos_map.get((cur_scan, cur_sec, cur_sh, cur_pos))
+                            or digital_by_pos_map.get((cur_scan, cur_sh, cur_pos))
+                        )
+                        if matched_d:
+                            if matched_d.product_name:
+                                act["product_title"] = matched_d.product_name
+                            if matched_d.upc:
+                                act["displayed_upc"] = matched_d.upc
+                                act["upc"] = matched_d.upc
+                            d_prod = (matched_d.raw or {}).get("product") or {}
+                            d_img = (d_prod.get("image") if isinstance(d_prod, dict) else None) or (matched_d.raw or {}).get("crop_image_url")
+                            if d_img:
+                                act["image"] = d_img
+                                act["crop_image_url"] = d_img
+                            pog_p = str(getattr(matched_d, "pog_position", "") or "").strip()
+                            exp_sh = cur_sh
+                            exp_p = cur_pos
+                            if ":" in pog_p:
+                                try:
+                                    exp_sh = int(pog_p.split(":", 1)[0].strip())
+                                    exp_p = str(pog_p.split(":", 1)[1].strip())
+                                except Exception:
+                                    pass
+                            if not act.get("expected_position"):
+                                act["expected_position"] = {
+                                    "shelf": exp_sh,
+                                    "position": exp_p,
+                                    "section_info": cur_p.get("section_info"),
+                                    "scan_id": cur_scan,
+                                }
 
             flow = synthesize_task_flow_from_raw_actions(
                 task_id,
@@ -3383,11 +3439,6 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 post_error=post_stage_error,
                 metadata_override=meta_override,
             ))
-            digital_items, digital_loaded, digital_error, _ = load_digital_report_actions(
-                base_url,
-                token,
-                raw_actions,
-            )
             flow = enrich_flow_with_digital_shelf_evidence(flow, digital_items)
             flow["all_digital_actions"] = [
                 {
