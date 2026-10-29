@@ -4544,12 +4544,13 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
         is_force_live = bool(query.get("force_live", [""])[0].lower() in ("1", "true", "yes"))
 
-        # Check memory cache (30 minutes TTL)
+        # Check memory cache (30 minutes TTL, only for finalized tasks)
         cache_key = (instance, task_id)
         cached_entry = TASK_FLOW_CACHE.get(cache_key)
         if cached_entry and not is_force_live:
             ts, flow_data = cached_entry
-            if time.time() - ts < 1800:
+            c_status = str((flow_data.get("metadata") or {}).get("status") or "").lower()
+            if c_status not in ("in_progress", "started", "active", "not_started", "new") and (time.time() - ts < 1800):
                 return flow_data
 
         # Benchmark reference tasks return instantly with validated data unless force_live is requested
@@ -4558,27 +4559,31 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             TASK_FLOW_CACHE[cache_key] = (time.time(), flow)
             return flow
 
-        # Check persistent disk cache
+        # Check persistent disk cache (only for finalized tasks)
         disk_flow_path = os.path.join(os.path.dirname(__file__), "data", "ir_tasks", f"flow_{instance}_{task_id}.json")
         if not is_force_live and os.path.exists(disk_flow_path):
             try:
                 with open(disk_flow_path, "r", encoding="utf-8") as f:
                     disk_flow = json.load(f)
-                TASK_FLOW_CACHE[cache_key] = (time.time(), disk_flow)
-                return disk_flow
+                d_status = str((disk_flow.get("metadata") or {}).get("status") or "").lower()
+                if d_status not in ("in_progress", "started", "active", "not_started", "new"):
+                    TASK_FLOW_CACHE[cache_key] = (time.time(), disk_flow)
+                    return disk_flow
             except Exception:
                 pass
 
         # Try live fetch
         live_flow = self._fetch_live_task_flow(base_url, instance, task_id)
         if live_flow:
-            TASK_FLOW_CACHE[cache_key] = (time.time(), live_flow)
-            try:
-                os.makedirs(os.path.dirname(disk_flow_path), exist_ok=True)
-                with open(disk_flow_path, "w", encoding="utf-8") as f:
-                    json.dump(live_flow, f)
-            except Exception:
-                pass
+            live_status = str((live_flow.get("metadata") or {}).get("status") or "").lower()
+            if live_status not in ("in_progress", "started", "active", "not_started", "new"):
+                TASK_FLOW_CACHE[cache_key] = (time.time(), live_flow)
+                try:
+                    os.makedirs(os.path.dirname(disk_flow_path), exist_ok=True)
+                    with open(disk_flow_path, "w", encoding="utf-8") as f:
+                        json.dump(live_flow, f)
+                except Exception:
+                    pass
             return live_flow
 
         # Fallback to local / benchmark reference builder

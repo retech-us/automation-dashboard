@@ -1810,7 +1810,7 @@
     <!-- Session Control Bar -->
     <div class="quick-presets-bar">
         <div class="studio-session-meta">
-            <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Active task</span>
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Loaded task</span>
             <span id="disp-task-id" class="badge badge-gray" style="font-size: 11px; font-weight: 800; padding: 3px 8px;">Not Loaded</span>
             <span id="disp-active-status-badge" class="badge badge-blue" style="font-size: 10.5px; padding: 3px 10px; font-weight: 700;">
                 IDLE
@@ -3899,8 +3899,11 @@
                         setElementValue('cfg-task-id-direct', targetTaskId);
                         updateReportBadgesForActiveTask(targetTaskId);
                     }
-                    setElementText('disp-task-status', 'IN PROGRESS');
-                    setElementText('disp-active-status-badge', 'STATUS: IN PROGRESS');
+                    const isDone = data.task_status && (String(data.task_status).toLowerCase().includes('complet') || String(data.task_status).toLowerCase().includes('finish'));
+                    setElementText('disp-task-status', isDone ? 'COMPLETED' : 'IN PROGRESS');
+                    setElementText('disp-active-status-badge', isDone ? 'STATUS: COMPLETED' : 'STATUS: IN PROGRESS');
+                    const activeBadgeEl = document.getElementById('disp-active-status-badge');
+                    if (activeBadgeEl) activeBadgeEl.className = isDone ? 'badge badge-green' : 'badge badge-orange';
                     updateActionCounts();
                     renderActionTable();
                     renderMobileScreen();
@@ -4796,7 +4799,14 @@
                 const audit = await runHistoricalTaskAudit({ embedded: true });
                 const validation = mergeTaskValidation(data.validation, audit && audit.validation);
                 applyExistingTaskValidation(validation);
-                setElementText('disp-active-status-badge', validation?.can_start ? 'STATUS: READY' : 'STATUS: BLOCKED');
+                const isTaskDone = data.task_status && (String(data.task_status).toLowerCase().includes('complet') || String(data.task_status).toLowerCase().includes('finish'));
+                const isTaskFail = data.task_status && (String(data.task_status).toLowerCase().includes('incomplet') || String(data.task_status).toLowerCase().includes('fail'));
+                const badgeStatus = isTaskDone ? 'STATUS: COMPLETED' : (isTaskFail ? 'STATUS: INCOMPLETE' : (validation?.can_start ? 'STATUS: READY' : 'STATUS: BLOCKED'));
+                setElementText('disp-active-status-badge', badgeStatus);
+                const activeBadgeEl = document.getElementById('disp-active-status-badge');
+                if (activeBadgeEl) {
+                    activeBadgeEl.className = isTaskDone ? 'badge badge-green' : (isTaskFail ? 'badge badge-red' : (validation?.can_start ? 'badge badge-blue' : 'badge badge-yellow'));
+                }
                 renderActionTable();
                 renderMobileScreen();
                 if (!audit || audit.status !== 'success') {

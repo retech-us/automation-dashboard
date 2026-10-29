@@ -1132,7 +1132,12 @@
       const liveTaskId = data.metadata ? data.metadata.task_id : targetId;
       if (statusBadge) {
         const retailLabel = data.metadata ? (data.metadata.retailer || inst.toUpperCase()) : inst.toUpperCase();
-        statusBadge.textContent = `Live: Task #${liveTaskId} (${retailLabel})`;
+        const taskStatus = (data.metadata && data.metadata.status ? data.metadata.status : '').toLowerCase();
+        let statusText = 'Loaded';
+        if (taskStatus === 'completed' || taskStatus === 'done') statusText = 'Completed';
+        else if (taskStatus === 'incomplete' || taskStatus === 'failed' || taskStatus === 'cancelled') statusText = 'Incomplete';
+        else if (taskStatus.includes('progress') || taskStatus.includes('started') || taskStatus.includes('active')) statusText = 'In Progress';
+        statusBadge.textContent = `Task #${liveTaskId} · ${statusText} (${retailLabel})`;
       }
       syncEmbeddedTabs(liveTaskId, inst);
     } catch (err) {
@@ -2477,6 +2482,13 @@
         byId('ir-exec-verdict-icon').textContent = '✅';
         byId('ir-exec-verdict-title').textContent = `Reset Completed Successfully — ${finalScore}% Compliance`;
         byId('ir-exec-verdict-desc').textContent = `${assocName} completed the reset for ${meta.task_title}. All ${totalTouched} requested items were adjusted and restocked. Final verification scored ${finalScore}%, passing the 95% quality standard.${unperfNote}`;
+      } else if (isCompleted) {
+        verdictCard.className = 'ir-exec-verdict ir-exec-verdict--review';
+        byId('ir-exec-verdict-icon').textContent = '⚠️';
+        byId('ir-exec-verdict-title').textContent = finalScore !== null
+          ? `Reset Completed — ${finalScore}% Compliance (Needs Attention, Target: 95%)`
+          : `Reset Completed — Verification Review Pending`;
+        byId('ir-exec-verdict-desc').textContent = `${assocName} completed the reset for ${meta.task_title}, but final shelf accuracy finished at ${finalScore !== null ? finalScore + '%' : 'review level'}, below the 95% release standard.${unperfNote} Review flagged items below.`;
       } else {
         verdictCard.className = 'ir-exec-verdict ir-exec-verdict--review';
         byId('ir-exec-verdict-icon').textContent = '⚠️';
