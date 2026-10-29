@@ -3168,12 +3168,26 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             # Compliance
             pog_comp = task_obj.get("pog_compliance") or []
             final_comp = None
+            initial_comp = None
+            raw_comp_val = None
             if pog_comp and isinstance(pog_comp[0], dict) and "compliance" in pog_comp[0]:
-                final_comp = round(float(pog_comp[0]["compliance"]) * 100.0, 1)
+                raw_comp_val = round(float(pog_comp[0]["compliance"]) * 100.0, 1)
+
+            if status_slug in ("incomplete", "failed", "cancelled"):
+                final_comp = None
+                initial_comp = raw_comp_val if raw_comp_val is not None else 25.0
+            elif status_slug in ("in_progress", "started", "not_started", "new"):
+                final_comp = None
+                initial_comp = raw_comp_val if raw_comp_val is not None else 25.0
+            elif raw_comp_val is not None:
+                final_comp = raw_comp_val
+                initial_comp = 35.0 if final_comp >= 90 else 25.0
             elif status_slug in ("completed", "done", "finished"):
                 final_comp = 98.0
+                initial_comp = 35.0
             else:
                 final_comp = None
+                initial_comp = 25.0
 
             # Store timezone conversion
             store_tz_name = (st.get("timezone") if isinstance(st, dict) else None) or "America/New_York"
@@ -3335,7 +3349,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "status": status_slug,
                 "status_reason": task_obj.get("status_reason") or ("Stopped before completion" if status_slug in ("incomplete", "failed", "cancelled") else ""),
                 "final_compliance": final_comp,
-                "initial_compliance": 35.0 if (final_comp is not None and final_comp >= 90) else 25.0,
+                "initial_compliance": initial_comp,
                 "wall_duration_min": duration_val,
                 "duration_sec": duration_sec,
                 "duration_source": duration_source,
