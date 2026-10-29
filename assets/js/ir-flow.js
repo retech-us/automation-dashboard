@@ -1181,6 +1181,55 @@
     return '';
   }
 
+  function openBBoxLightbox(item, scanId, scanUrl) {
+    const dialog = byId('ir-bbox-lightbox');
+    if (!dialog) return;
+
+    const sId = scanId || item.scan_id || resolveItemScanId(item);
+    const sUrl = scanUrl || item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, currentFlowData && currentFlowData.metadata);
+    const cropImg = item.crop_image_url || item.image || '';
+    const bbox = item.bounding_box || {};
+
+    const imgEl = byId('ir-bbox-lightbox-img');
+    if (imgEl) {
+      imgEl.src = cropImg;
+      imgEl.alt = item.product_name || 'Scan crop';
+    }
+
+    setText('ir-bbox-lightbox-product', item.product_name || 'Identified Product');
+    setText('ir-bbox-lightbox-upc', item.upc ? `UPC ${item.upc}` : 'UPC unavailable');
+    setText('ir-bbox-lightbox-scan', sId ? `Scan #${sId}` : 'Scan unavailable');
+
+    const coordsStr = (bbox.x !== undefined && bbox.y !== undefined)
+      ? `X: ${bbox.x}, Y: ${bbox.y} (W: ${bbox.width || 80}, H: ${bbox.height || 130})`
+      : (bbox.ymin !== undefined ? `[${bbox.ymin}, ${bbox.xmin}, ${bbox.ymax}, ${bbox.xmax}]` : 'Available on Shelf Scan Canvas');
+    setText('ir-bbox-lightbox-coords', coordsStr);
+
+    const posStr = item.from_shelf ? `Shelf ${item.from_shelf}, Pos ${item.from_pos || '—'}` : (item.to_shelf ? `Shelf ${item.to_shelf}, Pos ${item.to_pos || '—'}` : 'Recorded on shelf scan');
+    setText('ir-bbox-lightbox-pos', posStr);
+
+    setText('ir-bbox-lightbox-reason', item.reason || 'AI Vision Identification');
+
+    const shelfLink = byId('ir-bbox-lightbox-shelf-link');
+    if (shelfLink) {
+      if (sUrl) {
+        shelfLink.href = sUrl;
+        shelfLink.style.display = 'inline-flex';
+        shelfLink.innerHTML = `📸 View Bounding Box on Scan #${sId || ''} ↗`;
+      } else {
+        shelfLink.style.display = 'none';
+      }
+    }
+
+    const closeBtn = byId('ir-bbox-lightbox-close');
+    if (closeBtn) closeBtn.onclick = () => dialog.close();
+    dialog.onclick = (e) => {
+      if (e.target === dialog) dialog.close();
+    };
+
+    if (!dialog.open) dialog.showModal();
+  }
+
   function openInsightDialog({ title, subtitle, summary = [], items = [] }) {
     const dialog = byId('ir-insight-dialog');
     const body = byId('ir-insight-dialog-body');
@@ -1197,7 +1246,11 @@
         const term = document.createElement('dt');
         term.textContent = label;
         const description = document.createElement('dd');
-        description.textContent = value || 'Not recorded';
+        if (typeof value === 'string' && value.includes('<a ')) {
+          description.innerHTML = value;
+        } else {
+          description.textContent = value || 'Not recorded';
+        }
         list.append(term, description);
       });
       summaryEl.appendChild(list);
@@ -1209,17 +1262,59 @@
       const row = document.createElement('tr');
       const productCell = document.createElement('td');
       productCell.className = 'ir-insight-product';
-      const product = document.createElement('strong');
-      product.textContent = item.product_name || 'Product name unavailable';
-      const upc = document.createElement('span');
-      upc.textContent = item.upc ? `UPC ${item.upc}` : 'UPC unavailable';
-      productCell.append(product, upc);
+
+      const rawAct = item.action_type || 'Action unavailable';
+      const isIdentify = String(rawAct).toUpperCase().includes('IDENTIFY') || Boolean(item.bounding_box);
+      const cropUrl = item.crop_image_url || (isIdentify ? item.image : null);
+      const bbox = item.bounding_box;
+
+      const itemScanId = item.scan_id || resolveItemScanId(item);
+      const scanUrl = buildDigitalShelfScanUrl(itemScanId, item, currentFlowData && currentFlowData.metadata);
+
+      if (isIdentify && cropUrl) {
+        productCell.innerHTML = `
+          <div class="ir-bbox-product-wrap">
+            <div class="ir-bbox-thumb-box" title="Click to inspect identified scan bounding box" role="button" tabindex="0">
+              <img src="${escapeHtml(cropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="this.style.display='none'"/>
+              <div class="ir-bbox-reticle">
+                <span class="corner tl"></span>
+                <span class="corner tr"></span>
+                <span class="corner bl"></span>
+                <span class="corner br"></span>
+              </div>
+              <span class="ir-bbox-mini-tag">AI BOX</span>
+            </div>
+            <div class="ir-bbox-product-info">
+              <strong>${escapeHtml(item.product_name || 'Product name unavailable')}</strong>
+              <span class="ir-product-upc">UPC ${escapeHtml(item.upc || 'unavailable')}</span>
+              ${bbox ? `<span class="ir-bbox-coord-pill" title="Detected shelf coordinates">🎯 [X: ${escapeHtml(String(bbox.x || bbox.xmin || 0))}, Y: ${escapeHtml(String(bbox.y || bbox.ymin || 0))}]</span>` : ''}
+            </div>
+          </div>
+        `;
+        const thumbBox = productCell.querySelector('.ir-bbox-thumb-box');
+        if (thumbBox) {
+          thumbBox.onclick = (e) => {
+            e.stopPropagation();
+            openBBoxLightbox(item, itemScanId, scanUrl);
+          };
+          thumbBox.onkeydown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openBBoxLightbox(item, itemScanId, scanUrl);
+            }
+          };
+        }
+      } else {
+        const product = document.createElement('strong');
+        product.textContent = item.product_name || 'Product name unavailable';
+        const upc = document.createElement('span');
+        upc.textContent = item.upc ? `UPC ${item.upc}` : 'UPC unavailable';
+        productCell.append(product, upc);
+      }
 
       // Scan / Digital Shelf Column (directly in front of Action)
       const scanCell = document.createElement('td');
       scanCell.className = 'ir-col-scan';
-      const itemScanId = item.scan_id || resolveItemScanId(item);
-      const scanUrl = buildDigitalShelfScanUrl(itemScanId, item, currentFlowData && currentFlowData.metadata);
       if (itemScanId && scanUrl) {
         scanCell.innerHTML = `
           <a href="${scanUrl}" target="_blank" rel="noopener noreferrer" class="ir-scan-link" title="Open Scan #${itemScanId} in Digital Shelf">
@@ -1787,18 +1882,6 @@
         const rowScanId = (firstItem && (firstItem.scan_id || resolveItemScanId(firstItem))) || (id === 'ir-post-action-list' ? currentPostScanId() : currentPreScanId());
         const rowScanUrl = buildDigitalShelfScanUrl(rowScanId, firstItem, meta);
 
-        if (rowScanId && rowScanUrl) {
-          const scanPill = document.createElement('a');
-          scanPill.href = rowScanUrl;
-          scanPill.target = '_blank';
-          scanPill.rel = 'noopener noreferrer';
-          scanPill.className = 'ir-scan-pill';
-          scanPill.title = `Open Scan #${rowScanId} in Digital Shelf`;
-          scanPill.innerHTML = `📸 Scan #${rowScanId} ↗`;
-          scanPill.onclick = (e) => e.stopPropagation();
-          item.appendChild(scanPill);
-        }
-
         const title = document.createElement('strong');
         title.textContent = row.type;
         const detail = document.createElement('span');
@@ -1814,8 +1897,8 @@
             ['Evidence source', id === 'ir-performed-action-list'
               ? 'Digital Shelf report'
               : (id === 'ir-post-action-list' ? 'Post-photo action list' : 'Pre-photo action list')],
-            ['Scan ID', rowScanId ? `#${rowScanId}` : 'Not specified'],
-            ['Digital Shelf', rowScanUrl ? 'Available ↗' : 'Not linked'],
+            ['Scan ID', rowScanId ? `<span class="ir-scan-tag">Scan #${escapeHtml(String(rowScanId))}</span>` : 'Not specified'],
+            ['Digital Shelf', rowScanUrl ? `<a href="${escapeHtml(rowScanUrl)}" target="_blank" rel="noopener noreferrer" class="ir-scan-link">Open Digital Shelf ↗</a>` : 'Not linked'],
             ['Items shown', String(row.items.length)],
           ],
           items: row.items,
@@ -2241,7 +2324,19 @@
     };
   }
 
+  let currentDrawerItems = [];
+  window.irOpenBBoxLightbox = function(idx) {
+    const item = currentDrawerItems[idx];
+    if (item) {
+      const meta = currentFlowData && currentFlowData.metadata;
+      const sId = item.scan_id || resolveItemScanId(item);
+      const sUrl = item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, meta);
+      openBBoxLightbox(item, sId, sUrl);
+    }
+  };
+
   function openItemDrawer(title, items, defaultType) {
+    currentDrawerItems = items;
     const drawer = byId('ir-flow-drawer');
     const overlay = byId('ir-flow-drawer-overlay');
     if (!drawer || !overlay) return;
@@ -2266,18 +2361,37 @@
           const sId = item.scan_id || resolveItemScanId(item);
           const sUrl = item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, meta);
           const actRaw = (item.action_type || defaultType || '').toUpperCase();
-          const isIdentify = actRaw.includes('IDENTIFY');
+          const isIdentify = actRaw.includes('IDENTIFY') || Boolean(item.bounding_box);
+          const bbox = item.bounding_box;
+          const cropUrl = item.crop_image_url || (isIdentify ? item.image : null);
           return `
           <tr>
             <td style="font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
             <td>
-              <div style="display:flex; align-items:center; gap:10px;">
-                ${item.image ? `<img src="${escapeHtml(item.image)}" alt="" style="width:36px; height:36px; object-fit:contain; border-radius:4px; border:1px solid var(--border-color, #e5e7eb); background:#fff; flex-shrink:0;" onerror="this.style.display='none'"/>` : ''}
+              ${isIdentify && cropUrl ? `
+                <div class="ir-bbox-product-wrap">
+                  <div class="ir-bbox-thumb-box" onclick="window.irOpenBBoxLightbox(${idx})" title="Click to inspect identified scan bounding box" role="button" tabindex="0">
+                    <img src="${escapeHtml(cropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="this.style.display='none'"/>
+                    <div class="ir-bbox-reticle">
+                      <span class="corner tl"></span>
+                      <span class="corner tr"></span>
+                      <span class="corner bl"></span>
+                      <span class="corner br"></span>
+                    </div>
+                    <span class="ir-bbox-mini-tag">AI BOX</span>
+                  </div>
+                  <div class="ir-bbox-product-info">
+                    <div style="font-weight: 700; font-size: 12.5px; color: var(--text);">${escapeHtml(item.product_name || 'Product')}</div>
+                    <div style="font-size: 10px; font-family: monospace; color: var(--text-muted);">UPC: ${escapeHtml(item.upc || '—')}</div>
+                    ${bbox ? `<span class="ir-bbox-coord-pill" title="Detected shelf coordinates">🎯 [X: ${escapeHtml(String(bbox.x || bbox.xmin || 0))}, Y: ${escapeHtml(String(bbox.y || bbox.ymin || 0))}]</span>` : ''}
+                  </div>
+                </div>
+              ` : `
                 <div>
                   <div style="font-weight: 700; font-size: 12.5px; color: var(--text);">${escapeHtml(item.product_name || 'Product')}</div>
                   <div style="font-size: 10px; font-family: monospace; color: var(--text-muted);">UPC: ${escapeHtml(item.upc || '—')}</div>
                 </div>
-              </div>
+              `}
             </td>
             <td>
               ${(() => {

@@ -524,6 +524,69 @@
           </div>
         </dialog>
 
+        <!-- Bounding Box Inspector Lightbox for Identified Products -->
+        <dialog id="ir-bbox-lightbox" class="ir-bbox-lightbox" aria-labelledby="ir-bbox-lightbox-title">
+          <div class="ir-bbox-lightbox__header">
+            <div>
+              <span class="ir-review-kicker">🎯 AI Vision Detection</span>
+              <h2 id="ir-bbox-lightbox-title">Identified Product Bounding Box</h2>
+              <p id="ir-bbox-lightbox-subtitle">Scan crop and detection coordinates from shelf photo</p>
+            </div>
+            <button type="button" id="ir-bbox-lightbox-close" class="btn btn--ghost btn--sm" aria-label="Close bounding box inspector">✕ Close</button>
+          </div>
+          <div class="ir-bbox-lightbox__content">
+            <div class="ir-bbox-lightbox__viewport">
+              <div class="ir-bbox-lightbox__image-frame">
+                <img id="ir-bbox-lightbox-img" src="" alt="Identified Product Scan Crop" />
+                <div class="ir-bbox-lightbox__viewfinder">
+                  <span class="corner top-left"></span>
+                  <span class="corner top-right"></span>
+                  <span class="corner bottom-left"></span>
+                  <span class="corner bottom-right"></span>
+                  <span class="crosshair-h"></span>
+                  <span class="crosshair-v"></span>
+                </div>
+                <div id="ir-bbox-lightbox-badge" class="ir-bbox-tag">🎯 AI Bounding Box</div>
+              </div>
+            </div>
+            <div class="ir-bbox-lightbox__meta">
+              <div class="ir-bbox-meta-row">
+                <span class="ir-bbox-meta-label">Product</span>
+                <strong id="ir-bbox-lightbox-product">—</strong>
+              </div>
+              <div class="ir-bbox-meta-row">
+                <span class="ir-bbox-meta-label">UPC</span>
+                <span id="ir-bbox-lightbox-upc" class="code-val">—</span>
+              </div>
+              <div class="ir-bbox-meta-row">
+                <span class="ir-bbox-meta-label">Action</span>
+                <span id="ir-bbox-lightbox-action" class="status-pill status-pill--purple">🔍 IDENTIFY</span>
+              </div>
+              <div class="ir-bbox-meta-row">
+                <span class="ir-bbox-meta-label">Scan ID</span>
+                <span id="ir-bbox-lightbox-scan">—</span>
+              </div>
+              <div class="ir-bbox-meta-row">
+                <span class="ir-bbox-meta-label">Bounding Box Coordinates</span>
+                <span id="ir-bbox-lightbox-coords" class="code-val">—</span>
+              </div>
+              <div class="ir-bbox-meta-row">
+                <span class="ir-bbox-meta-label">Shelf Position</span>
+                <span id="ir-bbox-lightbox-pos">—</span>
+              </div>
+              <div class="ir-bbox-meta-row">
+                <span class="ir-bbox-meta-label">Detection Status / Reason</span>
+                <span id="ir-bbox-lightbox-reason" style="color: var(--warn, #f59e0b);">—</span>
+              </div>
+              <div class="ir-bbox-lightbox__action-bar">
+                <a id="ir-bbox-lightbox-shelf-link" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--primary btn--sm">
+                  📸 View Bounding Box on Digital Shelf Scan ↗
+                </a>
+              </div>
+            </div>
+          </div>
+        </dialog>
+
         <!-- Live quality findings from the runner snapshot (was previously rendered but hidden) -->
         <section class="panel ir-quality-panel ir-summary-secondary" aria-label="Intelligent Reset quality findings">
           <div class="panel__header">

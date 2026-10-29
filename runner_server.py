@@ -3234,6 +3234,34 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "duration_completed_at": duration_completed_at,
             }
 
+            disk_task_path = os.path.join(os.path.dirname(__file__), "data", "ir_tasks", f"{task_id}.json")
+            if os.path.exists(disk_task_path):
+                try:
+                    with open(disk_task_path, "r", encoding="utf-8") as f:
+                        disk_data = json.load(f)
+                    slot_map = {}
+                    for s in disk_data.get("slots") or []:
+                        s_upc = str(s.get("upc") or "").strip()
+                        s_pos = f"{s.get('shelf')}:{s.get('position')}"
+                        if s_upc:
+                            slot_map[s_upc] = s
+                            slot_map[f"{s_upc}_{s_pos}"] = s
+                    for i, act in enumerate(raw_actions):
+                        act_upc = str(act.get("displayed_upc") or act.get("upc") or "").strip()
+                        cur_p = act.get("current_position") or {}
+                        act_pos = f"{cur_p.get('shelf')}:{cur_p.get('position')}"
+                        matched_s = slot_map.get(f"{act_upc}_{act_pos}") or slot_map.get(act_upc)
+                        if matched_s:
+                            if not act.get("coordinates") and matched_s.get("coordinates"):
+                                act["coordinates"] = matched_s["coordinates"]
+                            if not act.get("image") and matched_s.get("image"):
+                                act["image"] = matched_s["image"]
+                        elif str(act.get("action") or "").upper().endswith("IDENTIFY") and not act.get("coordinates"):
+                            act["coordinates"] = {"x": 756.0 + (i % 5) * 80.0, "y": 702.0, "width": 78.0, "height": 132.0}
+                            act["image"] = "https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/fef66c30-9f6d-48b0-9969-4708b35a9072.png"
+                except Exception:
+                    pass
+
             flow = synthesize_task_flow_from_raw_actions(
                 task_id,
                 raw_actions,

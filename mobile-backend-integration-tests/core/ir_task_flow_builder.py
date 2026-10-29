@@ -51,6 +51,8 @@ class FlowItem:
     discrepancy_detail: Optional[str] = None
     scan_id: Optional[int] = None
     digital_shelf_url: Optional[str] = None
+    bounding_box: Optional[Dict[str, Any]] = None
+    crop_image_url: Optional[str] = None
 
 
 @dataclass
@@ -552,6 +554,9 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
                     state="STATE_REJECTED",
                     reason="Image not Ideal to add to database",
                     actor="800175267",
+                    bounding_box={"x": 756.0, "y": 702.0, "width": 78.0, "height": 132.0, "shelf": 6, "position": "3"},
+                    crop_image_url="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/fef66c30-9f6d-48b0-9969-4708b35a9072.png",
+                    image="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/fef66c30-9f6d-48b0-9969-4708b35a9072.png",
                 ),
                 FlowItem(
                     ledger_id=25207151,
@@ -564,6 +569,9 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
                     state="STATE_REJECTED",
                     reason="Image not Ideal to add to database",
                     actor="800175267",
+                    bounding_box={"x": 838.0, "y": 702.0, "width": 76.0, "height": 132.0, "shelf": 6, "position": "4"},
+                    crop_image_url="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260811/019ff0c8-583f-ea75-f94b-40c72e533387.png",
+                    image="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260811/019ff0c8-583f-ea75-f94b-40c72e533387.png",
                 ),
                 FlowItem(
                     ledger_id=25207152,
@@ -576,6 +584,9 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
                     state="STATE_REJECTED",
                     reason="Image not Ideal to add to database",
                     actor="800175267",
+                    bounding_box={"x": 918.0, "y": 701.0, "width": 77.0, "height": 130.0, "shelf": 6, "position": "5"},
+                    crop_image_url="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260824/01a033eb-6a96-ea76-2b39-569848779522.png",
+                    image="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260824/01a033eb-6a96-ea76-2b39-569848779522.png",
                 ),
                 FlowItem(
                     ledger_id=25207153,
@@ -588,6 +599,9 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
                     state="STATE_REJECTED",
                     reason="Image not Ideal to add to database",
                     actor="800175267",
+                    bounding_box={"x": 998.0, "y": 700.0, "width": 75.0, "height": 133.0, "shelf": 6, "position": "6"},
+                    crop_image_url="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/01934047-e824-6efb-99ad-bfd44df5e545.png",
+                    image="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/01934047-e824-6efb-99ad-bfd44df5e545.png",
                 ),
                 FlowItem(
                     ledger_id=25207154,
@@ -600,6 +614,9 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
                     state="STATE_REJECTED",
                     reason="Image not Ideal to add to database",
                     actor="800175267",
+                    bounding_box={"x": 1076.0, "y": 701.0, "width": 76.0, "height": 131.0, "shelf": 6, "position": "7"},
+                    crop_image_url="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260811/019ff0c8-563c-464a-1a46-15eb5a4dae93.png",
+                    image="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260811/019ff0c8-563c-464a-1a46-15eb5a4dae93.png",
                 ),
             ],
         ),
@@ -1522,6 +1539,37 @@ def synthesize_task_flow_from_raw_actions(
                     inst_host = inst_clean if "." in inst_clean else f"{inst_clean}.rebotics.net"
                     item_shelf_url = f"https://{inst_host}/reporting/scans/{item_scan_id}" if item_scan_id else None
 
+                    raw_coords = (
+                        item.get("coordinates")
+                        or (curr_pos.get("coordinates") if isinstance(curr_pos, dict) else None)
+                        or (exp_pos.get("coordinates") if isinstance(exp_pos, dict) else None)
+                        or item.get("bounding_box")
+                        or item.get("bbox")
+                    )
+                    bbox_data = None
+                    if isinstance(raw_coords, dict):
+                        bbox_data = {
+                            "x": raw_coords.get("x"),
+                            "y": raw_coords.get("y"),
+                            "width": raw_coords.get("width") or raw_coords.get("w") or 80.0,
+                            "height": raw_coords.get("height") or raw_coords.get("h") or 130.0,
+                        }
+                    elif isinstance(raw_coords, (list, tuple)) and len(raw_coords) >= 4:
+                        bbox_data = {
+                            "ymin": raw_coords[0],
+                            "xmin": raw_coords[1],
+                            "ymax": raw_coords[2],
+                            "xmax": raw_coords[3],
+                        }
+
+                    is_identify = "IDENTIFY" in str(act_type or "").upper()
+                    crop_img = (
+                        item.get("crop_image_url")
+                        or item.get("crop_image")
+                        or item.get("cropped_image_url")
+                        or (item.get("image") if is_identify else None)
+                    )
+
                     flow_items.append(FlowItem(
                         ledger_id=raw_id,
                         product_report_id=item.get("product_id") or (1400000 + idx * 7),
@@ -1545,13 +1593,15 @@ def synthesize_task_flow_from_raw_actions(
                         actor=performer,
                         state=state,
                         reason=reason,
-                        image=item.get("image"),
+                        image=crop_img or item.get("image"),
                         planogram_facings=item.get("horizontal_facings"),
                         discrepancy_type=disc_type,
                         discrepancy_label=disc_label,
                         discrepancy_detail=disc_detail,
                         scan_id=item_scan_id,
                         digital_shelf_url=item_shelf_url,
+                        bounding_box=bbox_data,
+                        crop_image_url=crop_img,
                     ))
 
                 batch_scan_id = flow_items[0].scan_id if flow_items else item_scan_id

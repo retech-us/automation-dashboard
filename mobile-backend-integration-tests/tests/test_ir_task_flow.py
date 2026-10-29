@@ -282,6 +282,33 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
         self.assertEqual(k_batch["items"][0]["scan_id"], k_batch["scan_id"])
         self.assertEqual(k_batch["items"][0]["digital_shelf_url"], k_batch["digital_shelf_url"])
 
+    def test_identified_products_have_bounding_boxes_and_crop_urls(self):
+        harr = build_harr_reference_task_8648127()
+        batch1 = harr["action_batches"]["batch_harr_1"]
+        self.assertEqual(batch1["action_type"], "ACTION_IDENTIFY")
+        for item in batch1["items"]:
+            self.assertIsNotNone(item.get("bounding_box"))
+            self.assertIn("x", item["bounding_box"])
+            self.assertIn("y", item["bounding_box"])
+            self.assertTrue(item["crop_image_url"].startswith("https://"))
+            self.assertTrue(item["image"].startswith("https://"))
+
+        # Verify synthesized action with coordinates gets bounding box
+        actions = [{
+            "id": 881,
+            "action": "ACTION_IDENTIFY",
+            "product_title": "Identified Item",
+            "displayed_upc": "123456789012",
+            "coordinates": {"x": 512.0, "y": 640.0, "width": 80.0, "height": 140.0},
+            "image": "https://bucket-test.s3.amazonaws.com/crop.png",
+            "current_position": {"shelf": 2, "position": "1", "section_info": {"name": "1"}},
+        }]
+        flow = synthesize_task_flow_from_raw_actions(7777, actions)
+        item = next(iter(flow["action_batches"].values()))["items"][0]
+        self.assertEqual(item["bounding_box"]["x"], 512.0)
+        self.assertEqual(item["bounding_box"]["y"], 640.0)
+        self.assertEqual(item["crop_image_url"], "https://bucket-test.s3.amazonaws.com/crop.png")
+
 
 if __name__ == "__main__":
     unittest.main()
