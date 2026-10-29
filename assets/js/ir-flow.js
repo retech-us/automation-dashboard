@@ -425,6 +425,12 @@
     if (minutes === 0) {
       return '0 mins';
     }
+    const totalSec = Math.round(minutes * 60);
+    if (totalSec < 300 && totalSec % 60 !== 0) {
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    }
     const totalMinutes = Math.round(minutes);
     if (totalMinutes < 60) {
       return totalMinutes === 1 ? '1 min' : `${totalMinutes} mins`;
@@ -1994,11 +2000,11 @@
           ? 'Performer mobile app logged duration (task.logged_duration: ISO-8601 timer recorded on device)'
           : (meta.duration_source || 'Performer mobile app timer log')]);
 
-        if (meta.start_time || meta.duration_started_at) {
-          summaryItems.push(['Shift started at', meta.start_time ? `${meta.task_date || ''} ${meta.start_time}` : meta.duration_started_at]);
+        if (meta.duration_started_at || meta.start_time) {
+          summaryItems.push(['Shift started at', meta.duration_started_at || (meta.start_time ? `${meta.task_date || ''} ${meta.start_time}` : '')]);
         }
-        if (meta.end_time || meta.duration_completed_at) {
-          summaryItems.push(['Shift completed at', meta.end_time ? `${meta.task_date || ''} ${meta.end_time}` : meta.duration_completed_at]);
+        if (meta.duration_completed_at || meta.end_time) {
+          summaryItems.push(['Shift completed at', meta.duration_completed_at || (meta.end_time ? `${meta.task_date || ''} ${meta.end_time}` : '')]);
         }
         if (meta.reset_window_str) {
           summaryItems.push(['Shelf Reset Window', meta.reset_window_str]);
@@ -2012,7 +2018,7 @@
         summaryItems.push([
           'Calculation Note',
           meta.duration_source === 'task.logged_duration'
-            ? 'The retailer mobile app recorded this exact active on-shelf labor duration via the associate timer. If associate completed or paused quickly, logged_duration records that active elapsed time.'
+            ? 'The retailer mobile app recorded this exact active on-shelf labor duration via the associate device timer. The associate opened the task and executed the on-screen action prompts during this window.'
             : 'Active on-shelf reset labor duration from performer mobile timer.'
         ]);
       } else {
@@ -2666,10 +2672,43 @@
     const isIncomplete = rawStatus === 'incomplete' || rawStatus === 'failed' || rawStatus === 'cancelled';
     const isInProgress = rawStatus === 'in_progress' || rawStatus === 'started' || rawStatus === 'not_started' || rawStatus === 'active';
 
+    function formatTimeLabel(ts, fallback) {
+      if (!ts) return fallback || '';
+      const str = String(ts).trim();
+      const parts = str.split(' ');
+      const timePart = parts.length > 1 ? parts[1] : parts[0];
+      if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(timePart)) {
+        const segs = timePart.split(':');
+        let h = parseInt(segs[0], 10);
+        const m = segs[1];
+        const s = segs[2];
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return s ? `${h}:${m}:${s} ${ampm}` : `${h}:${m} ${ampm}`;
+      }
+      return str;
+    }
+
+    const startEv = events.find(e => e.event_type === 'started') || events.find(e => e.phase === 'task' && e.event_type !== 'created') || events[0];
+    const prePhotoEv = events.find(e => e.phase === 'pre' && e.event_type === 'photo');
+    const preAiEv = events.find(e => e.phase === 'pre' && (e.event_type === 'ai_result' || e.event_type === 'compliance'));
+    const workEv = events.find(e => e.event_type === 'actions');
+    const postPhotoEv = events.find(e => e.phase === 'post' && e.event_type === 'photo');
+    const scoredEv = events.find(e => e.phase === 'post' && (e.event_type === 'compliance' || e.event_type === 'survey_end'));
+    const closeEv = events.find(e => e.event_type === 'closed' || e.event_type === 'in_progress') || events[events.length - 1];
+
+    const startTimeFormatted = formatTimeLabel(startEv?.ts || meta.start_time, 'Shift Start');
+    const prePhotoTimeFormatted = formatTimeLabel(prePhotoEv?.ts, startTimeFormatted);
+    const preAiTimeFormatted = formatTimeLabel(preAiEv?.ts, prePhotoTimeFormatted);
+    const workTimeFormatted = formatTimeLabel(workEv?.ts, preAiTimeFormatted);
+    const postPhotoTimeFormatted = formatTimeLabel(postPhotoEv?.ts, workTimeFormatted);
+    const scoredTimeFormatted = formatTimeLabel(scoredEv?.ts, postPhotoTimeFormatted);
+    const endTimeFormatted = formatTimeLabel(closeEv?.ts || meta.end_time, 'Complete');
+
     // Transform technical events into human narrative cards
     const storySteps = [
       {
-        time: meta.start_time || '11:54 AM',
+        time: startTimeFormatted,
         icon: '▶️',
         title: 'Reset Started',
         desc: `Associate ${meta.performer_name || meta.performer || 'Associate'} began the reset task for ${meta.task_title}.`,
@@ -2677,7 +2716,7 @@
         color: '#3B82F6',
       },
       {
-        time: '11:55 AM',
+        time: prePhotoTimeFormatted,
         icon: '📸',
         title: 'Before Photos Captured',
         desc: 'Associate photographed the initial shelf state before touching any items (Photo quality score: 89/100).',
@@ -2685,7 +2724,7 @@
         color: '#0284C7',
       },
       {
-        time: '11:55 AM',
+        time: preAiTimeFormatted,
         icon: '⚡',
         title: 'Automated AI Check Complete',
         desc: 'Computer Vision evaluated the shelf and identified initial baseline planogram accuracy.',
@@ -2693,7 +2732,7 @@
         color: '#8B5CF6',
       },
       {
-        time: 'Work Phase',
+        time: workTimeFormatted,
         icon: '🛒',
         title: 'Physical Product Adjustments',
         desc: 'Associate moved misplaced packages into place, restocked out-of-stock items, and cleared unwanted products.',
@@ -2704,7 +2743,7 @@
 
     if (isIncomplete) {
       storySteps.push({
-        time: meta.end_time || 'Interrupted',
+        time: endTimeFormatted || 'Interrupted',
         icon: '❌',
         title: 'Reset Interrupted / Stopped Early',
         desc: `Associate stopped before completing the full reset. Final verification photos were not submitted or shelf quality gate was not met. Status: ${meta.status_reason || 'Incomplete'}.`,
@@ -2723,7 +2762,7 @@
     } else {
       storySteps.push(
         {
-          time: 'Post Reset',
+          time: postPhotoTimeFormatted,
           icon: '📸',
           title: 'After Photos Captured',
           desc: 'Associate photographed the completed shelf to verify all items match the required planogram.',
@@ -2731,7 +2770,7 @@
           color: '#0284C7',
         },
         {
-          time: 'Scored',
+          time: scoredTimeFormatted,
           icon: '📊',
           title: 'Final Shelf Accuracy Scored',
           desc: meta.final_compliance ? `Automated verification scored the reset at ${meta.final_compliance}% compliance.` : 'Automated verification scored the reset compliance post-reset.',
@@ -2739,7 +2778,7 @@
           color: meta.final_compliance && meta.final_compliance >= 95 ? '#10B981' : '#F59E0B',
         },
         {
-          time: meta.end_time || 'Complete',
+          time: endTimeFormatted,
           icon: '🏁',
           title: 'Task Closed',
           desc: `Task finished. Status: ${meta.status_reason || meta.status || 'Completed'}.`,

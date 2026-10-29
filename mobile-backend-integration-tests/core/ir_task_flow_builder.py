@@ -1357,7 +1357,44 @@ def synthesize_task_flow_from_raw_actions(
     sorted_bays = sorted(list(bays_seen)) if bays_seen else ["Bay 1", "Bay 2"]
     
     task_date = meta.get("task_date") or datetime.date.today().isoformat()
-    base_time = datetime.datetime.strptime(f"{task_date} 09:15:00", "%Y-%m-%d %H:%M:%S")
+
+    # Resolve base_time and comp_time from recorded metadata
+    base_time = None
+    comp_time = None
+    if meta.get("duration_started_at"):
+        try:
+            base_time = datetime.datetime.strptime(str(meta["duration_started_at"]).split(".")[0], "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            pass
+    if not base_time and meta.get("start_time"):
+        try:
+            base_time = datetime.datetime.strptime(f"{task_date} {meta['start_time']}", "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            pass
+
+    if meta.get("duration_completed_at"):
+        try:
+            comp_time = datetime.datetime.strptime(str(meta["duration_completed_at"]).split(".")[0], "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            pass
+    if not comp_time and meta.get("end_time"):
+        try:
+            comp_time = datetime.datetime.strptime(f"{task_date} {meta['end_time']}", "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            pass
+
+    if comp_time and not base_time and meta.get("wall_duration_min"):
+        dur_sec = meta.get("duration_sec") or int(float(meta["wall_duration_min"]) * 60)
+        base_time = comp_time - datetime.timedelta(seconds=dur_sec)
+
+    if not base_time:
+        base_time = datetime.datetime.strptime(f"{task_date} 09:15:00", "%Y-%m-%d %H:%M:%S")
+
+    if not comp_time and meta.get("wall_duration_min"):
+        dur_sec = meta.get("duration_sec") or int(float(meta["wall_duration_min"]) * 60)
+        comp_time = base_time + datetime.timedelta(seconds=dur_sec)
+
+    total_span_sec = max(30, int((comp_time - base_time).total_seconds())) if (comp_time and comp_time > base_time) else None
 
     events: List[FlowEvent] = []
     
@@ -1394,7 +1431,8 @@ def synthesize_task_flow_from_raw_actions(
     ))
 
     # 3. Survey Start
-    survey_ts = (base_time + datetime.timedelta(seconds=2)).strftime("%Y-%m-%d %H:%M:%S")
+    survey_delay = max(1, int(total_span_sec * 0.03)) if total_span_sec else 2
+    survey_ts = (base_time + datetime.timedelta(seconds=survey_delay)).strftime("%Y-%m-%d %H:%M:%S")
     events.append(FlowEvent(
         event_id=f"ev-{task_id}-survey-start",
         ts=survey_ts,
@@ -1410,7 +1448,7 @@ def synthesize_task_flow_from_raw_actions(
     ))
 
     # Bay-by-bay photos & CV
-    current_time = base_time + datetime.timedelta(seconds=20)
+    current_time = base_time + datetime.timedelta(seconds=max(2, int(total_span_sec * 0.10)) if total_span_sec else 20)
     bay_summaries: Dict[str, Any] = {}
     action_batches: Dict[str, ActionBatch] = {}
     batch_idx = 1
@@ -1424,9 +1462,13 @@ def synthesize_task_flow_from_raw_actions(
         bay_label = f"Bay {b_name}" if not str(b_name).lower().startswith("bay") else str(b_name)
         actions_by_bay.setdefault(bay_label, []).append(item)
 
-    for bay in sorted_bays:
+    for bay_i, bay in enumerate(sorted_bays):
         # Pre-photo
-        photo_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        if total_span_sec:
+            bay_photo_time = base_time + datetime.timedelta(seconds=max(3, int(total_span_sec * (0.08 + bay_i * 0.05))))
+            photo_ts = bay_photo_time.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            photo_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
         scan_id = 17000000 + hash(f"{task_id}_{bay}") % 500000
         events.append(FlowEvent(
             event_id=f"ev-{task_id}-photo-{bay}",
@@ -1444,9 +1486,14 @@ def synthesize_task_flow_from_raw_actions(
             badge_type="info",
         ))
 
-        # AI Result (24s later)
-        current_time += datetime.timedelta(seconds=24)
-        ai_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        # AI Result
+        if total_span_sec:
+            bay_ai_time = base_time + datetime.timedelta(seconds=max(5, int(total_span_sec * (0.16 + bay_i * 0.05))))
+            ai_ts = bay_ai_time.strftime("%Y-%m-%d %H:%M:%S")
+            current_time = bay_ai_time
+        else:
+            current_time += datetime.timedelta(seconds=24)
+            ai_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
         proc_id = scan_id + 1000
         events.append(FlowEvent(
             event_id=f"ev-{task_id}-ai-{bay}",
@@ -1465,8 +1512,13 @@ def synthesize_task_flow_from_raw_actions(
         ))
 
         # Compliance Report
-        current_time += datetime.timedelta(seconds=2)
-        comp_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        if total_span_sec:
+            bay_comp_time = base_time + datetime.timedelta(seconds=max(6, int(total_span_sec * (0.22 + bay_i * 0.05))))
+            comp_ts = bay_comp_time.strftime("%Y-%m-%d %H:%M:%S")
+            current_time = bay_comp_time
+        else:
+            current_time += datetime.timedelta(seconds=2)
+            comp_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
         events.append(FlowEvent(
             event_id=f"ev-{task_id}-comp-{bay}",
             ts=comp_ts,
@@ -1493,9 +1545,16 @@ def synthesize_task_flow_from_raw_actions(
                 reason = item.get("reason") or "Fixed Item"
                 grouped_actions.setdefault((act_type, state, reason), []).append(item)
 
-            for (act_type, state, reason), grp_items in grouped_actions.items():
-                current_time += datetime.timedelta(minutes=1, seconds=15)
-                batch_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
+            for act_grp_i, ((act_type, state, reason), grp_items) in enumerate(grouped_actions.items()):
+                if total_span_sec:
+                    total_grps = max(1, len(grouped_actions))
+                    batch_frac = 0.32 + 0.50 * (float(act_grp_i + 1) / float(total_grps))
+                    batch_time = base_time + datetime.timedelta(seconds=int(total_span_sec * batch_frac))
+                    batch_ts = batch_time.strftime("%Y-%m-%d %H:%M:%S")
+                    current_time = batch_time
+                else:
+                    current_time += datetime.timedelta(minutes=1, seconds=15)
+                    batch_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
                 batch_id = f"batch_{task_id}_{batch_idx}"
                 batch_idx += 1
 
@@ -1709,8 +1768,13 @@ def synthesize_task_flow_from_raw_actions(
         }
 
     # Post-photo for last bay
-    current_time += datetime.timedelta(minutes=3)
-    post_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
+    if total_span_sec:
+        post_time = base_time + datetime.timedelta(seconds=max(12, int(total_span_sec * 0.88)))
+        post_ts = post_time.strftime("%Y-%m-%d %H:%M:%S")
+        current_time = post_time
+    else:
+        current_time += datetime.timedelta(minutes=3)
+        post_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
     events.append(FlowEvent(
         event_id=f"ev-{task_id}-post-photo",
         ts=post_ts,
@@ -1728,7 +1792,11 @@ def synthesize_task_flow_from_raw_actions(
     ))
 
     # Survey End
-    current_time += datetime.timedelta(minutes=1)
+    if total_span_sec:
+        survey_end_time = base_time + datetime.timedelta(seconds=max(14, int(total_span_sec * 0.94)))
+        current_time = survey_end_time
+    else:
+        current_time += datetime.timedelta(minutes=1)
     events.append(FlowEvent(
         event_id=f"ev-{task_id}-survey-end",
         ts=current_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -1745,6 +1813,7 @@ def synthesize_task_flow_from_raw_actions(
     ))
 
     # Closed
+    close_ts = comp_time.strftime("%Y-%m-%d %H:%M:%S") if comp_time else current_time.strftime("%Y-%m-%d %H:%M:%S")
     wall_min = (
         meta.get("wall_duration_min")
         if "wall_duration_min" in meta
@@ -1770,7 +1839,7 @@ def synthesize_task_flow_from_raw_actions(
 
     events.append(FlowEvent(
         event_id=f"ev-{task_id}-close",
-        ts=current_time.strftime("%Y-%m-%d %H:%M:%S"),
+        ts=close_ts,
         phase="task",
         event_type=close_event_type,
         bay=None,
@@ -1811,12 +1880,13 @@ def synthesize_task_flow_from_raw_actions(
             "task_date": task_date,
             "performer_id": performer,
             "performer_name": performer,
-            "start_time": base_time.strftime("%H:%M:%S"),
-            "end_time": current_time.strftime("%H:%M:%S"),
+            "start_time": meta.get("start_time") or base_time.strftime("%H:%M:%S"),
+            "end_time": meta.get("end_time") or (comp_time.strftime("%H:%M:%S") if comp_time else current_time.strftime("%H:%M:%S")),
             "wall_duration_min": wall_min,
+            "duration_sec": meta.get("duration_sec"),
             "duration_source": meta.get("duration_source"),
-            "duration_started_at": meta.get("duration_started_at"),
-            "duration_completed_at": meta.get("duration_completed_at"),
+            "duration_started_at": meta.get("duration_started_at") or (base_time.strftime("%Y-%m-%d %H:%M:%S") if "wall_duration_min" in meta and wall_min is not None else None),
+            "duration_completed_at": meta.get("duration_completed_at") or (comp_time.strftime("%Y-%m-%d %H:%M:%S") if comp_time and "wall_duration_min" in meta and wall_min is not None else None),
             "initial_compliance": initial_comp,
             "action_compliance": meta.get("action_compliance") or (98.0 if not is_incomplete else 96.0),
             "final_compliance": final_comp,
