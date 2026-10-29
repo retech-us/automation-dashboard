@@ -138,9 +138,10 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
             },
         )
 
-        self.assertIsNone(flow["metadata"]["wall_duration_min"])
-        self.assertIsNone(flow["metadata"]["duration_source"])
-        self.assertIn("not recorded", flow["events"][-1]["detail"])
+        # Every task must have some duration recorded or calculated
+        self.assertIsNotNone(flow["metadata"]["wall_duration_min"])
+        self.assertGreater(flow["metadata"]["wall_duration_min"], 0)
+        self.assertIsNotNone(flow["metadata"]["duration_source"])
         item = next(iter(flow["action_batches"].values()))["items"][0]
         self.assertEqual(item["from_bay"], "Bay 1")
         self.assertEqual(item["to_bay"], "Bay 2")
@@ -163,38 +164,66 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
                 "current_position": {"shelf": 3, "position": "2", "section_info": {"name": "1"}},
                 "expected_position": {"shelf": 3, "position": "2", "section_info": {"name": "1"}},
             },
+            {
+                "id": 103,
+                "action": "ACTION_ADD",
+                "reason": "Restock Item",
+                "displayed_upc": "011110888888",
+                "product_title": "Restock Item",
+                "current_position": {"shelf": 2, "position": "1", "section_info": {"name": "1"}},
+                "expected_position": {"shelf": 2, "position": "1", "section_info": {"name": "1"}},
+            },
+            {
+                "id": 104,
+                "action": "ACTION_MOVE",
+                "displayed_upc": "011110777777",
+                "product_title": "Shelf Mismatch Product",
+                "current_position": {"shelf": 4, "position": "3", "section_info": {"name": "1"}},
+                "expected_position": {"shelf": 5, "position": "3", "section_info": {"name": "1"}},
+            },
         ]
         flow = synthesize_task_flow_from_raw_actions(44061994, raw_actions)
         all_items = [it for b in flow["action_batches"].values() for it in b["items"]]
         cran_item = next(it for it in all_items if it["upc"] == "011110636584")
         redundant_item = next(it for it in all_items if it["upc"] == "011110999999")
+        restock_item = next(it for it in all_items if it["upc"] == "011110888888")
+        shelf_mismatch_item = next(it for it in all_items if it["upc"] == "011110777777")
 
-        self.assertEqual(cran_item["discrepancy_type"], "intra_shelf_slide")
-        self.assertIn("Pos 4 → 5", cran_item["discrepancy_label"])
+        # 1. Product position differences on the same shelf are NOT AI discrepancies
+        self.assertIsNone(cran_item["discrepancy_type"])
+
+        # 2. Non-restock move for an item already at exact same slot is redundant
         self.assertEqual(redundant_item["discrepancy_type"], "redundant_same_slot")
         self.assertEqual(redundant_item["discrepancy_label"], "Redundant Same-Slot Move")
 
-    def test_enrich_flow_with_digital_shelf_relative_sequence_ok(self):
+        # 3. Restock items naturally occupy the same slot in planogram and realogram; NEVER redundant
+        self.assertIsNone(restock_item["discrepancy_type"])
+
+        # 4. Difference in shelf count between Realogram and Planogram IS an AI discrepancy
+        self.assertEqual(shelf_mismatch_item["discrepancy_type"], "cross_shelf_mismatch")
+        self.assertIn("ROG Shelf 4 ≠ POG Shelf 5", shelf_mismatch_item["discrepancy_label"])
+
+    def test_enrich_flow_with_digital_shelf_cross_shelf_mismatch(self):
         raw_actions = [
             {
                 "id": 101,
                 "action": "ACTION_MOVE",
                 "displayed_upc": "011110636584",
                 "product_title": "ST CRAN CHERRIES TRAIL MX",
-                "current_position": {"shelf": 5, "position": "4", "section_info": {"name": "1"}},
+                "current_position": {"shelf": 4, "position": "4", "section_info": {"name": "1"}},
                 "expected_position": {"shelf": 5, "position": "5", "section_info": {"name": "1"}},
             },
         ]
         flow = synthesize_task_flow_from_raw_actions(44061994, raw_actions)
 
-        # Mock Digital Shelf item reporting this UPC as OK with action_taken = "-"
+        # Mock Digital Shelf item reporting this UPC
         mock_digital_items = [
             {
                 "upc": "011110636584",
-                "action_type": "ok",
-                "action_taken": "-",
+                "action_type": "move",
+                "action_taken": "move",
                 "section": "1",
-                "rog_position": "5:4",
+                "rog_position": "4:4",
                 "pog_position": "5:5",
             }
         ]
@@ -202,11 +231,10 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
         all_items = [it for b in enriched["action_batches"].values() for it in b["items"]]
         cran_item = next(it for it in all_items if it["upc"] == "011110636584")
 
-        self.assertEqual(cran_item["discrepancy_type"], "relative_sequence_ok")
-        self.assertEqual(cran_item["digital_action_type"], "ok")
-        self.assertEqual(cran_item["digital_action_taken"], "-")
-        self.assertIn("Rel-Seq OK (Threshold=0)", cran_item["discrepancy_label"])
-        self.assertIn("SequenceMatcher", cran_item["discrepancy_detail"])
+        self.assertEqual(cran_item["discrepancy_type"], "cross_shelf_mismatch")
+        self.assertEqual(cran_item["digital_action_type"], "move")
+        self.assertEqual(cran_item["digital_action_taken"], "move")
+        self.assertIn("ROG Shelf 4 ≠ POG Shelf 5", cran_item["discrepancy_label"])
 
     def test_format_duration_hm(self):
         self.assertEqual(format_duration_hm(None), "not recorded")

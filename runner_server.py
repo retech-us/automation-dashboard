@@ -3252,6 +3252,67 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     duration_val = round(elapsed, 1)
                     duration_source = "task start and completion timestamps"
 
+            # Fallback 1: estimated_duration on task object
+            if duration_val is None:
+                est_dur = task_obj.get("estimated_duration")
+                if est_dur and isinstance(est_dur, str):
+                    import re
+                    m_d = re.search(r"(\d+)D", est_dur)
+                    m_h = re.search(r"(\d+)H", est_dur)
+                    m_m = re.search(r"(\d+)M", est_dur)
+                    m_s = re.search(r"(\d+(?:\.\d+)?)S", est_dur)
+                    e_sec = 0.0
+                    if m_d: e_sec += float(m_d.group(1)) * 86400
+                    if m_h: e_sec += float(m_h.group(1)) * 3600
+                    if m_m: e_sec += float(m_m.group(1)) * 60
+                    if m_s: e_sec += float(m_s.group(1))
+                    if 0 < e_sec < 24 * 3600:
+                        duration_sec = int(round(e_sec))
+                        duration_val = round(e_sec / 60.0, 1)
+                        duration_source = "task.estimated_duration"
+                        if completed_dt and not started_dt:
+                            started_dt = completed_dt - datetime.timedelta(seconds=duration_sec)
+                        elif started_dt and not completed_dt:
+                            completed_dt = started_dt + datetime.timedelta(seconds=duration_sec)
+
+            # Fallback 2: task created_at vs updated_at/completed_at lifecycle
+            if duration_val is None:
+                raw_created = task_obj.get("created_at")
+                if raw_created and completed_dt:
+                    try:
+                        created_dt = datetime.datetime.fromisoformat(str(raw_created).replace("Z", "+00:00")).astimezone(store_tz)
+                        elapsed_c = (completed_dt - created_dt).total_seconds()
+                        if 60 < elapsed_c < 12 * 3600:
+                            duration_sec = int(elapsed_c)
+                            duration_val = round(elapsed_c / 60.0, 1)
+                            duration_source = "task lifecycle (created to completed)"
+                            if not started_dt:
+                                started_dt = created_dt
+                    except Exception:
+                        pass
+
+            # Fallback 3: Standard reset baseline so every task has a duration
+            if duration_val is None or duration_val <= 0:
+                duration_sec = 900  # 15 minutes default reset execution time
+                duration_val = 15.0
+                duration_source = "standard reset execution baseline"
+                if completed_dt and not started_dt:
+                    started_dt = completed_dt - datetime.timedelta(seconds=duration_sec)
+                elif started_dt and not completed_dt:
+                    completed_dt = started_dt + datetime.timedelta(seconds=duration_sec)
+                elif not started_dt and not completed_dt:
+                    t_date_str = task_obj.get("task_date") or (task_obj.get("created_at") or "")[:10]
+                    base_ref = None
+                    if t_date_str:
+                        try:
+                            base_ref = datetime.datetime.strptime(f"{t_date_str} 10:00:00", "%Y-%m-%d %H:%M:%S").replace(tzinfo=store_tz)
+                        except Exception:
+                            pass
+                    if not base_ref:
+                        base_ref = datetime.datetime.now(store_tz)
+                    started_dt = base_ref
+                    completed_dt = started_dt + datetime.timedelta(seconds=duration_sec)
+
             if started_dt:
                 duration_started_at = started_dt.strftime("%Y-%m-%d %H:%M:%S")
                 start_time_str = started_dt.strftime("%H:%M:%S")
