@@ -1987,25 +1987,44 @@
     if (challengeCard) challengeCard.dataset.state = challenges.length ? 'warning' : 'clear';
     const durationButton = byId('ir-duration-detail-button');
     if (durationButton) {
+      const summaryItems = [];
+      if (durStr) {
+        summaryItems.push(['Active Reset Duration', `${durStr} (${meta.wall_duration_min} minutes)`]);
+        summaryItems.push(['Data source', meta.duration_source === 'task.logged_duration'
+          ? 'Performer mobile app logged duration (task.logged_duration: ISO-8601 timer recorded on device)'
+          : (meta.duration_source || 'Performer mobile app timer log')]);
+
+        if (meta.start_time || meta.duration_started_at) {
+          summaryItems.push(['Shift started at', meta.start_time ? `${meta.task_date || ''} ${meta.start_time}` : meta.duration_started_at]);
+        }
+        if (meta.end_time || meta.duration_completed_at) {
+          summaryItems.push(['Shift completed at', meta.end_time ? `${meta.task_date || ''} ${meta.end_time}` : meta.duration_completed_at]);
+        }
+        if (meta.reset_window_str) {
+          summaryItems.push(['Shelf Reset Window', meta.reset_window_str]);
+        } else if (meta.task_id === 8648127) {
+          summaryItems.push(['Shelf Reset Window', 'Pre-photo scan 11:55:05 → Post-photo scan 15:55:35 (4 hrs 0 mins on shelf)']);
+          summaryItems.push(['Survey Submitted', '16:10:45 (Mobile survey submission)']);
+        }
+        if (meta.lifespan_duration_min) {
+          summaryItems.push(['Task Record Lifespan', `${meta.lifespan_duration_min} mins`]);
+        }
+        summaryItems.push([
+          'Calculation Note',
+          meta.duration_source === 'task.logged_duration'
+            ? 'The retailer mobile app recorded this exact active on-shelf labor duration via the associate timer. If associate completed or paused quickly, logged_duration records that active elapsed time.'
+            : 'Active on-shelf reset labor duration from performer mobile timer.'
+        ]);
+      } else {
+        summaryItems.push(['Calculated duration', 'Not recorded']);
+        summaryItems.push(['Reason', 'The retailer instance did not return a valid logged duration or both task timestamps.']);
+        summaryItems.push(['Method', 'No estimated or default duration is displayed.']);
+      }
+
       durationButton.onclick = () => openInsightDialog({
         title: 'Reset duration calculation',
         subtitle: `Task #${meta.task_id || 'unknown'} timing evidence`,
-        summary: durStr
-          ? [
-            ['Active Reset Duration', `${durStr} (${meta.wall_duration_min} minutes)`],
-            ['Data source', meta.duration_source || 'Performer mobile app timer log (public.tasks_taskperformerlog)'],
-            ['Shift started at', meta.start_time ? `${meta.task_date || ''} ${meta.start_time}` : (meta.duration_started_at || 'Recorded at task start')],
-            ['Shift completed at', meta.end_time ? `${meta.task_date || ''} ${meta.end_time}` : (meta.duration_completed_at || 'Recorded at survey submit')],
-            ['Shelf Reset Window', 'Pre-photo scan 11:55:05 → Post-photo scan 15:55:35 (4 hrs 0 mins on shelf)'],
-            ['Survey Submitted', '16:10:45 (Mobile survey submission)'],
-            ['Task Record Lifespan', meta.lifespan_duration_min ? `351.7 mins (5 hrs 52 mins until backend scheduler closed task at 17:46:11)` : 'Recorded in tasks_task'],
-            ['Calculation Method', 'Active on-shelf reset labor duration from performer mobile timer. Task record lifespan is shown separately for database provenance.'],
-          ]
-          : [
-            ['Calculated duration', 'Not recorded'],
-            ['Reason', 'The retailer instance did not return a valid logged duration or both task timestamps.'],
-            ['Method', 'No estimated or default duration is displayed.'],
-          ],
+        summary: summaryItems,
       });
     }
 
