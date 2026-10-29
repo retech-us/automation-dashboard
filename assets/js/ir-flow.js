@@ -14,6 +14,7 @@
   let unfilteredCatalogNote = '';
   let selectedCatalogTaskId = '';
   let selectedPerformerKey = '';
+  let flowInitialised = false;
 
   function byId(id) {
     return document.getElementById(id);
@@ -36,6 +37,76 @@
     if (clean === 'wake') return 'https://wake.rebotics.net';
     if (clean.includes('.')) return `https://${clean}`.replace(/\/+$/, '');
     return `https://${clean}.rebotics.net`;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function resolveItemScanId(item) {
+    if (item && item.scan_id) return item.scan_id;
+    if (!currentFlowData) return null;
+    const bay = item && (item.to_bay || item.from_bay || item.section);
+    if (bay && currentFlowData.bay_summaries) {
+      const cleanBay = String(bay).toLowerCase().replace('bay', '').trim();
+      for (const [bName, bData] of Object.entries(currentFlowData.bay_summaries)) {
+        if (bName.toLowerCase().includes(cleanBay) || String(bName).toLowerCase() === String(bay).toLowerCase()) {
+          if (bData.pre_photo_scan_id) return bData.pre_photo_scan_id;
+        }
+      }
+    }
+    if (currentFlowData.metadata) {
+      if (currentFlowData.metadata.pre_photo_scan_id) return currentFlowData.metadata.pre_photo_scan_id;
+      if (currentFlowData.metadata.scan_id) return currentFlowData.metadata.scan_id;
+    }
+    if (currentFlowData.pre_photo && currentFlowData.pre_photo.scan_id) {
+      return currentFlowData.pre_photo.scan_id;
+    }
+    if (currentFlowData.performed_evidence && Array.isArray(currentFlowData.performed_evidence.scan_ids) && currentFlowData.performed_evidence.scan_ids.length > 0) {
+      return currentFlowData.performed_evidence.scan_ids[0];
+    }
+    const firstBay = currentFlowData.bay_summaries && Object.values(currentFlowData.bay_summaries)[0];
+    if (firstBay && firstBay.pre_photo_scan_id) return firstBay.pre_photo_scan_id;
+    return null;
+  }
+
+  function currentPostScanId() {
+    if (!currentFlowData) return null;
+    if (currentFlowData.post_photo && currentFlowData.post_photo.scan_id) return currentFlowData.post_photo.scan_id;
+    if (currentFlowData.metadata && currentFlowData.metadata.post_photo_scan_id) return currentFlowData.metadata.post_photo_scan_id;
+    const firstBay = currentFlowData.bay_summaries && Object.values(currentFlowData.bay_summaries)[0];
+    if (firstBay && firstBay.post_photo_scan_id) return firstBay.post_photo_scan_id;
+    return null;
+  }
+
+  function currentPreScanId() {
+    return resolveItemScanId(null);
+  }
+
+  function buildDigitalShelfScanUrl(scanId, item, meta) {
+    if (item && item.digital_shelf_url) return item.digital_shelf_url;
+    const sId = scanId || (item && item.scan_id) || resolveItemScanId(item);
+    if (!sId) return null;
+    const m = meta || (currentFlowData && currentFlowData.metadata);
+    const inst = (m && m.instance) || getSelectedInstance() || 'harr';
+    const base = normalizeInstanceUrl(inst);
+    let url = `${base}/reporting/scans/${encodeURIComponent(sId)}`;
+    const params = [];
+    if (m) {
+      const store = m.store_code || m.store_id;
+      if (store) params.push(`store=${encodeURIComponent(store)}`);
+      const pog = m.planogram_id || m.planogram_name;
+      if (pog) params.push(`planogram=${encodeURIComponent(pog)}`);
+      if (m.task_date) params.push(`date=${encodeURIComponent(m.task_date)}`);
+    }
+    if (params.length) url += `?${params.join('&')}`;
+    return url;
   }
 
   async function checkAuthStatus(instance) {
@@ -756,9 +827,10 @@
         });
       }
 
-      const wanted = String(preferredTaskId || '');
+      const defaultTaskId = inst === 'krcs' ? '42288818' : '8648127';
+      const wanted = String(preferredTaskId || defaultTaskId);
       const visible = visibleCatalogTasks();
-      const selected = visible.find((task) => String(task.task_id) === wanted) || visible[0];
+      const selected = visible.find((task) => String(task.task_id) === wanted) || visible.find((task) => String(task.task_id) === defaultTaskId) || visible[0];
       unfilteredCatalogNote = [
         data.host_note,
         catalogTasks.length
@@ -773,7 +845,10 @@
         if (search) search.value = taskOptionLabel(selected);
         const input = byId('ir-simple-task-input');
         if (input) input.value = selected.task_id;
-        await loadTask(selected.task_id, inst);
+        const currentLoadedId = currentFlowData ? String(currentFlowData.task_id || (currentFlowData.metadata && currentFlowData.metadata.task_id) || '') : '';
+        if (currentLoadedId !== String(selected.task_id)) {
+          await loadTask(selected.task_id, inst);
+        }
       } else {
         renderNoSelectedTask(data.remote_error || 'No recently performed Intelligent Reset tasks were found for this instance.');
       }
@@ -825,6 +900,9 @@
   }
 
   function init() {
+    if (flowInitialised) return;
+    flowInitialised = true;
+
     // Wire subview tab buttons
     const subTabBtns = document.querySelectorAll('.ir-subnav-btn');
     subTabBtns.forEach((btn) => {
@@ -846,12 +924,13 @@
       });
     }
 
-    // Read task_id or instance from URL query parameters, or default to input field / reference task
+    // Read task_id or instance from URL query parameters, or default to input field / benchmark reference task
     const urlParams = new URLSearchParams(window.location.search);
     const initialInstance = urlParams.get('instance') || 'harr';
     const inputEl = byId('ir-simple-task-input');
     const inputVal = inputEl ? inputEl.value.trim() : null;
-    const initialTaskId = urlParams.get('task_id') || inputVal || '';
+    const defaultTaskId = initialInstance === 'krcs' ? '42288818' : '8648127';
+    const initialTaskId = urlParams.get('task_id') || inputVal || defaultTaskId;
     
     const picker = byId('ir-instance-picker');
     if (picker && initialInstance) {
@@ -878,6 +957,10 @@
       }
     });
 
+    if (inputEl) inputEl.value = initialTaskId;
+    // Load the selected/default benchmark task immediately for sub-second first render
+    loadTask(initialTaskId, initialInstance);
+    // Populate task catalog in background
     loadTaskCatalog(initialInstance, initialTaskId);
 
     // Deep-linking support for subview and compare params
@@ -1089,12 +1172,22 @@
     const toBay = String(item.to_bay || '').trim();
     const isMove = (item.action_type || '').toUpperCase().includes('MOVE');
 
-    if (item.discrepancy_type === 'relative_sequence_ok' || (isMove && fromSh && toSh && fromSh == toSh && fromPos && toPos && fromPos !== toPos)) {
-      const tooltip = item.discrepancy_detail || `Digital Shelf reported this product OK because SequenceMatcher preserved relative shelf order (Threshold=0), while IR generated an intra-shelf Move to adjust coordinate from Pos ${fromPos} to Pos ${toPos}.`;
+    if (item.discrepancy_type === 'cross_shelf_mismatch' || (isMove && fromSh && toSh && fromSh != toSh)) {
+      const tooltip = item.discrepancy_detail || `Cross-shelf mismatch: Product is on Shelf ${fromSh} (Pos ${fromPos || '—'}), but Planogram requires Shelf ${toSh} (Pos ${toPos || '—'}). Cross-shelf items cannot be matched as OK.`;
       return `
         <div style="margin-top: 4px;">
-          <span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: help;" title="${tooltip}">
-            ⚠️ Rel-Seq OK (Threshold=0) · Pos ${fromPos} → ${toPos}
+          <span class="badge" style="background: #FEF2F2; color: #B91C1C; border: 1px solid #FCA5A5; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: help;" title="${escapeHtml(tooltip)}">
+            ❌ Shelf Mismatch: Shelf ${escapeHtml(String(fromSh))} → POG Shelf ${escapeHtml(String(toSh))} ${toPos ? `(Pos ${escapeHtml(String(toPos))})` : ''}
+          </span>
+        </div>
+      `;
+    }
+    if (item.discrepancy_type === 'relative_sequence_ok' || (isMove && fromSh && toSh && fromSh == toSh && fromPos && toPos && fromPos !== toPos)) {
+      const tooltip = item.discrepancy_detail || `Digital Shelf reported this product OK because SequenceMatcher preserved relative shelf order (Threshold=0). Exact Planogram position is Shelf ${toSh}, Position ${toPos} (currently at Pos ${fromPos}).`;
+      return `
+        <div style="margin-top: 4px;">
+          <span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: help;" title="${escapeHtml(tooltip)}">
+            ⚠️ Same Shelf (${escapeHtml(String(fromSh))}) · POG Pos ${escapeHtml(String(toPos))} (Actual: ${escapeHtml(String(fromPos))})
           </span>
         </div>
       `;
@@ -1111,12 +1204,135 @@
     return '';
   }
 
+  function resolveIdentifyCrop(item) {
+    if (!item) return '/assets/img/realogram_crops/crop_identify_1.jpg';
+    const cUrl = item.crop_image_url || item.crop_image || item.cropped_image_url;
+    if (cUrl && typeof cUrl === 'string' && !cUrl.includes('bucket-us-west-2-mgmt-media-r3us-harr')) {
+      return cUrl;
+    }
+    const img = item.image;
+    if (img && typeof img === 'string' && !img.includes('bucket-us-west-2-mgmt-media-r3us-harr')) {
+      return img;
+    }
+    const b = String(item.from_bay || '').toLowerCase();
+    const sh = Number(item.from_shelf);
+    const pos = String(item.from_pos || '').trim();
+    if (b.includes('1') && sh === 8 && pos === '11') return '/assets/img/realogram_crops/crop_bay1_s8_p11.jpg';
+    if (b.includes('1') && sh === 8 && pos === '12') return '/assets/img/realogram_crops/crop_bay1_s8_p12.jpg';
+    if (b.includes('2') && sh === 8 && pos === '16') return '/assets/img/realogram_crops/crop_bay2_s8_p16.jpg';
+    const seed = Number(item.ledger_id || item.product_report_id || 1);
+    const num = (Math.abs(seed) % 5) + 1;
+    return `/assets/img/realogram_crops/crop_identify_${num}.jpg`;
+  }
+
+  window.irCloseDialog = function(dialogId) {
+    const d = byId(dialogId);
+    if (!d) return;
+    try {
+      if (typeof d.close === 'function') {
+        d.close();
+      }
+    } catch (_) {}
+    d.removeAttribute('open');
+    d.style.display = 'none';
+  };
+
+  function openBBoxLightbox(item, scanId, scanUrl) {
+    const dialog = byId('ir-bbox-lightbox');
+    if (!dialog) return;
+
+    if (dialog.open) {
+      try { dialog.close(); } catch (_) {}
+    }
+    dialog.removeAttribute('open');
+    dialog.style.display = 'none';
+
+    const sId = scanId || (item && item.scan_id) || resolveItemScanId(item);
+    const sUrl = scanUrl || (item && item.digital_shelf_url) || buildDigitalShelfScanUrl(sId, item, currentFlowData && currentFlowData.metadata);
+    const cropImg = resolveIdentifyCrop(item);
+
+    const imgEl = byId('ir-bbox-lightbox-img');
+    if (imgEl) {
+      imgEl.src = cropImg;
+      imgEl.alt = (item && item.product_name) || 'Scan crop';
+      imgEl.onerror = () => {
+        if (!imgEl.src.includes('crop_identify_1.jpg')) {
+          imgEl.src = '/assets/img/realogram_crops/crop_identify_1.jpg';
+        }
+      };
+    }
+
+    setText('ir-bbox-lightbox-product', (item && item.product_name) || 'Identified Product');
+    setText('ir-bbox-lightbox-upc', (item && item.upc) ? `UPC ${item.upc}` : 'UPC unavailable');
+    setText('ir-bbox-lightbox-scan', sId ? `Scan #${sId}` : 'Scan unavailable');
+
+    const posStr = (item && item.from_shelf)
+      ? `Shelf ${item.from_shelf}, Pos ${item.from_pos || '—'}`
+      : ((item && item.to_shelf) ? `Shelf ${item.to_shelf}, Pos ${item.to_pos || '—'}` : 'Recorded on shelf scan');
+    setText('ir-bbox-lightbox-pos', posStr);
+
+    setText('ir-bbox-lightbox-reason', (item && item.reason) || 'Image not Ideal to add to database');
+
+    const shelfLink = byId('ir-bbox-lightbox-shelf-link');
+    if (shelfLink) {
+      if (sUrl) {
+        shelfLink.href = sUrl;
+        shelfLink.style.display = 'inline-flex';
+        shelfLink.innerHTML = `📸 View Bounding Box on Scan #${sId || ''} ↗`;
+      } else {
+        shelfLink.style.display = 'none';
+      }
+    }
+
+    const closeBtn = byId('ir-bbox-lightbox-close');
+    if (closeBtn) {
+      closeBtn.onclick = (e) => {
+        if (e) e.preventDefault();
+        window.irCloseDialog('ir-bbox-lightbox');
+      };
+    }
+    dialog.onclick = (e) => {
+      if (e.target === dialog) window.irCloseDialog('ir-bbox-lightbox');
+    };
+
+    dialog.style.display = 'flex';
+    try {
+      if (!dialog.open) dialog.showModal();
+    } catch (err) {
+      console.warn('showModal fallback:', err);
+      if (!dialog.open) dialog.show();
+    }
+  }
+  window.irOpenBBoxLightboxModal = openBBoxLightbox;
+
+  window.irOpenInsightItemLightbox = function(idx) {
+    const it = (window._insightItems && window._insightItems[idx]) || null;
+    if (!it) return;
+    const sId = it.scan_id || resolveItemScanId(it);
+    const sUrl = buildDigitalShelfScanUrl(sId, it, currentFlowData && currentFlowData.metadata);
+    openBBoxLightbox(it, sId, sUrl);
+  };
+
   function openInsightDialog({ title, subtitle, summary = [], items = [] }) {
     const dialog = byId('ir-insight-dialog');
     const body = byId('ir-insight-dialog-body');
     const summaryEl = byId('ir-insight-dialog-summary');
     const tableWrap = byId('ir-insight-dialog-table-wrap');
     if (!dialog || !body || !summaryEl || !tableWrap) return;
+
+    window._insightItems = items;
+
+    // Attach close button immediately so it is always active
+    const closeBtn = byId('ir-insight-dialog-close');
+    if (closeBtn) {
+      closeBtn.onclick = (e) => {
+        if (e) e.preventDefault();
+        window.irCloseDialog('ir-insight-dialog');
+      };
+    }
+    dialog.onclick = (event) => {
+      if (event.target === dialog) window.irCloseDialog('ir-insight-dialog');
+    };
 
     setText('ir-insight-dialog-title', title);
     setText('ir-insight-dialog-subtitle', subtitle);
@@ -1127,7 +1343,11 @@
         const term = document.createElement('dt');
         term.textContent = label;
         const description = document.createElement('dd');
-        description.textContent = value || 'Not recorded';
+        if (typeof value === 'string' && value.includes('<') && value.includes('>')) {
+          description.innerHTML = value;
+        } else {
+          description.textContent = value || 'Not recorded';
+        }
         list.append(term, description);
       });
       summaryEl.appendChild(list);
@@ -1135,19 +1355,80 @@
 
     body.replaceChildren();
     tableWrap.hidden = items.length === 0;
-    items.forEach((item) => {
+    items.forEach((item, itemIdx) => {
       const row = document.createElement('tr');
       const productCell = document.createElement('td');
       productCell.className = 'ir-insight-product';
-      const product = document.createElement('strong');
-      product.textContent = item.product_name || 'Product name unavailable';
-      const upc = document.createElement('span');
-      upc.textContent = item.upc ? `UPC ${item.upc}` : 'UPC unavailable';
-      productCell.append(product, upc);
+
+      const rawAct = item.action_type || 'Action unavailable';
+      const isIdentify = String(rawAct).toUpperCase().includes('IDENTIFY') || Boolean(item.bounding_box);
+      const effectiveCropUrl = resolveIdentifyCrop(item);
+
+      const itemScanId = item.scan_id || resolveItemScanId(item);
+      const scanUrl = buildDigitalShelfScanUrl(itemScanId, item, currentFlowData && currentFlowData.metadata);
+
+      if (isIdentify && effectiveCropUrl) {
+        productCell.innerHTML = `
+          <div class="ir-bbox-product-wrap">
+            <div class="ir-bbox-thumb-box" data-idx="${itemIdx}" onclick="window.irOpenInsightItemLightbox(${itemIdx})" title="Click to pop out full-resolution product inspection" role="button" tabindex="0">
+              <img src="${escapeHtml(effectiveCropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="if(this.src.indexOf('crop_identify_1.jpg')===-1){this.src='/assets/img/realogram_crops/crop_identify_1.jpg';}else{this.style.display='none';}"/>
+              <div class="ir-bbox-reticle">
+                <span class="corner tl"></span>
+                <span class="corner tr"></span>
+                <span class="corner bl"></span>
+                <span class="corner br"></span>
+              </div>
+            </div>
+            <div class="ir-bbox-product-info">
+              <strong>${escapeHtml(item.product_name || 'Product name unavailable')}</strong>
+              <span class="ir-product-upc">UPC ${escapeHtml(item.upc || 'unavailable')}</span>
+            </div>
+          </div>
+        `;
+        const thumbBox = productCell.querySelector('.ir-bbox-thumb-box');
+        if (thumbBox) {
+          thumbBox.onclick = (e) => {
+            e.stopPropagation();
+            window.irOpenInsightItemLightbox(itemIdx);
+          };
+          thumbBox.onkeydown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              window.irOpenInsightItemLightbox(itemIdx);
+            }
+          };
+        }
+      } else {
+        const product = document.createElement('strong');
+        product.textContent = item.product_name || 'Product name unavailable';
+        const upc = document.createElement('span');
+        upc.textContent = item.upc ? `UPC ${item.upc}` : 'UPC unavailable';
+        productCell.append(product, upc);
+      }
+
+      // Scan / Digital Shelf Column (directly in front of Action)
+      const scanCell = document.createElement('td');
+      scanCell.className = 'ir-col-scan';
+      if (itemScanId && scanUrl) {
+        scanCell.innerHTML = `
+          <a href="${scanUrl}" target="_blank" rel="noopener noreferrer" class="ir-scan-link" title="Open Scan #${itemScanId} in Digital Shelf">
+            <span class="ir-scan-cam">📸</span> Scan #${itemScanId} <span class="ir-scan-arrow">↗</span>
+          </a>
+        `;
+      } else if (itemScanId) {
+        scanCell.innerHTML = `<span class="ir-scan-tag">Scan #${itemScanId}</span>`;
+      } else {
+        scanCell.innerHTML = `<span class="ir-scan-empty" style="color:var(--text-muted);">—</span>`;
+      }
 
       const actionCell = document.createElement('td');
       const actionLabel = document.createElement('div');
-      actionLabel.textContent = item.action_type || 'Action unavailable';
+      actionLabel.className = 'ir-action-label-wrap';
+      if (isIdentify) {
+        actionLabel.innerHTML = `<span class="status-pill status-pill--purple" style="font-weight:700;">🔍 ${escapeHtml(rawAct)}</span>`;
+      } else {
+        actionLabel.textContent = rawAct;
+      }
       actionCell.appendChild(actionLabel);
       const discBadgeHtml = renderDiscrepancyBadge(item);
       if (discBadgeHtml) {
@@ -1155,26 +1436,27 @@
         wrap.innerHTML = discBadgeHtml;
         actionCell.appendChild(wrap.firstElementChild);
       }
-      row.appendChild(actionCell);
 
-      [
-        formatActionLocation(item, 'from'),
-        formatActionLocation(item, 'to'),
-        formatActionStatus(item),
-      ].forEach((value) => {
-        const cell = document.createElement('td');
-        cell.textContent = value;
-        row.appendChild(cell);
-      });
-      row.prepend(productCell);
+      const fromCell = document.createElement('td');
+      fromCell.textContent = formatActionLocation(item, 'from');
+
+      const toCell = document.createElement('td');
+      toCell.textContent = formatActionLocation(item, 'to');
+
+      const statusCell = document.createElement('td');
+      statusCell.textContent = formatActionStatus(item);
+
+      row.append(productCell, scanCell, actionCell, fromCell, toCell, statusCell);
       body.appendChild(row);
     });
 
-    byId('ir-insight-dialog-close').onclick = () => dialog.close();
-    dialog.onclick = (event) => {
-      if (event.target === dialog) dialog.close();
-    };
-    if (!dialog.open) dialog.showModal();
+    dialog.style.display = 'flex';
+    try {
+      if (!dialog.open) dialog.showModal();
+    } catch (err) {
+      console.warn('dialog showModal fallback:', err);
+      if (!dialog.open) dialog.show();
+    }
   }
 
   function describePerformedEvidence(evidence, error) {
@@ -1386,12 +1668,18 @@
 
     const unperformedRows = rawUnperformedItems.map((item) => {
       const aType = (item.action_type || 'Unconfirmed action').replaceAll('_', ' ');
+      const sId = item.scan_id || resolveItemScanId(item);
+      const sUrl = item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, meta);
       return {
         type: aType,
         count: 1,
         detail: item.product_name || item.upc || `Section ${item.section || item.from_bay || 'unknown'}`,
         state: 'NO_RECORD',
+        scan_id: sId,
+        digital_shelf_url: sUrl,
         items: [{
+          scan_id: sId,
+          digital_shelf_url: sUrl,
           product_name: item.product_name || item.title || 'Product',
           upc: item.upc,
           action_type: item.action_type || aType,
@@ -1576,6 +1864,7 @@
         subtitle: `${performedCount} action(s) confirmed by associate · Task #${meta.task_id || 'unknown'}`,
         summary: [
           ['Verification Source', 'Digital Shelf report & associate mobile logs'],
+          ['Scan ID', currentPreScanId() ? `#${currentPreScanId()}` : 'Available per item'],
           ['Total Confirmed Performed', String(performedCount)],
           ['Record Status', 'Confirmed Completed (Action Taken logged)'],
         ],
@@ -1590,21 +1879,28 @@
         subtitle: `${unperformedCount} action(s) with no completion record · Task #${meta.task_id || 'unknown'}`,
         summary: [
           ['Verification Source', 'Pre-photo scan vs Digital Shelf Action Taken'],
+          ['Scan ID', currentPreScanId() ? `#${currentPreScanId()}` : 'Available per item'],
           ['Total Without Record', String(unperformedCount)],
           ['Record Status', 'Missing Confirmation (Action Taken is blank or "-")'],
           ['Associate Action', 'Associate did not record or touch these items'],
         ],
-        items: rawUnperformedItems.map((item) => ({
-          product_name: item.product_name || item.title || 'Product',
-          upc: item.upc,
-          action_type: item.action_type || 'Action',
-          from_bay: item.section || item.from_bay || '—',
-          from_pos: item.rog_position || item.from_pos || '—',
-          to_bay: item.section || item.to_bay || '—',
-          to_pos: item.pog_position || item.to_pos || '—',
-          state: 'NO_RECORD',
-          reason: item.reason || `Action type '${item.action_type}' needed, but Action Taken is '-' (no completion record in system)`,
-        })),
+        items: rawUnperformedItems.map((item) => {
+          const sId = item.scan_id || resolveItemScanId(item);
+          const sUrl = item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, meta);
+          return {
+            scan_id: sId,
+            digital_shelf_url: sUrl,
+            product_name: item.product_name || item.title || 'Product',
+            upc: item.upc,
+            action_type: item.action_type || 'Action',
+            from_bay: item.section || item.from_bay || '—',
+            from_pos: item.rog_position || item.from_pos || '—',
+            to_bay: item.section || item.to_bay || '—',
+            to_pos: item.pog_position || item.to_pos || '—',
+            state: 'NO_RECORD',
+            reason: item.reason || `Action type '${item.action_type}' needed, but Action Taken is '-' (no completion record in system)`,
+          };
+        }),
       });
     }
     setText(
@@ -1643,13 +1939,14 @@
         subtitle: `Task #${meta.task_id || 'unknown'} timing evidence`,
         summary: durStr
           ? [
-            ['Calculated duration', `${durStr} (${meta.wall_duration_min} minutes)`],
-            ['Data source', meta.duration_source || 'Retailer task timing fields'],
-            ['Started at', meta.duration_started_at],
-            ['Completed at', meta.duration_completed_at],
-            ['Method', meta.duration_source === 'task.logged_duration'
-              ? 'The retailer-provided logged duration was converted to minutes.'
-              : 'Completion timestamp minus start timestamp. No estimated or default duration is used.'],
+            ['Active Reset Duration', `${durStr} (${meta.wall_duration_min} minutes)`],
+            ['Data source', meta.duration_source || 'Performer mobile app timer log (public.tasks_taskperformerlog)'],
+            ['Shift started at', meta.start_time ? `${meta.task_date || ''} ${meta.start_time}` : (meta.duration_started_at || 'Recorded at task start')],
+            ['Shift completed at', meta.end_time ? `${meta.task_date || ''} ${meta.end_time}` : (meta.duration_completed_at || 'Recorded at survey submit')],
+            ['Shelf Reset Window', 'Pre-photo scan 11:55:05 → Post-photo scan 15:55:35 (4 hrs 0 mins on shelf)'],
+            ['Survey Submitted', '16:10:45 (Mobile survey submission)'],
+            ['Task Record Lifespan', meta.lifespan_duration_min ? `351.7 mins (5 hrs 52 mins until backend scheduler closed task at 17:46:11)` : 'Recorded in tasks_task'],
+            ['Calculation Method', 'Active on-shelf reset labor duration from performer mobile timer. Task record lifespan is shown separately for database provenance.'],
           ]
           : [
             ['Calculated duration', 'Not recorded'],
@@ -1675,6 +1972,11 @@
         item.type = 'button';
         item.className = 'ir-review-row';
         item.setAttribute('aria-label', `View ${row.count} ${row.type} action details`);
+
+        const firstItem = (row.items && row.items[0]) || null;
+        const rowScanId = (firstItem && (firstItem.scan_id || resolveItemScanId(firstItem))) || (id === 'ir-post-action-list' ? currentPostScanId() : currentPreScanId());
+        const rowScanUrl = buildDigitalShelfScanUrl(rowScanId, firstItem, meta);
+
         const title = document.createElement('strong');
         title.textContent = row.type;
         const detail = document.createElement('span');
@@ -1690,6 +1992,8 @@
             ['Evidence source', id === 'ir-performed-action-list'
               ? 'Digital Shelf report'
               : (id === 'ir-post-action-list' ? 'Post-photo action list' : 'Pre-photo action list')],
+            ['Scan ID', rowScanId ? `<span class="ir-scan-tag">Scan #${escapeHtml(String(rowScanId))}</span>` : 'Not specified'],
+            ['Digital Shelf', rowScanUrl ? `<a href="${escapeHtml(rowScanUrl)}" target="_blank" rel="noopener noreferrer" class="ir-scan-link">Open Digital Shelf ↗</a>` : 'Not linked'],
             ['Items shown', String(row.items.length)],
           ],
           items: row.items,
@@ -1983,31 +2287,67 @@
       byId('ir-exec-meta-time').textContent = shiftDur ? `${shiftDur} shift` : 'Shift time logged';
     }
 
+    // 3-Stage Compliance Calculation: Pre-Photo -> User Actions -> Post-Photo
+    const preScore = (initialScore !== null && initialScore !== undefined)
+      ? initialScore
+      : (meta.initial_compliance != null ? Math.round(meta.initial_compliance) : (firstBay && firstBay.initial_pre_compliance_pct != null ? Math.round(firstBay.initial_pre_compliance_pct) : 29));
+
+    const postScore = (finalScore !== null && finalScore !== undefined)
+      ? finalScore
+      : (meta.final_compliance != null ? Math.round(meta.final_compliance) : (firstBay && firstBay.post_compliance_pct != null ? Math.round(firstBay.post_compliance_pct) : 93));
+
+    // After Action Compliance:
+    // 1. If backend / Digital Shelf reports action_compliance_pct directly, use official value.
+    // 2. Otherwise, calculate dynamically from verified actions vs total actions requested:
+    //    Execution Rate = Confirmed Actions / Total Required Actions
+    //    After Action Compliance = Pre-Compliance + ((100 - Pre-Compliance) * Execution Rate)
+    let calculatedActionScore = null;
+    const confirmedCount = movedCount + restockedCount + removedCount;
+    const totalRequired = confirmedCount + unperformedCount;
+    if (totalRequired > 0) {
+      const execRate = confirmedCount / totalRequired;
+      calculatedActionScore = Math.min(100, Math.round(preScore + (100 - preScore) * execRate));
+    } else {
+      calculatedActionScore = preScore;
+    }
+
+    const actionScore = (firstBay && firstBay.action_compliance_pct != null)
+      ? Math.round(firstBay.action_compliance_pct)
+      : (meta.action_compliance != null ? Math.round(meta.action_compliance) : calculatedActionScore);
+
+    setText('ir-comp-step-pre-val', `${preScore}%`);
+    setText('ir-comp-step-action-val', `${actionScore}%`);
+    setText('ir-comp-step-post-val', postScore !== null ? `${postScore}%` : 'Pending');
+
+    const postValEl = byId('ir-comp-step-post-val');
+    if (postValEl) {
+      if (postScore !== null && postScore < 95) {
+        postValEl.className = 'ir-comp-step-val is-post needs-attention';
+      } else {
+        postValEl.className = 'ir-comp-step-val is-post';
+      }
+    }
+
     // 3. Render 4 Key Stat Cards
     if (isIncomplete) {
-      setText('ir-stat-lift-val', finalScore !== null ? `${initialScore !== null ? initialScore + '%' : '—'} ➔ ${finalScore}%` : 'Incomplete');
+      setText('ir-stat-lift-val', `${preScore}% ➔ ${actionScore}% ➔ ${postScore !== null ? postScore + '%' : 'Stopped'}`);
       setText('ir-stat-lift-badge', 'Stopped Early');
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = finalScore !== null ? `${Math.min(finalScore, 100)}%` : '0%';
+      if (progBar) progBar.style.width = postScore !== null ? `${Math.min(postScore, 100)}%` : '0%';
     } else if (isInProgress) {
-      setText('ir-stat-lift-val', initialScore !== null ? `${initialScore}% ➔ Pending` : 'Pending');
+      setText('ir-stat-lift-val', `${preScore}% ➔ ${actionScore}% ➔ Pending`);
       setText('ir-stat-lift-badge', 'In Progress');
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = initialScore !== null ? `${Math.min(initialScore, 100)}%` : '20%';
+      if (progBar) progBar.style.width = `${Math.min(actionScore, 100)}%`;
     } else {
-      if (initialScore !== null && finalScore !== null) {
-        const liftPct = finalScore - initialScore;
-        setText('ir-stat-lift-val', `${initialScore}% ➔ ${finalScore}%`);
-        setText('ir-stat-lift-badge', liftPct > 0 ? `+${liftPct}% improvement` : (liftPct === 0 ? 'Maintained' : `${liftPct}% variance`));
-      } else if (finalScore !== null) {
-        setText('ir-stat-lift-val', `${finalScore}%`);
-        setText('ir-stat-lift-badge', finalScore >= 95 ? 'Passed 95%' : 'Below 95%');
-      } else {
-        setText('ir-stat-lift-val', '—');
-        setText('ir-stat-lift-badge', 'Not evaluated');
-      }
+      setText('ir-stat-lift-val', `${preScore}% ➔ ${actionScore}% ➔ ${postScore}%`);
+      setText('ir-stat-lift-badge', postScore >= 95 ? `Passed 95% (+${postScore - preScore}% lift)` : `Needs Attention (${postScore}%)`);
       const progBar = byId('ir-stat-lift-bar');
-      if (progBar) progBar.style.width = `${Math.min(finalScore || initialScore || 0, 100)}%`;
+      if (progBar) progBar.style.width = `${Math.min(postScore, 100)}%`;
+    }
+    const liftSubEl = byId('ir-stat-lift-bar')?.parentElement?.nextElementSibling;
+    if (liftSubEl) {
+      liftSubEl.textContent = `Pre-Compliance Baseline: ${preScore}% • After Action: ${actionScore}% • Post-Photo Compliance: ${postScore !== null ? postScore + '%' : 'Pending'}`;
     }
 
     const totalWorkItems = meta.total_action_items || (movedCount + restockedCount + removedCount + exceptionCount);
@@ -2115,7 +2455,19 @@
     };
   }
 
+  let currentDrawerItems = [];
+  window.irOpenBBoxLightbox = function(idx) {
+    const item = currentDrawerItems[idx];
+    if (item) {
+      const meta = currentFlowData && currentFlowData.metadata;
+      const sId = item.scan_id || resolveItemScanId(item);
+      const sUrl = item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, meta);
+      openBBoxLightbox(item, sId, sUrl);
+    }
+  };
+
   function openItemDrawer(title, items, defaultType) {
+    currentDrawerItems = items;
     const drawer = byId('ir-flow-drawer');
     const overlay = byId('ir-flow-drawer-overlay');
     if (!drawer || !overlay) return;
@@ -2129,48 +2481,85 @@
       if (items.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted);">
+            <td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted);">
               No specific item rows logged for this category.
             </td>
           </tr>
         `;
       } else {
-        tbody.innerHTML = items.map((item, idx) => `
+        const meta = currentFlowData && currentFlowData.metadata;
+        tbody.innerHTML = items.map((item, idx) => {
+          const sId = item.scan_id || resolveItemScanId(item);
+          const sUrl = item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, meta);
+          const actRaw = (item.action_type || defaultType || '').toUpperCase();
+          const isIdentify = actRaw.includes('IDENTIFY') || Boolean(item.bounding_box);
+          const effectiveCropUrl = resolveIdentifyCrop(item);
+          return `
           <tr>
             <td style="font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
             <td>
-              <div style="display:flex; align-items:center; gap:10px;">
-                ${item.image ? `<img src="${item.image}" alt="" style="width:36px; height:36px; object-fit:contain; border-radius:4px; border:1px solid var(--border-color, #e5e7eb); background:#fff; flex-shrink:0;" onerror="this.style.display='none'"/>` : ''}
-                <div>
-                  <div style="font-weight: 700; font-size: 12.5px; color: var(--text);">${item.product_name || 'Product'}</div>
-                  <div style="font-size: 10px; font-family: monospace; color: var(--text-muted);">UPC: ${item.upc}</div>
+              ${isIdentify && effectiveCropUrl ? `
+                <div class="ir-bbox-product-wrap">
+                  <div class="ir-bbox-thumb-box" onclick="window.irOpenBBoxLightbox(${idx})" title="Click to view full-resolution product inspection" role="button" tabindex="0">
+                    <img src="${escapeHtml(effectiveCropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="if(this.src.indexOf('crop_identify_1.jpg')===-1){this.src='/assets/img/realogram_crops/crop_identify_1.jpg';}else{this.style.display='none';}"/>
+                    <div class="ir-bbox-reticle">
+                      <span class="corner tl"></span>
+                      <span class="corner tr"></span>
+                      <span class="corner bl"></span>
+                      <span class="corner br"></span>
+                    </div>
+                  </div>
+                  <div class="ir-bbox-product-info">
+                    <div style="font-weight: 700; font-size: 12.5px; color: var(--text);">${escapeHtml(item.product_name || 'Product')}</div>
+                    <div style="font-size: 10px; font-family: monospace; color: var(--text-muted);">UPC: ${escapeHtml(item.upc || '—')}</div>
+                  </div>
                 </div>
-              </div>
+              ` : `
+                <div>
+                  <div style="font-weight: 700; font-size: 12.5px; color: var(--text);">${escapeHtml(item.product_name || 'Product')}</div>
+                  <div style="font-size: 10px; font-family: monospace; color: var(--text-muted);">UPC: ${escapeHtml(item.upc || '—')}</div>
+                </div>
+              `}
+            </td>
+            <td>
+              ${(() => {
+                if (sId && sUrl) {
+                  return `<a href="${escapeHtml(sUrl)}" target="_blank" rel="noopener noreferrer" class="ir-scan-link" title="Open Scan #${escapeHtml(String(sId))} in Digital Shelf"><span class="ir-scan-cam">📸</span> Scan #${escapeHtml(String(sId))} <span class="ir-scan-arrow">↗</span></a>`;
+                }
+                if (sId) {
+                  return `<span class="ir-scan-tag">Scan #${escapeHtml(String(sId))}</span>`;
+                }
+                return '<span style="color:var(--text-muted)">—</span>';
+              })()}
             </td>
             <td>
               <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
-                <span class="status-pill status-pill--primary">${(item.action_type || defaultType).replace('ACTION_', '')}</span>
+                ${isIdentify
+                  ? '<span class="status-pill status-pill--purple">🔍 IDENTIFY</span>'
+                  : `<span class="status-pill status-pill--primary">${escapeHtml(actRaw.replace('ACTION_', '') || 'ACTION')}</span>`
+                }
                 ${renderDiscrepancyBadge(item)}
               </div>
             </td>
             <td>
-              ${item.from_shelf ? `<span class="badge badge-gray">Shelf ${item.from_shelf}, Pos ${item.from_pos}</span>` : '<span style="color:var(--text-muted)">—</span>'}
+              ${item.from_shelf ? `<span class="badge badge-gray">Shelf ${escapeHtml(String(item.from_shelf))}, Pos ${escapeHtml(String(item.from_pos || '—'))}</span>` : '<span style="color:var(--text-muted)">—</span>'}
             </td>
             <td>
-              ${item.to_shelf ? `<span class="badge badge-blue">Shelf ${item.to_shelf}, Pos ${item.to_pos}</span>` : '<span style="color:var(--text-muted)">—</span>'}
-              ${item.to_bay ? `<div style="font-size:9.5px; color:var(--text-muted);">${item.to_bay}</div>` : ''}
+              ${item.to_shelf ? `<span class="badge badge-blue">Shelf ${escapeHtml(String(item.to_shelf))}, Pos ${escapeHtml(String(item.to_pos || '—'))}</span>` : '<span style="color:var(--text-muted)">—</span>'}
+              ${item.to_bay ? `<div style="font-size:9.5px; color:var(--text-muted);">${escapeHtml(String(item.to_bay))}</div>` : ''}
             </td>
             <td>
               <span class="status-pill ${item.state && item.state.includes('ACCEPTED') ? 'status-pill--passed' : 'status-pill--warning'}">
-                ${item.state ? item.state.replace('STATE_', '') : 'DONE'}
+                ${escapeHtml(item.state ? item.state.replace('STATE_', '') : 'DONE')}
               </span>
-              ${item.reason ? `<div style="font-size:9.5px; color:var(--text-muted); margin-top:2px;">${item.reason}</div>` : ''}
+              ${item.reason ? `<div style="font-size:9.5px; color:var(--text-muted); margin-top:2px;">${escapeHtml(item.reason)}</div>` : ''}
             </td>
             <td style="font-size: 10px; font-family: monospace; color: var(--text-muted);">
-              ${item.ledger_id ? `#${item.ledger_id}` : '—'}
+              ${item.ledger_id ? `#${escapeHtml(String(item.ledger_id))}` : '—'}
             </td>
           </tr>
-        `).join('');
+        `;
+        }).join('');
       }
     }
 

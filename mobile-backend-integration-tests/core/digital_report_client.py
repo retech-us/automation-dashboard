@@ -172,13 +172,25 @@ def fetch_section_product_reports_for_scans(
     raw_payloads = []
     unique_scan_ids = sorted(set(int(s) for s in scan_ids if str(s or '').isdigit()))
     successful_fetches = 0
-    for scan_id in unique_scan_ids:
-        result = fetch_section_product_reports(
-            base_url,
-            token,
-            scan_id,
-            opener=opener,
-        )
+    if len(unique_scan_ids) <= 1:
+        scan_results = [
+            (
+                sid,
+                fetch_section_product_reports(base_url, token, sid, opener=opener),
+            )
+            for sid in unique_scan_ids
+        ]
+    else:
+        from concurrent.futures import ThreadPoolExecutor
+
+        def _fetch(sid: int):
+            return sid, fetch_section_product_reports(base_url, token, sid, opener=opener)
+
+        with ThreadPoolExecutor(max_workers=min(len(unique_scan_ids), 8)) as executor:
+            fetched_dict = dict(executor.map(_fetch, unique_scan_ids))
+        scan_results = [(sid, fetched_dict[sid]) for sid in unique_scan_ids]
+
+    for scan_id, result in scan_results:
         items.extend(result.items)
         requested_urls.extend(result.requested_urls)
         raw_payloads.extend(result.raw_payloads)

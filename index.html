@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261028a" />
+  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261029e" />
   <script>
     (function() {
       try {
@@ -337,6 +337,27 @@
               <span id="ir-exec-meta-time" class="ir-exec-meta-sub">—</span>
             </div>
           </div>
+
+          <!-- 3-Stage Reset Compliance Flow (Pre-Photo -> User Actions -> Post-Photo) -->
+          <div id="ir-compliance-3stage" class="ir-compliance-3stage">
+            <div class="ir-comp-step">
+              <span class="ir-comp-step-label">📸 1. Pre-Compliance Baseline</span>
+              <span id="ir-comp-step-pre-val" class="ir-comp-step-val is-pre">—</span>
+              <span class="ir-comp-step-sub">Initial Shelf Baseline</span>
+            </div>
+            <div class="ir-comp-step-arrow">➔</div>
+            <div class="ir-comp-step">
+              <span class="ir-comp-step-label">🛠️ 2. After Action Compliance</span>
+              <span id="ir-comp-step-action-val" class="ir-comp-step-val is-action">—</span>
+              <span class="ir-comp-step-sub">User Completed Actions</span>
+            </div>
+            <div class="ir-comp-step-arrow">➔</div>
+            <div class="ir-comp-step">
+              <span class="ir-comp-step-label">📷 3. Post-Photo Compliance</span>
+              <span id="ir-comp-step-post-val" class="ir-comp-step-val is-post">—</span>
+              <span class="ir-comp-step-sub">Verified Final Shelf Quality</span>
+            </div>
+          </div>
         </div>
 
         <section class="ir-task-insights" aria-label="Selected task performance">
@@ -497,31 +518,7 @@
           </div>
         </section>
 
-        <dialog id="ir-insight-dialog" class="ir-insight-dialog" aria-labelledby="ir-insight-dialog-title">
-          <div class="ir-insight-dialog__header">
-            <div>
-              <span class="ir-review-kicker">Task evidence</span>
-              <h2 id="ir-insight-dialog-title">Action details</h2>
-              <p id="ir-insight-dialog-subtitle"></p>
-            </div>
-            <button type="button" id="ir-insight-dialog-close" class="btn btn--ghost btn--sm" aria-label="Close action details">✕ Close</button>
-          </div>
-          <div id="ir-insight-dialog-summary" class="ir-insight-dialog__summary"></div>
-          <div id="ir-insight-dialog-table-wrap" class="ir-insight-dialog__table-wrap">
-            <table class="ir-insight-detail-table">
-              <thead>
-                <tr>
-                  <th>Product / UPC</th>
-                  <th>Action</th>
-                  <th>From</th>
-                  <th>To</th>
-                  <th>Status / reason</th>
-                </tr>
-              </thead>
-              <tbody id="ir-insight-dialog-body"></tbody>
-            </table>
-          </div>
-        </dialog>
+
 
         <!-- Live quality findings from the runner snapshot (was previously rendered but hidden) -->
         <section class="panel ir-quality-panel ir-summary-secondary" aria-label="Intelligent Reset quality findings">
@@ -1348,6 +1345,7 @@
               <tr>
                 <th style="width: 30px;">#</th>
                 <th>Product &amp; UPC</th>
+                <th class="ir-col-scan">Scan / Digital Shelf</th>
                 <th>Action</th>
                 <th>From Position</th>
                 <th>To Position</th>
@@ -1505,6 +1503,90 @@
     </div>
   </div>
 
+  <!-- Task Evidence Modal Dialog (Root level) -->
+  <dialog id="ir-insight-dialog" class="ir-insight-dialog" aria-labelledby="ir-insight-dialog-title">
+    <div class="ir-insight-dialog__header">
+      <div>
+        <span class="ir-review-kicker">Task evidence</span>
+        <h2 id="ir-insight-dialog-title">Action details</h2>
+        <p id="ir-insight-dialog-subtitle"></p>
+      </div>
+      <button type="button" id="ir-insight-dialog-close" class="btn btn--ghost btn--sm" aria-label="Close action details" onclick="window.irCloseDialog('ir-insight-dialog')">✕ Close</button>
+    </div>
+    <div id="ir-insight-dialog-summary" class="ir-insight-dialog__summary"></div>
+    <div id="ir-insight-dialog-table-wrap" class="ir-insight-dialog__table-wrap">
+      <table class="ir-insight-detail-table">
+        <thead>
+          <tr>
+            <th>Product / UPC</th>
+            <th class="ir-col-scan">Scan / Digital Shelf</th>
+            <th>Action</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Status / reason</th>
+          </tr>
+        </thead>
+        <tbody id="ir-insight-dialog-body"></tbody>
+      </table>
+    </div>
+  </dialog>
+
+  <!-- Bounding Box Inspector Lightbox for Identified Products (Root level) -->
+  <dialog id="ir-bbox-lightbox" class="ir-bbox-lightbox" aria-labelledby="ir-bbox-lightbox-title">
+    <div class="ir-bbox-lightbox__header">
+      <div>
+        <span class="ir-review-kicker">📸 Realogram Shelf Evidence</span>
+        <h2 id="ir-bbox-lightbox-title">Identified Shelf Product Inspection</h2>
+        <p id="ir-bbox-lightbox-subtitle">High-resolution physical shelf product scan evidence</p>
+      </div>
+      <button type="button" id="ir-bbox-lightbox-close" class="btn btn--ghost btn--sm" aria-label="Close product inspector" onclick="window.irCloseDialog('ir-bbox-lightbox')">✕ Close</button>
+    </div>
+    <div class="ir-bbox-lightbox__content">
+      <div class="ir-bbox-lightbox__viewport">
+        <div class="ir-bbox-lightbox__image-frame">
+          <img id="ir-bbox-lightbox-img" src="" alt="Identified Product Scan Crop" />
+          <div class="ir-bbox-lightbox__viewfinder">
+            <span class="corner top-left"></span>
+            <span class="corner top-right"></span>
+            <span class="corner bottom-left"></span>
+            <span class="corner bottom-right"></span>
+          </div>
+        </div>
+      </div>
+      <div class="ir-bbox-lightbox__meta">
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">Product</span>
+          <strong id="ir-bbox-lightbox-product">—</strong>
+        </div>
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">UPC</span>
+          <span id="ir-bbox-lightbox-upc" class="code-val">—</span>
+        </div>
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">Action</span>
+          <span id="ir-bbox-lightbox-action" class="status-pill status-pill--purple">🔍 IDENTIFY</span>
+        </div>
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">Scan ID</span>
+          <span id="ir-bbox-lightbox-scan">—</span>
+        </div>
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">Shelf Position</span>
+          <span id="ir-bbox-lightbox-pos">—</span>
+        </div>
+        <div class="ir-bbox-meta-row">
+          <span class="ir-bbox-meta-label">Detection Status / Reason</span>
+          <span id="ir-bbox-lightbox-reason" style="color: var(--warn, #f59e0b);">—</span>
+        </div>
+        <div class="ir-bbox-lightbox__action-bar">
+          <a id="ir-bbox-lightbox-shelf-link" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--primary btn--sm">
+            📸 Open Realogram in Digital Shelf Scan ↗
+          </a>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
   <script src="assets/bootstrap.js?v=20260901a"></script>
   <script src="assets/js/auth-gate.js?v=20260923b"></script>
   <script src="assets/js/live-tracker.js?v=20260817p"></script>
@@ -1512,7 +1594,7 @@
   <script src="assets/js/issue-bridge.js?v=20261007e"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20261007a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261028a"></script>
+  <script src="assets/js/ir-flow.js?v=20261029e"></script>
   <script src="assets/js/agent-center.js?v=20261012f"></script>
   <script src="assets/js/sentry-usage.js?v=20261012c"></script>
   <script src="assets/js/app.v16.js?v=20261012a"></script>
