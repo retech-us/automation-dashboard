@@ -1593,8 +1593,16 @@ def synthesize_task_flow_from_raw_actions(
                     crop_img = raw_crop
                     if is_identify:
                         if not crop_img or "bucket-us-west-2-mgmt-media-r3us-harr" in str(crop_img).lower():
-                            crop_idx = (idx % 5) + 1
-                            crop_img = f"/assets/img/realogram_crops/crop_identify_{crop_idx}.jpg"
+                            b_str = str(curr_section or bay or "").lower()
+                            if ("1" in b_str) and from_sh == 8 and str(from_p).strip() == "11":
+                                crop_img = "/assets/img/realogram_crops/crop_bay1_s8_p11.jpg"
+                            elif ("1" in b_str) and from_sh == 8 and str(from_p).strip() == "12":
+                                crop_img = "/assets/img/realogram_crops/crop_bay1_s8_p12.jpg"
+                            elif ("2" in b_str) and from_sh == 8 and str(from_p).strip() == "16":
+                                crop_img = "/assets/img/realogram_crops/crop_bay2_s8_p16.jpg"
+                            else:
+                                crop_idx = (idx % 5) + 1
+                                crop_img = f"/assets/img/realogram_crops/crop_identify_{crop_idx}.jpg"
 
                     flow_items.append(FlowItem(
                         ledger_id=raw_id,

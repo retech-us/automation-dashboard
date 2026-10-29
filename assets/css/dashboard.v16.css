@@ -8380,6 +8380,10 @@ button.ir-review-row {
 }
 
 .ir-insight-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  z-index: 9000;
   width: min(1040px, calc(100vw - 32px));
   max-height: min(760px, calc(100vh - 48px));
   padding: 0;
@@ -8392,7 +8396,15 @@ button.ir-review-row {
 }
 
 .ir-insight-dialog::backdrop {
+  z-index: 8999;
   background: rgba(15, 23, 42, .55);
+}
+
+#ir-insight-dialog-close {
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  z-index: 10;
 }
 
 .ir-insight-dialog__header {
@@ -8760,18 +8772,32 @@ button.ir-review-row {
 
 /* Lightbox Dialog */
 .ir-bbox-lightbox {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  z-index: 10050;
   width: min(880px, calc(100vw - 32px));
+  max-height: min(780px, calc(100vh - 40px));
   border: 1px solid var(--border);
   border-radius: 18px;
   background: var(--surface-2);
   padding: 0;
   color: var(--text);
   box-shadow: 0 28px 70px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
 }
 
 .ir-bbox-lightbox::backdrop {
+  z-index: 10049;
   background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(4px);
+}
+
+#ir-bbox-lightbox-close {
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  z-index: 10;
 }
 
 .ir-bbox-lightbox__header {
@@ -8936,54 +8962,76 @@ button.ir-review-row {
   .ir-bbox-lightbox__content {
     grid-template-columns: 1fr;
   }
-/* 3-Stage Reset Compliance Flow (Pre-Photo -> User Actions -> Post-Photo) */
+}
+
+/* 3-Stage Reset Compliance Flow (Pre-Compliance Baseline -> After Action -> Post-Photo Compliance) */
 .ir-compliance-3stage {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   background: var(--surface-2, rgba(255, 255, 255, 0.04));
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 18px;
-  margin: 16px 0 8px 0;
+  border-radius: 14px;
+  padding: 16px 22px;
+  margin: 18px 0 12px 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
   flex-wrap: wrap;
+}
+
+[data-theme="light"] .ir-compliance-3stage {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .ir-comp-step {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   flex: 1;
-  min-width: 130px;
+  min-width: 140px;
 }
 
 .ir-comp-step-label {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
 }
 
 .ir-comp-step-val {
-  font-size: 22px;
-  font-weight: 800;
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 24px;
+  font-weight: 900;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: var(--text);
   line-height: 1.1;
+  margin: 2px 0;
 }
 
 .ir-comp-step-val.is-pre {
   color: #f59e0b;
 }
 
+[data-theme="light"] .ir-comp-step-val.is-pre {
+  color: #d97706;
+}
+
 .ir-comp-step-val.is-action {
-  color: #3b82f6;
+  color: #38bdf8;
+}
+
+[data-theme="light"] .ir-comp-step-val.is-action {
+  color: #0284c7;
 }
 
 .ir-comp-step-val.is-post {
   color: #10b981;
+}
+
+[data-theme="light"] .ir-comp-step-val.is-post {
+  color: #059669;
 }
 
 .ir-comp-step-val.is-post.needs-attention {
@@ -8991,15 +9039,15 @@ button.ir-review-row {
 }
 
 .ir-comp-step-sub {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--text-muted);
 }
 
 .ir-comp-step-arrow {
   color: var(--text-muted);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
-  opacity: 0.6;
+  opacity: 0.5;
   user-select: none;
 }
 
