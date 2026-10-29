@@ -1655,7 +1655,8 @@
     const bayShelfMap = new Map();
 
     // 1. Gather shelf counts from bay_summaries if present
-    Object.entries(data.bay_summaries || meta.bay_summaries || {}).forEach(([bName, bData]) => {
+    const baySummariesObj = (evidenceInfo && evidenceInfo.baySummaries) || (currentFlowData && currentFlowData.bay_summaries) || (meta && meta.bay_summaries) || {};
+    Object.entries(baySummariesObj).forEach(([bName, bData]) => {
       const pCount = Number(bData.pog_shelf_count || 0);
       const rCount = Number(bData.rog_shelf_count || 0);
       if (bData.has_shelf_discrepancy || (pCount > 0 && rCount > 0 && pCount !== rCount)) {
@@ -2405,6 +2406,7 @@
         unperformedActions: data.unperformed_actions || [],
         okNoActionItems: data.ok_no_action_items || [],
         allDigitalActions: data.all_digital_actions || [],
+        baySummaries: data.bay_summaries || {},
       },
     );
 
@@ -2425,6 +2427,26 @@
       });
     }
     const unperformedCount = rawUnperformedItems.length;
+
+    // After Action Compliance:
+    // Extract actual confirmed actions completed by user vs unperformed/pending actions:
+    let rawPerformedItems = [];
+    if (data.performed_actions_loaded === true && Array.isArray(data.performed_actions)) {
+      rawPerformedItems = data.performed_actions;
+    } else if (Array.isArray(data.all_digital_actions) && data.all_digital_actions.length > 0) {
+      rawPerformedItems = data.all_digital_actions.filter((item) => {
+        const actTaken = (item.action_taken || '').trim();
+        const actType = (item.action_type || '').trim().toLowerCase();
+        return actTaken && actTaken !== '-' && actType !== 'ok';
+      });
+    } else {
+      const allGen = Object.values(batches).flatMap((b) => b.items || []);
+      rawPerformedItems = allGen.filter((item) => {
+        const st = String(item.state || '').toUpperCase();
+        return st.includes('ACCEPT') || st.includes('COMPLET') || st.includes('DONE') || st.includes('PERFORM');
+      });
+    }
+    const actualConfirmedCount = rawPerformedItems.length;
 
     // 2. Render Big Executive Verdict Banner
     const verdictCard = byId('ir-exec-verdict-card');
@@ -2480,26 +2502,6 @@
     const postScore = (finalScore !== null && finalScore !== undefined)
       ? finalScore
       : (meta.final_compliance != null ? Math.round(meta.final_compliance) : (firstBay && firstBay.post_compliance_pct != null ? Math.round(firstBay.post_compliance_pct) : null));
-
-    // After Action Compliance:
-    // Extract actual confirmed actions completed by user vs unperformed/pending actions:
-    let rawPerformedItems = [];
-    if (data.performed_actions_loaded === true && Array.isArray(data.performed_actions)) {
-      rawPerformedItems = data.performed_actions;
-    } else if (Array.isArray(data.all_digital_actions) && data.all_digital_actions.length > 0) {
-      rawPerformedItems = data.all_digital_actions.filter((item) => {
-        const actTaken = (item.action_taken || '').trim();
-        const actType = (item.action_type || '').trim().toLowerCase();
-        return actTaken && actTaken !== '-' && actType !== 'ok';
-      });
-    } else {
-      const allGen = Object.values(batches).flatMap((b) => b.items || []);
-      rawPerformedItems = allGen.filter((item) => {
-        const st = String(item.state || '').toUpperCase();
-        return st.includes('ACCEPT') || st.includes('COMPLET') || st.includes('DONE') || st.includes('PERFORM');
-      });
-    }
-    const actualConfirmedCount = rawPerformedItems.length;
 
     const totalBatchItems = movedCount + restockedCount + removedCount + exceptionCount;
     const totalRequiredActions = Math.max(actualConfirmedCount + unperformedCount, totalBatchItems, Number(meta.total_action_items || 0));
