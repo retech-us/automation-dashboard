@@ -1200,13 +1200,18 @@
 
     const sId = scanId || item.scan_id || resolveItemScanId(item);
     const sUrl = scanUrl || item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, currentFlowData && currentFlowData.metadata);
-    const cropImg = item.crop_image_url || item.image || '';
+    const cropImg = item.crop_image_url || item.image || '/assets/img/realogram_crops/crop_identify_1.jpg';
     const bbox = item.bounding_box || {};
 
     const imgEl = byId('ir-bbox-lightbox-img');
     if (imgEl) {
       imgEl.src = cropImg;
       imgEl.alt = item.product_name || 'Scan crop';
+      imgEl.onerror = () => {
+        if (!imgEl.src.includes('crop_identify_1.jpg')) {
+          imgEl.src = '/assets/img/realogram_crops/crop_identify_1.jpg';
+        }
+      };
     }
 
     setText('ir-bbox-lightbox-product', item.product_name || 'Identified Product');
@@ -1279,16 +1284,17 @@
       const rawAct = item.action_type || 'Action unavailable';
       const isIdentify = String(rawAct).toUpperCase().includes('IDENTIFY') || Boolean(item.bounding_box);
       const cropUrl = item.crop_image_url || (isIdentify ? item.image : null);
+      const effectiveCropUrl = cropUrl || (isIdentify ? '/assets/img/realogram_crops/crop_identify_1.jpg' : null);
       const bbox = item.bounding_box;
 
       const itemScanId = item.scan_id || resolveItemScanId(item);
       const scanUrl = buildDigitalShelfScanUrl(itemScanId, item, currentFlowData && currentFlowData.metadata);
 
-      if (isIdentify && cropUrl) {
+      if (isIdentify && effectiveCropUrl) {
         productCell.innerHTML = `
           <div class="ir-bbox-product-wrap">
             <div class="ir-bbox-thumb-box" title="Click to inspect identified scan bounding box" role="button" tabindex="0">
-              <img src="${escapeHtml(cropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="this.style.display='none'"/>
+              <img src="${escapeHtml(effectiveCropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="if(this.src.indexOf('crop_identify_1.jpg')===-1){this.src='/assets/img/realogram_crops/crop_identify_1.jpg';}else{this.style.display='none';}"/>
               <div class="ir-bbox-reticle">
                 <span class="corner tl"></span>
                 <span class="corner tr"></span>
@@ -2375,14 +2381,15 @@
           const isIdentify = actRaw.includes('IDENTIFY') || Boolean(item.bounding_box);
           const bbox = item.bounding_box;
           const cropUrl = item.crop_image_url || (isIdentify ? item.image : null);
+          const effectiveCropUrl = cropUrl || (isIdentify ? '/assets/img/realogram_crops/crop_identify_1.jpg' : null);
           return `
           <tr>
             <td style="font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
             <td>
-              ${isIdentify && cropUrl ? `
+              ${isIdentify && effectiveCropUrl ? `
                 <div class="ir-bbox-product-wrap">
                   <div class="ir-bbox-thumb-box" onclick="window.irOpenBBoxLightbox(${idx})" title="Click to inspect identified scan bounding box" role="button" tabindex="0">
-                    <img src="${escapeHtml(cropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="this.style.display='none'"/>
+                    <img src="${escapeHtml(effectiveCropUrl)}" alt="${escapeHtml(item.product_name || 'Product')}" class="ir-bbox-thumb-img" onerror="if(this.src.indexOf('crop_identify_1.jpg')===-1){this.src='/assets/img/realogram_crops/crop_identify_1.jpg';}else{this.style.display='none';}"/>
                     <div class="ir-bbox-reticle">
                       <span class="corner tl"></span>
                       <span class="corner tr"></span>

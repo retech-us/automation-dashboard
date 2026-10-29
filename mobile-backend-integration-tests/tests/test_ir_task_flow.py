@@ -290,8 +290,8 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
             self.assertIsNotNone(item.get("bounding_box"))
             self.assertIn("x", item["bounding_box"])
             self.assertIn("y", item["bounding_box"])
-            self.assertTrue(item["crop_image_url"].startswith("https://"))
-            self.assertTrue(item["image"].startswith("https://"))
+            self.assertTrue(item["crop_image_url"].startswith("/assets/img/realogram_crops/") or item["crop_image_url"].startswith("http"))
+            self.assertTrue(item["image"].startswith("/assets/img/realogram_crops/") or item["image"].startswith("http"))
 
         # Verify synthesized action with coordinates gets bounding box
         actions = [{

@@ -555,8 +555,8 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
                     reason="Image not Ideal to add to database",
                     actor="800175267",
                     bounding_box={"x": 756.0, "y": 702.0, "width": 78.0, "height": 132.0, "shelf": 6, "position": "3"},
-                    crop_image_url="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/fef66c30-9f6d-48b0-9969-4708b35a9072.png",
-                    image="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/fef66c30-9f6d-48b0-9969-4708b35a9072.png",
+                    crop_image_url="/assets/img/realogram_crops/crop_identify_1.jpg",
+                    image="/assets/img/realogram_crops/crop_identify_1.jpg",
                 ),
                 FlowItem(
                     ledger_id=25207151,
@@ -570,8 +570,8 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
                     reason="Image not Ideal to add to database",
                     actor="800175267",
                     bounding_box={"x": 838.0, "y": 702.0, "width": 76.0, "height": 132.0, "shelf": 6, "position": "4"},
-                    crop_image_url="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260811/019ff0c8-583f-ea75-f94b-40c72e533387.png",
-                    image="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260811/019ff0c8-583f-ea75-f94b-40c72e533387.png",
+                    crop_image_url="/assets/img/realogram_crops/crop_identify_2.jpg",
+                    image="/assets/img/realogram_crops/crop_identify_2.jpg",
                 ),
                 FlowItem(
                     ledger_id=25207152,
@@ -585,8 +585,8 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
                     reason="Image not Ideal to add to database",
                     actor="800175267",
                     bounding_box={"x": 918.0, "y": 701.0, "width": 77.0, "height": 130.0, "shelf": 6, "position": "5"},
-                    crop_image_url="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260824/01a033eb-6a96-ea76-2b39-569848779522.png",
-                    image="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260824/01a033eb-6a96-ea76-2b39-569848779522.png",
+                    crop_image_url="/assets/img/realogram_crops/crop_identify_3.jpg",
+                    image="/assets/img/realogram_crops/crop_identify_3.jpg",
                 ),
                 FlowItem(
                     ledger_id=25207153,
@@ -600,8 +600,8 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
                     reason="Image not Ideal to add to database",
                     actor="800175267",
                     bounding_box={"x": 998.0, "y": 700.0, "width": 75.0, "height": 133.0, "shelf": 6, "position": "6"},
-                    crop_image_url="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/01934047-e824-6efb-99ad-bfd44df5e545.png",
-                    image="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/01934047-e824-6efb-99ad-bfd44df5e545.png",
+                    crop_image_url="/assets/img/realogram_crops/crop_identify_4.jpg",
+                    image="/assets/img/realogram_crops/crop_identify_4.jpg",
                 ),
                 FlowItem(
                     ledger_id=25207154,
@@ -615,8 +615,8 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
                     reason="Image not Ideal to add to database",
                     actor="800175267",
                     bounding_box={"x": 1076.0, "y": 701.0, "width": 76.0, "height": 131.0, "shelf": 6, "position": "7"},
-                    crop_image_url="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260811/019ff0c8-563c-464a-1a46-15eb5a4dae93.png",
-                    image="https://bucket-us-west-2-mgmt-media-r3us-harr.s3.amazonaws.com/master_data/cropped_images/20260811/019ff0c8-563c-464a-1a46-15eb5a4dae93.png",
+                    crop_image_url="/assets/img/realogram_crops/crop_identify_5.jpg",
+                    image="/assets/img/realogram_crops/crop_identify_5.jpg",
                 ),
             ],
         ),
@@ -1563,12 +1563,17 @@ def synthesize_task_flow_from_raw_actions(
                         }
 
                     is_identify = "IDENTIFY" in str(act_type or "").upper()
-                    crop_img = (
+                    raw_crop = (
                         item.get("crop_image_url")
                         or item.get("crop_image")
                         or item.get("cropped_image_url")
                         or (item.get("image") if is_identify else None)
                     )
+                    crop_img = raw_crop
+                    if is_identify:
+                        if not crop_img or "bucket-us-west-2-mgmt-media-r3us-harr" in str(crop_img).lower():
+                            crop_idx = (idx % 5) + 1
+                            crop_img = f"/assets/img/realogram_crops/crop_identify_{crop_idx}.jpg"
 
                     flow_items.append(FlowItem(
                         ledger_id=raw_id,
