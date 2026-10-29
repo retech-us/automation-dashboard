@@ -1642,6 +1642,26 @@
       });
     }
 
+    const crossShelfMismatchItems = allGeneratedItems.filter((item) => {
+      const fromSh = item.from_shelf;
+      const toSh = item.to_shelf;
+      const isMove = (item.action_type || '').toUpperCase().includes('MOVE');
+      return item.discrepancy_type === 'cross_shelf_mismatch' || (isMove && fromSh && toSh && fromSh != toSh);
+    });
+    if (crossShelfMismatchItems.length > 0) {
+      challenges.push({
+        text: `⚠️ AI Exception: ${crossShelfMismatchItems.length} cross-shelf planogram vs. realogram discrepanc${crossShelfMismatchItems.length === 1 ? 'y' : 'ies'} detected between expected and actual shelf positions.`,
+        items: crossShelfMismatchItems,
+        source: 'Digital Shelf Realogram vs. Planogram Shelf Mismatch',
+        summary: [
+          ['AI Exception type', 'Cross-Shelf Planogram Discrepancy'],
+          ['Detection logic', 'Computer Vision detected the physical product on one shelf, but the Planogram specifies placement on a different vertical shelf.'],
+          ['Rule enforcement', 'Cross-shelf items cannot be marked as OK or relative sequence matches. Associate action is required to move product to target shelf.'],
+          ['Products affected', String(crossShelfMismatchItems.length)],
+        ],
+      });
+    }
+
     const generatedCount = generated.reduce((sum, row) => sum + row.count, 0);
     const postGeneratedCount = postGenerated.reduce((sum, row) => sum + row.count, 0);
     if (performedLoaded) {
