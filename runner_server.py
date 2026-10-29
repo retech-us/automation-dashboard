@@ -3110,6 +3110,53 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             ),
         }
 
+    def _fetch_live_task_status(self, base_url: str, task_id: int) -> Optional[Dict[str, Any]]:
+        """Fetch 100% real-time task status directly from retailer backend API without any caching."""
+        token = INSTANCE_TOKENS.get(base_url) or TOKEN
+        if not token:
+            return None
+        headers = {"Authorization": f"Token {token}", "Accept": "application/json"}
+        try:
+            req = urllib.request.Request(f"{base_url}/api/v1/tasks/{task_id}/", headers=headers)
+            with urllib.request.urlopen(req, context=ssl_ctx, timeout=8) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            st_obj = data.get("status")
+            status_name = "completed"
+            if isinstance(st_obj, dict):
+                status_name = st_obj.get("name") or st_obj.get("id") or "completed"
+            elif st_obj:
+                status_name = str(st_obj)
+            status_slug = status_name.strip().lower().replace(" ", "_").replace("-", "_")
+
+            perf = data.get("performer") or {}
+            if isinstance(perf, dict):
+                p_fn = (perf.get("first_name") or "").strip()
+                p_ln = (perf.get("last_name") or "").strip()
+                perf_name = f"{p_fn} {p_ln}".strip() or perf.get("username") or "Store Associate"
+            else:
+                perf_name = str(perf) if perf else "Store Associate"
+
+            pog_comp = data.get("pog_compliance") or []
+            comp_val = None
+            if pog_comp and isinstance(pog_comp[0], dict) and "compliance" in pog_comp[0]:
+                comp_val = round(float(pog_comp[0]["compliance"]) * 100.0, 1)
+
+            return {
+                "status": status_slug,
+                "status_name": status_name,
+                "is_completed": status_slug in ("completed", "done"),
+                "is_in_progress": status_slug in ("in_progress", "started", "not_started", "new", "active"),
+                "is_incomplete": status_slug in ("incomplete", "failed", "cancelled"),
+                "finished_at": data.get("finished_at"),
+                "started_at": data.get("started_at"),
+                "performer_name": perf_name,
+                "compliance_pct": comp_val,
+                "title": data.get("title"),
+            }
+        except Exception as e:
+            print(f"[task_status] Live status fetch failed for Task #{task_id}: {e}")
+            return None
+
     def _fetch_live_task_flow(self, base_url: str, instance: str, task_id: int) -> Optional[Dict[str, Any]]:
         """Fetch real-time task metadata and action list from retailer instance."""
         token = INSTANCE_TOKENS.get(base_url) or TOKEN
@@ -4544,33 +4591,53 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
         is_force_live = bool(query.get("force_live", [""])[0].lower() in ("1", "true", "yes"))
 
-        # Check memory cache (30 minutes TTL, only for finalized tasks)
-        cache_key = (instance, task_id)
-        cached_entry = TASK_FLOW_CACHE.get(cache_key)
-        if cached_entry and not is_force_live:
-            ts, flow_data = cached_entry
-            c_status = str((flow_data.get("metadata") or {}).get("status") or "").lower()
-            if c_status not in ("in_progress", "started", "active", "not_started", "new") and (time.time() - ts < 1800):
-                return flow_data
-
         # Benchmark reference tasks return instantly with validated data unless force_live is requested
         if not is_force_live and task_id in (8648127, 42288818):
+            cache_key = (instance, task_id)
             flow = get_task_flow(task_id, instance=instance)
             TASK_FLOW_CACHE[cache_key] = (time.time(), flow)
             return flow
 
-        # Check persistent disk cache (only for finalized tasks)
+        # Real-time task status from live backend (NEVER cached)
+        live_st = self._fetch_live_task_status(base_url, task_id)
+        live_status = live_st["status"] if live_st else None
+
+        cache_key = (instance, task_id)
+        cached_entry = TASK_FLOW_CACHE.get(cache_key)
         disk_flow_path = os.path.join(os.path.dirname(__file__), "data", "ir_tasks", f"flow_{instance}_{task_id}.json")
-        if not is_force_live and os.path.exists(disk_flow_path):
-            try:
-                with open(disk_flow_path, "r", encoding="utf-8") as f:
-                    disk_flow = json.load(f)
-                d_status = str((disk_flow.get("metadata") or {}).get("status") or "").lower()
-                if d_status not in ("in_progress", "started", "active", "not_started", "new"):
-                    TASK_FLOW_CACHE[cache_key] = (time.time(), disk_flow)
-                    return disk_flow
-            except Exception:
-                pass
+
+        # If task is actively running on the store floor, or force_live requested, bypass all caches
+        is_active = live_status in ("in_progress", "started", "active", "not_started", "new") if live_status else False
+
+        flow_candidate = None
+        if not is_force_live and not is_active:
+            if cached_entry:
+                ts, flow_data = cached_entry
+                c_status = str((flow_data.get("metadata") or {}).get("status") or "").lower()
+                if (not live_status or c_status == live_status) and (time.time() - ts < 1800):
+                    flow_candidate = flow_data
+            elif os.path.exists(disk_flow_path):
+                try:
+                    with open(disk_flow_path, "r", encoding="utf-8") as f:
+                        disk_flow = json.load(f)
+                    d_status = str((disk_flow.get("metadata") or {}).get("status") or "").lower()
+                    if not live_status or d_status == live_status:
+                        flow_candidate = disk_flow
+                        TASK_FLOW_CACHE[cache_key] = (time.time(), disk_flow)
+                except Exception:
+                    pass
+
+        if flow_candidate:
+            # Always ensure real-time status attributes from backend are applied
+            if live_st:
+                flow_candidate.setdefault("metadata", {})["status"] = live_st["status"]
+                flow_candidate["metadata"]["status_name"] = live_st.get("status_name", live_st["status"])
+                if live_st.get("finished_at"):
+                    flow_candidate["metadata"]["finished_at"] = live_st["finished_at"]
+                if live_st.get("performer_name"):
+                    flow_candidate["metadata"]["performer_name"] = live_st["performer_name"]
+                flow_candidate["metadata"]["is_realtime_status"] = True
+            return flow_candidate
 
         # Try live fetch
         live_flow = self._fetch_live_task_flow(base_url, instance, task_id)
@@ -5083,6 +5150,32 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             self._send_json(self._handle_task_flow(
                 urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             ))
+            return
+
+        elif self.path.startswith("/api/runner/task_status"):
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            instance = (query.get("instance") or [None])[0] or EXECUTION_STATE.get("instance_slug") or "harr"
+            base_url = normalize_backend_url(instance)
+            task_id_raw = (query.get("task_id") or [None])[0]
+            if not task_id_raw or not str(task_id_raw).isdigit():
+                self._send_json({"status": "error", "message": "Valid task_id is required"}, status=400)
+                return
+            task_id = int(task_id_raw)
+            status_info = self._fetch_live_task_status(base_url, task_id)
+            if not status_info:
+                status_slug = str(EXECUTION_STATE.get("task_status") or "unknown").lower()
+                status_info = {
+                    "status": status_slug,
+                    "status_name": status_slug.replace("_", " ").title(),
+                    "is_completed": status_slug in ("completed", "done"),
+                    "is_in_progress": status_slug in ("in_progress", "started", "active"),
+                    "is_incomplete": status_slug in ("incomplete", "failed", "cancelled"),
+                    "real_time": False,
+                }
+            else:
+                status_info["real_time"] = True
+            
+            self._send_json({"status": "success", "task_id": task_id, "instance": instance, **status_info})
             return
 
         elif self.path.startswith("/api/runner/scan_crop"):
@@ -7157,6 +7250,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         return {
             "status": "success",
             "task_id": task_id,
+            "task_status": EXECUTION_STATE.get("task_status") or "completed",
             "actions_count": len(actions_list),
             "actions": actions_list,
             "cart": EXECUTION_STATE.get("cart", {"foreign": 0, "picks": 0, "surplus": 0}),

@@ -15,6 +15,7 @@
   let selectedCatalogTaskId = '';
   let selectedPerformerKey = '';
   let flowInitialised = false;
+  let liveStatusPollInterval = null;
 
   function byId(id) {
     return document.getElementById(id);
@@ -1113,6 +1114,12 @@
     setGlobalProgressBar(true);
     renderTaskLoadingState(targetId, inst);
 
+    // Clear previous live status poll if any
+    if (liveStatusPollInterval) {
+      clearInterval(liveStatusPollInterval);
+      liveStatusPollInterval = null;
+    }
+
     try {
       const resp = await fetch(`/api/runner/task_flow?task_id=${encodeURIComponent(targetId)}&instance=${encodeURIComponent(inst)}&force_live=1&_t=${Date.now()}`, {
         cache: 'no-store'
@@ -1130,9 +1137,9 @@
       }
       renderSimplifiedView(data);
       const liveTaskId = data.metadata ? data.metadata.task_id : targetId;
+      const taskStatus = (data.metadata && data.metadata.status ? data.metadata.status : '').toLowerCase();
       if (statusBadge) {
         const retailLabel = data.metadata ? (data.metadata.retailer || inst.toUpperCase()) : inst.toUpperCase();
-        const taskStatus = (data.metadata && data.metadata.status ? data.metadata.status : '').toLowerCase();
         let statusText = 'Loaded';
         if (taskStatus === 'completed' || taskStatus === 'done') statusText = 'Completed';
         else if (taskStatus === 'incomplete' || taskStatus === 'failed' || taskStatus === 'cancelled') statusText = 'Incomplete';
@@ -1140,6 +1147,26 @@
         statusBadge.textContent = `Task #${liveTaskId} · ${statusText} (${retailLabel})`;
       }
       syncEmbeddedTabs(liveTaskId, inst);
+
+      // If task is in-progress on store floor, poll real-time status directly from backend every 8s
+      if (taskStatus.includes('progress') || taskStatus.includes('started') || taskStatus.includes('active')) {
+        liveStatusPollInterval = setInterval(async () => {
+          try {
+            const pollRes = await fetch(`/api/runner/task_status?task_id=${encodeURIComponent(liveTaskId)}&instance=${encodeURIComponent(inst)}&_t=${Date.now()}`, {
+              cache: 'no-store'
+            });
+            if (pollRes.ok) {
+              const pollData = await pollRes.json();
+              if (pollData && (pollData.is_completed || (pollData.status && pollData.status.toLowerCase().includes('complet')))) {
+                clearInterval(liveStatusPollInterval);
+                liveStatusPollInterval = null;
+                // Live associate reset just finished! Re-load task to update all graphs and verdict immediately
+                loadTask(liveTaskId, inst);
+              }
+            }
+          } catch (_) {}
+        }, 8000);
+      }
     } catch (err) {
       console.error('Failed to load task flow:', err);
       if (statusBadge) statusBadge.textContent = 'Ready';

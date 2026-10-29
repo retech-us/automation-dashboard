@@ -4017,8 +4017,11 @@
                 currentStep = null;
                 setElementText('disp-task-id', '#' + data.task_id);
                 setElementValue('cfg-task-id-direct', data.task_id);
-                setElementText('disp-task-status', 'IN PROGRESS');
-                setElementText('disp-active-status-badge', 'STATUS: IN PROGRESS');
+                const isDone = data.task_status && (String(data.task_status).toLowerCase().includes('complet') || String(data.task_status).toLowerCase().includes('finish'));
+                setElementText('disp-task-status', isDone ? 'COMPLETED' : 'IN PROGRESS');
+                setElementText('disp-active-status-badge', isDone ? 'STATUS: COMPLETED' : 'STATUS: IN PROGRESS');
+                const activeBadgeEl = document.getElementById('disp-active-status-badge');
+                if (activeBadgeEl) activeBadgeEl.className = isDone ? 'badge badge-green' : 'badge badge-orange';
                 updateReportBadgesForActiveTask(data.task_id);
                 updateActionCounts();
                 renderActionTable();
