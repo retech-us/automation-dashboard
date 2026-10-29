@@ -1682,21 +1682,13 @@ def synthesize_task_flow_from_raw_actions(
                     )
                     crop_img = raw_crop
                     if is_identify:
-                        ws_dir = Path(__file__).resolve().parent.parent.parent
-                        scan_crop_rel = f"/assets/img/realogram_crops/crop_identify_scan_{item_scan_id}_s{from_sh}_p{from_p}.jpg"
-                        if (ws_dir / scan_crop_rel.lstrip("/")).exists():
-                            crop_img = scan_crop_rel
-                        elif not crop_img or "master_data/cropped_images" in str(crop_img) or "others/01a" in str(crop_img):
-                            b_str = str(curr_section or bay or "").lower()
-                            if ("1" in b_str) and from_sh == 8 and str(from_p).strip() == "11":
-                                crop_img = "/assets/img/realogram_crops/crop_bay1_s8_p11.jpg"
-                            elif ("1" in b_str) and from_sh == 8 and str(from_p).strip() == "12":
-                                crop_img = "/assets/img/realogram_crops/crop_bay1_s8_p12.jpg"
-                            elif ("2" in b_str) and from_sh == 8 and str(from_p).strip() == "16":
-                                crop_img = "/assets/img/realogram_crops/crop_bay2_s8_p16.jpg"
-                            else:
-                                crop_idx = (idx % 5) + 1
-                                crop_img = f"/assets/img/realogram_crops/crop_identify_{crop_idx}.jpg"
+                        if raw_crop and (str(raw_crop).startswith("http") or "/api/runner/scan_crop" in str(raw_crop)):
+                            crop_img = raw_crop
+                        elif item_scan_id:
+                            item_id_val = item.get("item_id") or item.get("realogram_item_id") or ""
+                            crop_img = f"/api/runner/scan_crop?scan_id={item_scan_id}&item_id={item_id_val}&shelf={from_sh}&pos={from_p}"
+                        else:
+                            crop_img = raw_crop
 
                     flow_items.append(FlowItem(
                         ledger_id=raw_id,
@@ -1997,6 +1989,7 @@ def enrich_flow_with_digital_shelf_evidence(
 
     digital_by_upc: Dict[str, Any] = {}
     digital_by_pos: Dict[Tuple[Any, ...], Any] = {}
+    digital_by_pos_unidentified: Dict[Tuple[Any, ...], Any] = {}
     digital_by_pos_no_sec: Dict[Tuple[Any, ...], Any] = {}
     digital_by_sec_pos: Dict[Tuple[Any, ...], Any] = {}
 
@@ -2014,6 +2007,12 @@ def enrich_flow_with_digital_shelf_evidence(
         sec = str(getattr(item, "section", "") or (item.get("section") if isinstance(item, dict) else "")).strip().lower()
         sec_clean = sec.replace("bay", "").strip()
 
+        act_type_item = str(getattr(item, "action_type", "") or (item.get("action_type") if isinstance(item, dict) else "")).lower()
+        stat_item = str(getattr(item, "report_product_status", "") or (item.get("report_product_status") if isinstance(item, dict) else "")).lower()
+        raw_obj_item = getattr(item, "raw", None) or (item.get("raw") if isinstance(item, dict) else {}) or {}
+        raw_stat_item = str(raw_obj_item.get("report_product_status") or "").lower()
+        is_unidentified = "unidentified" in act_type_item or "unidentified" in stat_item or "unidentified" in raw_stat_item
+
         pog_pos = str(getattr(item, "pog_position", "") or (item.get("pog_position") if isinstance(item, dict) else "")).strip()
         rog_pos = str(getattr(item, "rog_position", "") or (item.get("rog_position") if isinstance(item, dict) else "")).strip()
 
@@ -2023,12 +2022,18 @@ def enrich_flow_with_digital_shelf_evidence(
                 try:
                     sh_int = int(sh_part.strip())
                     p_clean = str(p_part).strip()
-                    if s_id_int is not None and sec_clean:
-                        digital_by_pos[(s_id_int, sec_clean, sh_int, p_clean)] = item
-                    if s_id_int is not None:
-                        digital_by_pos_no_sec[(s_id_int, sh_int, p_clean)] = item
-                    if sec_clean:
-                        digital_by_sec_pos[(sec_clean, sh_int, p_clean)] = item
+                    if is_unidentified:
+                        if s_id_int is not None and sec_clean:
+                            digital_by_pos_unidentified[(s_id_int, sec_clean, sh_int, p_clean)] = item
+                        if s_id_int is not None:
+                            digital_by_pos_unidentified[(s_id_int, sh_int, p_clean)] = item
+                    else:
+                        if s_id_int is not None and sec_clean:
+                            digital_by_pos[(s_id_int, sec_clean, sh_int, p_clean)] = item
+                        if s_id_int is not None:
+                            digital_by_pos_no_sec[(s_id_int, sh_int, p_clean)] = item
+                        if sec_clean:
+                            digital_by_sec_pos[(sec_clean, sh_int, p_clean)] = item
                 except (ValueError, TypeError):
                     pass
 
@@ -2059,11 +2064,20 @@ def enrich_flow_with_digital_shelf_evidence(
                         except (ValueError, TypeError):
                             it_sh_int = None
                         if it_sh_int is not None:
-                            d_item = (
-                                digital_by_pos.get((it_scan_int, it_sec, it_sh_int, it_p))
-                                or digital_by_pos_no_sec.get((it_scan_int, it_sh_int, it_p))
-                                or digital_by_sec_pos.get((it_sec, it_sh_int, it_p))
-                            )
+                            if is_identify:
+                                d_item = (
+                                    digital_by_pos_unidentified.get((it_scan_int, it_sec, it_sh_int, it_p))
+                                    or digital_by_pos_unidentified.get((it_scan_int, it_sh_int, it_p))
+                                    or digital_by_pos.get((it_scan_int, it_sec, it_sh_int, it_p))
+                                    or digital_by_pos_no_sec.get((it_scan_int, it_sh_int, it_p))
+                                    or digital_by_sec_pos.get((it_sec, it_sh_int, it_p))
+                                )
+                            else:
+                                d_item = (
+                                    digital_by_pos.get((it_scan_int, it_sec, it_sh_int, it_p))
+                                    or digital_by_pos_no_sec.get((it_scan_int, it_sh_int, it_p))
+                                    or digital_by_sec_pos.get((it_sec, it_sh_int, it_p))
+                                )
 
                 if not d_item:
                     continue
@@ -2095,15 +2109,18 @@ def enrich_flow_with_digital_shelf_evidence(
                     it["cropped_image_url"] = img_url
 
                 if is_identify:
-                    ws_dir = Path(__file__).resolve().parent.parent.parent
                     it_scan_val = it.get("scan_id")
-                    it_sh_val = it.get("from_shelf")
-                    it_p_val = it.get("from_pos")
-                    shelf_crop = f"/assets/img/realogram_crops/crop_identify_scan_{it_scan_val}_s{it_sh_val}_p{it_p_val}.jpg"
-                    if (ws_dir / shelf_crop.lstrip("/")).exists():
-                        it["image"] = shelf_crop
-                        it["crop_image_url"] = shelf_crop
-                        it["cropped_image_url"] = shelf_crop
+                    it_sh_val = it.get("from_shelf") if it.get("from_shelf") is not None else it.get("to_shelf")
+                    it_p_val = it.get("from_pos") or it.get("to_pos")
+                    it_item_id = it.get("item_id") or it.get("realogram_item_id") or ""
+                    if it_scan_val:
+                        live_crop = f"/api/runner/scan_crop?scan_id={it_scan_val}&item_id={it_item_id}&shelf={it_sh_val}&pos={it_p_val}"
+                        it["image"] = live_crop
+                        it["crop_image_url"] = live_crop
+                        it["cropped_image_url"] = live_crop
+                    it["digital_action_type"] = "unidentified"
+                    if not it.get("product_name") or "000000000000" in str(it.get("product_name")) or str(it.get("product_name")).startswith("PRODUCT "):
+                        it["product_name"] = f"Unidentified Item (Shelf {it_sh_val}:{it_p_val})"
 
                     if it.get("to_shelf") is None and it.get("from_shelf") is not None:
                         it["to_shelf"] = it.get("from_shelf")

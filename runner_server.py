@@ -171,6 +171,9 @@ EXECUTION_STATE = {
 }
 AGENT_RUN_RESULTS: Dict[str, Dict[str, Any]] = {}
 AGENT_RUN_RESULTS_LOCK = threading.Lock()
+SCAN_CROP_CACHE: Dict[str, bytes] = {}
+SCAN_METADATA_CACHE: Dict[int, Dict[str, Any]] = {}
+SCAN_IMAGE_BYTES_CACHE: Dict[int, bytes] = {}
 
 
 def load_digital_report_actions(
@@ -3375,19 +3378,27 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             # Enrich raw_actions with linked scan digital report items (e.g. identify actions)
             if digital_items:
                 digital_by_pos_map = {}
+                digital_by_pos_unidentified = {}
                 for d_it in digital_items:
                     d_scan = getattr(d_it, "scan_id", None)
                     d_sec = str(getattr(d_it, "section", "") or "").replace("bay", "").strip()
+                    d_act_type = str(getattr(d_it, "action_type", "") or "").lower()
+                    is_unid = "unidentified" in d_act_type or "identify" in d_act_type
                     for p_str in (getattr(d_it, "pog_position", ""), getattr(d_it, "rog_position", "")):
                         if ":" in str(p_str or ""):
                             sh_s, pos_s = str(p_str).split(":", 1)
                             try:
-                                digital_by_pos_map[(d_scan, d_sec, int(sh_s.strip()), str(pos_s).strip())] = d_it
-                                digital_by_pos_map[(d_scan, int(sh_s.strip()), str(pos_s).strip())] = d_it
+                                sh_val = int(sh_s.strip())
+                                p_val = str(pos_s).strip()
+                                if is_unid:
+                                    digital_by_pos_unidentified[(d_scan, d_sec, sh_val, p_val)] = d_it
+                                    digital_by_pos_unidentified[(d_scan, sh_val, p_val)] = d_it
+                                else:
+                                    digital_by_pos_map[(d_scan, d_sec, sh_val, p_val)] = d_it
+                                    digital_by_pos_map[(d_scan, sh_val, p_val)] = d_it
                             except Exception:
                                 pass
-                # Crop purple-box shelf images for identify actions directly from the linked scan
-                scan_merged_cache = {}
+
                 for act in raw_actions:
                     act_type_str = str(act.get("action") or "").upper()
                     is_act_identify = "IDENTIFY" in act_type_str
@@ -3396,45 +3407,41 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     cur_pos = str(cur_p.get("position") or "").strip()
                     cur_sec = str((cur_p.get("section_info") or {}).get("name") or "").replace("bay", "").strip()
                     cur_scan = cur_p.get("scan_id")
+                    item_id_val = cur_p.get("realogram_item_id") or act.get("source_id") or act.get("id")
 
                     if is_act_identify and cur_scan:
-                        c_coords = cur_p.get("coordinates")
-                        crop_fname = f"crop_identify_scan_{cur_scan}_s{cur_sh}_p{cur_pos}.jpg"
-                        crop_fpath = os.path.join(os.path.dirname(__file__), "assets", "img", "realogram_crops", crop_fname)
-                        if os.path.exists(crop_fpath) and os.path.getsize(crop_fpath) > 100:
-                            act["crop_image_url"] = f"/assets/img/realogram_crops/{crop_fname}"
-                            act["image"] = f"/assets/img/realogram_crops/{crop_fname}"
-                        elif c_coords and isinstance(c_coords, (list, tuple)) and len(c_coords) == 2:
-                            try:
-                                from PIL import Image
-                                import io
-                                if cur_scan not in scan_merged_cache:
-                                    s_req = urllib.request.Request(f"{base_url}/api/v4/processing/actions/{cur_scan}/", headers=headers)
-                                    with urllib.request.urlopen(s_req, context=ssl_ctx, timeout=8) as s_resp:
-                                        s_data = json.loads(s_resp.read().decode("utf-8"))
-                                        scan_merged_cache[cur_scan] = s_data.get("merged_image")
-                                m_url = scan_merged_cache.get(cur_scan)
-                                if m_url:
-                                    m_req = urllib.request.Request(m_url, headers={"User-Agent": "Mozilla/5.0"})
-                                    with urllib.request.urlopen(m_req, context=ssl_ctx, timeout=12) as m_resp:
-                                        m_img = Image.open(io.BytesIO(m_resp.read()))
-                                        c1_0, c1_1 = float(c_coords[0][0]), float(c_coords[0][1])
-                                        c2_0, c2_1 = float(c_coords[1][0]), float(c_coords[1][1])
-                                        x1, x2 = min(c1_0, c2_0), max(c1_0, c2_0)
-                                        y1, y2 = min(c1_1, c2_1), max(c1_1, c2_1)
-                                        if y2 > m_img.height or x2 > m_img.width:
-                                            if max(c1_1, c2_1) <= m_img.width and max(c1_0, c2_0) <= m_img.height:
-                                                x1, x2 = min(c1_1, c2_1), max(c1_1, c2_1)
-                                                y1, y2 = min(c1_0, c2_0), max(c1_0, c2_0)
-                                        c_crop = m_img.crop((int(x1), int(y1), int(x2), int(y2)))
-                                        os.makedirs(os.path.dirname(crop_fpath), exist_ok=True)
-                                        c_crop.save(crop_fpath, quality=92)
-                                        act["crop_image_url"] = f"/assets/img/realogram_crops/{crop_fname}"
-                                        act["image"] = f"/assets/img/realogram_crops/{crop_fname}"
-                            except Exception:
-                                pass
+                        crop_api_url = f"/api/runner/scan_crop?scan_id={cur_scan}&item_id={item_id_val}&shelf={cur_sh}&pos={cur_pos}"
+                        act["crop_image_url"] = crop_api_url
+                        act["cropped_image_url"] = crop_api_url
+                        act["image"] = crop_api_url
+                        act["digital_action_type"] = "unidentified"
 
-                    if is_act_identify or not act.get("displayed_upc") or str(act.get("displayed_upc") or "").strip() in ("", "000000000000"):
+                        matched_d = (
+                            digital_by_pos_unidentified.get((cur_scan, cur_sec, cur_sh, cur_pos))
+                            or digital_by_pos_unidentified.get((cur_scan, cur_sh, cur_pos))
+                            or digital_by_pos_map.get((cur_scan, cur_sec, cur_sh, cur_pos))
+                            or digital_by_pos_map.get((cur_scan, cur_sh, cur_pos))
+                        )
+                        if matched_d:
+                            pog_p = str(getattr(matched_d, "pog_position", "") or "").strip()
+                            exp_sh = cur_sh
+                            exp_p = cur_pos
+                            if ":" in pog_p:
+                                try:
+                                    exp_sh = int(pog_p.split(":", 1)[0].strip())
+                                    exp_p = str(pog_p.split(":", 1)[1].strip())
+                                except Exception:
+                                    pass
+                            if not act.get("expected_position"):
+                                act["expected_position"] = {
+                                    "shelf": exp_sh,
+                                    "position": exp_p,
+                                    "section_info": cur_p.get("section_info"),
+                                    "scan_id": cur_scan,
+                                }
+                        if not act.get("product_title") or "000000000000" in str(act.get("product_title")) or str(act.get("product_title")).startswith("PRODUCT "):
+                            act["product_title"] = f"Unidentified Item (Shelf {cur_sh}:{cur_pos})"
+                    elif not act.get("displayed_upc") or str(act.get("displayed_upc") or "").strip() in ("", "000000000000"):
                         matched_d = (
                             digital_by_pos_map.get((cur_scan, cur_sec, cur_sh, cur_pos))
                             or digital_by_pos_map.get((cur_scan, cur_sh, cur_pos))
@@ -3447,7 +3454,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                                 act["upc"] = matched_d.upc
                             d_prod = (matched_d.raw or {}).get("product") or {}
                             d_img = (d_prod.get("image") if isinstance(d_prod, dict) else None) or (matched_d.raw or {}).get("crop_image_url")
-                            if d_img and not act.get("crop_image_url"):
+                            if d_img:
                                 act["image"] = d_img
                                 act["crop_image_url"] = d_img
                             pog_p = str(getattr(matched_d, "pog_position", "") or "").strip()
@@ -4551,6 +4558,131 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         # Fallback to local / benchmark reference builder
         return get_task_flow(task_id, instance=instance)
 
+    def _handle_scan_crop(self, query_params: Dict[str, List[str]]):
+        """Stream on-the-fly realogram crop of purple unidentified box from live shelf scan image."""
+        scan_id_str = (query_params.get("scan_id") or [""])[0].strip()
+        item_id_str = (query_params.get("item_id") or query_params.get("realogram_item_id") or [""])[0].strip()
+        shelf_str = (query_params.get("shelf") or [""])[0].strip()
+        pos_str = (query_params.get("pos") or query_params.get("position") or [""])[0].strip()
+        inst = (query_params.get("instance") or query_params.get("base_url") or [""])[0].strip()
+
+        if not scan_id_str or not scan_id_str.isdigit():
+            self.send_error(400, "Missing or invalid scan_id")
+            return
+
+        scan_id = int(scan_id_str)
+        item_id = int(item_id_str) if item_id_str.isdigit() else None
+        shelf = int(shelf_str) if shelf_str.isdigit() else None
+
+        cache_key = f"{scan_id}_{item_id}_{shelf}_{pos_str}"
+        if cache_key in SCAN_CROP_CACHE:
+            crop_bytes = SCAN_CROP_CACHE[cache_key]
+            self.send_response(200)
+            self.send_header("Content-Type", "image/jpeg")
+            self.send_header("Content-Length", str(len(crop_bytes)))
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self.end_headers()
+            self.wfile.write(crop_bytes)
+            return
+
+        base_url = normalize_backend_url(inst) if inst else "https://harr.rebotics.net"
+        token = INSTANCE_TOKENS.get(base_url) or TOKEN
+        headers = {"Authorization": f"Token {token}", "Accept": "application/json"}
+
+        try:
+            from PIL import Image
+            import io
+
+            s_data = SCAN_METADATA_CACHE.get(scan_id)
+            if not s_data:
+                s_req = urllib.request.Request(f"{base_url}/api/v4/processing/actions/{scan_id}/", headers=headers)
+                with urllib.request.urlopen(s_req, context=ssl_ctx, timeout=15) as s_resp:
+                    s_data = json.loads(s_resp.read().decode("utf-8"))
+                    SCAN_METADATA_CACHE[scan_id] = s_data
+
+            merged_image_url = s_data.get("merged_image")
+            if not merged_image_url:
+                self.send_error(404, "Scan has no merged_image")
+                return
+
+            target_coords = None
+            # Pass 1: Look specifically for purple unidentified item matching shelf and position or scan item id
+            for it in s_data.get("items") or []:
+                it_sh = it.get("display_shelf") if it.get("display_shelf") is not None else it.get("shelf")
+                it_pos = str(it.get("position") or "").strip()
+                it_type = (it.get("item_type") or {}).get("type") or it.get("type") or ""
+                it_color = str((it.get("item_type") or {}).get("color") or "").lower()
+                is_purple_unid = "unidentified" in it_type.lower() or it_color in ("#9400d3", "purple")
+                if is_purple_unid:
+                    if shelf is not None and pos_str and it_sh == shelf and it_pos == pos_str:
+                        target_coords = it.get("coordinates")
+                        break
+                    if item_id and it.get("id") == item_id:
+                        target_coords = it.get("coordinates")
+                        break
+
+            # Pass 2: Fallback to item_id or shelf/position
+            if not target_coords:
+                for it in s_data.get("items") or []:
+                    if item_id and it.get("id") == item_id:
+                        target_coords = it.get("coordinates")
+                        break
+                    if shelf is not None and pos_str:
+                        it_sh = it.get("display_shelf") if it.get("display_shelf") is not None else it.get("shelf")
+                        it_pos = str(it.get("position") or "").strip()
+                        if it_sh == shelf and it_pos == pos_str:
+                            target_coords = it.get("coordinates")
+                            break
+
+            if not target_coords or not isinstance(target_coords, (list, tuple)) or len(target_coords) != 2:
+                self.send_error(404, "Item bounding box coordinates not found on shelf scan")
+                return
+
+            m_bytes = SCAN_IMAGE_BYTES_CACHE.get(scan_id)
+            if not m_bytes:
+                m_req = urllib.request.Request(merged_image_url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(m_req, context=ssl_ctx, timeout=20) as m_resp:
+                    m_bytes = m_resp.read()
+                    SCAN_IMAGE_BYTES_CACHE[scan_id] = m_bytes
+
+            full_img = Image.open(io.BytesIO(m_bytes))
+            c1_0, c1_1 = float(target_coords[0][0]), float(target_coords[0][1])
+            c2_0, c2_1 = float(target_coords[1][0]), float(target_coords[1][1])
+            x1, x2 = min(c1_0, c2_0), max(c1_0, c2_0)
+            y1, y2 = min(c1_1, c2_1), max(c1_1, c2_1)
+
+            if y2 > full_img.height or x2 > full_img.width:
+                if max(c1_1, c2_1) <= full_img.width and max(c1_0, c2_0) <= full_img.height:
+                    x1, x2 = min(c1_1, c2_1), max(c1_1, c2_1)
+                    y1, y2 = min(c1_0, c2_0), max(c1_0, c2_0)
+
+            w = x2 - x1
+            h = y2 - y1
+            pad_x = max(4, int(w * 0.08))
+            pad_y = max(4, int(h * 0.08))
+            crop_rect = (
+                max(0, int(x1 - pad_x)),
+                max(0, int(y1 - pad_y)),
+                min(full_img.width, int(x2 + pad_x)),
+                min(full_img.height, int(y2 + pad_y)),
+            )
+
+            cropped = full_img.crop(crop_rect)
+            out_buf = io.BytesIO()
+            cropped.save(out_buf, format="JPEG", quality=92)
+            crop_bytes = out_buf.getvalue()
+
+            SCAN_CROP_CACHE[cache_key] = crop_bytes
+
+            self.send_response(200)
+            self.send_header("Content-Type", "image/jpeg")
+            self.send_header("Content-Length", str(len(crop_bytes)))
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self.end_headers()
+            self.wfile.write(crop_bytes)
+        except Exception as e:
+            self.send_error(500, f"Error cropping scan image: {e}")
+
     def _handle_task_fields(self, query: Dict[str, List[str]]) -> Dict[str, Any]:
         """Report the real shape of a task row so filters are built on facts, not guesses."""
         values = query.get("instance") or []
@@ -4761,6 +4893,15 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             "download_url": f"/generated-reports/{urllib.parse.quote(output_path.name)}",
         }
 
+    def do_HEAD(self):
+        if self.path.startswith("/api/runner/scan_crop"):
+            self.send_response(200)
+            self.send_header("Content-Type", "image/jpeg")
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self.end_headers()
+            return
+        return super().do_HEAD()
+
     def do_GET(self):
         if self.path.startswith("/api/repos/branches"):
             android_branches = get_git_branches(ANDROID_REPO)
@@ -4890,6 +5031,12 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             self._send_json(self._handle_task_flow(
                 urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             ))
+            return
+
+        elif self.path.startswith("/api/runner/scan_crop"):
+            self._handle_scan_crop(
+                urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            )
             return
 
         elif self.path.startswith("/api/runner/traffic"):
