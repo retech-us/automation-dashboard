@@ -7137,6 +7137,25 @@ code {
 .ir-exec-icon {
   font-size: 32px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.ir-exec-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3.5px solid rgba(59, 130, 246, 0.2);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: ir-spin 0.75s linear infinite;
+  display: inline-block;
+}
+
+@keyframes ir-spin {
+  to { transform: rotate(360deg); }
 }
 
 .ir-exec-verdict-kicker {

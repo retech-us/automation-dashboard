@@ -1020,18 +1020,43 @@
     setText('ir-exec-verdict-title', `Loading Task ${displayLabel}…`);
     setText('ir-exec-verdict-desc', `Connecting to ${instName} backend, retrieving planogram items, movement sequence, associate audit trail, and Digital Shelf history…`);
     const icon = byId('ir-exec-verdict-icon');
-    if (icon) icon.textContent = '⏳';
+    if (icon) {
+      icon.innerHTML = '<span class="ir-exec-spinner" aria-label="Loading task data…"></span>';
+    }
 
     const card = byId('ir-exec-verdict-card');
     if (card) {
       card.className = 'ir-exec-verdict ir-exec-verdict--review';
     }
 
+    // Clear Executive Verdict metadata fields
     setText('ir-exec-meta-store', '…');
     setText('ir-exec-meta-planogram', '…');
     setText('ir-exec-meta-associate', '…');
     setText('ir-exec-meta-date', '…');
     setText('ir-exec-meta-time', '…');
+
+    // Clear 3-Stage Reset Compliance Flow (Pre-Photo -> Actions -> Post-Photo)
+    setText('ir-comp-step-pre-val', '…');
+    setText('ir-comp-step-action-val', '…');
+    setText('ir-comp-step-post-val', '…');
+    const postValEl = byId('ir-comp-step-post-val');
+    if (postValEl) postValEl.className = 'ir-comp-step-val is-post';
+
+    // Clear Overview & Stat Cards
+    setText('ir-stat-lift-val', '… ➔ … ➔ …');
+    setText('ir-stat-lift-badge', 'Loading…');
+    const progBar = byId('ir-stat-lift-bar');
+    if (progBar) progBar.style.width = '0%';
+    const liftSubEl = byId('ir-stat-lift-bar')?.parentElement?.nextElementSibling;
+    if (liftSubEl) {
+      liftSubEl.textContent = 'Pre-Compliance Baseline: … • After Action: … • Post-Photo Compliance: …';
+    }
+
+    setText('ir-stat-work-val', '…');
+    setText('ir-stat-work-sub', 'Fetching work items…');
+    setText('ir-stat-time-val', '…');
+    setText('ir-stat-ai-val', '…');
 
     setText('ir-overview-generated', '…');
     setText('ir-overview-performed', '…');
@@ -2418,6 +2443,13 @@
     setText('ir-exec-meta-associate', '—');
     setText('ir-exec-meta-date', '—');
     setText('ir-exec-meta-time', '—');
+    setText('ir-comp-step-pre-val', '—');
+    setText('ir-comp-step-action-val', '—');
+    setText('ir-comp-step-post-val', '—');
+    setText('ir-stat-lift-val', '—');
+    setText('ir-stat-lift-badge', '—');
+    const progBar = byId('ir-stat-lift-bar');
+    if (progBar) progBar.style.width = '0%';
     setText('ir-overview-generated', '—');
     setText('ir-overview-generated-help', 'Work requested by the system');
     setText('ir-overview-performed', '—');
