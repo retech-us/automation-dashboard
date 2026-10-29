@@ -1,0 +1,34 @@
+# Shelf Intelligence Quality Automation — Run Configuration
+version: "1.0"
+
+# 1. Source Revision: Target repository, branch, or specific commit SHA
+source:
+  repository: "backend"       # "backend" | "android" | "ios" | "all"
+  branch: "current"          # e.g. "current", "release/main", "develop"
+  commit: "auto"             # "auto" dynamically resolves to current HEAD SHA, or provide 40-char SHA
+  sync_remote: false         # Set to true to fetch remote branch updates before execution
+
+# 2. Target Environment: Epsilon, kRCS, or any authorized instance with base URL
+target:
+  name: "epsilon"            # "epsilon" | "krcs" | "harr" | "custom"
+  base_url: "${TARGET_BASE_URL:-https://epsilon.rebotics.net}"
+  api_prefix: "/api/v1"
+  auth:
+    username_env: "REBOTICS_USERNAME"
+    password_env: "REBOTICS_PASSWORD"
+    token_env: "REBOTICS_AUTH_TOKEN"
+    device_id: "00000000-0000-0000-0000-000000000000"
+
+# 3. Test Selection: Selectable suite and scenario scopes
+tests:
+  scope: "regression"        # "smoke" | "rules" | "api" | "ai_benchmark" | "regression"
+  scenarios: []              # Optional filter: list of specific scenario IDs or file names
+  filter_tags: []            # Optional tags: e.g. ["pog_compliance", "invader"]
+
+# 4. Execution Controls: Safe dry-run mode and state mutation guard
+execution:
+  mode: "dry_run"            # "dry_run" (safe read-only) | "live"
+  allow_state_changes: false # Mutation safety guard: prevents DB writes when false
+  timeout_seconds: 300
+  retry_count: 1
+  platform: "all"            # "android" | "ios" | "all"

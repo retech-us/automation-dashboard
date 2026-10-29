@@ -1,0 +1,241 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ShelfIntelligenceScenarioManifest",
+  "description": "Canonical schema for Shelf Intelligence captured test scenarios, immutable planogram snapshots, detections, and expected actions.",
+  "type": "object",
+  "required": [
+    "scenario_id",
+    "provenance",
+    "image",
+    "planogram_snapshot",
+    "detections_payload",
+    "expected_actions",
+    "verification",
+    "replay_eligibility"
+  ],
+  "properties": {
+    "scenario_id": {
+      "type": "string",
+      "pattern": "^SCEN_[A-Za-z0-9_-]+$",
+      "description": "Unique stable identifier for the test scenario."
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable summary of the shelf condition and edge case."
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source_environment",
+        "source_scan_id",
+        "captured_at",
+        "ingested_at"
+      ],
+      "properties": {
+        "source_environment": {
+          "type": "string",
+          "description": "Origin environment (e.g., krcs, harr, epsilon, uat)."
+        },
+        "source_scan_id": {
+          "type": ["integer", "string"],
+          "description": "Origin scan identifier."
+        },
+        "source_processing_action_id": {
+          "type": ["integer", "string", "null"]
+        },
+        "source_task_id": {
+          "type": ["integer", "string", "null"]
+        },
+        "captured_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ingested_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "store_pseudonym": {
+          "type": "string"
+        },
+        "category_slug": {
+          "type": "string"
+        },
+        "section_slug": {
+          "type": "string"
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "required": [
+        "relative_path",
+        "sha256",
+        "content_type"
+      ],
+      "properties": {
+        "relative_path": {
+          "type": "string",
+          "description": "Relative path to the image file within the scenario bundle."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$",
+          "description": "SHA-256 cryptographic hash of image bytes."
+        },
+        "content_type": {
+          "type": "string",
+          "enum": ["image/jpeg", "image/png"]
+        },
+        "dimensions": {
+          "type": "object",
+          "properties": {
+            "width": { "type": "integer" },
+            "height": { "type": "integer" }
+          }
+        },
+        "raw_keyframe_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "planogram_snapshot": {
+      "type": "object",
+      "required": [
+        "relative_path",
+        "planogram_id",
+        "sha256"
+      ],
+      "properties": {
+        "relative_path": {
+          "type": "string",
+          "description": "Relative path to the immutable planogram JSON snapshot."
+        },
+        "planogram_id": {
+          "type": ["integer", "string"]
+        },
+        "store_planogram_id": {
+          "type": ["integer", "string", "null"]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$",
+          "description": "SHA-256 hash of canonical planogram snapshot content."
+        },
+        "validity_range": {
+          "type": "object",
+          "properties": {
+            "start": { "type": ["string", "null"] },
+            "end": { "type": ["string", "null"] }
+          }
+        }
+      }
+    },
+    "detections_payload": {
+      "type": "object",
+      "required": [
+        "relative_path"
+      ],
+      "properties": {
+        "relative_path": {
+          "type": "string",
+          "description": "Relative path to pre-captured CV detections JSON."
+        },
+        "model_version": {
+          "type": ["string", "null"]
+        },
+        "detection_count": {
+          "type": "integer"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        }
+      }
+    },
+    "expected_actions": {
+      "type": "array",
+      "description": "Authoritative list of expected business compliance actions.",
+      "items": {
+        "type": "object",
+        "required": [
+          "action_type",
+          "status",
+          "upc"
+        ],
+        "properties": {
+          "action_type": {
+            "type": "string",
+            "enum": ["ADD", "REMOVE", "MOVE", "IDENTIFY", "EXTRA_FACING", "LOW_STOCK", "CORRECT"]
+          },
+          "status": {
+            "type": "string"
+          },
+          "upc": {
+            "type": "string"
+          },
+          "shelf": {
+            "type": ["integer", "null"]
+          },
+          "position": {
+            "type": ["integer", "null"]
+          },
+          "facing": {
+            "type": ["integer", "null"]
+          },
+          "target_location": {
+            "type": ["string", "null"]
+          },
+          "stage": {
+            "type": "string",
+            "enum": ["pre_photo", "post_photo"]
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "VERIFIED_BASELINE",
+            "VERIFIED_DEFECT",
+            "PARTIALLY_VERIFIED",
+            "UNVERIFIED_ANOMALY",
+            "INVALID_INCOMPLETE"
+          ]
+        },
+        "reviewed_by": {
+          "type": ["string", "null"]
+        },
+        "reviewed_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "notes": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "replay_eligibility": {
+      "type": "object",
+      "required": [
+        "mode_1_deterministic_rules"
+      ],
+      "properties": {
+        "mode_1_deterministic_rules": {
+          "type": "boolean"
+        },
+        "mode_2_full_image_pipeline": {
+          "type": "boolean"
+        },
+        "mode_3_candidate_comparison": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

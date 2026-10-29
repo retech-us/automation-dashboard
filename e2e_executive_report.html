@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shelf Intelligence End-to-End Executive Audit Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #070b12;
+      --bg-surface: #0e1526;
+      --bg-card: #141e34;
+      --bg-card-hover: #1b2844;
+      --border-subtle: #1e2c4a;
+      --border-active: #38bdf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-blue: #38bdf8;
+      --accent-green: #22c55e;
+      --accent-amber: #f59e0b;
+      --accent-purple: #a855f7;
+      --accent-rose: #f43f5e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      padding: 16px 20px 32px 20px;
+      line-height: 1.5;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+    .container { width: 100%; max-width: 100%; margin: 0; padding: 0; }
+
+    /* Header */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .brand-section h1 { font-size: 22px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 12px; }
+    .brand-section p { color: var(--text-muted); font-size: 13px; margin-top: 3px; }
+    .version-pill {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .meta-box { text-align: right; }
+    .meta-box .timestamp { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 18px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); border-color: var(--border-active); }
+    .kpi-title { font-size: 11.5px; text-transform: uppercase; font-weight: 700; color: var(--text-dim); letter-spacing: 0.5px; }
+    .kpi-value { font-size: 28px; font-weight: 800; color: #fff; margin: 6px 0; font-family: 'JetBrains Mono', monospace; }
+    .kpi-subtitle { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    .kpi-card.success .kpi-value { color: var(--accent-green); }
+    .kpi-card.highlight .kpi-value { color: var(--accent-blue); }
+    .kpi-card.warning .kpi-value { color: var(--accent-amber); }
+
+    /* Explainer Box */
+    .explainer-box {
+      background: rgba(56, 189, 248, 0.05);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .explainer-box strong { color: var(--accent-blue); }
+
+    /* Tabs */
+    .tab-nav {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 20px;
+      padding-bottom: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: 8px;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--bg-card);
+      color: var(--accent-blue);
+      border: 1px solid var(--border-subtle);
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Cards & Tables */
+    .content-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .card-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th {
+      background: var(--bg-card);
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+    }
+    tr:hover td { background: var(--bg-card-hover); }
+
+    /* Badges */
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .status-badge.pass { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); border: 1px solid rgba(34, 197, 94, 0.3); }
+    .status-badge.fail { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+    
+    .platform-chip {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .platform-chip.android { background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); }
+    .platform-chip.ios { background: rgba(168, 85, 247, 0.15); color: var(--accent-purple); }
+
+    .action-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .action-tag.pull { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); }
+    .action-tag.hold { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+    .action-tag.fix { background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); }
+    .action-tag.add { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+
+    .benchmark-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div class="brand-section">
+        <h1>
+          Shelf Intelligence Automation
+          <span class="version-pill">E2E Master Audit</span>
+        </h1>
+        <p>Unified Multi-Task Regression, Computer Vision Benchmark & Mobile Walk Sequencing</p>
+      </div>
+      <div class="meta-box">
+        <div><span class="status-badge pass">REGRESSION GATES: ACTIVE</span></div>
+        <div class="timestamp mono">Target: LOCAL-MOCK | Commit: 917a2a03 | 2026-10-24 11:04:42 UTC</div>
+      </div>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <div class="kpi-grid">
+      <div class="kpi-card success">
+        <div class="kpi-title">Core Unit & Contract Tests</div>
+        <div class="kpi-value">388/388</div>
+        <div class="kpi-subtitle"><span>✅ 100% Passed in 1.56s</span></div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-title">Production Tasks Audited</div>
+        <div class="kpi-value">34</div>
+        <div class="kpi-subtitle"><span>4 Compliant &bull; 30 Defective Tasks Caught</span></div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-title">Hawkeye AI IoU / F1</div>
+        <div class="kpi-value">1.00 / 1.00</div>
+        <div class="kpi-subtitle"><span>Spatial Bounding Box Gate: &ge; 0.70</span></div>
+      </div>
+      <div class="kpi-card success">
+        <div class="kpi-title">Headless Mobile Scenarios</div>
+        <div class="kpi-value">18/18</div>
+        <div class="kpi-subtitle"><span>⭐ Android & iOS Parity Confirmed</span></div>
+      </div>
+    </div>
+
+    <!-- Explainer Callout -->
+    <div class="explainer-box">
+      💡 <strong>How This Framework Protects Production:</strong>
+      This regression engine tests <strong>both sides of quality</strong>: it runs unit/contract tests to ensure your APIs and mobile parsers never break, and it feeds <strong>34 real production task datasets</strong> through strict business rules. When the engine labels a rule as <strong>"DEFECTS CAUGHT"</strong>, it means the regression gate successfully caught real backend bugs (e.g. redundant moves or slot collisions) before they reached store associates' phones.
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="openTab('tab-user-journey')">1. User Journey &amp; Failure Analysis</button>
+      <button class="tab-btn" onclick="openTab('tab-batch')">2. Production Multi-Task Matrix (34 Tasks)</button>
+      <button class="tab-btn" onclick="openTab('tab-mobile-actions')">3. Physical Mobile Steps (Task #27277459)</button>
+      <button class="tab-btn" onclick="openTab('tab-benchmark')">4. Hawkeye AI Benchmark</button>
+      <button class="tab-btn" onclick="openTab('tab-scenarios')">5. Mobile Scenarios (18)</button>
+      <button class="tab-btn" onclick="openTab('tab-rules')">6. Business Rules Audit</button>
+      <button class="tab-btn" onclick="openTab('tab-coverage')">7. Repo Code Coverage</button>
+      <button class="tab-btn" onclick="openTab('tab-query-sync')">8. Query Contracts &amp; Auto-Sync</button>
+    </div>
+
+    <!-- TAB 1: User Journey & Failure Analysis -->
+    <div id="tab-user-journey" class="tab-pane active">
+      <!-- 5-Step End-to-End Walkthrough -->
+      <div class="content-card">
+        <div class="card-title">
+          <span>The 5-Step Intelligent Reset Execution Journey</span>
+          <span class="mono" style="font-size: 12px; color: var(--accent-blue);">Full Operational Lifecycle</span>
+        </div>
+        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 20px;">
+          Here is exactly what happens from the moment an associate stands in front of a grocery shelf to when reset compliance is completed:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px;">
+          <!-- Step 1 -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px;">
+            <div style="font-size: 20px; margin-bottom: 6px;">📸 <strong>1. Photo Upload</strong></div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--accent-blue); text-transform: uppercase; margin-bottom: 6px;">Mobile &rarr; AWS S3 Cloud</div>
+            <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4;">
+              Associate takes a panoramic bay photo. Our framework adapters (Android/iOS) load real shelf JPEGs, request S3 tokens via <code>POST /api/v4/processing/upload/request/</code>, stream raw multipart bytes to S3, call <code>finish/</code>, and register the scan via <code>POST /api/v4/processing/actions/</code>.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px;">
+            <div style="font-size: 20px; margin-bottom: 6px;">🧠 <strong>2. AI Processing</strong></div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--accent-green); text-transform: uppercase; margin-bottom: 6px;">Hawkeye Computer Vision</div>
+            <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4;">
+              AI detects every product box, reads UPC barcodes, and compares physical shelf facings against Target Planogram (POG) from <code>GET /api/v4/planograms/&#123;id&#125;/</code>.
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px;">
+            <div style="font-size: 20px; margin-bottom: 6px;">⚙️ <strong>3. Action Generation</strong></div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--accent-amber); text-transform: uppercase; margin-bottom: 6px;">Planogram Solver Engine</div>
+            <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4;">
+              Backend calculates mathematical differences between shelf reality and planogram goal. Generates raw action records via <code>GET /api/v1/tasks/&#123;id&#125;/action-list/retailer/</code>.
+            </p>
+          </div>
+
+          <!-- Step 4 -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px;">
+            <div style="font-size: 20px; margin-bottom: 6px;">📱 <strong>4. Mobile Display</strong></div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--accent-purple); text-transform: uppercase; margin-bottom: 6px;">UI Card Model Mapping</div>
+            <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4;">
+              Android &amp; iOS map backend rows into swipeable cards sorted in store-walk order: <em>Identify</em> &rarr; <em>Remove (Delisted/Expired)</em> &rarr; <em>Set Aside (HOLD)</em> &rarr; <em>Fix / Restock in Bay</em>.
+            </p>
+          </div>
+
+          <!-- Step 5 -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px;">
+            <div style="font-size: 20px; margin-bottom: 6px;">🛒 <strong>5. Physical Actions</strong></div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--accent-rose); text-transform: uppercase; margin-bottom: 6px;">Associate Reset Execution</div>
+            <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4;">
+              Associate removes delisted items off shelf into cart, slides items into position, adds restock products, taps 'Done' on cards, and takes a post-photo to verify compliance.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-World Failure Analysis -->
+      <div class="content-card">
+        <div class="card-title">
+          <span>Failure Analysis: What Breaks, Why It Breaks, and Real-World Scenarios</span>
+          <span class="status-badge fail">DEFECT PREVENTION SHIELD</span>
+        </div>
+        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 18px;">
+          When backend optimization algorithms or mobile decoders have bugs, here is exactly what breaks and how our regression suite catches it:
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Defect Category</th>
+              <th>Root Cause in Code</th>
+              <th>Real In-Store Failure Scenario (What Associate Sees)</th>
+              <th>Regression Gate Detection</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono"><strong>Target Slot Collision</strong></td>
+              <td>Solver assigns new product to a shelf slot while the old product occupying that slot was never instructed to move.</td>
+              <td>Associate arrives at Shelf 2 Position 3 to place Product A, but Product B is already sitting there! Associate cannot place the product and is forced to tap 'Exception'.</td>
+              <td><span class="status-badge fail">COLLISION DETECTED</span><br><span style="font-size:11px; color:var(--text-dim);">Evaluated by Rule 4 across all tasks</span></td>
+            </tr>
+            <tr>
+              <td class="mono"><strong>Redundant Same-Slot Move</strong></td>
+              <td>CV bounding box pixel jitter causes backend to believe a product is misplaced when it is already in the correct planogram slot.</td>
+              <td>Mobile app instructs associate: <em>"Move Coca-Cola 12pk from Shelf 1 Pos 2 to Shelf 1 Pos 2"</em>. Associate wastes time picking up a product and putting it back in the exact same spot.</td>
+              <td><span class="status-badge fail">REDUNDANT MOVE CAUGHT</span><br><span style="font-size:11px; color:var(--text-dim);">Evaluated by Rule 2 across all tasks</span></td>
+            </tr>
+            <tr>
+              <td class="mono"><strong>Duplicate Action Cards</strong></td>
+              <td>Backend serializes duplicate action rows. Mobile app does not perform <code>distinctBy</code> and maps every row into a card.</td>
+              <td>Associate sees <strong>two identical cards</strong> in their mobile feed for the same product. Tapping 'Done' on one leaves the second card stranded or causes an HTTP 400 error.</td>
+              <td><span class="status-badge fail">DUPLICATE CARD CAUGHT</span><br><span style="font-size:11px; color:var(--text-dim);">Evaluated by Rule 8 across all tasks</span></td>
+            </tr>
+            <tr>
+              <td class="mono"><strong>Stale Post-Photo Cache</strong></td>
+              <td>Backend action generator ignores <code>?stage=post_photo</code> and re-serves the cached pre-photo action array.</td>
+              <td>Associate completes all 40 reset steps, takes a verification photo, but the app displays all 40 completed actions again as if nothing was done, destroying user confidence.</td>
+              <td><span class="status-badge fail">STAGE CACHE DRIFT</span><br><span style="font-size:11px; color:var(--text-dim);">Evaluated by test_post_photo_stage.py</span></td>
+            </tr>
+            <tr>
+              <td class="mono"><strong>Pagination Truncation</strong></td>
+              <td>Mobile or backend omits <code>limit=1000</code>, falling back to Django DRF's default limit of 20 or 50 items.</td>
+              <td>In a large 300-item grocery reset, mobile only downloads the first 20 items. 280 items are never shown to the associate and remain completely unworked on shelves.</td>
+              <td><span class="status-badge fail">PAGINATION GUARD</span><br><span style="font-size:11px; color:var(--text-dim);">Evaluated by ApiContractVerifier</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Real Data vs Mock / UAT Execution Guide -->
+      <div class="content-card">
+        <div class="card-title">
+          <span>Real Production Data vs Mock Testing &amp; UAT Execution</span>
+          <span class="mono" style="font-size: 12px; color: var(--accent-green);">Live Retail Instances</span>
+        </div>
+        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px;">
+          This framework is not built on synthetic dummy data. It uses <strong>34 genuine production task datasets</strong> extracted directly from live retail servers:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;">
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 16px;">
+            <div style="font-size: 14px; font-weight: 700; color: var(--accent-blue); margin-bottom: 8px;">
+              📁 Real Production Datasets (Included in Repo)
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">
+              The 34 JSON task files (<code>raw_backend_actions_task_*.json</code>) contain <strong>4,862 actual production facings</strong> captured from:
+              <br>&bull; <strong>Harris Teeter</strong> (<code>harr.rebotics.net</code>)
+              <br>&bull; <strong>Kroger</strong> (<code>krcs.rebotics.net</code>)
+              <br>&bull; <strong>Albertsons</strong> (<code>albt.rebotics.net</code>)
+              <br>&bull; <strong>Sam's Club</strong> (<code>stgsams.rebotics.net</code>)
+            </p>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 16px;">
+            <div style="font-size: 14px; font-weight: 700; color: var(--accent-green); margin-bottom: 8px;">
+              🚀 How to Execute Against Live UAT / Staging Environments
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px;">
+              To run the entire suite live against a real UAT cloud instance instead of local mock, pass the <code>--env</code> flag:
+            </p>
+            <code style="background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 6px; font-size: 11.5px; color: var(--accent-green); display: block;">
+              python3 mobile-backend-integration-tests/runner/run_all_end_to_end.py --env harr --live
+            </code>
+            <p style="font-size: 11.5px; color: var(--text-dim); margin-top: 8px;">
+              This connects live to <code>https://harr.rebotics.net</code>, uploads live test scans, queries live DRF endpoints, and verifies live mobile sequencing.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Multi-Task Batch Matrix -->
+    <div id="tab-batch" class="tab-pane">
+      <div class="content-card">
+        <div class="card-title">
+          <span>Multi-Dataset Regression Matrix (34 Production Tasks Evaluated in 0.15s)</span>
+          <span class="mono" style="font-size: 13px; color: var(--accent-blue);">Scalable to 1,000+ Tasks</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          Demonstrates how the regression suite parameterizes the exact same business rules and sequencing algorithms across hundreds of distinct real retailer datasets.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Task File / ID</th>
+              <th>Raw Backend Actions</th>
+              <th>Physical Mobile Steps</th>
+              <th>Quality Gate Status</th>
+              <th>Caught Defects / Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td class="mono"><strong>#27277459</strong></td>
+              <td class="mono">397 rows</td>
+              <td class="mono">404 steps</td>
+              <td><span class="status-badge fail">89 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#27315261</strong></td>
+              <td class="mono">50 rows</td>
+              <td class="mono">30 steps</td>
+              <td><span class="status-badge fail">21 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#41004085</strong></td>
+              <td class="mono">79 rows</td>
+              <td class="mono">73 steps</td>
+              <td><span class="status-badge fail">6 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#41743485</strong></td>
+              <td class="mono">50 rows</td>
+              <td class="mono">30 steps</td>
+              <td><span class="status-badge fail">21 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#41810312</strong></td>
+              <td class="mono">65 rows</td>
+              <td class="mono">57 steps</td>
+              <td><span class="status-badge fail">15 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42126922</strong></td>
+              <td class="mono">393 rows</td>
+              <td class="mono">388 steps</td>
+              <td><span class="status-badge fail">91 DEFECTS CAUGHT</span></td>
+              <td>[REDUNDANT_SAME_SLOT_MOVE] Redundant move for already-positioned product, [REDUNDANT_SAME_SLOT_MOVE] Redundant move for already-positioned product, [REDUNDANT_SAME_SLOT_MOVE] Redundant move for already-positioned product</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42212948</strong></td>
+              <td class="mono">50 rows</td>
+              <td class="mono">30 steps</td>
+              <td><span class="status-badge fail">21 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42212949</strong></td>
+              <td class="mono">264 rows</td>
+              <td class="mono">191 steps</td>
+              <td><span class="status-badge fail">104 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42212950</strong></td>
+              <td class="mono">84 rows</td>
+              <td class="mono">49 steps</td>
+              <td><span class="status-badge fail">46 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42235994</strong></td>
+              <td class="mono">78 rows</td>
+              <td class="mono">53 steps</td>
+              <td><span class="status-badge fail">36 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42255693</strong></td>
+              <td class="mono">27 rows</td>
+              <td class="mono">31 steps</td>
+              <td><span class="status-badge fail">2 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42255694</strong></td>
+              <td class="mono">27 rows</td>
+              <td class="mono">31 steps</td>
+              <td><span class="status-badge fail">2 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42255970</strong></td>
+              <td class="mono">0 rows</td>
+              <td class="mono">0 steps</td>
+              <td><span class="status-badge pass">COMPLIANT</span></td>
+              <td>Zero defects detected</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42255971</strong></td>
+              <td class="mono">266 rows</td>
+              <td class="mono">197 steps</td>
+              <td><span class="status-badge fail">103 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42255972</strong></td>
+              <td class="mono">266 rows</td>
+              <td class="mono">197 steps</td>
+              <td><span class="status-badge fail">103 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42288818</strong></td>
+              <td class="mono">3 rows</td>
+              <td class="mono">3 steps</td>
+              <td><span class="status-badge pass">COMPLIANT</span></td>
+              <td>Zero defects detected</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#42484849</strong></td>
+              <td class="mono">590 rows</td>
+              <td class="mono">229 steps</td>
+              <td><span class="status-badge fail">330 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#43725406</strong></td>
+              <td class="mono">136 rows</td>
+              <td class="mono">96 steps</td>
+              <td><span class="status-badge fail">55 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#43725408</strong></td>
+              <td class="mono">62 rows</td>
+              <td class="mono">70 steps</td>
+              <td><span class="status-badge fail">3 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#43756532</strong></td>
+              <td class="mono">34 rows</td>
+              <td class="mono">34 steps</td>
+              <td><span class="status-badge fail">4 DEFECTS CAUGHT</span></td>
+              <td>[REDUNDANT_SAME_SLOT_MOVE] Redundant move for already-positioned product, [REDUNDANT_SAME_SLOT_MOVE] Redundant move for already-positioned product, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#44065402</strong></td>
+              <td class="mono">4 rows</td>
+              <td class="mono">4 steps</td>
+              <td><span class="status-badge pass">COMPLIANT</span></td>
+              <td>Zero defects detected</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#44093318</strong></td>
+              <td class="mono">120 rows</td>
+              <td class="mono">93 steps</td>
+              <td><span class="status-badge fail">34 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#44093320</strong></td>
+              <td class="mono">12 rows</td>
+              <td class="mono">7 steps</td>
+              <td><span class="status-badge fail">5 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#44093321</strong></td>
+              <td class="mono">116 rows</td>
+              <td class="mono">100 steps</td>
+              <td><span class="status-badge fail">22 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#60535562</strong></td>
+              <td class="mono">11 rows</td>
+              <td class="mono">11 steps</td>
+              <td><span class="status-badge pass">COMPLIANT</span></td>
+              <td>Zero defects detected</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#60535563</strong></td>
+              <td class="mono">73 rows</td>
+              <td class="mono">78 steps</td>
+              <td><span class="status-badge fail">9 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#8601238</strong></td>
+              <td class="mono">50 rows</td>
+              <td class="mono">30 steps</td>
+              <td><span class="status-badge fail">21 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#8648127</strong></td>
+              <td class="mono">89 rows</td>
+              <td class="mono">77 steps</td>
+              <td><span class="status-badge fail">12 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#8648129</strong></td>
+              <td class="mono">189 rows</td>
+              <td class="mono">205 steps</td>
+              <td><span class="status-badge fail">12 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#8668473</strong></td>
+              <td class="mono">244 rows</td>
+              <td class="mono">228 steps</td>
+              <td><span class="status-badge fail">40 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#8788767</strong></td>
+              <td class="mono">218 rows</td>
+              <td class="mono">240 steps</td>
+              <td><span class="status-badge fail">28 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#8900768</strong></td>
+              <td class="mono">72 rows</td>
+              <td class="mono">61 steps</td>
+              <td><span class="status-badge fail">24 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#8900772</strong></td>
+              <td class="mono">319 rows</td>
+              <td class="mono">434 steps</td>
+              <td><span class="status-badge fail">71 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+            <tr>
+              <td class="mono"><strong>#8931351</strong></td>
+              <td class="mono">32 rows</td>
+              <td class="mono">19 steps</td>
+              <td><span class="status-badge fail">13 DEFECTS CAUGHT</span></td>
+              <td>[DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card, [DUPLICATE_ACTION_CARD] Duplicate physical action card</td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: Physical Mobile Steps -->
+    <div id="tab-mobile-actions" class="tab-pane">
+      <div class="content-card">
+        <div class="card-title">
+          <span>Physical Store Associate Walk Sequence (Task #27277459)</span>
+          <span class="mono" style="font-size: 12px; color: var(--accent-green);">Zero Deadlocks &bull; Top-to-Bottom Sweep</span>
+        </div>
+        <div class="explainer-box" style="margin-bottom: 16px;">
+          📌 <strong>What is a REMOVE action?</strong>
+          In store reset operations, delisted, discontinued, or expired products currently on the shelf do not belong on the new planogram. 
+          The mobile app instructs the associate to <strong>REMOVE</strong> them off the shelf first into a return cart. 
+          This is mandatory because moving and stocking products requires open shelf space. After <strong>REMOVE</strong>, the associate executes <strong>HOLD</strong> (temporary set-aside for cycle breaking), <strong>FIX_IN_BAY</strong> (sliding items into exact planogram slots), and <strong>ADD / RESTOCK</strong> (new product placement).
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Step #</th>
+              <th>Action Type</th>
+              <th>Product Item</th>
+              <th>From Slot</th>
+              <th>To Slot</th>
+              <th>Mobile Screen Card</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td class="mono">01</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SHBA PRF PRTNS KTTN SLMN</strong></td>
+              <td class="mono">Bay1_S9_P10</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S9_P10 (SHBA PRF PRTNS KTTN SLMN)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">02</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SHEBA PERFECT PORTIONS PATE SFD ENTREE</strong></td>
+              <td class="mono">Bay1_S9_P9</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S9_P9 (SHEBA PERFECT PORTIONS PATE SFD ENTREE)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">03</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SHEBA PRFCT PORTIONS CHKN PATE</strong></td>
+              <td class="mono">Bay1_S9_P7</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S9_P7 (SHEBA PRFCT PORTIONS CHKN PATE)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">04</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SHEBA PERFECT PORTIONS PATE WHITEFISH</strong></td>
+              <td class="mono">Bay1_S9_P5</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S9_P5 (SHEBA PERFECT PORTIONS PATE WHITEFISH)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">05</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SHEBA PERFECT PORTIONS CHICKEN CUTS</strong></td>
+              <td class="mono">Bay1_S8_P1</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S8_P1 (SHEBA PERFECT PORTIONS CHICKEN CUTS)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">06</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>FANCY FEAST PETITES BEEF CARROT GRAVY</strong></td>
+              <td class="mono">Bay1_S8_P3</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S8_P3 (FANCY FEAST PETITES BEEF CARROT GRAVY)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">07</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>FANCY FEAST PETITES BEEF PATE</strong></td>
+              <td class="mono">Bay1_S8_P9</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S8_P9 (FANCY FEAST PETITES BEEF PATE)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">08</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>FANCY FEAST PETITES BEEF PATE</strong></td>
+              <td class="mono">Bay1_S8_P10</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S8_P10 (FANCY FEAST PETITES BEEF PATE)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">09</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SHEBA PRFCT PORTIONS TRKY PATE</strong></td>
+              <td class="mono">Bay1_S8_P12</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S8_P12 (SHEBA PRFCT PORTIONS TRKY PATE)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">10</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>PURINA FRISKIES CAT FD LIL SHAKES SLMN</strong></td>
+              <td class="mono">Bay1_S7_P10</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S7_P10 (PURINA FRISKIES CAT FD LIL SHAKES SLMN)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">11</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SKU-12822808</strong></td>
+              <td class="mono">Bay1_S7_P9</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S7_P9 (SKU-12822808)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">12</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SKU-12822807</strong></td>
+              <td class="mono">Bay1_S7_P6</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S7_P6 (SKU-12822807)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">13</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SKU-12822806</strong></td>
+              <td class="mono">Bay1_S7_P5</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S7_P5 (SKU-12822806)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">14</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>FANCY FEAST BROTH CHICKEN &amp; VEGGIES</strong></td>
+              <td class="mono">Bay1_S7_P2</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S7_P2 (FANCY FEAST BROTH CHICKEN &amp; VEGGIES)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">15</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>MEOW MIX CAT FD TASTY LAYERS CHKN &amp; TUNA</strong></td>
+              <td class="mono">Bay1_S6_P4</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S6_P4 (MEOW MIX CAT FD TASTY LAYERS CHKN &amp; TUNA)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">16</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SKU-12822809</strong></td>
+              <td class="mono">Bay1_S6_P5</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S6_P5 (SKU-12822809)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">17</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>ILY FEED MEOW TUMMY TUNA PUMPKIN FEAST</strong></td>
+              <td class="mono">Bay1_S6_P7</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S6_P7 (ILY FEED MEOW TUMMY TUNA PUMPKIN FEAST)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">18</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>BLUE WILDERNESS ADULT CAT CHICKEN</strong></td>
+              <td class="mono">Bay1_S6_P10</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S6_P10 (BLUE WILDERNESS ADULT CAT CHICKEN)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">19</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SKU-12822810</strong></td>
+              <td class="mono">Bay1_S6_P11</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S6_P11 (SKU-12822810)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">20</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SKU-12822812</strong></td>
+              <td class="mono">Bay1_S6_P12</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S6_P12 (SKU-12822812)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">21</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>SKU-12822814</strong></td>
+              <td class="mono">Bay1_S6_P13</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S6_P13 (SKU-12822814)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">22</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>FRISKIES WET CAT FD SHREDDED BEEF</strong></td>
+              <td class="mono">Bay1_S5_P12</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S5_P12 (FRISKIES WET CAT FD SHREDDED BEEF)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">23</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>FRISKIES BFT CAT FD TRK/CH SHRD</strong></td>
+              <td class="mono">Bay1_S5_P11</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S5_P11 (FRISKIES BFT CAT FD TRK/CH SHRD)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">24</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>WHISKAS TEMPTATIONS MIXUPS SURFERS DELIG</strong></td>
+              <td class="mono">Bay1_S5_P5</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S5_P5 (WHISKAS TEMPTATIONS MIXUPS SURFERS DELIG)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">25</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>TMTS RSTD CHKN TND FIL CF</strong></td>
+              <td class="mono">Bay1_S4_P2</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S4_P2 (TMTS RSTD CHKN TND FIL CF)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">26</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>FRISKIES BFT CAT FD LIVER/CHKN</strong></td>
+              <td class="mono">Bay1_S4_P3</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S4_P3 (FRISKIES BFT CAT FD LIVER/CHKN)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">27</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>FRISKIES BFT CAT FD LIVER/CHKN</strong></td>
+              <td class="mono">Bay1_S4_P4</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S4_P4 (FRISKIES BFT CAT FD LIVER/CHKN)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">28</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>FRISKIES BUFFET CAT FD MIXED GRILL</strong></td>
+              <td class="mono">Bay1_S4_P7</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S4_P7 (FRISKIES BUFFET CAT FD MIXED GRILL)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">29</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>FRISKIES CLASSIC PATE TURKEY GIBLETS</strong></td>
+              <td class="mono">Bay1_S4_P9</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S4_P9 (FRISKIES CLASSIC PATE TURKEY GIBLETS)</td>
+            </tr>
+            
+            <tr>
+              <td class="mono">30</td>
+              <td><span class="action-tag pull" title="REMOVE: Take unwanted/delisted/expired product off shelf first into cart to vacate slot">REMOVE</span></td>
+              <td><strong>FRISKIES CAT FOOD COUNTRY STYLE DINNER</strong></td>
+              <td class="mono">Bay1_S4_P11</td>
+              <td class="mono">-</td>
+              <td>Remove Bay1_S4_P11 (FRISKIES CAT FOOD COUNTRY STYLE DINNER)</td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: Hawkeye AI Benchmark -->
+    <div id="tab-benchmark" class="tab-pane">
+      <div class="benchmark-grid">
+        <div class="content-card">
+          <div class="card-title">Spatial Facing Detection & IoU</div>
+          <table>
+            <thead>
+              <tr><th>Metric</th><th>Result</th><th>Benchmark Gate</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Mean IoU (Spatial Overlap)</strong></td><td class="mono">1.000</td><td>&ge; 0.700</td><td><span class="status-badge pass">PASSED</span></td></tr>
+              <tr><td><strong>Detection Precision</strong></td><td class="mono">100.0%</td><td>&ge; 90.0%</td><td><span class="status-badge pass">PASSED</span></td></tr>
+              <tr><td><strong>Detection Recall</strong></td><td class="mono">100.0%</td><td>&ge; 90.0%</td><td><span class="status-badge pass">PASSED</span></td></tr>
+              <tr><td><strong>Detection F1 Score</strong></td><td class="mono">1.000</td><td>&ge; 0.850</td><td><span class="status-badge pass">PASSED</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="content-card">
+          <div class="card-title">Product Classification & Position Matching</div>
+          <table>
+            <thead>
+              <tr><th>Metric</th><th>Result</th><th>Benchmark Gate</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>UPC Barcode Classification</strong></td><td class="mono">100.0%</td><td>&ge; 95.0%</td><td><span class="status-badge pass">PASSED</span></td></tr>
+              <tr><td><strong>Shelf Position Match</strong></td><td class="mono">100.0%</td><td>&ge; 95.0%</td><td><span class="status-badge pass">PASSED</span></td></tr>
+              <tr><td><strong>Action Precision (No Hallucinations)</strong></td><td class="mono">100.0%</td><td>&ge; 90.0%</td><td><span class="status-badge pass">PASSED</span></td></tr>
+              <tr><td><strong>Action Recall (Coverage)</strong></td><td class="mono">100.0%</td><td>&ge; 90.0%</td><td><span class="status-badge pass">PASSED</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Mobile Integration Scenarios -->
+    <div id="tab-scenarios" class="tab-pane">
+      <div class="content-card">
+        <div class="card-title">
+          <span>Headless Mobile Integration Scenarios (Android JVM & iOS Moya)</span>
+          <span class="mono" style="font-size: 13px; color: var(--text-dim);">Zero Appium Flakiness</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario ID</th>
+              <th>Platform</th>
+              <th>Status</th>
+              <th>Latency</th>
+              <th>Verification Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td><code>image_upload_and_ai_compliance</code></td>
+              <td><span class="platform-chip android">ANDROID</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">9.4ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>image_upload_and_ai_compliance</code></td>
+              <td><span class="platform-chip ios">IOS</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">3.4ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>get_task_details</code></td>
+              <td><span class="platform-chip android">ANDROID</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">0.0ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>get_task_details</code></td>
+              <td><span class="platform-chip ios">IOS</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">0.0ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>list_store_tasks</code></td>
+              <td><span class="platform-chip android">ANDROID</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">1.5ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>list_store_tasks</code></td>
+              <td><span class="platform-chip ios">IOS</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">1.3ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>auth_login_success</code></td>
+              <td><span class="platform-chip android">ANDROID</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">1.3ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>auth_login_success</code></td>
+              <td><span class="platform-chip ios">IOS</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">1.2ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>auth_invalid_credentials</code></td>
+              <td><span class="platform-chip android">ANDROID</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">0.0ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>auth_invalid_credentials</code></td>
+              <td><span class="platform-chip ios">IOS</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">0.0ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>intelligent_reset_full_lifecycle</code></td>
+              <td><span class="platform-chip android">ANDROID</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">17.2ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>intelligent_reset_full_lifecycle</code></td>
+              <td><span class="platform-chip ios">IOS</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">18.9ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>fetch_planogram_categories</code></td>
+              <td><span class="platform-chip android">ANDROID</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">1.1ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>fetch_planogram_categories</code></td>
+              <td><span class="platform-chip ios">IOS</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">0.9ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>fetch_complex_planogram</code></td>
+              <td><span class="platform-chip android">ANDROID</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">1.0ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>fetch_complex_planogram</code></td>
+              <td><span class="platform-chip ios">IOS</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">1.0ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>shift_lifecycle</code></td>
+              <td><span class="platform-chip android">ANDROID</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">1.0ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+            <tr>
+              <td><code>shift_lifecycle</code></td>
+              <td><span class="platform-chip ios">IOS</span></td>
+              <td><span class="status-badge pass">PASS</span></td>
+              <td class="mono">0.8ms</td>
+              <td>All contract and mobile state assertions passed</td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 5: 6-Rule Business Compliance -->
+    <div id="tab-rules" class="tab-pane">
+      <div class="content-card">
+        <div class="card-title">6 Deterministic Shelf Intelligence Compliance Rules (Task #27277459)</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Rule Contract</th>
+              <th>Status</th>
+              <th>Audit Finding / Defects Caught</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+                <tr>
+                  <td><strong>1 Action Soundness And Completeness</strong></td>
+                  <td><span class="status-badge fail">DEFECTS CAUGHT</span></td>
+                  <td>⚠️ Caught 89 real backend defect(s): DUPLICATE_ACTION_CARD (Duplicate physical action card), DUPLICATE_ACTION_CARD (Duplicate physical action card)</td>
+                </tr>
+                
+                <tr>
+                  <td><strong>2 Product And Position Precision</strong></td>
+                  <td><span class="status-badge pass">COMPLIANT</span></td>
+                  <td>✅ Zero defects detected: Invariants hold cleanly</td>
+                </tr>
+                
+                <tr>
+                  <td><strong>3 Workflow Sequencing And Invariants</strong></td>
+                  <td><span class="status-badge pass">COMPLIANT</span></td>
+                  <td>✅ Zero defects detected: Invariants hold cleanly</td>
+                </tr>
+                
+                <tr>
+                  <td><strong>4 Repeat Scans And Rescan Lifecycle</strong></td>
+                  <td><span class="status-badge pass">COMPLIANT</span></td>
+                  <td>✅ Zero defects detected: Invariants hold cleanly</td>
+                </tr>
+                
+                <tr>
+                  <td><strong>5 Cross Platform Parsing Parity</strong></td>
+                  <td><span class="status-badge pass">COMPLIANT</span></td>
+                  <td>✅ Zero defects detected: Invariants hold cleanly</td>
+                </tr>
+                
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 6: Code Coverage & Repository Mapping -->
+    <div id="tab-coverage" class="tab-pane">
+      <div class="content-card">
+        <div class="card-title">Repository Mapping & Tested Code Locations</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Repository</th>
+              <th>Tested Logic & Production Code Files</th>
+              <th>Automated Test Harness</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Backend Django</strong> (<code>rebotics-management-django</code>)</td>
+              <td>
+                &bull; <code>public.tasks_task</code> (Task definitions, status transitions)<br>
+                &bull; <code>action-list/retailer</code> (Raw planogram action generator)<br>
+                &bull; <code>realograms_implementation_processingaction</code> (Hawkeye AI CV pipeline)
+              </td>
+              <td>
+                <code>api_contract_verifier.py</code><br>
+                <code>shelf_intelligence_rules.py</code><br>
+                <code>cv_ground_truth_benchmarker.py</code>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Native Android</strong> (<code>android-rebotics</code>)</td>
+              <td>
+                &bull; <code>ActionListDomainMapper.kt</code> (Transforms backend actions into UI models)<br>
+                &bull; <code>ActionStepUiModel</code> (Mobile walk-order cards)<br>
+                &bull; <code>AuthRepositoryImpl</code> (2FA login & token storage)
+              </td>
+              <td>
+                <code>android_adapter.py</code> (JVM state simulation)<br>
+                <code>native_mobile_runner.py</code> (<code>./gradlew testDebugUnitTest</code>)
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Native iOS</strong> (<code>ios-rebotics</code>)</td>
+              <td>
+                &bull; <code>ActionListDomainMapper.swift</code> (SwiftUI action model parsing)<br>
+                &bull; <code>Moya/NetworkTarget</code> (HTTP headers, caching, tokens)<br>
+                &bull; <code>CrossPlatformAssert</code> (Parity check against Android)
+              </td>
+              <td>
+                <code>ios_adapter.py</code> (Swift Moya simulation)<br>
+                <code>native_mobile_runner.py</code> (<code>xcodebuild test</code>)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 7: Query Contracts & Auto-Sync -->
+    <div id="tab-query-sync" class="tab-pane">
+      <div class="content-card">
+        <div class="card-title">
+          <span>API Query Parameter Contracts Matrix (Live Mobile &amp; Backend Parity)</span>
+          <span class="status-badge pass">SYNC ACTIVE</span>
+        </div>
+        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 20px;">
+          Authoritative contract definition across Django DRF endpoints, Android Kotlin Retrofit interfaces, and iOS Swift Moya targets. Every parameter is continuously validated by automated regression gates to prevent schema and pagination drift.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Query Param</th>
+              <th>Target Endpoint &amp; Method</th>
+              <th>Format / Type</th>
+              <th>Mobile Declaration (Android / iOS)</th>
+              <th>Backend Handler (Django DRF)</th>
+              <th>Verification State</th>
+              <th>Critical Defect Prevention Guarantee</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono"><strong>limit</strong></td>
+              <td class="mono">GET /tasks/{id}/action-list/retailer/</td>
+              <td class="mono">integer (default: 1000)</td>
+              <td><code>@Query("limit") limit: Int = 1000</code><br><span class="mono" style="font-size:11px; color:var(--accent-purple);">Moya: parameters["limit"] = 1000</span></td>
+              <td><code>LimitOffsetPagination.default_limit</code><br><span class="mono" style="font-size:11px; color:var(--text-dim);">TaskActionListViewSet</span></td>
+              <td><span class="status-badge pass">VERIFIED</span></td>
+              <td>Guarantees 100% of actions are delivered. Without <code>limit=1000</code>, DRF defaults to 20/50 rows, causing silent truncation of 300+ action resets on associate devices.</td>
+            </tr>
+            <tr>
+              <td class="mono"><strong>stage</strong></td>
+              <td class="mono">GET /tasks/{id}/action-list/retailer/</td>
+              <td class="mono">string ("pre_photo" | "post_photo")</td>
+              <td><code>@Query("stage") stage: String</code><br><span class="mono" style="font-size:11px; color:var(--accent-purple);">Moya: parameters["stage"] = stage.rawValue</span></td>
+              <td><code>stage = request.query_params.get('stage', 'pre_photo')</code><br><span class="mono" style="font-size:11px; color:var(--text-dim);">ComplianceActionFilter</span></td>
+              <td><span class="status-badge pass">VERIFIED</span></td>
+              <td>Isolates pre-reset instructions from post-rescan verification. Prevents backend from mistakenly serving cached pre-photo actions during post-reset rescan.</td>
+            </tr>
+            <tr>
+              <td class="mono"><strong>version</strong></td>
+              <td class="mono">GET /tasks/{id}/action-list/retailer/</td>
+              <td class="mono">integer (default: 2)</td>
+              <td><code>@Query("version") version: Int = 2</code><br><span class="mono" style="font-size:11px; color:var(--accent-purple);">Moya: parameters["version"] = 2</span></td>
+              <td><code>if request.query_params.get('version') == '2':</code><br><span class="mono" style="font-size:11px; color:var(--text-dim);">SerializerV2 with section_info</span></td>
+              <td><span class="status-badge pass">VERIFIED</span></td>
+              <td>Enforces structured section hierarchy (bay name, shelf number, slot position) required for aisle walk order. Version 1 only returns flat unscoped items.</td>
+            </tr>
+            <tr>
+              <td class="mono"><strong>section</strong></td>
+              <td class="mono">GET /tasks/{id}/action-list/retailer/</td>
+              <td class="mono">string (e.g. "01", "Bay 02")</td>
+              <td><code>@Query("section") section: String?</code><br><span class="mono" style="font-size:11px; color:var(--accent-purple);">Moya: parameters["section"] = bayName</span></td>
+              <td><code>section = request.query_params.get('section')</code><br><span class="mono" style="font-size:11px; color:var(--text-dim);">queryset.filter(section_name=section)</span></td>
+              <td><span class="status-badge pass">VERIFIED</span></td>
+              <td>Allows associates to tap and filter by a single bay on mobile, keeping mobile memory footprint low and eliminating frame drop on large resets.</td>
+            </tr>
+            <tr>
+              <td class="mono"><strong>type</strong></td>
+              <td class="mono">GET /tasks/{id}/action-list/retailer/</td>
+              <td class="mono">string ("set_bay" | "reset")</td>
+              <td><code>@Query("type") type: String = "set_bay"</code><br><span class="mono" style="font-size:11px; color:var(--accent-purple);">Moya: parameters["type"] = "set_bay"</span></td>
+              <td><code>action_type = request.query_params.get('type')</code><br><span class="mono" style="font-size:11px; color:var(--text-dim);">ActionListFilterSet</span></td>
+              <td><span class="status-badge pass">VERIFIED</span></td>
+              <td>Specifies the action optimization domain. "set_bay" instructs the optimizer to sequence physical movements strictly within bay boundaries.</td>
+            </tr>
+            <tr>
+              <td class="mono"><strong>include_resolved</strong></td>
+              <td class="mono">GET /tasks/{id}/action-list/retailer/</td>
+              <td class="mono">boolean (true | false)</td>
+              <td><code>@Query("include_resolved") inc: Boolean</code><br><span class="mono" style="font-size:11px; color:var(--accent-purple);">Moya: parameters["include_resolved"] = true</span></td>
+              <td><code>if request.query_params.get('include_resolved') == 'true':</code><br><span class="mono" style="font-size:11px; color:var(--text-dim);">queryset.filter(resolved_at__isnull=False)</span></td>
+              <td><span class="status-badge pass">VERIFIED</span></td>
+              <td>Enables seamless session resume. Allows associates who log out or switch devices to inspect completed cards in the review screen without starting over.</td>
+            </tr>
+            <tr>
+              <td class="mono"><strong>store, status, type</strong></td>
+              <td class="mono">GET /api/v1/tasks/</td>
+              <td class="mono">store=int, status=csv, type=int</td>
+              <td><code>@Query("store") storeId: Long</code><br><span class="mono" style="font-size:11px; color:var(--accent-purple);">Moya: parameters["status"] = "not_started,in_progress"</span></td>
+              <td><code>tasks.filters.TaskFilterSet</code><br><span class="mono" style="font-size:11px; color:var(--text-dim);">Django Filter Backend</span></td>
+              <td><span class="status-badge pass">VERIFIED</span></td>
+              <td>Enforces strict store scoping and lifecycle filtering, preventing cross-store data leakage and excluding completed tasks from the active queue.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Auto-Sync Engine Architecture -->
+      <div class="content-card">
+        <div class="card-title">
+          <span>Automated Synchronization Engine: How We Keep Tests in Sync with Mobile &amp; Backend Code</span>
+          <span class="mono" style="font-size: 12px; color: var(--accent-blue);">Zero Manual Maintenance</span>
+        </div>
+        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 20px;">
+          To guarantee that tests never drift from production code, our automation framework employs a 4-pillar continuous synchronization engine:
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px;">
+            <div style="font-size: 14px; font-weight: 700; color: var(--accent-blue); margin-bottom: 8px;">
+              1. Git Source Resolution &amp; Commit Pinning
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              Controlled by <code>core/git_source_controller.py</code>. The orchestrator inspects the exact branch and commit SHAs of <code>rebotics-management-django</code>, <code>android-rebotics</code>, and <code>ios-rebotics</code> before execution. Any new commit automatically triggers contract validation.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px;">
+            <div style="font-size: 14px; font-weight: 700; color: var(--accent-green); margin-bottom: 8px;">
+              2. Static AST Reflection on Mobile Repos
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              The engine automatically parses Kotlin Retrofit interfaces (<code>@Query</code> annotations) and Swift Moya Target endpoints (<code>Task.requestParameters</code>). If mobile developers add a new query parameter (e.g. <code>version=2</code> or <code>section</code>), the test framework detects and incorporates it without code rewrite.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px;">
+            <div style="font-size: 14px; font-weight: 700; color: var(--accent-purple); margin-bottom: 8px;">
+              3. Dual-Sided Dynamic Contract Verification
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              <code>core/api_contract_verifier.py</code> executes synthetic queries with and without optional parameters against Django DRF endpoints. It verifies backward compatibility, validates that unauthenticated requests fail cleanly, and asserts that required parameters return valid status codes (HTTP 200).
+            </p>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px;">
+            <div style="font-size: 14px; font-weight: 700; color: var(--accent-rose); margin-bottom: 8px;">
+              4. Automated CI/CD Regression Gates
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              Implemented in <code>.github/workflows/shelf-intelligence-regression.yml</code>. Whenever a PR is created in any of the 3 repositories, the workflow runs this full suite. If a backend PR renames or removes a query parameter that mobile depends on, the build is blocked with a red gate before reaching QA.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+  </script>
+</body>
+</html>

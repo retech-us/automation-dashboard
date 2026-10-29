@@ -1,0 +1,75 @@
+{
+  "$schema": "https://retechlabs.com/schemas/shelf-intelligence-scenario.v1.json",
+  "scenario_id": "SCEN_KRCS_POC_001",
+  "description": "Proof of Concept: Frozen Pizza Bay 01 with Cheerios invader on Shelf 3 and Amys Margherita OOS on Shelf 2",
+  "provenance": {
+    "source_environment": "krcs",
+    "source_scan_id": 849201,
+    "source_processing_action_id": 114820,
+    "source_task_id": 41607658,
+    "captured_at": "2026-10-24T14:30:10Z",
+    "ingested_at": "2026-10-26T10:30:00Z",
+    "store_pseudonym": "STORE_KRCS_401",
+    "category_slug": "frozen_pizza",
+    "section_slug": "bay_01"
+  },
+  "image": {
+    "relative_path": "images/bay_01_stitched.jpg",
+    "sha256": "2230a5e41f0412e732418a251fbb88520991accc2369bd3051cc5ac499932661",
+    "content_type": "image/jpeg",
+    "dimensions": {
+      "width": 3840,
+      "height": 1920
+    },
+    "raw_keyframe_count": 4
+  },
+  "planogram_snapshot": {
+    "relative_path": "fixtures/planogram_snapshot.json",
+    "planogram_id": 4102,
+    "store_planogram_id": 99201,
+    "sha256": "9e527af937e3e6d55f11e0bef9f11cb2b2bce3868f0c0bf15057af641534feee",
+    "validity_range": {
+      "start": "2026-10-01T00:00:00Z",
+      "end": "2026-11-01T00:00:00Z"
+    }
+  },
+  "detections_payload": {
+    "relative_path": "fixtures/cv_detections.json",
+    "model_version": "core-detector-v4.2.1",
+    "detection_count": 5,
+    "sha256": "a4047b77a7e984ebc06ea3038a72ebe7a722cb6890536ce08848dc5d5a9b53ae"
+  },
+  "expected_actions": [
+    {
+      "action_type": "REMOVE",
+      "status": "INVADER",
+      "upc": "016000275270",
+      "shelf": 3,
+      "position": 1,
+      "facing": 1,
+      "target_location": "CART",
+      "stage": "pre_photo"
+    },
+    {
+      "action_type": "ADD",
+      "status": "OOS",
+      "upc": "042272005891",
+      "shelf": 2,
+      "position": 1,
+      "facing": 1,
+      "target_location": "SHELF",
+      "stage": "pre_photo"
+    }
+  ],
+  "verification": {
+    "status": "VERIFIED_BASELINE",
+    "reviewed_by": "QA_Architect_Lead",
+    "reviewed_at": "2026-10-26T10:30:00Z",
+    "notes": "Verified PoC baseline: Invader Cheerios on Shelf 3 and OOS Amys Pizza on Shelf 2."
+  },
+  "replay_eligibility": {
+    "mode_1_deterministic_rules": true,
+    "mode_2_full_image_pipeline": true,
+    "mode_3_candidate_comparison": true
+  }
+}

@@ -102,7 +102,11 @@ class MockRequestHandler(BaseHTTPRequestHandler):
 
         # Read body
         content_length = int(self.headers.get("Content-Length", 0))
-        raw_body = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else ""
+        raw_bytes = self.rfile.read(content_length) if content_length > 0 else b""
+        try:
+            raw_body = raw_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            raw_body = f"<binary data: {len(raw_bytes)} bytes>"
         
         parsed_body = None
         if raw_body:
@@ -197,6 +201,17 @@ class MockRequestHandler(BaseHTTPRequestHandler):
             fixture = FIXTURES_DIR / "shifts" / "shift_status.json"
             if fixture.exists():
                 return {"statusCode": 200, "body": json.loads(fixture.read_text(encoding="utf-8"))}
+        elif clean_path.startswith("api/v1/tasks/defs"):
+            return {"statusCode": 201, "body": {"id": 4139800, "title": "Intelligent Reset Automated Live Run", "status": "created"}}
+        elif clean_path == "api/v1/tasks" or clean_path.startswith("api/v1/tasks/active") or clean_path == "api/v1/tasks/":
+            return {"statusCode": 200, "body": {"results": [{"id": 41743485, "task_id": 41743485, "title": "Active Reset Task", "task_definition": 4139800, "status": "in_progress"}]}}
+        elif re.match(r"^api/v1/tasks/\d+/action-list/retailer", clean_path):
+            sample_file = Path(__file__).resolve().parents[3] / "raw_backend_actions_task_8601238.json"
+            if sample_file.exists():
+                return {"statusCode": 200, "body": {"results": json.loads(sample_file.read_text(encoding="utf-8"))}}
+            return {"statusCode": 200, "body": {"results": []}}
+        elif clean_path == "api/v4/processing/actions" or re.match(r"^api/v4/processing/actions.*", clean_path):
+            return {"statusCode": 200, "body": {"id": 9001, "action_id": 9001, "status": "done", "stage": "completed"}}
         return None
 
     def do_GET(self):

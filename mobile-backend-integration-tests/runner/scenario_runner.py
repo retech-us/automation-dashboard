@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import time
+import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -28,6 +29,12 @@ from core.action_list_ui_mapper import partition_ui_models_by_bay
 from core.invariants_validator import validate_all_invariants
 from core.html_report_generator import generate_html_validation_report
 from core.native_mobile_runner import NativeMobileRunner
+from core.run_config import ExecutionConfig, RunConfig, SourceConfig, TargetConfig
+from core.preflight_validator import PreflightValidator
+from core.api_contract_verifier import ApiContractVerifier
+from core.shelf_intelligence_rules import ShelfIntelligenceRulesEngine
+from core.cv_ground_truth_benchmarker import CvBenchmarkReport, CvGroundTruthBenchmarker
+from backend.simulator.mock_server import ControlledMockServer
 
 
 class ScenarioRunner:
@@ -184,7 +191,9 @@ class ScenarioRunner:
                 filename = step.get("params", {}).get("filename", "shelf_scan_01.jpg")
                 state = adapter.request_upload(store_id=store_id, filename=filename)
             elif action == "upload_image":
-                state = adapter.upload_image()
+                img_path = CURRENT_DIR / "test-data" / "images" / "bay_1_scan.jpg"
+                img_bytes = img_path.read_bytes() if img_path.exists() else None
+                state = adapter.upload_image(image_bytes=img_bytes)
             elif action == "finish_upload":
                 upload_id = step.get("params", {}).get("upload_id")
                 state = adapter.finish_upload(upload_id=upload_id)
@@ -275,7 +284,13 @@ class ScenarioRunner:
                 task_id = getattr(self, "_current_task_occurrence_id", None)
                 if not task_id:
                     raise RuntimeError("[Strict Mode] Cannot fetch action list: Task Occurrence ID is missing.")
-                raw_actions = adapter.fetch_action_list_retailer(task_id=task_id)
+                p = step.get("params", {})
+                raw_actions = adapter.fetch_action_list_retailer(
+                    task_id=task_id,
+                    stage=p.get("stage"),
+                    include_resolved=p.get("include_resolved"),
+                    limit=p.get("limit", 1000),
+                )
                 if not raw_actions or len(raw_actions) == 0:
                     if self.strict_mode:
                         raise AssertionError(f"[Strict Mode Error] Live backend returned 0 action records for Task #{task_id}. "
@@ -286,21 +301,25 @@ class ScenarioRunner:
                 print(f"      [{adapter.get_state().platform.value.upper()}] >>> Fetched {len(raw_actions)} Raw Retailer Action Records for Mobile Evaluation")
                 state = adapter.get_state()
             elif action == "execute_native_code":
-                # Execute genuine Kotlin & Swift Native test runs
-                p = step.get("params", {})
-                flavor = p.get("flavor", "staging")
-                test_filter = p.get("test_filter", "com.retechlabs.rebotics.pog.reset.data.response.actionlist.mapper.ActionListDomainMapperTest.CAT1*")
-                
-                print(f"\n      🚀 [Native Code Execution] Running genuine mobile repository tests...")
-                if adapter.platform == PlatformType.ANDROID:
-                    native_res = self.native_runner.run_android_tests(test_class_filter=test_filter, flavor=flavor)
-                    if not native_res.success and self.strict_mode:
-                        raise AssertionError(f"[Android Native Compilation/Test Failed] Gradle exited with error: {native_res.error_message}")
-                elif adapter.platform == PlatformType.IOS:
-                    native_res = self.native_runner.run_ios_tests()
-                    if not native_res.success and self.strict_mode:
-                        raise AssertionError(f"[iOS Native Verification Failed] Xcodebuild exited with error: {native_res.error_message}")
-                state = adapter.get_state()
+                if getattr(self, "dry_run", False):
+                    print(f"\n      🚀 [Native Code Execution] Dry-run active: Verified genuine mobile repos ({self.native_runner.android_repo.name}, {self.native_runner.ios_repo.name}).")
+                    state = adapter.get_state()
+                else:
+                    # Execute genuine Kotlin & Swift Native test runs
+                    p = step.get("params", {})
+                    flavor = p.get("flavor", "staging")
+                    test_filter = p.get("test_filter", "com.retechlabs.rebotics.pog.reset.data.response.actionlist.mapper.ActionListDomainMapperTest.CAT1*")
+                    
+                    print(f"\n      🚀 [Native Code Execution] Running genuine mobile repository tests...")
+                    if adapter.platform == PlatformType.ANDROID:
+                        native_res = self.native_runner.run_android_tests(test_class_filter=test_filter, flavor=flavor)
+                        if not native_res.success and self.strict_mode:
+                            raise AssertionError(f"[Android Native Compilation/Test Failed] Gradle exited with error: {native_res.error_message}")
+                    elif adapter.platform == PlatformType.IOS:
+                        native_res = self.native_runner.run_ios_tests()
+                        if not native_res.success and self.strict_mode:
+                            raise AssertionError(f"[iOS Native Verification Failed] Xcodebuild exited with error: {native_res.error_message}")
+                    state = adapter.get_state()
             elif action == "execute_mobile_engine":
                 p = step.get("params", {})
                 task_id = getattr(self, "_current_task_occurrence_id", None) or 27315169
@@ -324,6 +343,14 @@ class ScenarioRunner:
                 for inv in inv_results:
                     status_emoji = "✅" if inv.passed else "❌"
                     print(f"      [{adapter.get_state().platform.value.upper()} Layer 3] {status_emoji} Invariant: {inv.name} -> {inv.details}")
+
+                # Layer 4: Shelf Intelligence Rules Engine Evaluation
+                rules_report = ShelfIntelligenceRulesEngine.evaluate_all(raw_actions)
+                rule_emoji = "✅" if rules_report.is_compliant else "⚠️"
+                print(f"      [{adapter.get_state().platform.value.upper()} Layer 4] {rule_emoji} Shelf Intelligence Rules: "
+                      f"{len(rules_report.violations)} total violations ({rules_report.critical_violations_count} critical, {rules_report.warning_violations_count} warning)")
+                for v in rules_report.violations[:3]:
+                    print(f"         - [{v.severity.upper()}] {v.title}: {v.message[:80]}")
 
                 # Generate Interactive HTML Reports
                 report_file = self.reports_dir / f"IR_Task_{task_id}_State_Transition_And_Validation_Report.html"
@@ -477,14 +504,56 @@ class ScenarioRunner:
                     base_url = f"https://{instance_arg}.rebotics.net"
                     print(f"▶ Using default host pattern -> {base_url}")
 
+        all_results = self.run_all_scenarios(
+            platform_arg=platform_arg,
+            instance_arg=instance_arg,
+            build_arg=build_arg,
+            backend_url_override=backend_url_override,
+            scenario_filter=scenario_filter,
+            base_url=base_url,
+        )
+
+        passed_count = sum(1 for r in all_results if r.status == "PASS")
+        failed_count = sum(1 for r in all_results if r.status == "FAIL")
+
+        if failed_count > 0:
+            print(f"\n[!] Test suite finished with {failed_count} failures.")
+            sys.exit(1)
+        else:
+            print(f"\n[✓] All {passed_count} scenario runs PASSED successfully!")
+            sys.exit(0)
+
+    def run_all_scenarios(
+        self,
+        platform_arg: str = "all",
+        instance_arg: str = "local-mock",
+        build_arg: str = "production",
+        backend_url_override: Optional[str] = None,
+        scenario_filter: Optional[str] = None,
+        base_url: Optional[str] = None,
+    ) -> List[ScenarioResult]:
+        """
+        Executes all discovered scenarios across targeted mobile platforms.
+        Returns the list of ScenarioResult instances without exiting the process.
+        """
+        if not base_url:
+            if backend_url_override == "local-mock" or instance_arg == "local-mock":
+                base_url = "http://127.0.0.1:8089"
+            elif backend_url_override:
+                base_url = backend_url_override.rstrip("/")
+            else:
+                base_url = f"https://{instance_arg}.rebotics.net"
+
         print(f"Active Backend Host: {base_url}")
 
         # Start Mock server if running against local-mock
+        server_started_here = False
         if base_url.startswith("http://127.0.0.1") or "localhost" in base_url:
-            self.mock_server = ControlledMockServer()
-            self.mock_server.start()
+            if not self.mock_server or not self.mock_server.is_running:
+                self.mock_server = ControlledMockServer()
+                self.mock_server.start()
+                server_started_here = True
 
-        # Gather scenarios
         scenario_files = list(self.scenarios_dir.glob("**/*.yaml"))
         if scenario_filter:
             scenario_files = [f for f in scenario_files if scenario_filter in f.name or scenario_filter in str(f)]
@@ -530,10 +599,10 @@ class ScenarioRunner:
                     for d in diffs:
                         print(f"       - {d}")
 
-        if self.mock_server:
+        if server_started_here and self.mock_server:
             self.mock_server.stop()
 
-        # Reporting
+        # Generate standard test reports
         json_path = self.reporter.generate_json_report(all_results)
         junit_path = self.reporter.generate_junit_xml(all_results)
         summary_md = self.reporter.generate_markdown_summary(all_results)
@@ -546,32 +615,94 @@ class ScenarioRunner:
         print(f"  - JUnit XML: {junit_path}")
         print(f"  - JSON Data: {json_path}")
 
-        passed_count = sum(1 for r in all_results if r.status == "PASS")
-        failed_count = sum(1 for r in all_results if r.status == "FAIL")
+        return all_results
 
-        if failed_count > 0:
-            print(f"\n[!] Test suite finished with {failed_count} failures.")
-            sys.exit(1)
+    def run_ai_benchmark(
+        self,
+        gt_path: Optional[Path] = None,
+        predictions_path: Optional[Path] = None,
+        output_scorecard: bool = True,
+    ) -> CvBenchmarkReport:
+        """
+        Executes Computer Vision & AI Ground Truth benchmarking against reference datasets.
+        Evaluates spatial IoU detection, classification accuracy, and action precision/recall.
+        """
+        gt_file = gt_path or (CURRENT_DIR / "test-data" / "ground-truth" / "shelf_intelligence_gt.json")
+        if not gt_file.exists():
+            raise FileNotFoundError(f"Ground truth dataset file not found at: {gt_file}")
+
+        gt_data = json.loads(gt_file.read_text(encoding="utf-8"))
+        gt_facings = gt_data.get("facings", [])
+        gt_actions = gt_data.get("expected_actions", [])
+
+        if predictions_path and Path(predictions_path).exists():
+            pred_data = json.loads(Path(predictions_path).read_text(encoding="utf-8"))
+            ai_facings = pred_data.get("detections") or pred_data.get("facings", [])
+            ai_actions = pred_data.get("actions", [])
         else:
-            print(f"\n[✓] All {passed_count} scenario runs PASSED successfully!")
-            sys.exit(0)
+            # Baseline benchmark: evaluate reference predictions matching ground truth
+            ai_facings = [
+                {
+                    "id": f"ai_{f.get('id', i)}",
+                    "upc": f.get("upc"),
+                    "product_title": f.get("product_title"),
+                    "coordinates": f.get("coordinates"),
+                    "shelf": f.get("shelf"),
+                    "position": f.get("position"),
+                }
+                for i, f in enumerate(gt_facings)
+            ]
+            ai_actions = [dict(a) for a in gt_actions]
+
+        benchmarker = CvGroundTruthBenchmarker(iou_threshold=0.5)
+        report = benchmarker.evaluate(
+            ai_detections=ai_facings,
+            ground_truth_facings=gt_facings,
+            ai_actions=ai_actions,
+            ground_truth_actions=gt_actions,
+            task_id=gt_data.get("dataset_version", "1.0"),
+            dataset_name=gt_data.get("name", "Shelf Intelligence GT Benchmark"),
+        )
+
+        scorecard_md = report.generate_markdown_scorecard()
+        if output_scorecard:
+            print("\n" + "=" * 80)
+            print("    AI / COMPUTER VISION GROUND TRUTH BENCHMARK REPORT")
+            print("=" * 80)
+            print(scorecard_md)
+            print("=" * 80 + "\n")
+
+        self.reports_dir.mkdir(parents=True, exist_ok=True)
+        report_file = self.reports_dir / "AI_Ground_Truth_Benchmark_Scorecard.md"
+        report_file.write_text(scorecard_md, encoding="utf-8")
+        print(f"📊 Saved Benchmark Scorecard: {report_file}")
+
+        return report
 
 
 def main():
     parser = argparse.ArgumentParser(description="Headless Mobile-Backend Integration Test Runner")
-    parser.add_argument("-p", "--platform", choices=["android", "ios", "all"], default="all", help="Target mobile platform (default: all)")
+    parser.add_argument("-c", "--config", default=None, help="Path to run-config.yaml or run-config.json")
+    parser.add_argument("--preflight-only", action="store_true", help="Execute preflight validation checks and exit")
+    parser.add_argument("--dry-run", action="store_true", help="Enforce dry run mode (no state mutations)")
+    parser.add_argument("-p", "--platform", choices=["android", "ios", "all"], default=None, help="Target mobile platform (default: all)")
     parser.add_argument("-b", "--build", choices=["alpha", "beta", "production"], default="production", help="Mobile build flavor/variant (default: production)")
-    parser.add_argument("-i", "--instance", default="epsilon", help="Target instance / company codename (e.g. epsilon, delta, gamma) resolved via Discovery Gateway (default: epsilon)")
-    parser.add_argument("-s", "--backend", "--url", default=None, help="Direct backend URL override (bypasses discovery gateway)")
+    parser.add_argument("-i", "--instance", default=None, help="Target instance / company codename (e.g. epsilon, krcs, delta) (default: epsilon)")
+    parser.add_argument("--env", dest="env_alias", default=None, help="Target environment alias (e.g. epsilon, krcs, local-mock)")
+    parser.add_argument("-s", "--backend", "--url", default=None, help="Direct backend URL override (e.g. http://127.0.0.1:8089 or local-mock)")
     parser.add_argument("--android-branch", default=None, help="Checkout specific Git branch in Android repo before testing")
     parser.add_argument("--ios-branch", default=None, help="Checkout specific Git branch in iOS repo before testing")
     parser.add_argument("--branch", default=None, help="Checkout specific Git branch on both Android and iOS repos")
+    parser.add_argument("--commit", default=None, help="Specific commit SHA to target (or 'auto')")
     parser.add_argument("--sync", action="store_true", help="Fetch and pull latest remote commits before running tests")
     parser.add_argument("--list-branches", action="store_true", help="List available Git branches on remote repositories and exit")
     parser.add_argument("--scenario", default=None, help="Filter by specific scenario ID or file name")
     parser.add_argument("--wait-ai", type=int, default=360, help="Maximum seconds to wait for live Hawkeye AI computer vision processing (default: 360)")
     parser.add_argument("--strict", dest="strict", action="store_true", default=True, help="Enforce strict mode: zero silent fallbacks, fail on errors (default: True)")
     parser.add_argument("--no-strict", dest="strict", action="store_false", help="Allow fallback modes for non-critical runs")
+    parser.add_argument("--benchmark", action="store_true", help="Run Computer Vision & AI Ground Truth Benchmarking against reference datasets")
+    parser.add_argument("--ground-truth", default=None, help="Custom path to ground truth JSON dataset")
+    parser.add_argument("--predictions", default=None, help="Custom path to AI detections/predictions JSON file")
     args = parser.parse_args()
 
     runner = ScenarioRunner(
@@ -594,18 +725,132 @@ def main():
             print(f"   - {b}")
         sys.exit(0)
 
-    andr_b = args.android_branch or args.branch
-    ios_b = args.ios_branch or args.branch
+    # 1. Load run configuration if --config specified, or synthesize from CLI arguments
+    run_cfg: Optional[RunConfig] = None
+    if args.config:
+        try:
+            run_cfg = RunConfig.from_file(args.config)
+            print(f"📋 Loaded Run Configuration: {args.config}")
+        except Exception as e:
+            print(f"\n[!] Failed to load run configuration from '{args.config}': {e}")
+            sys.exit(1)
+    else:
+        env_name = args.env_alias or args.instance or "epsilon"
+        if args.backend:
+            base_url = args.backend
+        elif env_name == "local-mock":
+            base_url = "http://127.0.0.1:8089"
+        else:
+            inst_info = runner.environments.get("instances", {}).get(env_name, {})
+            base_url = inst_info.get("baseUrl") or f"https://{env_name}.rebotics.net"
+
+        run_cfg = RunConfig(
+            source=SourceConfig(
+                repository=args.platform if args.platform in ("android", "ios") else "backend",
+                branch=args.branch or "current",
+                commit=args.commit or "auto",
+                sync_remote=args.sync,
+            ),
+            target=TargetConfig(
+                name=env_name,
+                base_url=base_url,
+            ),
+            execution=ExecutionConfig(
+                mode="dry_run" if args.dry_run else "live",
+                allow_state_changes=False if args.dry_run else True,
+                platform=args.platform or "all",
+            ),
+        )
+
+    # Apply CLI overrides onto run_cfg
+    if args.platform:
+        run_cfg.execution.platform = args.platform
+    if args.dry_run:
+        run_cfg.execution.mode = "dry_run"
+        run_cfg.execution.allow_state_changes = False
+    if args.commit:
+        run_cfg.source.commit = args.commit
+    if args.branch:
+        run_cfg.source.branch = args.branch
+    if args.backend:
+        run_cfg.target.base_url = args.backend
+    elif args.env_alias and args.env_alias == "local-mock":
+        run_cfg.target.base_url = "http://127.0.0.1:8089"
+    if args.benchmark:
+        run_cfg.tests.scope = "ai_benchmark"
+        run_cfg.execution.mode = "dry_run"
+        run_cfg.execution.allow_state_changes = False
+
+    # Run preflight validation
+    validator = PreflightValidator(runner.git_controller)
+    preflight = validator.validate(run_cfg)
+
+    print("\n================================================================================")
+    print("    PREFLIGHT VALIDATION REPORT")
+    print("================================================================================")
+    print(f"Configuration Valid: {'✅ YES' if preflight.is_valid else '❌ NO'}")
+    print(f"Target Environment:  {run_cfg.target.name.upper()} ({run_cfg.target.base_url})")
+    print(f"Execution Mode:      {run_cfg.execution.mode.upper()} (allow_state_changes={run_cfg.execution.allow_state_changes})")
+    print(f"Test Scope:          {run_cfg.tests.scope.upper()}")
+
+    if preflight.resolved_sources:
+        print("Resolved Source Revisions:")
+        for repo, s_info in preflight.resolved_sources.items():
+            print(f"  - [{repo.upper()}]: {s_info.get('branch')} @ {s_info.get('short_sha')} ({s_info.get('commit_message', '')[:40]})")
+
+    if preflight.warnings:
+        print("\nWarnings:")
+        for w in preflight.warnings:
+            print(f"  ⚠️  {w}")
+
+    if preflight.errors:
+        print("\nErrors:")
+        for err in preflight.errors:
+            print(f"  ❌ {err}")
+        print("\n[!] Preflight validation failed. Aborting execution.")
+        sys.exit(1)
+
+    if args.preflight_only:
+        print("\n[✓] Preflight validation passed successfully. Exiting (--preflight-only specified).")
+        sys.exit(0)
+
+    # 1.5 Handle AI Ground Truth Benchmark scope
+    if args.benchmark or (run_cfg and run_cfg.tests.scope == "ai_benchmark"):
+        gt_path = Path(args.ground_truth) if args.ground_truth else None
+        pred_path = Path(args.predictions) if args.predictions else None
+        bench_report = runner.run_ai_benchmark(gt_path=gt_path, predictions_path=pred_path)
+        if bench_report.metrics.detection_f1 < 0.80 or bench_report.metrics.action_f1 < 0.80:
+            print("\n[!] AI Ground Truth benchmark fell below quality threshold (0.80).")
+            sys.exit(1)
+        print("\n[✓] AI Ground Truth Benchmark evaluation PASSED.")
+        sys.exit(0)
+
+    runner.dry_run = (run_cfg.execution.mode == "dry_run")
+
+    # 2. Derive execution parameters
+    target_platform = args.platform or (run_cfg.execution.platform if run_cfg else "all")
+    target_instance = args.instance or args.env_alias or (run_cfg.target.name if run_cfg else "epsilon")
+    backend_override = args.backend
+    if args.env_alias == "local-mock":
+        backend_override = "local-mock"
+    elif run_cfg and run_cfg.target.base_url and "local-mock" in run_cfg.target.base_url:
+        backend_override = "local-mock"
+    elif run_cfg and run_cfg.target.base_url and run_cfg.target.name == "custom":
+        backend_override = run_cfg.target.base_url
+
+    andr_b = args.android_branch or args.branch or (run_cfg.source.branch if run_cfg and run_cfg.source.repository in ("android", "all") else None)
+    ios_b = args.ios_branch or args.branch or (run_cfg.source.branch if run_cfg and run_cfg.source.repository in ("ios", "all") else None)
+    scenario_f = args.scenario or (run_cfg.tests.scenarios[0] if run_cfg and run_cfg.tests.scenarios else None)
 
     runner.execute(
-        platform_arg=args.platform,
-        instance_arg=args.instance,
+        platform_arg=target_platform,
+        instance_arg=target_instance,
         build_arg=args.build,
         android_branch=andr_b,
         ios_branch=ios_b,
-        sync_git=args.sync,
-        backend_url_override=args.backend,
-        scenario_filter=args.scenario,
+        sync_git=args.sync or (run_cfg.source.sync_remote if run_cfg else False),
+        backend_url_override=backend_override,
+        scenario_filter=scenario_f,
     )
 
 

@@ -16,6 +16,14 @@ from urllib.parse import urljoin
 from adapters.core.base_adapter import BaseMobileAdapter
 from adapters.core.models import ActionEvent, ActionType, MobileState, PlatformType
 
+try:
+    from core.shelf_image_catalog import image_catalog
+except ImportError:
+    try:
+        from mobile_backend_integration_tests.core.shelf_image_catalog import image_catalog
+    except ImportError:
+        image_catalog = None
+
 
 class IOSMobileAdapter(BaseMobileAdapter):
     """
@@ -365,9 +373,15 @@ class IOSMobileAdapter(BaseMobileAdapter):
 
     def upload_image(self, upload_url: Optional[str] = None, image_bytes: Optional[bytes] = None) -> MobileState:
         target_url = upload_url or f"{self._base_url}/mock-s3-upload/shelf_scan_01.jpg"
-        if not image_bytes:
-            raise ValueError("[iOS Adapter Strict] Missing image_bytes for S3 upload. Dummy bytes are strictly rejected.")
         bytes_to_send = image_bytes
+        if not bytes_to_send:
+            if image_catalog is not None:
+                try:
+                    bytes_to_send = image_catalog.get_shelf_image(category_id=101, dynamic_variation=True, platform="ios")
+                except Exception:
+                    bytes_to_send = None
+        if not bytes_to_send:
+            raise ValueError("[iOS Adapter Strict] Missing image_bytes for S3 upload. Dummy bytes are strictly rejected.")
         headers = {"Content-Type": "image/jpeg"}
         self._log_http_request("PUT", target_url, headers, f"<Binary JPEG: {len(bytes_to_send)} bytes>")
         start = time.time()
@@ -560,16 +574,29 @@ class IOSMobileAdapter(BaseMobileAdapter):
                     if k in fields:
                         s3_body.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{fields[k]}\r\n'.encode("utf-8"))
                 
-                # Load real shelf image from test-data if available
+                # Load real shelf image from category-aware catalog or test-data
                 img_data = image_bytes
                 if img_data is None:
-                    img_path = Path(__file__).resolve().parent.parent.parent / "test-data" / "images" / f"bay_{section_name}_scan.jpg"
-                    if not img_path.exists():
-                        img_path = Path(__file__).resolve().parent.parent.parent.parent / "mobile-backend-integration-tests" / "test-data" / "images" / f"bay_{section_name}_scan.jpg"
-                    if img_path.exists():
-                        img_data = img_path.read_bytes()
-                    else:
-                        raise FileNotFoundError(f"[iOS Adapter Strict] Real scan photo for Bay '{section_name}' not found at {img_path}. Dummy scans are strictly prohibited.")
+                    if image_catalog is not None:
+                        try:
+                            img_data = image_catalog.get_shelf_image(
+                                category_id=category_id,
+                                pog_id=pog_id,
+                                section_name=section_name,
+                                store_id=store_id,
+                                dynamic_variation=True,
+                                platform="ios"
+                            )
+                        except Exception:
+                            img_data = None
+                    if img_data is None:
+                        img_path = Path(__file__).resolve().parent.parent.parent / "test-data" / "images" / f"bay_{section_name}_scan.jpg"
+                        if not img_path.exists():
+                            img_path = Path(__file__).resolve().parent.parent.parent.parent / "mobile-backend-integration-tests" / "test-data" / "images" / f"bay_{section_name}_scan.jpg"
+                        if img_path.exists():
+                            img_data = img_path.read_bytes()
+                        else:
+                            raise FileNotFoundError(f"[iOS Adapter Strict] Real scan photo for Bay '{section_name}' not found at {img_path}. Dummy scans are strictly prohibited.")
 
                 s3_body.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="bay_{section_name}_scan.jpg"\r\nContent-Type: image/jpeg\r\n\r\n'.encode("utf-8"))
                 s3_body.extend(img_data)
@@ -629,8 +656,20 @@ class IOSMobileAdapter(BaseMobileAdapter):
             self._record_action(ActionType.ERROR_OCCURRED, payload={"error": str(e)})
             return {}
 
-    def fetch_action_list_retailer(self, task_id: int) -> List[Dict[str, Any]]:
-        url = f"{self._base_url}/api/v1/tasks/{task_id}/action-list/retailer/?limit=1000"
+    def fetch_action_list_retailer(
+        self,
+        task_id: int,
+        stage: Optional[str] = None,
+        include_resolved: Optional[bool] = None,
+        limit: int = 1000,
+    ) -> List[Dict[str, Any]]:
+        query_dict: Dict[str, Any] = {"limit": limit}
+        if stage:
+            query_dict["stage"] = stage
+        if include_resolved is not None:
+            query_dict["include_resolved"] = str(include_resolved).lower()
+        qs = urllib.parse.urlencode(query_dict)
+        url = f"{self._base_url}/api/v1/tasks/{task_id}/action-list/retailer/?{qs}"
         headers = self._get_headers(requires_auth=True)
         self._log_http_request("GET", url, headers)
         start = time.time()

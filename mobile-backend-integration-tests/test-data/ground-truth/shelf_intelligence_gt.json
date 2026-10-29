@@ -1,0 +1,104 @@
+{
+  "dataset_version": "1.0",
+  "name": "Shelf Intelligence Curated Ground Truth Benchmark",
+  "description": "Authoritative ground truth annotations for shelf facing bounding boxes, UPCs, shelf positions, and expected actions.",
+  "bays": ["1", "2"],
+  "facings": [
+    {
+      "id": "gt_01",
+      "upc": "012000001291",
+      "product_title": "Mountain Dew Citrus 20oz",
+      "shelf": 1,
+      "position": 1,
+      "bay": "1",
+      "coordinates": [[100, 100], [250, 400]],
+      "expected_compliance": "compliant",
+      "required_action": null
+    },
+    {
+      "id": "gt_02",
+      "upc": "012000001307",
+      "product_title": "Diet Mountain Dew 20oz",
+      "shelf": 1,
+      "position": 2,
+      "bay": "1",
+      "coordinates": [[260, 100], [410, 400]],
+      "expected_compliance": "compliant",
+      "required_action": null
+    },
+    {
+      "id": "gt_03",
+      "upc": "040000002376",
+      "product_title": "Delisted Foreign Soda 20oz",
+      "shelf": 1,
+      "position": 3,
+      "bay": "1",
+      "coordinates": [[420, 100], [570, 400]],
+      "expected_compliance": "foreign_invader",
+      "required_action": {
+        "action": "remove",
+        "upc": "040000002376",
+        "source_bay": "1",
+        "source_shelf": 1,
+        "source_pos": 3
+      }
+    },
+    {
+      "id": "gt_04",
+      "upc": "011110087456",
+      "product_title": "Ice Cream Waffle Cones",
+      "shelf": 2,
+      "position": 1,
+      "bay": "1",
+      "coordinates": [[100, 450], [300, 800]],
+      "expected_compliance": "misplaced_cross_bay",
+      "required_action": {
+        "action": "place_on_shelf_add_to_bay",
+        "upc": "011110087456",
+        "source_bay": "1",
+        "source_shelf": 2,
+        "source_pos": 1,
+        "target_bay": "2",
+        "target_shelf": 3,
+        "target_pos": 1
+      }
+    },
+    {
+      "id": "gt_05",
+      "upc": "041220789012",
+      "product_title": "Chocolate Sprinkles 8oz",
+      "shelf": 2,
+      "position": 2,
+      "bay": "1",
+      "coordinates": [[310, 450], [480, 800]],
+      "expected_compliance": "misplaced_intra_bay",
+      "required_action": {
+        "action": "fix_position_in_bay",
+        "upc": "041220789012",
+        "source_bay": "1",
+        "source_shelf": 2,
+        "source_pos": 2,
+        "target_bay": "1",
+        "target_shelf": 2,
+        "target_pos": 5
+      }
+    }
+  ],
+  "expected_actions": [
+    {
+      "action": "remove",
+      "upc": "040000002376",
+      "product_title": "Delisted Foreign Soda 20oz"
+    },
+    {
+      "action": "place_on_shelf_add_to_bay",
+      "upc": "011110087456",
+      "product_title": "Ice Cream Waffle Cones"
+    },
+    {
+      "action": "fix_position_in_bay",
+      "upc": "041220789012",
+      "product_title": "Chocolate Sprinkles 8oz"
+    }
+  ]
+}
