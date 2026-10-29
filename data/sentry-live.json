@@ -1,8 +1,11 @@
 {
-  "generated_at": "2026-10-29T18:05:22+00:00",
+  "generated_at": "2026-10-29T18:23:28+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
-  "errors": [],
+  "errors": [
+    "period_usage: The read operation timed out",
+    "span_ops_30d: The read operation timed out"
+  ],
   "billing_period": {
     "start": "2026-10-25",
     "end": "2026-11-24",
@@ -552,19 +555,19 @@
       "date": "2026-10-27",
       "accepted": 66531440,
       "quota_dropped": 0,
-      "dropped": 164899630
+      "dropped": 164899645
     },
     {
       "date": "2026-10-28",
       "accepted": 134468901,
       "quota_dropped": 0,
-      "dropped": 218788053
+      "dropped": 218788384
     },
     {
       "date": "2026-10-29",
       "accepted": 45036193,
-      "quota_dropped": 56614754,
-      "dropped": 195567935
+      "quota_dropped": 58802775,
+      "dropped": 199715440
     }
   ],
   "months": [
@@ -593,19 +596,19 @@
       "month": "2026-10",
       "days_covered": 29,
       "accepted_total": 271017293,
-      "quota_dropped": 2168940619,
-      "all_dropped": 4734806110
+      "quota_dropped": 2171128640,
+      "all_dropped": 4738953961
     }
   ],
   "span_drop_reasons_90d": {
-    "rate_limited/span_usage_exceeded": 4926616590,
-    "client_discard/ratelimit_backoff": 3755280601,
+    "rate_limited/span_usage_exceeded": 4928804611,
+    "client_discard/ratelimit_backoff": 3756922963,
     "invalid/too_large:transaction": 1302944889,
-    "client_discard/sample_rate": 1094146585,
+    "client_discard/sample_rate": 1094387171,
     "rate_limited/spike_protection": 323296540,
-    "client_discard/backpressure": 145732759,
-    "client_discard/network_error": 7693489,
-    "client_discard/before_send": 1903530,
+    "client_discard/backpressure": 145808533,
+    "client_discard/network_error": 7694217,
+    "client_discard/before_send": 1903910,
     "client_discard/send_error": 1458712,
     "filtered/web-crawlers": 963320,
     "invalid/too_large:span": 589596,
@@ -618,24 +621,13 @@
     "filtered/legacy-browsers": 1048,
     "invalid/internal": 2
   },
-  "period_usage": {
-    "error": 141467,
-    "log_byte": 1358926431,
-    "replay": 51125,
-    "span": 271017293,
-    "attachment": 7030195,
-    "profile_duration_ui": 40.5,
-    "profile_duration": 0.0,
-    "monitor_seat": 0,
-    "uptime": 0
-  },
   "error_outcomes_30d": {
-    "invalid": 354,
-    "accepted": 972265,
+    "accepted": 972635,
+    "client_discard": 2981809,
     "rate_limited": 1283,
-    "filtered": 90,
     "abuse": 3,
-    "client_discard": 2980412
+    "invalid": 355,
+    "filtered": 90
   },
   "projects_period": [
     {
@@ -667,110 +659,110 @@
     {
       "project": "rebm",
       "environment": "krcs",
-      "stored": 179461903.0,
-      "extrapolated": 245254937.0
+      "stored": 177189945.0,
+      "extrapolated": 241839685.0
     },
     {
       "project": "rebm",
       "environment": "harr",
-      "stored": 28163703.0,
-      "extrapolated": 35647104.0
+      "stored": 28076442.0,
+      "extrapolated": 35553467.0
     },
     {
       "project": "rebm",
       "environment": "albt",
-      "stored": 24720628.0,
-      "extrapolated": 71872048.0
+      "stored": 24304366.0,
+      "extrapolated": 70791558.0
     },
     {
       "project": "rebm",
       "environment": "krog",
-      "stored": 12614602.0,
-      "extrapolated": 13734012.0
+      "stored": 12613116.0,
+      "extrapolated": 13732526.0
     },
     {
       "project": "rebm",
       "environment": "prgm",
-      "stored": 10984145.0,
-      "extrapolated": 16487198.0
+      "stored": 10981557.0,
+      "extrapolated": 16484610.0
     },
     {
       "project": "rebm",
       "environment": "whfd",
-      "stored": 8223529.0,
-      "extrapolated": 8283469.0
+      "stored": 8221031.0,
+      "extrapolated": 8280971.0
     },
     {
       "project": "rebm",
       "environment": "qktp",
-      "stored": 5396954.0,
-      "extrapolated": 161221146.0
+      "stored": 5381460.0,
+      "extrapolated": 160911266.0
     },
     {
       "project": "rebm",
       "environment": "mjhd",
-      "stored": 5349980.0,
-      "extrapolated": 16086797.0
+      "stored": 5345931.0,
+      "extrapolated": 16082452.0
     },
     {
       "project": "rebm",
       "environment": "spar",
-      "stored": 4361813.0,
-      "extrapolated": 7704971.0
+      "stored": 4250628.0,
+      "extrapolated": 7591926.0
     },
     {
       "project": "android",
       "environment": "production",
-      "stored": 4226792.0,
-      "extrapolated": 4227052.0
+      "stored": 4207612.0,
+      "extrapolated": 4207862.0
     },
     {
       "project": "rebotics-frontend",
       "environment": "production",
-      "stored": 3848842.0,
-      "extrapolated": 3848842.0
+      "stored": 3845260.0,
+      "extrapolated": 3845260.0
     },
     {
       "project": "ios",
       "environment": "production",
-      "stored": 3627558.0,
-      "extrapolated": 11571906.0
+      "stored": 3610898.0,
+      "extrapolated": 11500144.0
     },
     {
       "project": "rebm",
       "environment": "sona",
-      "stored": 2913201.0,
-      "extrapolated": 10332774.0
+      "stored": 2901951.0,
+      "extrapolated": 10321524.0
     },
     {
       "project": "hawkeye",
       "environment": "stgalbt",
-      "stored": 1337181.0,
-      "extrapolated": 1337181.0
+      "stored": 1333549.0,
+      "extrapolated": 1333549.0
     },
     {
       "project": "hawkeye",
       "environment": "epsilon",
-      "stored": 1227903.0,
-      "extrapolated": 1227903.0
+      "stored": 1223818.0,
+      "extrapolated": 1223818.0
     },
     {
       "project": "rebm",
       "environment": "weis",
-      "stored": 941680.0,
-      "extrapolated": 1049572.0
+      "stored": 937607.0,
+      "extrapolated": 1045499.0
     },
     {
       "project": "rebm",
       "environment": "wstm",
-      "stored": 249377.0,
-      "extrapolated": 320705.0
+      "stored": 235529.0,
+      "extrapolated": 306857.0
     },
     {
       "project": "race-platform",
       "environment": "dev01",
-      "stored": 170964.0,
-      "extrapolated": 174327.0
+      "stored": 170932.0,
+      "extrapolated": 173687.0
     },
     {
       "project": "race-platform",
@@ -799,14 +791,14 @@
     {
       "project": "hawkeye",
       "environment": "qktp",
-      "stored": 50474.0,
-      "extrapolated": 286031873.0
+      "stored": 50340.0,
+      "extrapolated": 284691873.0
     },
     {
       "project": "rebm",
       "environment": "prge",
-      "stored": 48800.0,
-      "extrapolated": 369408.0
+      "stored": 45473.0,
+      "extrapolated": 362754.0
     },
     {
       "project": "rebm",
@@ -829,8 +821,8 @@
     {
       "project": "race-platform",
       "environment": "test02",
-      "stored": 4652.0,
-      "extrapolated": 4652.0
+      "stored": 4642.0,
+      "extrapolated": 4642.0
     },
     {
       "project": "rebm",
@@ -847,8 +839,8 @@
     {
       "project": "rebm",
       "environment": "wtrs",
-      "stored": 2163.0,
-      "extrapolated": 2163000.0
+      "stored": 2065.0,
+      "extrapolated": 2065000.0
     },
     {
       "project": "rebm",
@@ -935,46 +927,10 @@
       "extrapolated": 26000.0
     },
     {
-      "project": "hawkeye",
-      "environment": "sevn",
-      "stored": 25.0,
-      "extrapolated": 250000.0
-    },
-    {
       "project": "rebm",
       "environment": "delta",
       "stored": 3.0,
       "extrapolated": 3000.0
     }
-  ],
-  "span_ops_30d": {
-    "rebm": {
-      "event.django": 226527015.0,
-      "middleware.django": 30253974.0,
-      "db": 21933032.0,
-      "http.server": 1653459.0,
-      "view.render": 1421630.0,
-      "view.response.render": 1414765.0,
-      "http.client": 287417.0,
-      "db.redis": 263652.0,
-      "http.client.stream": 16268.0,
-      "template.render": 3.0
-    },
-    "android": {
-      "http.client": 3202788.0,
-      "activity.load": 292792.0,
-      "ui.load": 276932.0,
-      "ui.load.initial_display": 276932.0,
-      "Instance , albt|ModelName , LineDetection_Mobile_3_May_2023": 63580.0,
-      "Instance , krcs|ModelName , LineDetection_Android_3_May_2023": 37480.0,
-      "Instance , kroger|ModelName , LineDetection_Android_3_May_2023": 24693.0,
-      "app.start.warm": 11154.0,
-      "Instance , whfd|ModelName , LineDetection_Android_3_May_2023": 9888.0,
-      "app.start.cold": 9598.0,
-      "process.load": 8927.0,
-      "Instance , harr|ModelName , LineDetection_Android_3_May_2023": 6662.0,
-      "Instance , albertsons|ModelName , LineDetection_Mobile_3_May_2023": 2716.0,
-      "Instance , weis|ModelName , LineDetection_Android_3_May_2023": 2650.0
-    }
-  }
+  ]
 }
