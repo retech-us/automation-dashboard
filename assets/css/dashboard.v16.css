@@ -8509,15 +8509,168 @@ button.ir-review-row {
     margin-bottom: 0;
   }
 }
+/* Intelligent Reset - Scan & Digital Shelf Evidence Links */
+.ir-col-scan {
+  min-width: 140px;
+  white-space: nowrap;
+}
 
+.ir-scan-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  background: rgba(14, 165, 233, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.32);
+  transition: all 0.18s ease;
+  line-height: 1.3;
+}
 
+.ir-scan-link:hover {
+  background: rgba(14, 165, 233, 0.22);
+  color: #7dd3fc;
+  border-color: rgba(14, 165, 233, 0.55);
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.25);
+  text-decoration: none;
+}
 
+.ir-scan-cam {
+  font-size: 12px;
+  line-height: 1;
+  display: inline-block;
+}
 
+.ir-scan-arrow {
+  font-size: 10px;
+  opacity: 0.75;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
 
+.ir-scan-link:hover .ir-scan-arrow {
+  transform: translate(1px, -1px);
+  opacity: 1;
+}
 
+.ir-scan-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  text-decoration: none;
+  background: rgba(14, 165, 233, 0.14);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  transition: all 0.15s ease;
+}
 
+.ir-scan-pill:hover {
+  background: rgba(14, 165, 233, 0.26);
+  color: #7dd3fc;
+  border-color: #38bdf8;
+  text-decoration: none;
+}
 
+.ir-scan-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-muted, #94a3b8);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
 
+.status-pill--purple {
+  background: rgba(168, 85, 247, 0.16);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.status-pill--primary {
+  background: rgba(59, 130, 246, 0.16);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.status-pill--passed {
+  background: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-pill--warning {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Light Theme Support */
+[data-theme="light"] .ir-scan-link {
+  background: #f0f9ff;
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+
+[data-theme="light"] .ir-scan-link:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #7dd3fc;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.15);
+}
+
+[data-theme="light"] .ir-scan-pill {
+  background: #e0f2fe;
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+
+[data-theme="light"] .ir-scan-pill:hover {
+  background: #bae6fd;
+  color: #0369a1;
+}
+
+[data-theme="light"] .ir-scan-tag {
+  background: #f1f5f9;
+  color: #64748b;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .status-pill--purple {
+  background: #f3e8ff;
+  color: #7e22ce;
+  border-color: #d8b4fe;
+}
+
+[data-theme="light"] .status-pill--primary {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+[data-theme="light"] .status-pill--passed {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+[data-theme="light"] .status-pill--warning {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
 
 /* ─── Sentry span usage tab ─── */
 .sentry-body { padding: 8px 0 0; display: flex; flex-direction: column; gap: 20px; }

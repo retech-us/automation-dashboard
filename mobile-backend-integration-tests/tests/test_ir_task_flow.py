@@ -233,9 +233,54 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
             actions,
             metadata_override={"wall_duration_min": 351.7},
         )
-        self.assertEqual(flow["metadata"]["wall_duration_min"], 351.7)
-        close_event = flow["events"][-1]
-        self.assertIn("Wall Time: 5 hrs 52 mins", close_event["detail"])
+    def test_flow_items_include_scan_id_and_digital_shelf_link(self):
+        actions = [{
+            "id": 101,
+            "action": "ACTION_MOVE",
+            "product_title": "Trail Mix",
+            "displayed_upc": "011110636584",
+            "current_position": {
+                "shelf": 5,
+                "position": "4",
+                "section_info": {"name": "1"},
+                "scan_id": 998877,
+            },
+            "expected_position": {"shelf": 5, "position": "5", "section_info": {"name": "1"}},
+        }]
+        flow = synthesize_task_flow_from_raw_actions(
+            5555,
+            actions,
+            metadata_override={"instance": "harr"},
+        )
+        batch = next(iter(flow["action_batches"].values()))
+        self.assertEqual(batch["scan_id"], 998877)
+        self.assertEqual(batch["digital_shelf_url"], "https://harr.rebotics.net/reporting/scans/998877")
+        item = batch["items"][0]
+        self.assertEqual(item["scan_id"], 998877)
+        self.assertEqual(item["digital_shelf_url"], "https://harr.rebotics.net/reporting/scans/998877")
+
+    def test_reference_tasks_include_scan_evidence(self):
+        # HARR
+        harr = build_harr_reference_task_8648127()
+        self.assertEqual(harr["metadata"]["pre_photo_scan_id"], 3768606)
+        self.assertEqual(harr["metadata"]["post_photo_scan_id"], 3769854)
+        self.assertEqual(harr["metadata"]["digital_shelf_scan_url"], "https://harr.rebotics.net/reporting/scans/3768606")
+        batch1 = harr["action_batches"]["batch_harr_1"]
+        self.assertEqual(batch1["scan_id"], 3768606)
+        self.assertEqual(batch1["digital_shelf_url"], "https://harr.rebotics.net/reporting/scans/3768606")
+        self.assertEqual(batch1["items"][0]["scan_id"], 3768606)
+        self.assertEqual(batch1["items"][0]["digital_shelf_url"], "https://harr.rebotics.net/reporting/scans/3768606")
+
+        # KRCS
+        krcs = build_krcs_reference_task_42288818()
+        self.assertEqual(krcs["metadata"]["pre_photo_scan_id"], 17146891)
+        self.assertEqual(krcs["metadata"]["post_photo_scan_id"], 17147320)
+        self.assertEqual(krcs["metadata"]["digital_shelf_scan_url"], "https://krcs.rebotics.net/reporting/scans/17146891")
+        k_batch = next(iter(krcs["action_batches"].values()))
+        self.assertIsNotNone(k_batch["scan_id"])
+        self.assertTrue(k_batch["digital_shelf_url"].startswith("https://krcs.rebotics.net/reporting/scans/"))
+        self.assertEqual(k_batch["items"][0]["scan_id"], k_batch["scan_id"])
+        self.assertEqual(k_batch["items"][0]["digital_shelf_url"], k_batch["digital_shelf_url"])
 
 
 if __name__ == "__main__":

@@ -3256,6 +3256,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             flow["all_digital_actions"] = [
                 {
                     "scan_id": item.scan_id,
+                    "digital_shelf_url": f"{base_url}/reporting/scans/{item.scan_id}" if item.scan_id else None,
                     "upc": item.upc,
                     "product_name": item.product_name,
                     "section": item.section,
@@ -3290,6 +3291,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             flow["performed_actions"] = [
                 {
                     "scan_id": item.scan_id,
+                    "digital_shelf_url": f"{base_url}/reporting/scans/{item.scan_id}" if item.scan_id else None,
                     "upc": item.upc,
                     "product_name": item.product_name,
                     "section": item.section,
@@ -3304,6 +3306,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             flow["unperformed_actions"] = [
                 {
                     "scan_id": item.scan_id,
+                    "digital_shelf_url": f"{base_url}/reporting/scans/{item.scan_id}" if item.scan_id else None,
                     "upc": item.upc,
                     "product_name": item.product_name,
                     "section": item.section,
@@ -3320,6 +3323,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             flow["ok_no_action_items"] = [
                 {
                     "scan_id": item.scan_id,
+                    "digital_shelf_url": f"{base_url}/reporting/scans/{item.scan_id}" if item.scan_id else None,
                     "upc": item.upc,
                     "product_name": item.product_name,
                     "section": item.section,

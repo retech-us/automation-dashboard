@@ -49,6 +49,8 @@ class FlowItem:
     discrepancy_type: Optional[str] = None
     discrepancy_label: Optional[str] = None
     discrepancy_detail: Optional[str] = None
+    scan_id: Optional[int] = None
+    digital_shelf_url: Optional[str] = None
 
 
 @dataclass
@@ -64,6 +66,8 @@ class ActionBatch:
     item_count: int
     id_range: str
     items: List[FlowItem] = field(default_factory=list)
+    scan_id: Optional[int] = None
+    digital_shelf_url: Optional[str] = None
 
 
 @dataclass
@@ -168,6 +172,9 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
         "total_events": 24,
         "total_batches": 11,
         "total_action_items": 113,
+        "pre_photo_scan_id": 3768606,
+        "post_photo_scan_id": 3769854,
+        "digital_shelf_scan_url": "https://harr.rebotics.net/reporting/scans/3768606",
     }
 
     events = [
@@ -757,6 +764,18 @@ def build_harr_reference_task_8648127() -> Dict[str, Any]:
         }
     }
 
+    for b in action_batches.values():
+        is_post = b.stage == "post"
+        s_id = 3769854 if is_post else 3768606
+        s_url = f"https://harr.rebotics.net/reporting/scans/{s_id}"
+        b.scan_id = s_id
+        b.digital_shelf_url = s_url
+        for it in b.items:
+            if it.scan_id is None:
+                it.scan_id = s_id
+            if it.digital_shelf_url is None:
+                it.digital_shelf_url = s_url
+
     return {
         "status": "success",
         "task_id": 8648127,
@@ -792,6 +811,9 @@ def build_krcs_reference_task_42288818() -> Dict[str, Any]:
         "total_events": 19,
         "total_batches": 6,
         "total_action_items": 48,
+        "pre_photo_scan_id": 17146891,
+        "post_photo_scan_id": 17147320,
+        "digital_shelf_scan_url": "https://krcs.rebotics.net/reporting/scans/17146891",
     }
 
     events = [
@@ -1222,6 +1244,25 @@ def build_krcs_reference_task_42288818() -> Dict[str, Any]:
         },
     }
 
+    bay_scan_map = {
+        "Bay 1": 17146891,
+        "Bay 2": 17146898,
+        "Bay 3": 17146899,
+        "Bay 4": 17146911,
+        "Bay 5": 17146934,
+        "Bay 6": 17146946,
+    }
+    for b in action_batches.values():
+        s_id = bay_scan_map.get(b.bay, 17146891)
+        s_url = f"https://krcs.rebotics.net/reporting/scans/{s_id}"
+        b.scan_id = s_id
+        b.digital_shelf_url = s_url
+        for it in b.items:
+            if it.scan_id is None:
+                it.scan_id = s_id
+            if it.digital_shelf_url is None:
+                it.digital_shelf_url = s_url
+
     return {
         "status": "success",
         "task_id": 42288818,
@@ -1462,6 +1503,25 @@ def synthesize_task_flow_from_raw_actions(
                                 disc_label = f"Rel-Seq OK (Threshold=0) · Pos {from_p} → {to_p}"
                                 disc_detail = f"Intra-shelf shift on Shelf {from_sh} from Pos {from_p} to Pos {to_p}. Digital Shelf reports this as OK under relative sequence matching (Threshold=0), while IR generates a Move."
 
+                    curr_scan = (curr_pos.get("scan_id") if isinstance(curr_pos, dict) else None)
+                    exp_scan = (exp_pos.get("scan_id") if isinstance(exp_pos, dict) else None)
+                    direct_scan = item.get("scan_id")
+                    proc_act = item.get("processing_action")
+                    proc_scan = int(proc_act) if str(proc_act or "").isdigit() else None
+                    resolved_scan_id = curr_scan or exp_scan or direct_scan or proc_scan or scan_id
+                    try:
+                        item_scan_id = int(resolved_scan_id) if resolved_scan_id is not None else None
+                    except (TypeError, ValueError):
+                        item_scan_id = None
+
+                    inst_val = str(meta.get("instance") or "harr").strip()
+                    if "://" in inst_val:
+                        inst_clean = inst_val.split("://", 1)[1].split("/", 1)[0].split(":")[0]
+                    else:
+                        inst_clean = inst_val.split("/", 1)[0].split(":")[0]
+                    inst_host = inst_clean if "." in inst_clean else f"{inst_clean}.rebotics.net"
+                    item_shelf_url = f"https://{inst_host}/reporting/scans/{item_scan_id}" if item_scan_id else None
+
                     flow_items.append(FlowItem(
                         ledger_id=raw_id,
                         product_report_id=item.get("product_id") or (1400000 + idx * 7),
@@ -1490,8 +1550,12 @@ def synthesize_task_flow_from_raw_actions(
                         discrepancy_type=disc_type,
                         discrepancy_label=disc_label,
                         discrepancy_detail=disc_detail,
+                        scan_id=item_scan_id,
+                        digital_shelf_url=item_shelf_url,
                     ))
 
+                batch_scan_id = flow_items[0].scan_id if flow_items else item_scan_id
+                batch_shelf_url = flow_items[0].digital_shelf_url if flow_items else item_shelf_url
                 action_batches[batch_id] = ActionBatch(
                     batch_id=batch_id,
                     bay=bay,
@@ -1504,6 +1568,8 @@ def synthesize_task_flow_from_raw_actions(
                     item_count=len(flow_items),
                     id_range=f"{flow_items[0].ledger_id}..{flow_items[-1].ledger_id}",
                     items=flow_items,
+                    scan_id=batch_scan_id,
+                    digital_shelf_url=batch_shelf_url,
                 )
 
                 events.append(FlowEvent(
@@ -1633,6 +1699,18 @@ def synthesize_task_flow_from_raw_actions(
         badge_type=close_badge,
     ))
 
+    first_scan = next(
+        (b.get("pre_photo_scan_id") for b in bay_summaries.values() if b.get("pre_photo_scan_id")),
+        None,
+    )
+    inst_val = str(meta.get("instance") or "krcs").strip()
+    if "://" in inst_val:
+        inst_clean = inst_val.split("://", 1)[1].split("/", 1)[0].split(":")[0]
+    else:
+        inst_clean = inst_val.split("/", 1)[0].split(":")[0]
+    inst_host = inst_clean if "." in inst_clean else f"{inst_clean}.rebotics.net"
+    shelf_scan_url = f"https://{inst_host}/reporting/scans/{first_scan}" if first_scan else None
+
     return {
         "status": "success",
         "task_id": task_id,
@@ -1662,6 +1740,8 @@ def synthesize_task_flow_from_raw_actions(
             "total_events": len(events),
             "total_batches": len(action_batches),
             "total_action_items": sum(b.item_count for b in action_batches.values()),
+            "pre_photo_scan_id": first_scan,
+            "digital_shelf_scan_url": shelf_scan_url,
         },
         "events": [asdict(ev) for ev in events],
         "action_batches": {k: asdict(v) for k, v in action_batches.items()},
@@ -1735,6 +1815,21 @@ def enrich_flow_with_digital_shelf_evidence(
                 d_act_taken = getattr(d_item, "action_taken", None) or (d_item.get("action_taken") if isinstance(d_item, dict) else "")
                 it["digital_action_type"] = d_act_type
                 it["digital_action_taken"] = d_act_taken
+
+                d_scan = getattr(d_item, "scan_id", None) or (d_item.get("scan_id") if isinstance(d_item, dict) else None)
+                if d_scan and not it.get("scan_id"):
+                    try:
+                        it["scan_id"] = int(d_scan)
+                    except (TypeError, ValueError):
+                        pass
+                if it.get("scan_id") and not it.get("digital_shelf_url"):
+                    meta_inst = str(flow.get("metadata", {}).get("instance") or "harr").strip()
+                    if "://" in meta_inst:
+                        inst_c = meta_inst.split("://", 1)[1].split("/", 1)[0].split(":")[0]
+                    else:
+                        inst_c = meta_inst.split("/", 1)[0].split(":")[0]
+                    inst_h = inst_c if "." in inst_c else f"{inst_c}.rebotics.net"
+                    it["digital_shelf_url"] = f"https://{inst_h}/reporting/scans/{it['scan_id']}"
 
                 from_sh = it.get("from_shelf")
                 to_sh = it.get("to_shelf")

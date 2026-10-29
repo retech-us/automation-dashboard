@@ -38,6 +38,76 @@
     return `https://${clean}.rebotics.net`;
   }
 
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function resolveItemScanId(item) {
+    if (item && item.scan_id) return item.scan_id;
+    if (!currentFlowData) return null;
+    const bay = item && (item.to_bay || item.from_bay || item.section);
+    if (bay && currentFlowData.bay_summaries) {
+      const cleanBay = String(bay).toLowerCase().replace('bay', '').trim();
+      for (const [bName, bData] of Object.entries(currentFlowData.bay_summaries)) {
+        if (bName.toLowerCase().includes(cleanBay) || String(bName).toLowerCase() === String(bay).toLowerCase()) {
+          if (bData.pre_photo_scan_id) return bData.pre_photo_scan_id;
+        }
+      }
+    }
+    if (currentFlowData.metadata) {
+      if (currentFlowData.metadata.pre_photo_scan_id) return currentFlowData.metadata.pre_photo_scan_id;
+      if (currentFlowData.metadata.scan_id) return currentFlowData.metadata.scan_id;
+    }
+    if (currentFlowData.pre_photo && currentFlowData.pre_photo.scan_id) {
+      return currentFlowData.pre_photo.scan_id;
+    }
+    if (currentFlowData.performed_evidence && Array.isArray(currentFlowData.performed_evidence.scan_ids) && currentFlowData.performed_evidence.scan_ids.length > 0) {
+      return currentFlowData.performed_evidence.scan_ids[0];
+    }
+    const firstBay = currentFlowData.bay_summaries && Object.values(currentFlowData.bay_summaries)[0];
+    if (firstBay && firstBay.pre_photo_scan_id) return firstBay.pre_photo_scan_id;
+    return null;
+  }
+
+  function currentPostScanId() {
+    if (!currentFlowData) return null;
+    if (currentFlowData.post_photo && currentFlowData.post_photo.scan_id) return currentFlowData.post_photo.scan_id;
+    if (currentFlowData.metadata && currentFlowData.metadata.post_photo_scan_id) return currentFlowData.metadata.post_photo_scan_id;
+    const firstBay = currentFlowData.bay_summaries && Object.values(currentFlowData.bay_summaries)[0];
+    if (firstBay && firstBay.post_photo_scan_id) return firstBay.post_photo_scan_id;
+    return null;
+  }
+
+  function currentPreScanId() {
+    return resolveItemScanId(null);
+  }
+
+  function buildDigitalShelfScanUrl(scanId, item, meta) {
+    if (item && item.digital_shelf_url) return item.digital_shelf_url;
+    const sId = scanId || (item && item.scan_id) || resolveItemScanId(item);
+    if (!sId) return null;
+    const m = meta || (currentFlowData && currentFlowData.metadata);
+    const inst = (m && m.instance) || getSelectedInstance() || 'harr';
+    const base = normalizeInstanceUrl(inst);
+    let url = `${base}/reporting/scans/${encodeURIComponent(sId)}`;
+    const params = [];
+    if (m) {
+      const store = m.store_code || m.store_id;
+      if (store) params.push(`store=${encodeURIComponent(store)}`);
+      const pog = m.planogram_id || m.planogram_name;
+      if (pog) params.push(`planogram=${encodeURIComponent(pog)}`);
+      if (m.task_date) params.push(`date=${encodeURIComponent(m.task_date)}`);
+    }
+    if (params.length) url += `?${params.join('&')}`;
+    return url;
+  }
+
   async function checkAuthStatus(instance) {
     const inst = instance || getSelectedInstance() || 'harr';
     const baseUrl = normalizeInstanceUrl(inst);
@@ -1145,9 +1215,33 @@
       upc.textContent = item.upc ? `UPC ${item.upc}` : 'UPC unavailable';
       productCell.append(product, upc);
 
+      // Scan / Digital Shelf Column (directly in front of Action)
+      const scanCell = document.createElement('td');
+      scanCell.className = 'ir-col-scan';
+      const itemScanId = item.scan_id || resolveItemScanId(item);
+      const scanUrl = buildDigitalShelfScanUrl(itemScanId, item, currentFlowData && currentFlowData.metadata);
+      if (itemScanId && scanUrl) {
+        scanCell.innerHTML = `
+          <a href="${scanUrl}" target="_blank" rel="noopener noreferrer" class="ir-scan-link" title="Open Scan #${itemScanId} in Digital Shelf">
+            <span class="ir-scan-cam">📸</span> Scan #${itemScanId} <span class="ir-scan-arrow">↗</span>
+          </a>
+        `;
+      } else if (itemScanId) {
+        scanCell.innerHTML = `<span class="ir-scan-tag">Scan #${itemScanId}</span>`;
+      } else {
+        scanCell.innerHTML = `<span class="ir-scan-empty" style="color:var(--text-muted);">—</span>`;
+      }
+
       const actionCell = document.createElement('td');
       const actionLabel = document.createElement('div');
-      actionLabel.textContent = item.action_type || 'Action unavailable';
+      actionLabel.className = 'ir-action-label-wrap';
+      const rawAct = item.action_type || 'Action unavailable';
+      const isIdentify = String(rawAct).toUpperCase().includes('IDENTIFY');
+      if (isIdentify) {
+        actionLabel.innerHTML = `<span class="status-pill status-pill--purple" style="font-weight:700;">🔍 ${escapeHtml(rawAct)}</span>`;
+      } else {
+        actionLabel.textContent = rawAct;
+      }
       actionCell.appendChild(actionLabel);
       const discBadgeHtml = renderDiscrepancyBadge(item);
       if (discBadgeHtml) {
@@ -1155,18 +1249,17 @@
         wrap.innerHTML = discBadgeHtml;
         actionCell.appendChild(wrap.firstElementChild);
       }
-      row.appendChild(actionCell);
 
-      [
-        formatActionLocation(item, 'from'),
-        formatActionLocation(item, 'to'),
-        formatActionStatus(item),
-      ].forEach((value) => {
-        const cell = document.createElement('td');
-        cell.textContent = value;
-        row.appendChild(cell);
-      });
-      row.prepend(productCell);
+      const fromCell = document.createElement('td');
+      fromCell.textContent = formatActionLocation(item, 'from');
+
+      const toCell = document.createElement('td');
+      toCell.textContent = formatActionLocation(item, 'to');
+
+      const statusCell = document.createElement('td');
+      statusCell.textContent = formatActionStatus(item);
+
+      row.append(productCell, scanCell, actionCell, fromCell, toCell, statusCell);
       body.appendChild(row);
     });
 
@@ -1386,12 +1479,18 @@
 
     const unperformedRows = rawUnperformedItems.map((item) => {
       const aType = (item.action_type || 'Unconfirmed action').replaceAll('_', ' ');
+      const sId = item.scan_id || resolveItemScanId(item);
+      const sUrl = item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, meta);
       return {
         type: aType,
         count: 1,
         detail: item.product_name || item.upc || `Section ${item.section || item.from_bay || 'unknown'}`,
         state: 'NO_RECORD',
+        scan_id: sId,
+        digital_shelf_url: sUrl,
         items: [{
+          scan_id: sId,
+          digital_shelf_url: sUrl,
           product_name: item.product_name || item.title || 'Product',
           upc: item.upc,
           action_type: item.action_type || aType,
@@ -1576,6 +1675,7 @@
         subtitle: `${performedCount} action(s) confirmed by associate · Task #${meta.task_id || 'unknown'}`,
         summary: [
           ['Verification Source', 'Digital Shelf report & associate mobile logs'],
+          ['Scan ID', currentPreScanId() ? `#${currentPreScanId()}` : 'Available per item'],
           ['Total Confirmed Performed', String(performedCount)],
           ['Record Status', 'Confirmed Completed (Action Taken logged)'],
         ],
@@ -1590,21 +1690,28 @@
         subtitle: `${unperformedCount} action(s) with no completion record · Task #${meta.task_id || 'unknown'}`,
         summary: [
           ['Verification Source', 'Pre-photo scan vs Digital Shelf Action Taken'],
+          ['Scan ID', currentPreScanId() ? `#${currentPreScanId()}` : 'Available per item'],
           ['Total Without Record', String(unperformedCount)],
           ['Record Status', 'Missing Confirmation (Action Taken is blank or "-")'],
           ['Associate Action', 'Associate did not record or touch these items'],
         ],
-        items: rawUnperformedItems.map((item) => ({
-          product_name: item.product_name || item.title || 'Product',
-          upc: item.upc,
-          action_type: item.action_type || 'Action',
-          from_bay: item.section || item.from_bay || '—',
-          from_pos: item.rog_position || item.from_pos || '—',
-          to_bay: item.section || item.to_bay || '—',
-          to_pos: item.pog_position || item.to_pos || '—',
-          state: 'NO_RECORD',
-          reason: item.reason || `Action type '${item.action_type}' needed, but Action Taken is '-' (no completion record in system)`,
-        })),
+        items: rawUnperformedItems.map((item) => {
+          const sId = item.scan_id || resolveItemScanId(item);
+          const sUrl = item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, meta);
+          return {
+            scan_id: sId,
+            digital_shelf_url: sUrl,
+            product_name: item.product_name || item.title || 'Product',
+            upc: item.upc,
+            action_type: item.action_type || 'Action',
+            from_bay: item.section || item.from_bay || '—',
+            from_pos: item.rog_position || item.from_pos || '—',
+            to_bay: item.section || item.to_bay || '—',
+            to_pos: item.pog_position || item.to_pos || '—',
+            state: 'NO_RECORD',
+            reason: item.reason || `Action type '${item.action_type}' needed, but Action Taken is '-' (no completion record in system)`,
+          };
+        }),
       });
     }
     setText(
@@ -1675,6 +1782,23 @@
         item.type = 'button';
         item.className = 'ir-review-row';
         item.setAttribute('aria-label', `View ${row.count} ${row.type} action details`);
+
+        const firstItem = (row.items && row.items[0]) || null;
+        const rowScanId = (firstItem && (firstItem.scan_id || resolveItemScanId(firstItem))) || (id === 'ir-post-action-list' ? currentPostScanId() : currentPreScanId());
+        const rowScanUrl = buildDigitalShelfScanUrl(rowScanId, firstItem, meta);
+
+        if (rowScanId && rowScanUrl) {
+          const scanPill = document.createElement('a');
+          scanPill.href = rowScanUrl;
+          scanPill.target = '_blank';
+          scanPill.rel = 'noopener noreferrer';
+          scanPill.className = 'ir-scan-pill';
+          scanPill.title = `Open Scan #${rowScanId} in Digital Shelf`;
+          scanPill.innerHTML = `📸 Scan #${rowScanId} ↗`;
+          scanPill.onclick = (e) => e.stopPropagation();
+          item.appendChild(scanPill);
+        }
+
         const title = document.createElement('strong');
         title.textContent = row.type;
         const detail = document.createElement('span');
@@ -1690,6 +1814,8 @@
             ['Evidence source', id === 'ir-performed-action-list'
               ? 'Digital Shelf report'
               : (id === 'ir-post-action-list' ? 'Post-photo action list' : 'Pre-photo action list')],
+            ['Scan ID', rowScanId ? `#${rowScanId}` : 'Not specified'],
+            ['Digital Shelf', rowScanUrl ? 'Available ↗' : 'Not linked'],
             ['Items shown', String(row.items.length)],
           ],
           items: row.items,
@@ -2129,48 +2255,69 @@
       if (items.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted);">
+            <td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted);">
               No specific item rows logged for this category.
             </td>
           </tr>
         `;
       } else {
-        tbody.innerHTML = items.map((item, idx) => `
+        const meta = currentFlowData && currentFlowData.metadata;
+        tbody.innerHTML = items.map((item, idx) => {
+          const sId = item.scan_id || resolveItemScanId(item);
+          const sUrl = item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, meta);
+          const actRaw = (item.action_type || defaultType || '').toUpperCase();
+          const isIdentify = actRaw.includes('IDENTIFY');
+          return `
           <tr>
             <td style="font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
             <td>
               <div style="display:flex; align-items:center; gap:10px;">
-                ${item.image ? `<img src="${item.image}" alt="" style="width:36px; height:36px; object-fit:contain; border-radius:4px; border:1px solid var(--border-color, #e5e7eb); background:#fff; flex-shrink:0;" onerror="this.style.display='none'"/>` : ''}
+                ${item.image ? `<img src="${escapeHtml(item.image)}" alt="" style="width:36px; height:36px; object-fit:contain; border-radius:4px; border:1px solid var(--border-color, #e5e7eb); background:#fff; flex-shrink:0;" onerror="this.style.display='none'"/>` : ''}
                 <div>
-                  <div style="font-weight: 700; font-size: 12.5px; color: var(--text);">${item.product_name || 'Product'}</div>
-                  <div style="font-size: 10px; font-family: monospace; color: var(--text-muted);">UPC: ${item.upc}</div>
+                  <div style="font-weight: 700; font-size: 12.5px; color: var(--text);">${escapeHtml(item.product_name || 'Product')}</div>
+                  <div style="font-size: 10px; font-family: monospace; color: var(--text-muted);">UPC: ${escapeHtml(item.upc || '—')}</div>
                 </div>
               </div>
             </td>
             <td>
+              ${(() => {
+                if (sId && sUrl) {
+                  return `<a href="${escapeHtml(sUrl)}" target="_blank" rel="noopener noreferrer" class="ir-scan-link" title="Open Scan #${escapeHtml(String(sId))} in Digital Shelf"><span class="ir-scan-cam">📸</span> Scan #${escapeHtml(String(sId))} <span class="ir-scan-arrow">↗</span></a>`;
+                }
+                if (sId) {
+                  return `<span class="ir-scan-tag">Scan #${escapeHtml(String(sId))}</span>`;
+                }
+                return '<span style="color:var(--text-muted)">—</span>';
+              })()}
+            </td>
+            <td>
               <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
-                <span class="status-pill status-pill--primary">${(item.action_type || defaultType).replace('ACTION_', '')}</span>
+                ${isIdentify
+                  ? '<span class="status-pill status-pill--purple">🔍 IDENTIFY</span>'
+                  : `<span class="status-pill status-pill--primary">${escapeHtml(actRaw.replace('ACTION_', '') || 'ACTION')}</span>`
+                }
                 ${renderDiscrepancyBadge(item)}
               </div>
             </td>
             <td>
-              ${item.from_shelf ? `<span class="badge badge-gray">Shelf ${item.from_shelf}, Pos ${item.from_pos}</span>` : '<span style="color:var(--text-muted)">—</span>'}
+              ${item.from_shelf ? `<span class="badge badge-gray">Shelf ${escapeHtml(String(item.from_shelf))}, Pos ${escapeHtml(String(item.from_pos || '—'))}</span>` : '<span style="color:var(--text-muted)">—</span>'}
             </td>
             <td>
-              ${item.to_shelf ? `<span class="badge badge-blue">Shelf ${item.to_shelf}, Pos ${item.to_pos}</span>` : '<span style="color:var(--text-muted)">—</span>'}
-              ${item.to_bay ? `<div style="font-size:9.5px; color:var(--text-muted);">${item.to_bay}</div>` : ''}
+              ${item.to_shelf ? `<span class="badge badge-blue">Shelf ${escapeHtml(String(item.to_shelf))}, Pos ${escapeHtml(String(item.to_pos || '—'))}</span>` : '<span style="color:var(--text-muted)">—</span>'}
+              ${item.to_bay ? `<div style="font-size:9.5px; color:var(--text-muted);">${escapeHtml(String(item.to_bay))}</div>` : ''}
             </td>
             <td>
               <span class="status-pill ${item.state && item.state.includes('ACCEPTED') ? 'status-pill--passed' : 'status-pill--warning'}">
-                ${item.state ? item.state.replace('STATE_', '') : 'DONE'}
+                ${escapeHtml(item.state ? item.state.replace('STATE_', '') : 'DONE')}
               </span>
-              ${item.reason ? `<div style="font-size:9.5px; color:var(--text-muted); margin-top:2px;">${item.reason}</div>` : ''}
+              ${item.reason ? `<div style="font-size:9.5px; color:var(--text-muted); margin-top:2px;">${escapeHtml(item.reason)}</div>` : ''}
             </td>
             <td style="font-size: 10px; font-family: monospace; color: var(--text-muted);">
-              ${item.ledger_id ? `#${item.ledger_id}` : '—'}
+              ${item.ledger_id ? `#${escapeHtml(String(item.ledger_id))}` : '—'}
             </td>
           </tr>
-        `).join('');
+        `;
+        }).join('');
       }
     }
 
