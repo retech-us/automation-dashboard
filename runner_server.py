@@ -3131,10 +3131,13 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 continue
             tid_int = int(tid)
             cache_key = (base_url, tid_int)
-            if cache_key in TASK_SCAN_CACHE:
+            if cache_key in TASK_SCAN_CACHE and "all_scan_ids" in TASK_SCAN_CACHE[cache_key]:
                 cached = TASK_SCAN_CACHE[cache_key]
                 t["pre_photo_scan_id"] = cached.get("pre_photo_scan_id")
                 t["post_photo_scan_id"] = cached.get("post_photo_scan_id")
+                t["pre_photo_scan_ids"] = cached.get("pre_photo_scan_ids") or ([t["pre_photo_scan_id"]] if t.get("pre_photo_scan_id") else [])
+                t["post_photo_scan_ids"] = cached.get("post_photo_scan_ids") or ([t["post_photo_scan_id"]] if t.get("post_photo_scan_id") else [])
+                t["all_scan_ids"] = cached.get("all_scan_ids") or sorted(list(set(t["pre_photo_scan_ids"] + t["post_photo_scan_ids"])))
                 t["digital_shelf_scan_url"] = cached.get("digital_shelf_scan_url")
                 t["post_digital_shelf_scan_url"] = cached.get("post_digital_shelf_scan_url")
             else:
@@ -3144,20 +3147,37 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                         with open(disk_p, "r", encoding="utf-8") as f:
                             disk_d = json.load(f)
                         meta = disk_d.get("metadata") or {}
-                        pre = meta.get("pre_photo_scan_id") or meta.get("scan_id")
-                        post = meta.get("post_photo_scan_id")
-                        if pre or post:
+                        disk_pre_scans = set()
+                        disk_post_scans = set()
+                        for key in ("pre_photo_scan_id", "scan_id"):
+                            v = meta.get(key)
+                            if v and str(v).isdigit():
+                                disk_pre_scans.add(int(v))
+                        if meta.get("post_photo_scan_id") and str(meta.get("post_photo_scan_id")).isdigit():
+                            disk_post_scans.add(int(meta.get("post_photo_scan_id")))
+                        for act in disk_d.get("action_items") or disk_d.get("items") or []:
+                            for key in ("current_position", "expected_position"):
+                                s = (act.get(key) or {}).get("scan_id")
+                                if s and str(s).isdigit():
+                                    disk_pre_scans.add(int(s))
+                        if disk_pre_scans or disk_post_scans:
+                            pre_list = sorted(list(disk_pre_scans))
+                            post_list = sorted(list(disk_post_scans))
+                            all_list = sorted(list(disk_pre_scans.union(disk_post_scans)))
+                            pre_p = pre_list[0] if pre_list else None
+                            post_p = post_list[0] if post_list else None
                             res = {
-                                "pre_photo_scan_id": int(pre) if pre and str(pre).isdigit() else None,
-                                "post_photo_scan_id": int(post) if post and str(post).isdigit() else None,
-                                "digital_shelf_scan_url": f"{base_url}/reporting/scans/{pre}" if pre else None,
-                                "post_digital_shelf_scan_url": f"{base_url}/reporting/scans/{post}" if post else None,
+                                "pre_photo_scan_id": pre_p,
+                                "post_photo_scan_id": post_p,
+                                "pre_photo_scan_ids": pre_list,
+                                "post_photo_scan_ids": post_list,
+                                "all_scan_ids": all_list,
+                                "digital_shelf_scan_url": f"{base_url}/reporting/scans/{pre_p}" if pre_p else None,
+                                "post_digital_shelf_scan_url": f"{base_url}/reporting/scans/{post_p}" if post_p else None,
                             }
                             TASK_SCAN_CACHE[cache_key] = res
-                            t["pre_photo_scan_id"] = res["pre_photo_scan_id"]
-                            t["post_photo_scan_id"] = res["post_photo_scan_id"]
-                            t["digital_shelf_scan_url"] = res["digital_shelf_scan_url"]
-                            t["post_digital_shelf_scan_url"] = res["post_digital_shelf_scan_url"]
+                            for k, v in res.items():
+                                t[k] = v
                             continue
                     except Exception:
                         pass
