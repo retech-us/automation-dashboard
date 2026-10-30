@@ -2956,7 +2956,10 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             ), host_note
 
         # A missing type id makes the retailer scan every task and time out.
-        effective_type = task_type or intelligent_reset_type_id(instance) or intelligent_reset_type_id(base_url)
+        if task_type and str(task_type).strip().isdigit():
+            effective_type = str(task_type).strip()
+        else:
+            effective_type = intelligent_reset_type_id(instance) or intelligent_reset_type_id(base_url)
         if not effective_type:
             return [], (
                 f"{instance} has no known Intelligent Reset task type, so recent tasks cannot be listed."
