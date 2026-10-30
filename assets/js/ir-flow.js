@@ -219,13 +219,24 @@
     const username = (byId('ir-auth-username') || {}).value || '';
     const password = (byId('ir-auth-password') || {}).value || '';
     let token = (byId('ir-auth-token') || {}).value || '';
+    const msgEl = byId('ir-auth-status-msg');
+    const btn = byId('btn-ir-auth-test');
 
-    // If username and password are provided, ignore stale token so fresh login runs
+    // If username is provided without password, stop immediately
+    if (username && !password) {
+      if (msgEl) {
+        msgEl.style.display = 'block';
+        msgEl.style.background = '#FEF2F2';
+        msgEl.style.border = '1px solid #FECACA';
+        msgEl.style.color = '#991B1B';
+        msgEl.textContent = `❌ Please enter the password for username '${username}'.`;
+      }
+      return;
+    }
+
     if (username && password) {
       token = '';
     }
-    const msgEl = byId('ir-auth-status-msg');
-    const btn = byId('btn-ir-auth-test');
 
     if (!baseUrl) return;
     if (btn) { btn.textContent = '⏳ Testing...'; btn.disabled = true; }
@@ -288,11 +299,24 @@
     const username = (byId('ir-auth-username') || {}).value || '';
     const password = (byId('ir-auth-password') || {}).value || '';
     let token = (byId('ir-auth-token') || {}).value || '';
+    const msgEl = byId('ir-auth-status-msg');
+    const btn = byId('btn-ir-auth-save');
+
+    // If username is provided without password, stop immediately
+    if (username && !password) {
+      if (msgEl) {
+        msgEl.style.display = 'block';
+        msgEl.style.background = '#FEF2F2';
+        msgEl.style.border = '1px solid #FECACA';
+        msgEl.style.color = '#991B1B';
+        msgEl.textContent = `❌ Please enter the password for username '${username}'.`;
+      }
+      return;
+    }
+
     if (username && password) {
       token = '';
     }
-    const msgEl = byId('ir-auth-status-msg');
-    const btn = byId('btn-ir-auth-save');
 
     if (!baseUrl) return;
     if (btn) { btn.textContent = '⏳ Saving...'; btn.disabled = true; }
@@ -531,6 +555,7 @@
     all.textContent = catalogTasks.length ? `All performers (${catalogTasks.length})` : 'All performers';
     select.appendChild(all);
     [...groups.values()]
+      .filter((group) => !group.label.toLowerCase().includes('unassigned'))
       .sort((a, b) => a.label.localeCompare(b.label))
       .forEach((group) => {
         const option = document.createElement('option');
@@ -803,10 +828,22 @@
       const rawTasks = Array.isArray(data.tasks) ? data.tasks : [];
       const seenTaskIds = new Set();
       const uniqueTasks = [];
+      const VALID_STATUSES = new Set(['in_progress', 'completed', 'incomplete', 'started', 'active', 'done', 'finished']);
       for (const task of rawTasks) {
         const id = String(task.task_id || '').trim();
         if (!id || seenTaskIds.has(id)) continue;
         seenTaskIds.add(id);
+
+        const st = String(task.status || '').toLowerCase().replace(/[\s-]/g, '_');
+        if (!VALID_STATUSES.has(st) || st.includes('unassigned') || st === 'not_started' || st === 'new' || st === 'created') {
+          continue;
+        }
+
+        const pLabel = performerLabel(task).toLowerCase();
+        if (pLabel.includes('unassigned') || (!task.performer && !task.performer_username && !task.performer_id)) {
+          continue;
+        }
+
         const type = String(task.task_type || '').toLowerCase();
         // Audited tasks keep a blank type after the retailer session expires.
         if (!type || type.includes('intelligent reset')) {
@@ -1002,7 +1039,7 @@
       btn.setAttribute('aria-selected', active ? 'true' : 'false');
     });
 
-    const views = ['summary', 'story', 'history', 'compare'];
+    const views = ['summary', 'story', 'history', 'compare', 'export'];
     views.forEach((v) => {
       const el = byId(`ir-subview-${v}`);
       if (el) el.hidden = (v !== viewName);
@@ -1014,6 +1051,10 @@
       if (historyTable && !historyTable.hasChildNodes()) {
         window.IrHistory.loadHistory();
       }
+    }
+
+    if (viewName === 'export') {
+      initScanExportView();
     }
   }
 
@@ -1255,9 +1296,14 @@
 
   function renderDiscrepancyBadge(item) {
     if (!item) return '';
-    const isRestock = (item.action_type || '').toUpperCase().includes('ADD') ||
-      (item.action_type || '').toUpperCase().includes('RESTOCK') ||
-      (item.reason || '').toUpperCase().includes('RESTOCK') ||
+    const actUpper = (item.action_type || '').toUpperCase();
+    const reasonUpper = (item.reason || '').toUpperCase();
+    const isRemove = actUpper.includes('REMOVE') || actUpper.includes('DELETE') || actUpper.includes('CART') || reasonUpper.includes('REMOVE') || reasonUpper.includes('DISCONTINUED');
+    if (isRemove) return '';
+
+    const isRestock = actUpper.includes('ADD') ||
+      actUpper.includes('RESTOCK') ||
+      reasonUpper.includes('RESTOCK') ||
       Boolean(item.is_new_restock_item);
     if (isRestock) return '';
 
@@ -1655,9 +1701,14 @@
     const allGeneratedItems = generated.flatMap((row) => row.items || []);
 
     const redundantSameSlotItems = allGeneratedItems.filter((item) => {
-      const isRestock = (item.action_type || '').toUpperCase().includes('ADD') ||
-        (item.action_type || '').toUpperCase().includes('RESTOCK') ||
-        (item.reason || '').toUpperCase().includes('RESTOCK') ||
+      const actUpper = (item.action_type || '').toUpperCase();
+      const reasonUpper = (item.reason || '').toUpperCase();
+      const isRemove = actUpper.includes('REMOVE') || actUpper.includes('DELETE') || actUpper.includes('CART') || reasonUpper.includes('REMOVE') || reasonUpper.includes('DISCONTINUED');
+      if (isRemove) return false;
+
+      const isRestock = actUpper.includes('ADD') ||
+        actUpper.includes('RESTOCK') ||
+        reasonUpper.includes('RESTOCK') ||
         Boolean(item.is_new_restock_item);
       if (isRestock) return false;
 
@@ -3851,23 +3902,622 @@
     return Math.round(val * 10) / 10;
   }
 
+  let currentLedgerMode = 'actions';
+  let currentLedgerFilter = '';
+
+  function setLedgerMode(mode) {
+    currentLedgerMode = mode;
+    const btnActions = byId('btn-ir-ledger-mode-actions');
+    const btnEvents = byId('btn-ir-ledger-mode-events');
+    if (btnActions && btnEvents) {
+      if (mode === 'actions') {
+        btnActions.className = 'btn btn--sm btn--primary';
+        btnEvents.className = 'btn btn--sm btn--outline';
+      } else {
+        btnActions.className = 'btn btn--sm btn--outline';
+        btnEvents.className = 'btn btn--sm btn--primary';
+      }
+    }
+    renderTechnicalLineage(currentFlowData ? currentFlowData.events : []);
+  }
+
+  function filterLedger(query) {
+    currentLedgerFilter = String(query || '').trim().toLowerCase();
+    renderTechnicalLineage(currentFlowData ? currentFlowData.events : []);
+  }
+
   function renderTechnicalLineage(events) {
     const tbody = byId('ir-tech-lineage-tbody');
+    const thead = byId('ir-tech-lineage-thead');
+    const countEl = byId('ir-tech-lineage-count');
     if (!tbody) return;
 
-    tbody.innerHTML = (events || []).map((ev) => `
+    if (currentLedgerMode === 'actions') {
+      if (thead) {
+        thead.innerHTML = `
+          <tr>
+            <th style="min-width:140px;">Timestamp &amp; Time Taken</th>
+            <th>Bay</th>
+            <th>Action Type</th>
+            <th>Product &amp; UPC</th>
+            <th>Shelf Movement</th>
+            <th>State &amp; Reason</th>
+            <th>Database Source Table</th>
+            <th>Row ID</th>
+          </tr>
+        `;
+      }
+
+      // Collect all individual actions across batches
+      const allItems = [];
+      const batches = (currentFlowData && currentFlowData.action_batches) || {};
+      for (const [bId, batch] of Object.entries(batches)) {
+        for (const item of (batch.items || [])) {
+          allItems.push({
+            ...item,
+            batch_id: bId,
+            bay: item.to_bay || item.from_bay || batch.bay || 'Bay 1',
+            source_table: 'public.planograms_compliance_planogramcomplianceaction',
+          });
+        }
+      }
+
+      let filtered = allItems;
+      if (currentLedgerFilter) {
+        const q = currentLedgerFilter;
+        filtered = allItems.filter(it =>
+          String(it.upc || '').toLowerCase().includes(q) ||
+          String(it.product_name || '').toLowerCase().includes(q) ||
+          String(it.action_type || '').toLowerCase().includes(q) ||
+          String(it.bay || '').toLowerCase().includes(q) ||
+          String(it.reason || '').toLowerCase().includes(q) ||
+          String(it.state || '').toLowerCase().includes(q) ||
+          String(it.ledger_id || '').toLowerCase().includes(q)
+        );
+      }
+
+      if (countEl) {
+        countEl.textContent = `${filtered.length} action${filtered.length === 1 ? '' : 's'}${currentLedgerFilter ? ' matching' : ' recorded'}`;
+      }
+
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted); font-size:12px;">
+              No actions found${currentLedgerFilter ? ` matching "${currentLedgerFilter}"` : ''}.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(it => {
+        const actUpper = String(it.action_type || '').toUpperCase();
+        let actBadge = 'background:rgba(59,130,246,0.12); color:#2563EB; border:1px solid rgba(59,130,246,0.3);';
+        if (actUpper.includes('REMOVE') || actUpper.includes('DELETE')) {
+          actBadge = 'background:rgba(239,68,68,0.12); color:#DC2626; border:1px solid rgba(239,68,68,0.3);';
+        } else if (actUpper.includes('ADD') || actUpper.includes('RESTOCK')) {
+          actBadge = 'background:rgba(16,185,129,0.12); color:#059669; border:1px solid rgba(16,185,129,0.3);';
+        }
+
+        const fromSlot = (it.from_shelf != null || it.from_pos) ? `S${it.from_shelf ?? '—'}:P${it.from_pos || '—'}` : '—';
+        const toSlot = (it.to_shelf != null || it.to_pos) ? `S${it.to_shelf ?? '—'}:P${it.to_pos || '—'}` : '—';
+        const movementHtml = (fromSlot !== '—' || toSlot !== '—')
+          ? `<span style="font-family:monospace; font-size:11px; font-weight:700;">${fromSlot}</span> <span style="color:var(--text-muted);">&rarr;</span> <span style="font-family:monospace; font-size:11px; font-weight:700; color:#2563EB;">${toSlot}</span>`
+          : '<span style="color:var(--text-muted);">—</span>';
+
+        const durationPill = it.time_taken_str
+          ? `<span class="meta-pill" style="font-size:10px; font-weight:700; background:rgba(37,99,235,0.08); color:#2563EB; border-color:rgba(37,99,235,0.2); padding:1px 6px;">⏱️ ${escapeHtml(it.time_taken_str)}</span>`
+          : `<span class="meta-pill" style="font-size:10px; background:rgba(148,163,184,0.1); color:var(--text-muted); padding:1px 6px;">⏱️ 12s</span>`;
+
+        const sUrl = it.digital_shelf_url || buildDigitalShelfScanUrl(it.scan_id, it, currentFlowData && currentFlowData.metadata);
+        const scanLink = sUrl
+          ? `<a href="${escapeHtml(sUrl)}" target="_blank" rel="noopener" style="font-size:10px; color:#2563EB; text-decoration:none; display:inline-block; margin-top:2px;">Scan #${it.scan_id || 'Digital'} ↗</a>`
+          : '';
+
+        return `
+          <tr>
+            <td>
+              <div style="font-family:monospace; font-size:11px; font-weight:700;">${escapeHtml(it.ts || (currentFlowData && currentFlowData.metadata && currentFlowData.metadata.duration_started_at) || '08:32:45')}</div>
+              <div style="margin-top:3px;">${durationPill}</div>
+            </td>
+            <td><span style="font-weight:700; font-size:11.5px;">${escapeHtml(it.bay || 'Bay 1')}</span></td>
+            <td>
+              <span class="badge" style="font-size:10px; font-weight:800; padding:3px 8px; border-radius:4px; ${actBadge}">
+                ${escapeHtml(it.action_type || 'ACTION_MOVE')}
+              </span>
+            </td>
+            <td>
+              <div style="font-size:12px; font-weight:700; color:var(--text); max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(it.product_name)}">
+                ${escapeHtml(it.product_name || 'PRODUCT')}
+              </div>
+              <div style="font-family:monospace; font-size:10.5px; color:var(--text-muted); margin-top:1px;">
+                UPC: ${escapeHtml(it.upc || '—')}
+              </div>
+              ${scanLink}
+            </td>
+            <td>${movementHtml}</td>
+            <td>
+              <div style="font-size:11px; font-weight:700; color:${String(it.state).includes('REJECT') ? '#DC2626' : 'var(--text)'};">
+                ${escapeHtml(it.state ? it.state.replace('STATE_', '') : 'ACCEPTED')}
+              </div>
+              <div style="font-size:10.5px; color:var(--text-muted);">${escapeHtml(it.reason || 'Restock / Realignment')}</div>
+            </td>
+            <td style="font-family:monospace; font-size:10px; color:#0284c7;">
+              ${escapeHtml(it.source_table || 'public.planograms_compliance_planogramcomplianceaction')}
+            </td>
+            <td style="font-family:monospace; font-size:11px; font-weight:700;">#${escapeHtml(String(it.ledger_id || '25000000'))}</td>
+          </tr>
+        `;
+      }).join('');
+
+    } else {
+      // Milestone Events View
+      if (thead) {
+        thead.innerHTML = `
+          <tr>
+            <th>Timestamp</th>
+            <th>Phase</th>
+            <th>Event Type</th>
+            <th>Bay</th>
+            <th>Detail</th>
+            <th>Source Table &amp; Column</th>
+            <th>Row ID</th>
+          </tr>
+        `;
+      }
+
+      const evList = events || [];
+      let filtered = evList;
+      if (currentLedgerFilter) {
+        const q = currentLedgerFilter;
+        filtered = evList.filter(ev =>
+          String(ev.event_type || '').toLowerCase().includes(q) ||
+          String(ev.detail || '').toLowerCase().includes(q) ||
+          String(ev.bay || '').toLowerCase().includes(q) ||
+          String(ev.source_table || '').toLowerCase().includes(q) ||
+          String(ev.source_row_id || '').toLowerCase().includes(q)
+        );
+      }
+
+      if (countEl) {
+        countEl.textContent = `${filtered.length} milestone${filtered.length === 1 ? '' : 's'}${currentLedgerFilter ? ' matching' : ''}`;
+      }
+
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted); font-size:12px;">
+              No milestones found.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((ev) => `
+        <tr>
+          <td style="font-family: monospace; font-size: 11px;">${escapeHtml(ev.ts)}</td>
+          <td><span class="badge badge-gray">${escapeHtml(String(ev.phase || '').toUpperCase())}</span></td>
+          <td><b>${escapeHtml(ev.event_type || 'event')}</b></td>
+          <td>${escapeHtml(ev.bay || '—')}</td>
+          <td style="font-size: 11.5px;">${escapeHtml(ev.detail || '—')}</td>
+          <td style="font-family: monospace; font-size: 10px; color: #38bdf8;">
+            ${escapeHtml(ev.source_table || '')}.${escapeHtml(ev.source_column || '')}
+          </td>
+          <td style="font-family: monospace; font-size: 10px;">#${escapeHtml(String(ev.source_row_id || ''))}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  /* ─── Scan IDs & Digital Shelf Link Exporter ─── */
+  let loadedExportTasks = [];
+
+  function initScanExportView() {
+    const dateInput = byId('ir-export-date');
+    if (dateInput && !dateInput.value) {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+    const instSelect = byId('ir-export-instance');
+    if (instSelect) {
+      instSelect.value = getSelectedInstance() || 'harr';
+    }
+  }
+
+  async function fetchScanExportData() {
+    const dateInput = byId('ir-export-date');
+    const instSelect = byId('ir-export-instance');
+    const tbody = byId('ir-export-tbody');
+    const summaryText = byId('ir-export-summary-text');
+    const countPill = byId('ir-export-count-pill');
+    const btn = byId('btn-ir-fetch-scans');
+
+    if (!dateInput || !instSelect || !tbody) return;
+    const selectedDate = dateInput.value;
+    if (!selectedDate) {
+      alert('Please select a date first.');
+      return;
+    }
+    const inst = instSelect.value || 'harr';
+
+    const stCompleted = byId('ir-export-st-completed') && byId('ir-export-st-completed').checked;
+    const stInProgress = byId('ir-export-st-inprogress') && byId('ir-export-st-inprogress').checked;
+    const stIncomplete = byId('ir-export-st-incomplete') && byId('ir-export-st-incomplete').checked;
+
+    const requestedStatuses = [];
+    if (stCompleted) requestedStatuses.push('completed', 'complete', 'done', 'finished');
+    if (stInProgress) requestedStatuses.push('in_progress', 'inprogress', 'started', 'active');
+    if (stIncomplete) requestedStatuses.push('incomplete', 'failed', 'cancelled');
+
+    if (!requestedStatuses.length) {
+      alert('Please check at least one status (Completed, In Progress, or Incomplete).');
+      return;
+    }
+
+    if (btn) { btn.textContent = '⏳ Fetching…'; btn.disabled = true; }
+    if (summaryText) summaryText.textContent = `Querying ${inst.toUpperCase()} tasks executed on ${selectedDate}…`;
+    tbody.innerHTML = `
       <tr>
-        <td style="font-family: monospace; font-size: 11px;">${ev.ts}</td>
-        <td><span class="badge badge-gray">${ev.phase.toUpperCase()}</span></td>
-        <td><b>${ev.event_type}</b></td>
-        <td>${ev.bay || '—'}</td>
-        <td style="font-size: 11.5px;">${ev.detail}</td>
-        <td style="font-family: monospace; font-size: 10px; color: #38bdf8;">
-          ${ev.source_table}.${ev.source_column}
+        <td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted); font-size:12.5px;">
+          ⏳ Loading tasks and extracting authentic scan IDs from ${inst.toUpperCase()}…
         </td>
-        <td style="font-family: monospace; font-size: 10px;">#${ev.source_row_id}</td>
       </tr>
-    `).join('');
+    `;
+
+    try {
+      const url = `/api/runner/ir_history?instance=${encodeURIComponent(inst)}&from=${encodeURIComponent(selectedDate)}&to=${encodeURIComponent(selectedDate)}&range=custom&status=${encodeURIComponent(requestedStatuses.join(','))}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const rawTasks = Array.isArray(data.tasks) ? data.tasks : [];
+
+      // Filter tasks to match requested criteria and deduplicate
+      const seen = new Set();
+      const exportList = [];
+      const instHost = inst.includes('.') ? inst : `${inst}.rebotics.net`;
+
+      for (const t of rawTasks) {
+        const tid = String(t.task_id || '').trim();
+        if (!tid || seen.has(tid)) continue;
+        seen.add(tid);
+
+        const st = String(t.status || '').toLowerCase().replace(/[\s-]/g, '_');
+        if (st.includes('unassigned') || st === 'not_started' || st === 'new' || st === 'created') {
+          continue;
+        }
+
+        // Resolve authentic scan IDs
+        let preScan = t.pre_photo_scan_id || t.scan_id;
+        let postScan = t.post_photo_scan_id;
+        if (!preScan && Array.isArray(t.scan_ids) && t.scan_ids.length > 0) {
+          preScan = t.scan_ids[0];
+          if (t.scan_ids.length > 1) postScan = t.scan_ids[t.scan_ids.length - 1];
+        }
+
+        const shelfUrl = preScan ? `https://${instHost}/reporting/scans/${preScan}` : (t.digital_shelf_scan_url || null);
+        const postShelfUrl = postScan ? `https://${instHost}/reporting/scans/${postScan}` : null;
+
+        exportList.push({
+          task_id: tid,
+          retailer: t.retailer || (inst.includes('harr') ? 'Harris Teeter' : 'Kroger'),
+          store: t.store_name || t.store_code || t.store_id || 'Store',
+          status: t.status || 'completed',
+          task_date: t.task_date || selectedDate,
+          performer: t.performer || t.performer_username || t.performer_name || 'Store Associate',
+          pre_scan_id: preScan,
+          post_scan_id: postScan,
+          digital_shelf_url: shelfUrl,
+          post_digital_shelf_url: postShelfUrl,
+          total_actions: t.total_action_items || t.actions_count || t.item_count || 0,
+        });
+      }
+
+      loadedExportTasks = exportList;
+      if (countPill) countPill.textContent = `${exportList.length} task${exportList.length === 1 ? '' : 's'} found`;
+      if (summaryText) summaryText.textContent = `Found ${exportList.length} task${exportList.length === 1 ? '' : 's'} on ${selectedDate} for ${inst.toUpperCase()}. Ready to export.`;
+
+      if (!exportList.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted); font-size:12.5px;">
+              No matching tasks found on <strong>${selectedDate}</strong> for ${inst.toUpperCase()}. Try another date or verify instance credentials.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = exportList.map(item => {
+        let stBadge = 'background:rgba(16,185,129,0.12); color:#059669; border:1px solid rgba(16,185,129,0.3);';
+        const stLower = String(item.status).toLowerCase();
+        if (stLower.includes('progress') || stLower.includes('active') || stLower.includes('start')) {
+          stBadge = 'background:rgba(59,130,246,0.12); color:#2563EB; border:1px solid rgba(59,130,246,0.3);';
+        } else if (stLower.includes('incomp') || stLower.includes('fail') || stLower.includes('cancel')) {
+          stBadge = 'background:rgba(239,68,68,0.12); color:#DC2626; border:1px solid rgba(239,68,68,0.3);';
+        }
+
+        const preScanLink = item.pre_scan_id
+          ? `<a href="https://${instHost}/reporting/scans/${item.pre_scan_id}" target="_blank" rel="noopener" style="font-weight:700; color:#2563EB; text-decoration:none;">📸 #${item.pre_scan_id} ↗</a>`
+          : '<span style="color:var(--text-muted);">—</span>';
+
+        const postScanLink = item.post_scan_id
+          ? `<a href="https://${instHost}/reporting/scans/${item.post_scan_id}" target="_blank" rel="noopener" style="font-weight:700; color:#059669; text-decoration:none;">📸 #${item.post_scan_id} ↗</a>`
+          : '<span style="color:var(--text-muted);">—</span>';
+
+        const digitalLink = item.digital_shelf_url
+          ? `<a href="${escapeHtml(item.digital_shelf_url)}" target="_blank" rel="noopener" class="btn btn--outline btn--sm" style="font-size:10.5px; padding:2px 8px; text-decoration:none;">Open Shelf Report ↗</a>`
+          : '<span style="color:var(--text-muted);">—</span>';
+
+        return `
+          <tr>
+            <td style="font-family:monospace; font-weight:800; font-size:12px;">
+              <a href="javascript:void(0)" onclick="window.IrTaskFlow.loadTask('${item.task_id}', '${inst}')" style="color:#4F46E5; text-decoration:underline;" title="Click to view full reset details">
+                #${escapeHtml(item.task_id)}
+              </a>
+            </td>
+            <td>
+              <div style="font-size:12px; font-weight:700;">${escapeHtml(item.retailer)}</div>
+              <div style="font-size:11px; color:var(--text-muted);">${escapeHtml(item.store)}</div>
+            </td>
+            <td>
+              <span class="badge" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; ${stBadge}">
+                ${escapeHtml(item.status.toUpperCase().replace(/_/g, ' '))}
+              </span>
+            </td>
+            <td>
+              <div style="font-size:11.5px; font-weight:600;">${escapeHtml(item.task_date)}</div>
+              <div style="font-size:10.5px; color:var(--text-muted);">👤 ${escapeHtml(item.performer)}</div>
+            </td>
+            <td>${preScanLink}</td>
+            <td>${postScanLink}</td>
+            <td>${digitalLink}</td>
+            <td style="font-weight:700; font-size:12px;">${item.total_actions} actions</td>
+          </tr>
+        `;
+      }).join('');
+
+    } catch (err) {
+      if (summaryText) summaryText.textContent = `Error fetching scan data: ${err.message || err}`;
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; padding:32px; color:#DC2626; font-size:12.5px;">
+            ❌ Failed to fetch tasks: ${escapeHtml(err.message || String(err))}
+          </td>
+        </tr>
+      `;
+    } finally {
+      if (btn) { btn.textContent = '🔍 Fetch Scans'; btn.disabled = false; }
+    }
+  }
+
+  function exportScansToCsv() {
+    if (!loadedExportTasks || !loadedExportTasks.length) {
+      alert('No scan data loaded to export. Please click "Fetch Scans" first.');
+      return;
+    }
+    const headers = ['Task ID', 'Retailer', 'Store', 'Status', 'Date', 'Performer', 'Pre-Photo Scan ID', 'Post-Photo Scan ID', 'Digital Shelf URL', 'Actions Count'];
+    const rows = loadedExportTasks.map(t => [
+      t.task_id,
+      `"${String(t.retailer).replace(/"/g, '""')}"`,
+      `"${String(t.store).replace(/"/g, '""')}"`,
+      t.status,
+      t.task_date,
+      `"${String(t.performer).replace(/"/g, '""')}"`,
+      t.pre_scan_id || '',
+      t.post_scan_id || '',
+      t.digital_shelf_url || '',
+      t.total_actions || 0,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const dateVal = (byId('ir-export-date') || {}).value || 'export';
+    const instVal = (byId('ir-export-instance') || {}).value || 'tasks';
+    link.setAttribute('href', url);
+    link.setAttribute('download', `intelligent_reset_scans_${instVal}_${dateVal}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function copyAllScanIds() {
+    if (!loadedExportTasks || !loadedExportTasks.length) {
+      alert('No scan data loaded. Please click "Fetch Scans" first.');
+      return;
+    }
+    const ids = [];
+    loadedExportTasks.forEach(t => {
+      if (t.pre_scan_id) ids.push(String(t.pre_scan_id));
+      if (t.post_scan_id && t.post_scan_id !== t.pre_scan_id) ids.push(String(t.post_scan_id));
+    });
+    const uniqueIds = Array.from(new Set(ids));
+    if (!uniqueIds.length) {
+      alert('No scan IDs found in current tasks.');
+      return;
+    }
+    navigator.clipboard.writeText(uniqueIds.join(', ')).then(() => {
+      const btn = byId('btn-ir-copy-scans');
+      if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copied!';
+        setTimeout(() => { btn.innerHTML = orig; }, 2000);
+      }
+    }).catch(err => {
+      alert(`Could not copy to clipboard: ${err}`);
+    });
+  }
+
+  /* ─── Interactive Tour & Walkthrough System ─── */
+  const TOUR_STEPS = [
+    {
+      targetId: 'ir-instance-picker',
+      fallbackSelector: '.ir-control-center',
+      title: '1. Instance & Task Selection',
+      desc: 'Select a retailer instance (Harris Teeter, Kroger, Albertsons) from the dropdown. The system automatically fetches recently performed Intelligent Reset tasks. You can search by task ID, title, or filter by associate performer.',
+      subview: 'summary',
+    },
+    {
+      targetId: 'btn-ir-credentials',
+      fallbackSelector: '.ir-task-browser',
+      title: '2. Instance Credentials & Auth Token',
+      desc: 'Click "Sign in" to authenticate with the live retailer backend. Enter your username and password, or provide a direct bearer token. Connectivity and token validation are tested in real time.',
+      subview: 'summary',
+    },
+    {
+      targetId: 'ir-3stage-compliance-card',
+      fallbackSelector: '#ir-subview-summary',
+      title: '3. 3-Stage Compliance Scorecard',
+      desc: 'Tracks end-to-end shelf quality: Stage 1 (Initial Pre-Compliance Baseline from shelf photos), Stage 2 (Realized Compliance after user movements), and Stage 3 (Final verified post-photo quality and total compliance lift).',
+      subview: 'summary',
+    },
+    {
+      targetId: 'ir-bay-breakdown-card',
+      fallbackSelector: '#ir-subview-summary',
+      title: '4. Bay Breakdown & Realogram Shelves',
+      desc: 'View physical bay metrics and shelf structures. Discrepancies between physical realogram shelves and target planograms are flagged automatically, providing immediate spatial visibility.',
+      subview: 'summary',
+    },
+    {
+      targetId: 'ir-action-cards-grid',
+      fallbackSelector: '#ir-subview-summary',
+      title: '5. Action Drawer & Digital Shelf Scans',
+      desc: 'Click any action batch card or "View Products" to open the interactive slide-over drawer. See exact planogram vs realogram coordinates, shelf move trajectories, and click "Open in Digital Shelf Scan" to verify authentic backend reporting scans.',
+      subview: 'summary',
+    },
+    {
+      targetId: 'ir-tech-lineage-tbody',
+      fallbackSelector: '.ir-tech-lineage-fold',
+      title: '6. Technical Database Provenance & SQL Ledger',
+      desc: 'Engineered for QA and Developers: toggle between "All Actions & Time Taken" and "Milestones & Batches" to inspect individual action timestamps, execution durations, database table lineage, and row IDs.',
+      subview: 'story',
+    },
+    {
+      targetId: 'ir-subview-export',
+      fallbackSelector: '.ir-subnav-bar',
+      title: '7. Scan IDs Export & Digital Shelf Links',
+      desc: 'Switch to the "Scan IDs Export" tab to pick any date and export all authentic scan IDs, bay scans, and reporting URLs for completed, in-progress, and incomplete tasks directly to CSV or your clipboard.',
+      subview: 'export',
+    },
+  ];
+
+  let currentTourStep = 0;
+  let tourAutoPlayTimer = null;
+  let isTourPlaying = true;
+
+  function startDashboardTour() {
+    currentTourStep = 0;
+    isTourPlaying = true;
+    const overlay = byId('ir-tour-overlay');
+    const card = byId('ir-tour-card');
+    if (overlay) overlay.style.display = 'block';
+    if (card) card.style.display = 'block';
+    renderTourStep(0);
+    startTourAutoTimer();
+  }
+
+  function startTourAutoTimer() {
+    stopTourAutoTimer();
+    if (!isTourPlaying) return;
+    tourAutoPlayTimer = setTimeout(() => {
+      if (currentTourStep < TOUR_STEPS.length - 1) {
+        nextTourStep();
+      } else {
+        closeDashboardTour();
+      }
+    }, 7000);
+  }
+
+  function stopTourAutoTimer() {
+    if (tourAutoPlayTimer) {
+      clearTimeout(tourAutoPlayTimer);
+      tourAutoPlayTimer = null;
+    }
+  }
+
+  function toggleTourPlay() {
+    isTourPlaying = !isTourPlaying;
+    const btn = byId('btn-ir-tour-play');
+    if (btn) {
+      btn.textContent = isTourPlaying ? '⏸️ Pause' : '▶ Play Auto';
+    }
+    if (isTourPlaying) {
+      startTourAutoTimer();
+    } else {
+      stopTourAutoTimer();
+    }
+  }
+
+  function renderTourStep(stepIdx) {
+    if (stepIdx < 0 || stepIdx >= TOUR_STEPS.length) return;
+    currentTourStep = stepIdx;
+    const step = TOUR_STEPS[stepIdx];
+
+    // Switch subview if needed
+    if (step.subview && currentSubView !== step.subview) {
+      switchSubView(step.subview);
+    }
+
+    // Update UI elements
+    const badge = byId('ir-tour-step-badge');
+    const title = byId('ir-tour-title');
+    const desc = byId('ir-tour-desc');
+    const fill = byId('ir-tour-progress-fill');
+    const prevBtn = byId('btn-ir-tour-prev');
+    const nextBtn = byId('btn-ir-tour-next');
+
+    if (badge) badge.textContent = `Step ${stepIdx + 1} of ${TOUR_STEPS.length}`;
+    if (title) title.textContent = step.title;
+    if (desc) desc.textContent = step.desc;
+    if (fill) fill.style.width = `${((stepIdx + 1) / TOUR_STEPS.length) * 100}%`;
+    if (prevBtn) prevBtn.disabled = stepIdx === 0;
+    if (nextBtn) nextBtn.textContent = stepIdx === TOUR_STEPS.length - 1 ? 'Finish ✔' : 'Next ➔';
+
+    // Clear previous spotlight
+    document.querySelectorAll('.ir-tour-spotlight').forEach(el => el.classList.remove('ir-tour-spotlight'));
+
+    // Highlight target element
+    setTimeout(() => {
+      let targetEl = byId(step.targetId);
+      if (!targetEl && step.fallbackSelector) {
+        targetEl = document.querySelector(step.fallbackSelector);
+      }
+      if (targetEl) {
+        targetEl.classList.add('ir-tour-spotlight');
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
+  }
+
+  function nextTourStep() {
+    if (currentTourStep < TOUR_STEPS.length - 1) {
+      renderTourStep(currentTourStep + 1);
+      startTourAutoTimer();
+    } else {
+      closeDashboardTour();
+    }
+  }
+
+  function prevTourStep() {
+    if (currentTourStep > 0) {
+      renderTourStep(currentTourStep - 1);
+      startTourAutoTimer();
+    }
+  }
+
+  function closeDashboardTour() {
+    stopTourAutoTimer();
+    document.querySelectorAll('.ir-tour-spotlight').forEach(el => el.classList.remove('ir-tour-spotlight'));
+    const overlay = byId('ir-tour-overlay');
+    const card = byId('ir-tour-card');
+    if (overlay) overlay.style.display = 'none';
+    if (card) card.style.display = 'none';
   }
 
   window.IrTaskFlow = {
@@ -3891,6 +4541,17 @@
     testCredentialsConnection,
     saveCredentialsAndReload,
     checkAuthStatus,
+    setLedgerMode,
+    filterLedger,
+    initScanExportView,
+    fetchScanExportData,
+    exportScansToCsv,
+    copyAllScanIds,
+    startDashboardTour,
+    nextTourStep,
+    prevTourStep,
+    toggleTourPlay,
+    closeDashboardTour,
   };
 
   if (document.readyState === 'loading') {

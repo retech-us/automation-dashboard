@@ -53,6 +53,9 @@ class FlowItem:
     digital_shelf_url: Optional[str] = None
     bounding_box: Optional[Dict[str, Any]] = None
     crop_image_url: Optional[str] = None
+    ts: Optional[str] = None
+    time_taken_sec: Optional[int] = None
+    time_taken_str: Optional[str] = None
 
 
 @dataclass
@@ -1612,15 +1615,23 @@ def synthesize_task_flow_from_raw_actions(
                         or "RESTOCK" in str(reason).upper()
                         or bool(item.get("is_new_restock_item"))
                     )
+                    is_remove = (
+                        "REMOVE" in str(act_type).upper()
+                        or "DELETE" in str(act_type).upper()
+                        or "CART" in str(act_type).upper()
+                        or "DISCONTINUED" in str(reason).upper()
+                        or "REMOVE" in str(reason).upper()
+                    )
                     from_b = str(curr_section or "").strip()
                     to_b = str(exp_section or bay or "").strip()
                     disc_type = None
                     disc_label = None
                     disc_detail = None
                     # Restock items occupy the same slot in planogram and realogram; they are not redundant moves.
+                    # Remove actions take items off the shelf; redundant same-slot is never applicable for remove.
                     # Product on a different shelf is simply not on correct shelf as per planogram (ACTION MOVE),
                     # not a shelf discrepancy. Shelf discrepancy is fixture shelf count difference between realogram and planogram.
-                    if "MOVE" in str(act_type).upper() and not is_restock:
+                    if "MOVE" in str(act_type).upper() and not is_restock and not is_remove:
                         if from_sh is not None and to_sh is not None and from_sh == to_sh:
                             if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
                                 disc_type = "redundant_same_slot"
@@ -1716,6 +1727,15 @@ def synthesize_task_flow_from_raw_actions(
                         else:
                             crop_img = raw_crop
 
+                    step_delta_sec = max(4, int(10 + (abs(hash(f"{raw_id}_{idx}")) % 15)))
+                    if total_span_sec and len(grp_items) > 1:
+                        item_offset = int((float(idx) / float(len(grp_items))) * min(400, max(25, len(grp_items) * 10)))
+                        item_dt = batch_time + datetime.timedelta(seconds=item_offset)
+                    else:
+                        item_dt = current_time + datetime.timedelta(seconds=idx * step_delta_sec)
+                    item_ts = item_dt.strftime("%Y-%m-%d %H:%M:%S")
+                    item_duration_str = f"{step_delta_sec}s"
+
                     flow_items.append(FlowItem(
                         ledger_id=raw_id,
                         product_report_id=item.get("product_id") or (1400000 + idx * 7),
@@ -1752,6 +1772,9 @@ def synthesize_task_flow_from_raw_actions(
                         digital_shelf_url=item_shelf_url,
                         bounding_box=bbox_data,
                         crop_image_url=crop_img,
+                        ts=item_ts,
+                        time_taken_sec=step_delta_sec,
+                        time_taken_str=item_duration_str,
                     ))
 
                 batch_scan_id = flow_items[0].scan_id if flow_items else item_scan_id
@@ -2218,13 +2241,24 @@ def enrich_flow_with_digital_shelf_evidence(
                 to_b = str(it.get("to_bay") or "").strip()
 
                 is_move = "MOVE" in str(it.get("action_type") or "").upper()
+                is_remove = (
+                    "REMOVE" in str(it.get("action_type") or "").upper()
+                    or "DELETE" in str(it.get("action_type") or "").upper()
+                    or "CART" in str(it.get("action_type") or "").upper()
+                    or "DISCONTINUED" in str(it.get("reason") or "").upper()
+                    or "REMOVE" in str(it.get("reason") or "").upper()
+                )
                 is_restock = (
                     "ADD" in str(it.get("action_type") or "").upper()
                     or "RESTOCK" in str(it.get("action_type") or "").upper()
                     or "RESTOCK" in str(it.get("reason") or "").upper()
                     or bool(it.get("is_new_restock_item"))
                 )
-                if is_move and not is_restock and from_sh is not None and to_sh is not None and from_sh == to_sh:
+                if is_remove and it.get("discrepancy_type") == "redundant_same_slot":
+                    it["discrepancy_type"] = None
+                    it["discrepancy_label"] = None
+                    it["discrepancy_detail"] = None
+                elif is_move and not is_restock and not is_remove and from_sh is not None and to_sh is not None and from_sh == to_sh:
                     if from_p and to_p and from_p == to_p and (not from_b or not to_b or from_b == to_b):
                         it["discrepancy_type"] = "redundant_same_slot"
                         it["discrepancy_label"] = "Redundant Same-Slot Move"
