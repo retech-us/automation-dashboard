@@ -4115,13 +4115,23 @@
   let loadedExportTasks = [];
 
   function initScanExportView() {
-    const dateInput = byId('ir-export-date');
-    if (dateInput && !dateInput.value) {
-      const now = new Date();
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      dateInput.value = `${yyyy}-${mm}-${dd}`;
+    const fromInput = byId('ir-export-from-date');
+    const toInput = byId('ir-export-to-date');
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    if (toInput && !toInput.value) {
+      toInput.value = todayStr;
+    }
+    if (fromInput && !fromInput.value) {
+      const d7 = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+      const f_yyyy = d7.getFullYear();
+      const f_mm = String(d7.getMonth() + 1).padStart(2, '0');
+      const f_dd = String(d7.getDate()).padStart(2, '0');
+      fromInput.value = `${f_yyyy}-${f_mm}-${f_dd}`;
     }
     const instSelect = byId('ir-export-instance');
     if (instSelect) {
@@ -4129,18 +4139,50 @@
     }
   }
 
+  function setExportRange(rangeType) {
+    const fromInput = byId('ir-export-from-date');
+    const toInput = byId('ir-export-to-date');
+    if (!fromInput || !toInput) return;
+
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const toStr = `${yyyy}-${mm}-${dd}`;
+    toInput.value = toStr;
+
+    if (rangeType === 'today') {
+      fromInput.value = toStr;
+    } else if (rangeType === '7d') {
+      const d = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+      const f_yyyy = d.getFullYear();
+      const f_mm = String(d.getMonth() + 1).padStart(2, '0');
+      const f_dd = String(d.getDate()).padStart(2, '0');
+      fromInput.value = `${f_yyyy}-${f_mm}-${f_dd}`;
+    } else if (rangeType === '30d') {
+      const d = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000);
+      const f_yyyy = d.getFullYear();
+      const f_mm = String(d.getMonth() + 1).padStart(2, '0');
+      const f_dd = String(d.getDate()).padStart(2, '0');
+      fromInput.value = `${f_yyyy}-${f_mm}-${f_dd}`;
+    }
+    fetchScanExportData();
+  }
+
   async function fetchScanExportData() {
-    const dateInput = byId('ir-export-date');
+    const fromInput = byId('ir-export-from-date');
+    const toInput = byId('ir-export-to-date');
     const instSelect = byId('ir-export-instance');
     const tbody = byId('ir-export-tbody');
     const summaryText = byId('ir-export-summary-text');
     const countPill = byId('ir-export-count-pill');
     const btn = byId('btn-ir-fetch-scans');
 
-    if (!dateInput || !instSelect || !tbody) return;
-    const selectedDate = dateInput.value;
-    if (!selectedDate) {
-      alert('Please select a date first.');
+    if (!fromInput || !toInput || !instSelect || !tbody) return;
+    const fromDate = fromInput.value;
+    const toDate = toInput.value;
+    if (!fromDate || !toDate) {
+      alert('Please select both From Date and To Date.');
       return;
     }
     const inst = instSelect.value || 'harr';
@@ -4160,23 +4202,23 @@
     }
 
     if (btn) { btn.textContent = '⏳ Fetching…'; btn.disabled = true; }
-    if (summaryText) summaryText.textContent = `Querying ${inst.toUpperCase()} tasks executed on ${selectedDate}…`;
+    if (summaryText) summaryText.textContent = `Querying Intelligent Reset tasks for ${inst.toUpperCase()} between ${fromDate} and ${toDate}…`;
     tbody.innerHTML = `
       <tr>
         <td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted); font-size:12.5px;">
-          ⏳ Loading tasks and extracting authentic scan IDs from ${inst.toUpperCase()}…
+          ⏳ Loading Intelligent Reset tasks and extracting authentic scan IDs from ${inst.toUpperCase()}…
         </td>
       </tr>
     `;
 
     try {
-      const url = `/api/runner/ir_history?instance=${encodeURIComponent(inst)}&from=${encodeURIComponent(selectedDate)}&to=${encodeURIComponent(selectedDate)}&range=custom&status=${encodeURIComponent(requestedStatuses.join(','))}`;
+      const url = `/api/runner/ir_history?instance=${encodeURIComponent(inst)}&from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(toDate)}&range=custom&status=${encodeURIComponent(requestedStatuses.join(','))}`;
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const rawTasks = Array.isArray(data.tasks) ? data.tasks : [];
 
-      // Filter tasks to match requested criteria and deduplicate
+      // Filter tasks strictly to Intelligent Reset only and requested criteria
       const seen = new Set();
       const exportList = [];
       const instHost = inst.includes('.') ? inst : `${inst}.rebotics.net`;
@@ -4184,12 +4226,33 @@
       for (const t of rawTasks) {
         const tid = String(t.task_id || '').trim();
         if (!tid || seen.has(tid)) continue;
-        seen.add(tid);
+
+        // Strict Intelligent Reset filter: only tasks belonging to Intelligent Reset
+        const typeStr = String(t.task_type || t.type || '').toLowerCase();
+        const titleStr = String(t.title || t.name || '').toLowerCase();
+        const typeIdStr = String(t.task_type_id || t.type_id || '');
+
+        const isIR = typeStr.includes('intelligent reset') ||
+                     titleStr.includes('intelligent reset') ||
+                     typeIdStr === '26' || typeIdStr === '31' ||
+                     (inst.includes('harr') && typeIdStr === '26') ||
+                     (inst.includes('krog') && typeIdStr === '31') ||
+                     typeStr === 'intelligent_reset' ||
+                     (typeStr === 'reset' && !typeStr.includes('audit'));
+
+        // Disqualify if it's explicitly cycle count, audit only, or non-reset work
+        if (titleStr.includes('cycle count') || titleStr.includes('audit only')) {
+          continue;
+        }
+
+        if (!isIR) continue;
 
         const st = String(t.status || '').toLowerCase().replace(/[\s-]/g, '_');
         if (st.includes('unassigned') || st === 'not_started' || st === 'new' || st === 'created') {
           continue;
         }
+
+        seen.add(tid);
 
         // Resolve authentic scan IDs
         let preScan = t.pre_photo_scan_id || t.scan_id;
@@ -4207,7 +4270,7 @@
           retailer: t.retailer || (inst.includes('harr') ? 'Harris Teeter' : 'Kroger'),
           store: t.store_name || t.store_code || t.store_id || 'Store',
           status: t.status || 'completed',
-          task_date: t.task_date || selectedDate,
+          task_date: t.task_date || fromDate,
           performer: t.performer || t.performer_username || t.performer_name || 'Store Associate',
           pre_scan_id: preScan,
           post_scan_id: postScan,
@@ -4219,13 +4282,13 @@
 
       loadedExportTasks = exportList;
       if (countPill) countPill.textContent = `${exportList.length} task${exportList.length === 1 ? '' : 's'} found`;
-      if (summaryText) summaryText.textContent = `Found ${exportList.length} task${exportList.length === 1 ? '' : 's'} on ${selectedDate} for ${inst.toUpperCase()}. Ready to export.`;
+      if (summaryText) summaryText.textContent = `Found ${exportList.length} Intelligent Reset task${exportList.length === 1 ? '' : 's'} between ${fromDate} and ${toDate} for ${inst.toUpperCase()}. Ready to export.`;
 
       if (!exportList.length) {
         tbody.innerHTML = `
           <tr>
             <td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted); font-size:12.5px;">
-              No matching tasks found on <strong>${selectedDate}</strong> for ${inst.toUpperCase()}. Try another date or verify instance credentials.
+              No matching Intelligent Reset tasks found between <strong>${fromDate}</strong> and <strong>${toDate}</strong> for ${inst.toUpperCase()}. Try another date range or verify instance credentials.
             </td>
           </tr>
         `;
@@ -4318,10 +4381,11 @@
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    const dateVal = (byId('ir-export-date') || {}).value || 'export';
+    const fromVal = (byId('ir-export-from-date') || {}).value || 'export';
+    const toVal = (byId('ir-export-to-date') || {}).value || '';
     const instVal = (byId('ir-export-instance') || {}).value || 'tasks';
     link.setAttribute('href', url);
-    link.setAttribute('download', `intelligent_reset_scans_${instVal}_${dateVal}.csv`);
+    link.setAttribute('download', `intelligent_reset_scans_${instVal}_${fromVal}_to_${toVal}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -4544,6 +4608,7 @@
     setLedgerMode,
     filterLedger,
     initScanExportView,
+    setExportRange,
     fetchScanExportData,
     exportScansToCsv,
     copyAllScanIds,

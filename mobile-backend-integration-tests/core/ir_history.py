@@ -355,8 +355,14 @@ def filter_entries(
             continue
         if not (first <= entry_date <= last):
             continue
-        if wanted_type and str(entry.get("task_type") or "").strip().casefold() != wanted_type:
-            continue
+        if wanted_type:
+            tt = str(entry.get("task_type") or "").strip().casefold()
+            tt_id = str(entry.get("task_type_id") or "").strip().casefold()
+            if wanted_type != tt and wanted_type != tt_id:
+                if wanted_type == "intelligent reset" and "intelligent reset" in tt:
+                    pass
+                else:
+                    continue
         if needle and needle not in str(entry.get("title") or "").casefold():
             continue
         if wanted and normalize_status(entry.get("status")) not in wanted:
