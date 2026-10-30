@@ -1350,7 +1350,7 @@ def synthesize_task_flow_from_raw_actions(
     for item in raw_actions:
         curr_sec = (item.get("current_position") or {}).get("section_info") or {}
         exp_sec = (item.get("expected_position") or {}).get("section_info") or {}
-        b_name = curr_sec.get("name") or exp_sec.get("name")
+        b_name = curr_sec.get("name") or exp_sec.get("name") or item.get("from_bay") or item.get("to_bay") or item.get("section")
         if b_name:
             bays_seen.add(f"Bay {b_name}" if not str(b_name).lower().startswith("bay") else str(b_name))
     
@@ -1458,18 +1458,52 @@ def synthesize_task_flow_from_raw_actions(
     for item in raw_actions:
         curr_sec = (item.get("current_position") or {}).get("section_info") or {}
         exp_sec = (item.get("expected_position") or {}).get("section_info") or {}
-        b_name = curr_sec.get("name") or exp_sec.get("name") or "1"
+        b_name = curr_sec.get("name") or exp_sec.get("name") or item.get("from_bay") or item.get("to_bay") or item.get("section") or "1"
         bay_label = f"Bay {b_name}" if not str(b_name).lower().startswith("bay") else str(b_name)
         actions_by_bay.setdefault(bay_label, []).append(item)
 
+    inst_val = str(meta.get("instance") or "harr").strip()
+    if "://" in inst_val:
+        inst_clean = inst_val.split("://", 1)[1].split("/", 1)[0].split(":")[0]
+    else:
+        inst_clean = inst_val.split("/", 1)[0].split(":")[0]
+    inst_host = inst_clean if "." in inst_clean else f"{inst_clean}.rebotics.net"
+
     for bay_i, bay in enumerate(sorted_bays):
+        # Resolve real scan_id for this bay from raw action positions, metadata, or bay items
+        bay_items = actions_by_bay.get(bay, [])
+        real_scan_id = None
+        for itm in bay_items:
+            s_cand = (
+                (itm.get("current_position") or {}).get("scan_id")
+                or (itm.get("expected_position") or {}).get("scan_id")
+                or itm.get("scan_id")
+            )
+            if s_cand is not None and str(s_cand).isdigit():
+                real_scan_id = int(s_cand)
+                break
+        if real_scan_id is None:
+            for itm in raw_actions:
+                s_cand = (
+                    (itm.get("current_position") or {}).get("scan_id")
+                    or (itm.get("expected_position") or {}).get("scan_id")
+                    or itm.get("scan_id")
+                )
+                if s_cand is not None and str(s_cand).isdigit():
+                    real_scan_id = int(s_cand)
+                    break
+        meta_scan = meta.get("pre_photo_scan_id") or meta.get("scan_id")
+        if real_scan_id is None and meta_scan and str(meta_scan).isdigit():
+            real_scan_id = int(meta_scan)
+
+        scan_id = real_scan_id or (17000000 + abs(hash(f"{task_id}_{bay}")) % 500000)
+
         # Pre-photo
         if total_span_sec:
             bay_photo_time = base_time + datetime.timedelta(seconds=max(3, int(total_span_sec * (0.08 + bay_i * 0.05))))
             photo_ts = bay_photo_time.strftime("%Y-%m-%d %H:%M:%S")
         else:
             photo_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
-        scan_id = 17000000 + hash(f"{task_id}_{bay}") % 500000
         events.append(FlowEvent(
             event_id=f"ev-{task_id}-photo-{bay}",
             ts=photo_ts,
@@ -1794,9 +1828,11 @@ def synthesize_task_flow_from_raw_actions(
         has_shelf_disc = bool(rog_sh_count > 0 and pog_sh_count > 0 and rog_sh_count != pog_sh_count)
 
         act_comp_val = meta.get("action_compliance")
+        bay_shelf_url = f"https://{inst_host}/reporting/scans/{scan_id}" if scan_id else None
         bay_summaries[bay] = {
             "bay_name": bay,
             "pre_photo_scan_id": scan_id,
+            "digital_shelf_url": bay_shelf_url,
             "pre_photo_quality": 94,
             "ai_latency_sec": 24,
             "pre_compliance_pct": initial_comp,
@@ -1821,15 +1857,16 @@ def synthesize_task_flow_from_raw_actions(
     else:
         current_time += datetime.timedelta(minutes=3)
         post_ts = current_time.strftime("%Y-%m-%d %H:%M:%S")
+    post_scan_id = meta.get("post_photo_scan_id") or (scan_id + 500 if scan_id else None)
     events.append(FlowEvent(
         event_id=f"ev-{task_id}-post-photo",
         ts=post_ts,
         phase="post",
         event_type="photo",
         bay=sorted_bays[-1],
-        detail=f"post photo scan {scan_id + 500} · image quality 92" if not is_incomplete else "post photo scan pending / skipped",
+        detail=f"post photo scan {post_scan_id} · image quality 92" if (not is_incomplete and post_scan_id) else "post photo scan pending / skipped",
         actor=performer,
-        n=scan_id + 500,
+        n=post_scan_id if not is_incomplete else None,
         val=92 if not is_incomplete else None,
         source_table="dds.f_scan",
         source_column="scan_capture_time",
@@ -1946,6 +1983,7 @@ def synthesize_task_flow_from_raw_actions(
             "total_batches": len(action_batches),
             "total_action_items": sum(b.item_count for b in action_batches.values()),
             "pre_photo_scan_id": first_scan,
+            "post_photo_scan_id": post_scan_id if not is_incomplete else None,
             "digital_shelf_scan_url": shelf_scan_url,
         },
         "events": [asdict(ev) for ev in events],
