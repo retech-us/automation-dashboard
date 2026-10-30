@@ -1,15 +1,15 @@
 {
   "status": "live",
-  "lastUpdated": "2026-10-30T10:52:33.357600+00:00",
+  "lastUpdated": "2026-10-30T11:03:10.835402+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "projectName": "Rebotics 3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 193,
+    "openDefects": 192,
     "blockers": 96,
-    "inProgress": 398,
+    "inProgress": 399,
     "inQa": 59,
     "resolvedThisWeek": 38,
     "resolvedTotal": 350
@@ -22,10 +22,10 @@
     "Lowest": 0
   },
   "byComponent": {
-    "IOS": 247,
     "General": 163,
-    "ANDR": 250,
+    "IOS": 247,
     "BE REBM": 208,
+    "ANDR": 250,
     "HAWKEYE": 22,
     "PARENT-WORK-ITEM": 19,
     "MOBILE": 3,
@@ -39,13 +39,13 @@
     "SOLUTIONS": 1
   },
   "byStatus": {
-    "UAT": 255,
-    "To  Do": 156,
     "QA": 59,
+    "In Progress": 32,
+    "UAT": 255,
     "Waiting for clarification": 37,
     "Code Review": 15,
+    "To  Do": 155,
     "Dev Complete": 11,
-    "In Progress": 31,
     "PRODUCTION READY": 78,
     "Invalid": 63,
     "Staging": 8,
@@ -217,6 +217,87 @@
   },
   "issues": [
     {
+      "key": "REB3-21050",
+      "summary": "[DE][KRCS] KRCS Integration Confirmation Ids getting skipped due to Parallel Import process",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "Unversioned",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Task",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "High",
+      "component": "General",
+      "assignee": "Sarthak Jagdaley",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/ce94cc3527ade138a273bf54d7643255?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSJ-6.png",
+      "tester": "Akanksha Jangir",
+      "reporter": "Akanksha Jangir",
+      "created": "2026-10-19T06:24:08.771-0700",
+      "updated": "2026-10-30T04:00:24.002-0700",
+      "ageDays": 10,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-21050"
+    },
+    {
+      "key": "REB3-21144",
+      "summary": "[iOS] Reopen Button Displayed Instead of See Details for Offline Task Completed by Another User",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.42 PRGM",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "In Progress",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Pratiksha Raut",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
+      "tester": "Ayushi Maheshwari",
+      "reporter": "Ayushi Maheshwari",
+      "created": "2026-10-30T03:40:58.150-0700",
+      "updated": "2026-10-30T03:56:47.551-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS",
+        "PRGM",
+        "offline-survey"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21144"
+    },
+    {
+      "key": "REB3-21036",
+      "summary": "[BE] UI inconsistency due to Action count mismatch ",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "BE REBM",
+      "assignee": "Saharsh Solanki",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
+      "tester": "Swati Goel",
+      "reporter": "Swati Goel",
+      "created": "2026-10-16T04:11:15.255-0700",
+      "updated": "2026-10-30T03:55:31.931-0700",
+      "ageDays": 13,
+      "staleDays": 0,
+      "labels": [
+        "BE"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21036"
+    },
+    {
       "key": "REB3-21064",
       "summary": "[iOS][Blocker] Unable to start or resume offline surveys in offline mode",
       "project": "Rebotics 3",
@@ -271,35 +352,6 @@
         "PRGM"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-21136"
-    },
-    {
-      "key": "REB3-21144",
-      "summary": "[iOS] Reopen Button Displayed Instead of See Details for Offline Task Completed by Another User",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.42 PRGM",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "To  Do",
-      "statusCategory": "new",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Pratiksha Raut",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/d9a65aa6a4cf0464935e5840d616bbbc?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FPR-4.png",
-      "tester": "Ayushi Maheshwari",
-      "reporter": "Ayushi Maheshwari",
-      "created": "2026-10-30T03:40:58.150-0700",
-      "updated": "2026-10-30T03:41:35.692-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "IOS",
-        "PRGM",
-        "offline-survey"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-21144"
     },
     {
       "key": "REB3-20701",
@@ -613,7 +665,7 @@
       "reporter": "Brianne Tanke",
       "created": "2026-05-18T03:57:13.467-0700",
       "updated": "2026-10-30T02:42:44.535-0700",
-      "ageDays": 164,
+      "ageDays": 165,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19653"
@@ -860,31 +912,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-20732"
     },
     {
-      "key": "REB3-21050",
-      "summary": "[DE][KRCS] KRCS Integration Confirmation Ids getting skipped due to Parallel Import process",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "Unversioned",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Task",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "High",
-      "component": "General",
-      "assignee": "Sarthak Jagdaley",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/ce94cc3527ade138a273bf54d7643255?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSJ-6.png",
-      "tester": "Akanksha Jangir",
-      "reporter": "Akanksha Jangir",
-      "created": "2026-10-19T06:24:08.771-0700",
-      "updated": "2026-10-30T01:01:48.334-0700",
-      "ageDays": 10,
-      "staleDays": 0,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-21050"
-    },
-    {
       "key": "REB3-21068",
       "summary": "[iOS][KRCS] Incorrect Set-Aside actions displayed instead of Add to Shelf (fix in bay)",
       "project": "Rebotics 3",
@@ -965,33 +992,6 @@
         "FE"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-21125"
-    },
-    {
-      "key": "REB3-21036",
-      "summary": "[BE] UI inconsistency due to Action count mismatch ",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Saharsh Solanki",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/40d410b19d54a2555135d4841d9c2e44?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSS-6.png",
-      "tester": "Swati Goel",
-      "reporter": "Swati Goel",
-      "created": "2026-10-16T04:11:15.255-0700",
-      "updated": "2026-10-30T00:24:29.516-0700",
-      "ageDays": 13,
-      "staleDays": 0,
-      "labels": [
-        "BE"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-21036"
     },
     {
       "key": "REB3-21117",
@@ -6707,7 +6707,7 @@
       "reporter": "Shrey Jain",
       "created": "2026-09-22T03:55:54.093-0700",
       "updated": "2026-10-28T23:15:48.417-0700",
-      "ageDays": 37,
+      "ageDays": 38,
       "staleDays": 1,
       "labels": [
         "QKTP"
@@ -6948,7 +6948,7 @@
       "reporter": "Shrey Jain",
       "created": "2026-09-22T03:55:19.652-0700",
       "updated": "2026-10-28T23:15:47.663-0700",
-      "ageDays": 37,
+      "ageDays": 38,
       "staleDays": 1,
       "labels": [
         "QKTP"
@@ -12016,7 +12016,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-04-15T03:54:20.284-0700",
       "updated": "2026-10-28T23:15:28.691-0700",
-      "ageDays": 197,
+      "ageDays": 198,
       "staleDays": 1,
       "labels": [
         "Customer"
@@ -15905,7 +15905,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-10-17T03:56:42.922-0700",
       "updated": "2026-10-23T08:16:16.188-0700",
-      "ageDays": 12,
+      "ageDays": 13,
       "staleDays": 6,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21041"
@@ -16898,7 +16898,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-10-09T03:54:12.607-0700",
       "updated": "2026-10-15T04:21:09.077-0700",
-      "ageDays": 20,
+      "ageDays": 21,
       "staleDays": 14,
       "labels": [
         "AD-HOC",
@@ -17035,7 +17035,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-10-14T04:03:04.901-0700",
       "updated": "2026-10-14T22:11:16.220-0700",
-      "ageDays": 15,
+      "ageDays": 16,
       "staleDays": 15,
       "labels": [
         "Backend",
@@ -17457,7 +17457,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-07-27T03:52:33.531-0700",
       "updated": "2026-10-13T23:49:39.158-0700",
-      "ageDays": 94,
+      "ageDays": 95,
       "staleDays": 16,
       "labels": [
         "PILOT",
@@ -20779,7 +20779,7 @@
       "reporter": "Swati Goel",
       "created": "2026-09-30T03:59:29.831-0700",
       "updated": "2026-10-08T23:15:04.615-0700",
-      "ageDays": 29,
+      "ageDays": 30,
       "staleDays": 21,
       "labels": [
         "IOS"
@@ -22916,7 +22916,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-09-22T04:00:32.506-0700",
       "updated": "2026-10-08T22:56:02.567-0700",
-      "ageDays": 37,
+      "ageDays": 38,
       "staleDays": 21,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20714"
@@ -22941,7 +22941,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-09-22T03:58:48.974-0700",
       "updated": "2026-10-08T22:56:01.919-0700",
-      "ageDays": 37,
+      "ageDays": 38,
       "staleDays": 21,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20713"
@@ -24231,7 +24231,7 @@
       "reporter": "Brianne Tanke",
       "created": "2026-07-24T03:53:06.335-0700",
       "updated": "2026-10-06T08:04:35.499-0700",
-      "ageDays": 97,
+      "ageDays": 98,
       "staleDays": 23,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20139"
@@ -25692,8 +25692,8 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-09-28T03:58:02.519-0700",
       "updated": "2026-09-28T03:59:49.567-0700",
-      "ageDays": 31,
-      "staleDays": 31,
+      "ageDays": 32,
+      "staleDays": 32,
       "labels": [
         "Backend",
         "REBM",
@@ -25984,7 +25984,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-07-02T03:53:25.224-0700",
       "updated": "2026-09-24T22:19:54.124-0700",
-      "ageDays": 119,
+      "ageDays": 120,
       "staleDays": 35,
       "labels": [
         "Backend",
@@ -26037,7 +26037,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-07-02T03:53:24.773-0700",
       "updated": "2026-09-24T04:21:19.067-0700",
-      "ageDays": 119,
+      "ageDays": 120,
       "staleDays": 35,
       "labels": [
         "Backend",
@@ -26968,7 +26968,7 @@
       "reporter": "Swati Goel",
       "created": "2026-09-14T03:58:17.743-0700",
       "updated": "2026-09-20T23:38:28.752-0700",
-      "ageDays": 45,
+      "ageDays": 46,
       "staleDays": 39,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20658"
