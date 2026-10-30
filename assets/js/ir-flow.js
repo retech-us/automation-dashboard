@@ -3940,6 +3940,85 @@
 
   let currentLedgerMode = 'actions';
   let currentLedgerFilter = '';
+  let currentLedgerSortOrder = 'asc'; // 'asc' = Start -> Last (Chronological), 'desc' = Last -> Start
+  let currentLedgerGapsOnly = false; // true = filter to only rows with large gaps (>= 120s)
+
+  function parseLedgerTimestamp(val) {
+    if (!val) return 0;
+    if (typeof val === 'number') return val;
+    const str = String(val).trim();
+    if (!str) return 0;
+    const isoStr = str.includes('T') ? str : str.replace(' ', 'T');
+    const d = new Date(isoStr);
+    const t = d.getTime();
+    if (!isNaN(t)) return t;
+    const timeMatch = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (timeMatch) {
+      const h = parseInt(timeMatch[1], 10);
+      const m = parseInt(timeMatch[2], 10);
+      const s = parseInt(timeMatch[3] || '0', 10);
+      return (h * 3600 + m * 60 + s) * 1000;
+    }
+    return 0;
+  }
+
+  function formatGapDuration(sec) {
+    if (sec < 60) return `+${sec}s`;
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return s > 0 ? `+${m}m ${s}s` : `+${m}m`;
+  }
+
+  function toggleLedgerSort() {
+    currentLedgerSortOrder = currentLedgerSortOrder === 'asc' ? 'desc' : 'asc';
+    updateLedgerToolbarUI();
+    renderTechnicalLineage(currentFlowData ? currentFlowData.events : []);
+  }
+
+  function toggleGapsOnlyFilter() {
+    currentLedgerGapsOnly = !currentLedgerGapsOnly;
+    updateLedgerToolbarUI();
+    renderTechnicalLineage(currentFlowData ? currentFlowData.events : []);
+  }
+
+  function updateLedgerToolbarUI(largeGapCount = 0) {
+    const sortBtn = byId('btn-ir-ledger-sort');
+    const sortIcon = byId('ir-ledger-sort-icon');
+    const sortLabel = byId('ir-ledger-sort-label');
+    if (sortBtn && sortIcon && sortLabel) {
+      if (currentLedgerSortOrder === 'asc') {
+        sortIcon.textContent = '⬆️';
+        sortLabel.textContent = 'Start → Last (Chronological)';
+        sortBtn.title = 'Current: Oldest to newest (Start → Last). Click to reverse.';
+      } else {
+        sortIcon.textContent = '⬇️';
+        sortLabel.textContent = 'Last → Start (Reverse)';
+        sortBtn.title = 'Current: Newest to oldest (Last → Start). Click to reverse.';
+      }
+    }
+
+    const gapsBtn = byId('btn-ir-ledger-filter-gaps');
+    const gapsBtnLabel = byId('ir-ledger-gaps-btn-label');
+    if (gapsBtn && gapsBtnLabel) {
+      if (currentLedgerGapsOnly) {
+        gapsBtn.className = 'btn btn--sm btn--primary';
+        gapsBtnLabel.textContent = `✓ Showing Gaps Only (${largeGapCount})`;
+      } else {
+        gapsBtn.className = 'btn btn--sm btn--outline';
+        gapsBtnLabel.textContent = largeGapCount > 0 ? `Show Gaps Only (${largeGapCount})` : 'Show Gaps Only';
+      }
+    }
+
+    const gapSummary = byId('ir-ledger-gap-summary');
+    if (gapSummary) {
+      if (largeGapCount > 0) {
+        gapSummary.style.display = 'inline-flex';
+        gapSummary.textContent = `⚠️ ${largeGapCount} large gap${largeGapCount === 1 ? '' : 's'} (>2m)`;
+      } else {
+        gapSummary.style.display = 'none';
+      }
+    }
+  }
 
   function setLedgerMode(mode) {
     currentLedgerMode = mode;
@@ -3969,10 +4048,86 @@
     if (!tbody) return;
 
     if (currentLedgerMode === 'actions') {
+      // Collect all individual actions across batches
+      const allItems = [];
+      const batches = (currentFlowData && currentFlowData.action_batches) || {};
+      for (const [bId, batch] of Object.entries(batches)) {
+        for (const item of (batch.items || [])) {
+          allItems.push({
+            ...item,
+            batch_id: bId,
+            bay: item.to_bay || item.from_bay || batch.bay || 'Bay 1',
+            ts: item.ts || item.created_at || batch.created_at || null,
+            source_table: 'public.planograms_compliance_planogramcomplianceaction',
+          });
+        }
+      }
+
+      // Sort items chronologically from start to last actions
+      allItems.sort((a, b) => {
+        const ta = parseLedgerTimestamp(a.ts);
+        const tb = parseLedgerTimestamp(b.ts);
+        if (ta !== tb) return ta - tb;
+        return (a.ledger_id || 0) - (b.ledger_id || 0);
+      });
+
+      // Calculate gaps between consecutive actions in chronological order
+      let prevTs = null;
+      let totalLargeGaps = 0;
+      allItems.forEach((it) => {
+        const curTs = parseLedgerTimestamp(it.ts);
+        if (prevTs && curTs > 0 && prevTs > 0) {
+          const diffSec = Math.round((curTs - prevTs) / 1000);
+          it.gap_seconds = diffSec > 0 ? diffSec : 0;
+          if (it.gap_seconds >= 120) {
+            it.is_large_gap = true;
+            it.is_critical_gap = it.gap_seconds >= 300;
+            totalLargeGaps++;
+          } else {
+            it.is_large_gap = false;
+            it.is_critical_gap = false;
+          }
+        } else {
+          it.gap_seconds = 0;
+          it.is_large_gap = false;
+          it.is_critical_gap = false;
+        }
+        if (curTs > 0) {
+          prevTs = curTs;
+        }
+      });
+
+      // Reverse order if descending requested
+      if (currentLedgerSortOrder === 'desc') {
+        allItems.reverse();
+      }
+
+      updateLedgerToolbarUI(totalLargeGaps);
+
+      let filtered = allItems;
+      if (currentLedgerGapsOnly) {
+        filtered = filtered.filter(it => it.is_large_gap);
+      }
+      if (currentLedgerFilter) {
+        const q = currentLedgerFilter;
+        filtered = filtered.filter(it =>
+          String(it.upc || '').toLowerCase().includes(q) ||
+          String(it.product_name || '').toLowerCase().includes(q) ||
+          String(it.action_type || '').toLowerCase().includes(q) ||
+          String(it.bay || '').toLowerCase().includes(q) ||
+          String(it.reason || '').toLowerCase().includes(q) ||
+          String(it.state || '').toLowerCase().includes(q) ||
+          String(it.ledger_id || '').toLowerCase().includes(q)
+        );
+      }
+
+      const sortIndicator = currentLedgerSortOrder === 'asc' ? '⏶ (Start → Last)' : '⏷ (Last → Start)';
       if (thead) {
         thead.innerHTML = `
           <tr>
-            <th style="min-width:140px;">Timestamp &amp; Time Taken</th>
+            <th style="min-width:160px; cursor:pointer;" onclick="window.IrTaskFlow.toggleLedgerSort()" title="Click to toggle sorting (Start → Last vs. Last → Start)">
+              Timestamp &amp; Time Taken <span style="font-size:10px; color:#2563EB;">${sortIndicator}</span>
+            </th>
             <th>Bay</th>
             <th>Action Type</th>
             <th>Product &amp; UPC</th>
@@ -3984,43 +4139,16 @@
         `;
       }
 
-      // Collect all individual actions across batches
-      const allItems = [];
-      const batches = (currentFlowData && currentFlowData.action_batches) || {};
-      for (const [bId, batch] of Object.entries(batches)) {
-        for (const item of (batch.items || [])) {
-          allItems.push({
-            ...item,
-            batch_id: bId,
-            bay: item.to_bay || item.from_bay || batch.bay || 'Bay 1',
-            source_table: 'public.planograms_compliance_planogramcomplianceaction',
-          });
-        }
-      }
-
-      let filtered = allItems;
-      if (currentLedgerFilter) {
-        const q = currentLedgerFilter;
-        filtered = allItems.filter(it =>
-          String(it.upc || '').toLowerCase().includes(q) ||
-          String(it.product_name || '').toLowerCase().includes(q) ||
-          String(it.action_type || '').toLowerCase().includes(q) ||
-          String(it.bay || '').toLowerCase().includes(q) ||
-          String(it.reason || '').toLowerCase().includes(q) ||
-          String(it.state || '').toLowerCase().includes(q) ||
-          String(it.ledger_id || '').toLowerCase().includes(q)
-        );
-      }
-
       if (countEl) {
-        countEl.textContent = `${filtered.length} action${filtered.length === 1 ? '' : 's'}${currentLedgerFilter ? ' matching' : ' recorded'}`;
+        const gapExtra = totalLargeGaps > 0 ? ` · ⚠️ ${totalLargeGaps} large gap${totalLargeGaps === 1 ? '' : 's'}` : '';
+        countEl.textContent = `${filtered.length} action${filtered.length === 1 ? '' : 's'}${currentLedgerFilter || currentLedgerGapsOnly ? ' matching' : ' recorded'}${gapExtra}`;
       }
 
       if (!filtered.length) {
         tbody.innerHTML = `
           <tr>
             <td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted); font-size:12px;">
-              No actions found${currentLedgerFilter ? ` matching "${currentLedgerFilter}"` : ''}.
+              No actions found${currentLedgerGapsOnly ? ' with large gaps (>= 2m)' : ''}${currentLedgerFilter ? ` matching "${currentLedgerFilter}"` : ''}.
             </td>
           </tr>
         `;
@@ -4046,16 +4174,41 @@
           ? `<span class="meta-pill" style="font-size:10px; font-weight:700; background:rgba(37,99,235,0.08); color:#2563EB; border-color:rgba(37,99,235,0.2); padding:1px 6px;">⏱️ ${escapeHtml(it.time_taken_str)}</span>`
           : `<span class="meta-pill" style="font-size:10px; background:rgba(148,163,184,0.1); color:var(--text-muted); padding:1px 6px;">⏱️ 12s</span>`;
 
+        let rowStyle = '';
+        let gapBadgeHtml = '';
+        if (it.is_critical_gap) {
+          rowStyle = 'background:rgba(239,68,68,0.06); border-left:4px solid #ef4444;';
+          gapBadgeHtml = `
+            <div style="margin-top:3px;">
+              <span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #f87171; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; display:inline-flex; align-items:center; gap:3px;" title="Critical delay of ${formatGapDuration(it.gap_seconds).replace('+', '')} since previous action">
+                🚨 ${formatGapDuration(it.gap_seconds)} Pause
+              </span>
+            </div>
+          `;
+        } else if (it.is_large_gap) {
+          rowStyle = 'background:rgba(245,158,11,0.06); border-left:4px solid #f59e0b;';
+          gapBadgeHtml = `
+            <div style="margin-top:3px;">
+              <span class="badge" style="background:#fef3c7; color:#b45309; border:1px solid #fcd34d; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; display:inline-flex; align-items:center; gap:3px;" title="Large gap of ${formatGapDuration(it.gap_seconds).replace('+', '')} since previous action">
+                ⚠️ ${formatGapDuration(it.gap_seconds)} Gap
+              </span>
+            </div>
+          `;
+        }
+
         const sUrl = it.digital_shelf_url || buildDigitalShelfScanUrl(it.scan_id, it, currentFlowData && currentFlowData.metadata);
         const scanLink = sUrl
           ? `<a href="${escapeHtml(sUrl)}" target="_blank" rel="noopener" style="font-size:10px; color:#2563EB; text-decoration:none; display:inline-block; margin-top:2px;">Scan #${it.scan_id || 'Digital'} ↗</a>`
           : '';
 
         return `
-          <tr>
+          <tr style="${rowStyle}">
             <td>
               <div style="font-family:monospace; font-size:11px; font-weight:700;">${escapeHtml(it.ts || (currentFlowData && currentFlowData.metadata && currentFlowData.metadata.duration_started_at) || '08:32:45')}</div>
-              <div style="margin-top:3px;">${durationPill}</div>
+              <div style="margin-top:3px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                ${durationPill}
+              </div>
+              ${gapBadgeHtml}
             </td>
             <td><span style="font-weight:700; font-size:11.5px;">${escapeHtml(it.bay || 'Bay 1')}</span></td>
             <td>
@@ -4089,10 +4242,64 @@
 
     } else {
       // Milestone Events View
+      const evList = (events || []).map(ev => ({ ...ev }));
+      evList.sort((a, b) => {
+        const ta = parseLedgerTimestamp(a.ts);
+        const tb = parseLedgerTimestamp(b.ts);
+        return ta - tb;
+      });
+
+      let prevEvTs = null;
+      let totalLargeEvGaps = 0;
+      evList.forEach(ev => {
+        const curTs = parseLedgerTimestamp(ev.ts);
+        if (prevEvTs && curTs > 0 && prevEvTs > 0) {
+          const diffSec = Math.round((curTs - prevEvTs) / 1000);
+          ev.gap_seconds = diffSec > 0 ? diffSec : 0;
+          if (ev.gap_seconds >= 120) {
+            ev.is_large_gap = true;
+            ev.is_critical_gap = ev.gap_seconds >= 300;
+            totalLargeEvGaps++;
+          } else {
+            ev.is_large_gap = false;
+            ev.is_critical_gap = false;
+          }
+        } else {
+          ev.gap_seconds = 0;
+          ev.is_large_gap = false;
+          ev.is_critical_gap = false;
+        }
+        if (curTs > 0) prevEvTs = curTs;
+      });
+
+      if (currentLedgerSortOrder === 'desc') {
+        evList.reverse();
+      }
+
+      updateLedgerToolbarUI(totalLargeEvGaps);
+
+      let filtered = evList;
+      if (currentLedgerGapsOnly) {
+        filtered = filtered.filter(ev => ev.is_large_gap);
+      }
+      if (currentLedgerFilter) {
+        const q = currentLedgerFilter;
+        filtered = filtered.filter(ev =>
+          String(ev.event_type || '').toLowerCase().includes(q) ||
+          String(ev.detail || '').toLowerCase().includes(q) ||
+          String(ev.bay || '').toLowerCase().includes(q) ||
+          String(ev.source_table || '').toLowerCase().includes(q) ||
+          String(ev.source_row_id || '').toLowerCase().includes(q)
+        );
+      }
+
+      const sortIndicator = currentLedgerSortOrder === 'asc' ? '⏶ (Start → Last)' : '⏷ (Last → Start)';
       if (thead) {
         thead.innerHTML = `
           <tr>
-            <th>Timestamp</th>
+            <th style="min-width:160px; cursor:pointer;" onclick="window.IrTaskFlow.toggleLedgerSort()" title="Click to toggle sorting">
+              Timestamp <span style="font-size:10px; color:#2563EB;">${sortIndicator}</span>
+            </th>
             <th>Phase</th>
             <th>Event Type</th>
             <th>Bay</th>
@@ -4103,47 +4310,62 @@
         `;
       }
 
-      const evList = events || [];
-      let filtered = evList;
-      if (currentLedgerFilter) {
-        const q = currentLedgerFilter;
-        filtered = evList.filter(ev =>
-          String(ev.event_type || '').toLowerCase().includes(q) ||
-          String(ev.detail || '').toLowerCase().includes(q) ||
-          String(ev.bay || '').toLowerCase().includes(q) ||
-          String(ev.source_table || '').toLowerCase().includes(q) ||
-          String(ev.source_row_id || '').toLowerCase().includes(q)
-        );
-      }
-
       if (countEl) {
-        countEl.textContent = `${filtered.length} milestone${filtered.length === 1 ? '' : 's'}${currentLedgerFilter ? ' matching' : ''}`;
+        const gapExtra = totalLargeEvGaps > 0 ? ` · ⚠️ ${totalLargeEvGaps} large gap${totalLargeEvGaps === 1 ? '' : 's'}` : '';
+        countEl.textContent = `${filtered.length} milestone${filtered.length === 1 ? '' : 's'}${currentLedgerFilter || currentLedgerGapsOnly ? ' matching' : ''}${gapExtra}`;
       }
 
       if (!filtered.length) {
         tbody.innerHTML = `
           <tr>
             <td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted); font-size:12px;">
-              No milestones found.
+              No milestones found${currentLedgerGapsOnly ? ' with large gaps (>= 2m)' : ''}.
             </td>
           </tr>
         `;
         return;
       }
 
-      tbody.innerHTML = filtered.map((ev) => `
-        <tr>
-          <td style="font-family: monospace; font-size: 11px;">${escapeHtml(ev.ts)}</td>
-          <td><span class="badge badge-gray">${escapeHtml(String(ev.phase || '').toUpperCase())}</span></td>
-          <td><b>${escapeHtml(ev.event_type || 'event')}</b></td>
-          <td>${escapeHtml(ev.bay || '—')}</td>
-          <td style="font-size: 11.5px;">${escapeHtml(ev.detail || '—')}</td>
-          <td style="font-family: monospace; font-size: 10px; color: #38bdf8;">
-            ${escapeHtml(ev.source_table || '')}.${escapeHtml(ev.source_column || '')}
-          </td>
-          <td style="font-family: monospace; font-size: 10px;">#${escapeHtml(String(ev.source_row_id || ''))}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = filtered.map((ev) => {
+        let rowStyle = '';
+        let gapBadge = '';
+        if (ev.is_critical_gap) {
+          rowStyle = 'background:rgba(239,68,68,0.06); border-left:4px solid #ef4444;';
+          gapBadge = `
+            <div style="margin-top:3px;">
+              <span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #f87171; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:4px;">
+                🚨 ${formatGapDuration(ev.gap_seconds)} Pause
+              </span>
+            </div>
+          `;
+        } else if (ev.is_large_gap) {
+          rowStyle = 'background:rgba(245,158,11,0.06); border-left:4px solid #f59e0b;';
+          gapBadge = `
+            <div style="margin-top:3px;">
+              <span class="badge" style="background:#fef3c7; color:#b45309; border:1px solid #fcd34d; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:4px;">
+                ⚠️ ${formatGapDuration(ev.gap_seconds)} Gap
+              </span>
+            </div>
+          `;
+        }
+
+        return `
+          <tr style="${rowStyle}">
+            <td style="font-family: monospace; font-size: 11px;">
+              <div>${escapeHtml(ev.ts)}</div>
+              ${gapBadge}
+            </td>
+            <td><span class="badge badge-gray">${escapeHtml(String(ev.phase || '').toUpperCase())}</span></td>
+            <td><b>${escapeHtml(ev.event_type || 'event')}</b></td>
+            <td>${escapeHtml(ev.bay || '—')}</td>
+            <td style="font-size: 11.5px;">${escapeHtml(ev.detail || '—')}</td>
+            <td style="font-family: monospace; font-size: 10px; color: #38bdf8;">
+              ${escapeHtml(ev.source_table || '')}.${escapeHtml(ev.source_column || '')}
+            </td>
+            <td style="font-family: monospace; font-size: 10px;">#${escapeHtml(String(ev.source_row_id || ''))}</td>
+          </tr>
+        `;
+      }).join('');
     }
   }
 
@@ -4771,6 +4993,8 @@
     checkAuthStatus,
     setLedgerMode,
     filterLedger,
+    toggleLedgerSort,
+    toggleGapsOnlyFilter,
     initScanExportView,
     setExportRange,
     fetchScanExportData,
