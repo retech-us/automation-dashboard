@@ -1,15 +1,15 @@
 {
   "status": "live",
-  "lastUpdated": "2026-10-30T04:47:27.804290+00:00",
+  "lastUpdated": "2026-10-30T05:03:33.173256+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "projectName": "Rebotics 3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 188,
+    "openDefects": 189,
     "blockers": 95,
-    "inProgress": 389,
+    "inProgress": 388,
     "inQa": 71,
     "resolvedThisWeek": 37,
     "resolvedTotal": 352
@@ -22,10 +22,10 @@
     "Lowest": 0
   },
   "byComponent": {
+    "IOS": 245,
     "BE REBM": 208,
     "General": 164,
     "ANDR": 250,
-    "IOS": 245,
     "HAWKEYE": 22,
     "PARENT-WORK-ITEM": 19,
     "MOBILE": 3,
@@ -40,15 +40,15 @@
     "OPTIMAL CAPTURE": 1
   },
   "byStatus": {
-    "Staging": 9,
-    "To  Do": 152,
+    "QA": 71,
+    "To  Do": 153,
     "Waiting for clarification": 36,
     "Dev Complete": 12,
-    "QA": 71,
     "UAT": 246,
     "Code Review": 17,
     "In Progress": 29,
     "PRODUCTION READY": 76,
+    "Staging": 8,
     "Done": 290,
     "Invalid": 62
   },
@@ -220,6 +220,33 @@
   },
   "issues": [
     {
+      "key": "REB3-21117",
+      "summary": "[iOS] User Gets Stuck at \"Mark ALL Done\" When the Last Set Aside Item Is Handled by Another User",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Nitish Kumar",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
+      "tester": "Swati Goel",
+      "reporter": "Swati Goel",
+      "created": "2026-10-28T02:49:15.398-0700",
+      "updated": "2026-10-29T22:00:05.581-0700",
+      "ageDays": 1,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21117"
+    },
+    {
       "key": "REB3-20900",
       "summary": "[BE] Incorrect ACTION_MOVE Generated for Items with Same Current and Expected Position in Fix in Bay",
       "project": "Rebotics 3",
@@ -229,8 +256,8 @@
       "releaseStatus": "Unreleased",
       "type": "Bug",
       "epic": "None",
-      "status": "Staging",
-      "statusCategory": "indeterminate",
+      "status": "To  Do",
+      "statusCategory": "new",
       "priority": "Medium",
       "component": "BE REBM",
       "assignee": "Sourabh Yadav",
@@ -238,7 +265,7 @@
       "tester": "Rohan Patil",
       "reporter": "Rohan Patil",
       "created": "2026-10-06T22:41:30.546-0700",
-      "updated": "2026-10-29T21:35:38.639-0700",
+      "updated": "2026-10-29T21:54:45.700-0700",
       "ageDays": 22,
       "staleDays": 0,
       "labels": [
@@ -872,33 +899,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-21113"
     },
     {
-      "key": "REB3-21117",
-      "summary": "[iOS] User Gets Stuck at \"Mark ALL Done\" When the Last Set Aside Item Is Handled by Another User",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Nitish Kumar",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
-      "tester": "Swati Goel",
-      "reporter": "Swati Goel",
-      "created": "2026-10-28T02:49:15.398-0700",
-      "updated": "2026-10-29T07:04:13.704-0700",
-      "ageDays": 1,
-      "staleDays": 0,
-      "labels": [
-        "IOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-21117"
-    },
-    {
       "key": "REB3-21123",
       "summary": "[iOS] Incorrect Status Label Displayed for READY_TO_PICK Items",
       "project": "Rebotics 3",
@@ -1529,7 +1529,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-10-27T21:47:44.500-0700",
       "updated": "2026-10-29T03:05:49.853-0700",
-      "ageDays": 1,
+      "ageDays": 2,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21101"
@@ -1795,7 +1795,7 @@
       "reporter": "Swati Goel",
       "created": "2026-10-27T21:58:12.641-0700",
       "updated": "2026-10-29T01:34:50.630-0700",
-      "ageDays": 1,
+      "ageDays": 2,
       "staleDays": 0,
       "labels": [
         "IOS"
@@ -6063,7 +6063,7 @@
       "reporter": "vikas yadav",
       "created": "2026-05-11T21:49:59.747-0700",
       "updated": "2026-10-28T23:28:45.887-0700",
-      "ageDays": 170,
+      "ageDays": 171,
       "staleDays": 0,
       "labels": [
         "iOS"
@@ -9309,7 +9309,7 @@
       "reporter": "Raghav Galhotra",
       "created": "2026-07-14T21:55:27.853-0700",
       "updated": "2026-10-28T23:15:38.079-0700",
-      "ageDays": 106,
+      "ageDays": 107,
       "staleDays": 0,
       "labels": [
         "ALBT",
@@ -10647,7 +10647,7 @@
       "reporter": "Akanksha Jangir",
       "created": "2025-07-01T21:56:37.187-0700",
       "updated": "2026-10-28T23:15:31.916-0700",
-      "ageDays": 484,
+      "ageDays": 485,
       "staleDays": 0,
       "labels": [
         "Spillover"
@@ -12522,7 +12522,7 @@
       "reporter": "Vipin Nair",
       "created": "2026-05-03T22:00:51.727-0700",
       "updated": "2026-10-28T23:15:26.317-0700",
-      "ageDays": 178,
+      "ageDays": 179,
       "staleDays": 0,
       "labels": [
         "AD-HOC",
@@ -14086,7 +14086,7 @@
       "created": "2026-10-11T23:15:49.554-0700",
       "updated": "2026-10-28T22:00:48.949-0700",
       "ageDays": 17,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20941"
     },
@@ -14111,7 +14111,7 @@
       "created": "2026-10-27T23:02:05.781-0700",
       "updated": "2026-10-28T21:58:49.502-0700",
       "ageDays": 1,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "IOS"
       ],
@@ -14138,7 +14138,7 @@
       "created": "2026-10-27T20:45:20.605-0700",
       "updated": "2026-10-28T21:49:54.007-0700",
       "ageDays": 2,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [
         "IOS"
       ],
@@ -21871,7 +21871,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-09-27T22:01:09.225-0700",
       "updated": "2026-10-08T22:56:22.892-0700",
-      "ageDays": 31,
+      "ageDays": 32,
       "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20817"
@@ -22657,7 +22657,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-09-22T21:51:33.688-0700",
       "updated": "2026-10-08T22:56:04.420-0700",
-      "ageDays": 36,
+      "ageDays": 37,
       "staleDays": 20,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20719"
