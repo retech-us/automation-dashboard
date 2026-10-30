@@ -1451,8 +1451,8 @@
                   <th>Retailer &amp; Store</th>
                   <th>Status</th>
                   <th>Task Date &amp; Performer</th>
-                  <th>Pre-Photo Scan ID</th>
-                  <th>Post-Photo Scan ID</th>
+                  <th>Pre-Photo Scan IDs (All Bays)</th>
+                  <th>Post-Photo Scan IDs (All Bays)</th>
                   <th>Digital Shelf Link</th>
                   <th>Total Actions</th>
                 </tr>
@@ -1620,22 +1620,36 @@
             </select>
           </div>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
-          <div>
-            <label style="display:block; font-size:11px; font-weight:700; color:#334155; margin-bottom:4px;">Username</label>
-            <input type="text" id="ir-auth-username" class="ir-flow-input" style="width:100%; font-size:11.5px; padding:6px 8px;" placeholder="Username" autocomplete="username" />
-          </div>
-          <div>
-            <label style="display:block; font-size:11px; font-weight:700; color:#334155; margin-bottom:4px;">Password</label>
-            <input type="password" id="ir-auth-password" class="ir-flow-input" style="width:100%; font-size:11.5px; padding:6px 8px;" placeholder="Password" autocomplete="current-password" />
-          </div>
+        <div style="display:flex; border-bottom:1px solid #E2E8F0; margin-bottom:12px;">
+          <button type="button" id="ir-auth-tab-creds" onclick="window.IrTaskFlow.setAuthTab('creds')" style="flex:1; padding:7px 4px; font-size:11px; font-weight:700; border:none; background:transparent; border-bottom:2px solid #2563EB; color:#2563EB; cursor:pointer;">
+            👤 Username &amp; Password
+          </button>
+          <button type="button" id="ir-auth-tab-token" onclick="window.IrTaskFlow.setAuthTab('token')" style="flex:1; padding:7px 4px; font-size:11px; font-weight:700; border:none; background:transparent; border-bottom:2px solid transparent; color:#64748B; cursor:pointer;">
+            🔑 Bearer Auth Token
+          </button>
         </div>
-        <div style="margin-bottom:14px;">
+
+        <div id="ir-auth-panel-creds">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+            <div>
+              <label style="display:block; font-size:11px; font-weight:700; color:#334155; margin-bottom:4px;">Username <span style="color:#DC2626;">*</span></label>
+              <input type="text" id="ir-auth-username" class="ir-flow-input" style="width:100%; font-size:11.5px; padding:6px 8px;" placeholder="Username" autocomplete="username" />
+            </div>
+            <div>
+              <label style="display:block; font-size:11px; font-weight:700; color:#334155; margin-bottom:4px;">Password <span style="color:#DC2626;">*</span></label>
+              <input type="password" id="ir-auth-password" class="ir-flow-input" style="width:100%; font-size:11.5px; padding:6px 8px;" placeholder="Password required" autocomplete="current-password" />
+            </div>
+          </div>
+          <p style="margin:0 0 12px 0; font-size:10px; color:#64748B;">Both username and password are required. Live authentication check is performed on submit.</p>
+        </div>
+
+        <div id="ir-auth-panel-token" style="display:none; margin-bottom:14px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-            <label style="font-size:11px; font-weight:700; color:#334155;">Or Bearer Auth Token (Direct)</label>
+            <label style="font-size:11px; font-weight:700; color:#334155;">Bearer Auth Token (Direct Session)</label>
             <span id="ir-auth-saved-tag" style="display:none; font-size:9.5px; font-weight:700; color:#166534; background:#DCFCE7; padding:2px 6px; border-radius:4px;">Saved Session</span>
           </div>
           <input type="text" id="ir-auth-token" class="ir-flow-input" style="width:100%; font-size:11px; font-family:'JetBrains Mono',monospace; padding:6px 8px;" placeholder="Paste token e.g. b131c80b292622..." />
+          <p style="margin:4px 0 0 0; font-size:10px; color:#64748B;">Authenticates directly using session token. Password is not required for direct token.</p>
         </div>
         <div id="ir-auth-status-msg" style="display:none; font-size:11px; padding:8px 10px; border-radius:6px; margin-bottom:12px;"></div>
         <div style="display:flex; justify-content:flex-end; gap:8px;">
@@ -1770,7 +1784,7 @@
   <script src="assets/js/issue-bridge.js?v=20261007e"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20261007a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261030e"></script>
+  <script src="assets/js/ir-flow.js?v=20261030f"></script>
   <script src="assets/js/agent-center.js?v=20261012f"></script>
   <script src="assets/js/sentry-usage.js?v=20261012c"></script>
   <script src="assets/js/app.v16.js?v=20261012a"></script>

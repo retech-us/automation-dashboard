@@ -3169,40 +3169,66 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         headers = {"Authorization": f"Token {token}", "Accept": "application/json"}
 
         def fetch_for_task(tid: int):
-            pre_scan = None
-            post_scan = None
+            pre_scans = set()
+            post_scans = set()
+            # 1. Action list pre-photo across all bays (fetch up to 1000 items)
             try:
-                req = urllib.request.Request(f"{base_url}/api/v1/tasks/{tid}/action-list/retailer/?limit=1", headers=headers)
-                with urllib.request.urlopen(req, context=ssl_ctx, timeout=5) as r:
+                req = urllib.request.Request(f"{base_url}/api/v1/tasks/{tid}/action-list/retailer/?limit=1000", headers=headers)
+                with urllib.request.urlopen(req, context=ssl_ctx, timeout=8) as r:
                     d = json.loads(r.read().decode("utf-8"))
                     rows = d.get("results") if isinstance(d, dict) else d
-                    if rows and isinstance(rows, list) and len(rows) > 0:
-                        act = rows[0]
-                        s = (act.get("current_position") or {}).get("scan_id") or (act.get("expected_position") or {}).get("scan_id") or act.get("processing_action") or act.get("scan_id")
-                        if s and str(s).isdigit():
-                            pre_scan = int(s)
+                    if rows and isinstance(rows, list):
+                        for act in rows:
+                            for key in ("current_position", "expected_position"):
+                                s = (act.get(key) or {}).get("scan_id")
+                                if s and str(s).isdigit():
+                                    pre_scans.add(int(s))
+                            pa = act.get("processing_action")
+                            if pa and str(pa).isdigit():
+                                pre_scans.add(int(pa))
+                            sc = act.get("scan_id")
+                            if sc and str(sc).isdigit():
+                                pre_scans.add(int(sc))
             except Exception:
                 pass
 
+            # 2. Action list post-photo across all bays (fetch up to 1000 items)
             try:
-                req = urllib.request.Request(f"{base_url}/api/v1/tasks/{tid}/action-list/retailer/?stage=post_photo&limit=1", headers=headers)
-                with urllib.request.urlopen(req, context=ssl_ctx, timeout=5) as r:
+                req = urllib.request.Request(f"{base_url}/api/v1/tasks/{tid}/action-list/retailer/?stage=post_photo&limit=1000", headers=headers)
+                with urllib.request.urlopen(req, context=ssl_ctx, timeout=8) as r:
                     d = json.loads(r.read().decode("utf-8"))
                     rows = d.get("results") if isinstance(d, dict) else d
-                    if rows and isinstance(rows, list) and len(rows) > 0:
-                        act = rows[0]
-                        s = (act.get("current_position") or {}).get("scan_id") or (act.get("expected_position") or {}).get("scan_id") or act.get("processing_action") or act.get("scan_id")
-                        if s and str(s).isdigit():
-                            post_scan = int(s)
+                    if rows and isinstance(rows, list):
+                        for act in rows:
+                            for key in ("current_position", "expected_position"):
+                                s = (act.get(key) or {}).get("scan_id")
+                                if s and str(s).isdigit():
+                                    post_scans.add(int(s))
+                            pa = act.get("processing_action")
+                            if pa and str(pa).isdigit():
+                                post_scans.add(int(pa))
+                            sc = act.get("scan_id")
+                            if sc and str(sc).isdigit():
+                                post_scans.add(int(sc))
             except Exception:
                 pass
 
-            shelf_url = f"{base_url}/reporting/scans/{pre_scan}" if pre_scan else (f"{base_url}/reporting/scans/{post_scan}" if post_scan else None)
-            post_shelf_url = f"{base_url}/reporting/scans/{post_scan}" if post_scan else None
+            pre_list = sorted(list(pre_scans))
+            post_list = sorted(list(post_scans))
+            all_list = sorted(list(pre_scans.union(post_scans)))
+
+            pre_primary = pre_list[0] if pre_list else (post_list[0] if post_list else None)
+            post_primary = post_list[0] if post_list else None
+
+            shelf_url = f"{base_url}/reporting/scans/{pre_primary}" if pre_primary else None
+            post_shelf_url = f"{base_url}/reporting/scans/{post_primary}" if post_primary else None
 
             res = {
-                "pre_photo_scan_id": pre_scan,
-                "post_photo_scan_id": post_scan,
+                "pre_photo_scan_id": pre_primary,
+                "post_photo_scan_id": post_primary,
+                "pre_photo_scan_ids": pre_list,
+                "post_photo_scan_ids": post_list,
+                "all_scan_ids": all_list,
                 "digital_shelf_scan_url": shelf_url,
                 "post_digital_shelf_scan_url": post_shelf_url,
             }
@@ -3219,6 +3245,9 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 data = res_map[int(tid)]
                 t["pre_photo_scan_id"] = data["pre_photo_scan_id"]
                 t["post_photo_scan_id"] = data["post_photo_scan_id"]
+                t["pre_photo_scan_ids"] = data["pre_photo_scan_ids"]
+                t["post_photo_scan_ids"] = data["post_photo_scan_ids"]
+                t["all_scan_ids"] = data["all_scan_ids"]
                 t["digital_shelf_scan_url"] = data["digital_shelf_scan_url"]
                 t["post_digital_shelf_scan_url"] = data["post_digital_shelf_scan_url"]
 
@@ -6346,6 +6375,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 # Fetch backend version & instance name
                 backend_ver = fetch_backend_version(base_url)
                 instance_slug = base_url.replace("https://", "").replace("http://", "").split(".")[0]
+                auth_method_label = "via Bearer Token" if override_token else "with Password"
 
                 res_data = {
                     "status": "success",
@@ -6355,9 +6385,10 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     "instance_slug": instance_slug,
                     "backend_version": backend_ver,
                     "username": found_user,
+                    "auth_method": auth_method_label,
                     "token": token,
                     "has_saved_token": True,
-                    "message": f"Connected to {instance_slug} (v{backend_ver}) as {found_user} ({dur}ms)",
+                    "message": f"Connected to {instance_slug} (v{backend_ver}) as {found_user} ({auth_method_label}) in {dur}ms",
                 }
 
                 record_network_traffic(
