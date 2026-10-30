@@ -200,11 +200,36 @@
       .catch(() => {});
 
     modal.style.display = 'flex';
+    setAuthTab(tokenInput && tokenInput.value && (!userInput || !userInput.value) ? 'token' : 'creds');
   }
 
   function closeCredentialsModal() {
     const modal = byId('ir-auth-modal');
     if (modal) modal.style.display = 'none';
+  }
+
+  let currentAuthTab = 'creds';
+
+  function setAuthTab(tab) {
+    currentAuthTab = tab;
+    const tabCreds = byId('ir-auth-tab-creds');
+    const tabToken = byId('ir-auth-tab-token');
+    const panelCreds = byId('ir-auth-panel-creds');
+    const panelToken = byId('ir-auth-panel-token');
+    const statusMsg = byId('ir-auth-status-msg');
+    if (statusMsg) statusMsg.style.display = 'none';
+
+    if (tab === 'creds') {
+      if (tabCreds) { tabCreds.style.borderBottomColor = '#2563EB'; tabCreds.style.color = '#2563EB'; }
+      if (tabToken) { tabToken.style.borderBottomColor = 'transparent'; tabToken.style.color = '#64748B'; }
+      if (panelCreds) panelCreds.style.display = 'block';
+      if (panelToken) panelToken.style.display = 'none';
+    } else {
+      if (tabCreds) { tabCreds.style.borderBottomColor = 'transparent'; tabCreds.style.color = '#64748B'; }
+      if (tabToken) { tabToken.style.borderBottomColor = '#2563EB'; tabToken.style.color = '#2563EB'; }
+      if (panelCreds) panelCreds.style.display = 'none';
+      if (panelToken) panelToken.style.display = 'block';
+    }
   }
 
   function onModalInstanceSelect(slug) {
@@ -216,26 +241,39 @@
 
   async function testCredentialsConnection() {
     const baseUrl = (byId('ir-auth-base-url') || {}).value || '';
-    const username = (byId('ir-auth-username') || {}).value || '';
-    const password = (byId('ir-auth-password') || {}).value || '';
+    let username = (byId('ir-auth-username') || {}).value || '';
+    let password = (byId('ir-auth-password') || {}).value || '';
     let token = (byId('ir-auth-token') || {}).value || '';
     const msgEl = byId('ir-auth-status-msg');
     const btn = byId('btn-ir-auth-test');
 
-    // If username is provided without password, stop immediately
-    if (username && !password) {
-      if (msgEl) {
-        msgEl.style.display = 'block';
-        msgEl.style.background = '#FEF2F2';
-        msgEl.style.border = '1px solid #FECACA';
-        msgEl.style.color = '#991B1B';
-        msgEl.textContent = `❌ Please enter the password for username '${username}'.`;
+    if (currentAuthTab === 'creds') {
+      if (!username || !password) {
+        if (msgEl) {
+          msgEl.style.display = 'block';
+          msgEl.style.background = '#FEF2F2';
+          msgEl.style.border = '1px solid #FECACA';
+          msgEl.style.color = '#991B1B';
+          msgEl.textContent = !username
+            ? '❌ Please enter your Username.'
+            : `❌ Password is required to authenticate as '${username}'.`;
+        }
+        return;
       }
-      return;
-    }
-
-    if (username && password) {
-      token = '';
+      token = ''; // Exclude token in creds mode
+    } else {
+      if (!token) {
+        if (msgEl) {
+          msgEl.style.display = 'block';
+          msgEl.style.background = '#FEF2F2';
+          msgEl.style.border = '1px solid #FECACA';
+          msgEl.style.color = '#991B1B';
+          msgEl.textContent = '❌ Please enter a Bearer Auth Token.';
+        }
+        return;
+      }
+      username = '';
+      password = '';
     }
 
     if (!baseUrl) return;
@@ -256,11 +294,12 @@
       });
       const data = await resp.json();
       if (data.status === 'success') {
+        const methodTag = data.auth_method || (token ? 'via Bearer Token' : 'with Password');
         if (msgEl) {
           msgEl.style.background = '#F0FDF4';
           msgEl.style.border = '1px solid #BBF7D0';
           msgEl.style.color = '#166534';
-          msgEl.textContent = `✅ Connected to ${data.instance_slug} (v${data.backend_version || '1.0'}) as '${data.username}' in ${data.latency_ms}ms!`;
+          msgEl.textContent = `✅ Connected to ${data.instance_slug} (v${data.backend_version || '1.0'}) as '${data.username}' (${methodTag}) in ${data.latency_ms}ms!`;
         }
         checkAuthStatus(data.instance_slug);
       } else {
@@ -296,26 +335,39 @@
 
   async function saveCredentialsAndReload() {
     const baseUrl = (byId('ir-auth-base-url') || {}).value || '';
-    const username = (byId('ir-auth-username') || {}).value || '';
-    const password = (byId('ir-auth-password') || {}).value || '';
+    let username = (byId('ir-auth-username') || {}).value || '';
+    let password = (byId('ir-auth-password') || {}).value || '';
     let token = (byId('ir-auth-token') || {}).value || '';
     const msgEl = byId('ir-auth-status-msg');
     const btn = byId('btn-ir-auth-save');
 
-    // If username is provided without password, stop immediately
-    if (username && !password) {
-      if (msgEl) {
-        msgEl.style.display = 'block';
-        msgEl.style.background = '#FEF2F2';
-        msgEl.style.border = '1px solid #FECACA';
-        msgEl.style.color = '#991B1B';
-        msgEl.textContent = `❌ Please enter the password for username '${username}'.`;
+    if (currentAuthTab === 'creds') {
+      if (!username || !password) {
+        if (msgEl) {
+          msgEl.style.display = 'block';
+          msgEl.style.background = '#FEF2F2';
+          msgEl.style.border = '1px solid #FECACA';
+          msgEl.style.color = '#991B1B';
+          msgEl.textContent = !username
+            ? '❌ Please enter your Username.'
+            : `❌ Password is required to authenticate as '${username}'.`;
+        }
+        return;
       }
-      return;
-    }
-
-    if (username && password) {
       token = '';
+    } else {
+      if (!token) {
+        if (msgEl) {
+          msgEl.style.display = 'block';
+          msgEl.style.background = '#FEF2F2';
+          msgEl.style.border = '1px solid #FECACA';
+          msgEl.style.color = '#991B1B';
+          msgEl.textContent = '❌ Please enter a Bearer Auth Token.';
+        }
+        return;
+      }
+      username = '';
+      password = '';
     }
 
     if (!baseUrl) return;
@@ -4260,19 +4312,25 @@
           continue;
         }
 
-        // Resolve authentic scan IDs
-        let preScan = t.pre_photo_scan_id || t.scan_id;
-        let postScan = t.post_photo_scan_id;
-        if (!preScan && Array.isArray(t.scan_ids) && t.scan_ids.length > 0) {
-          preScan = t.scan_ids[0];
-          if (t.scan_ids.length > 1) postScan = t.scan_ids[t.scan_ids.length - 1];
+        // Resolve authentic scan IDs across all bays
+        let preScans = Array.isArray(t.pre_photo_scan_ids) && t.pre_photo_scan_ids.length > 0
+          ? t.pre_photo_scan_ids
+          : (t.pre_photo_scan_id ? [t.pre_photo_scan_id] : []);
+
+        let postScans = Array.isArray(t.post_photo_scan_ids) && t.post_photo_scan_ids.length > 0
+          ? t.post_photo_scan_ids
+          : (t.post_photo_scan_id ? [t.post_photo_scan_id] : []);
+
+        if (!preScans.length && Array.isArray(t.scan_ids) && t.scan_ids.length > 0) {
+          preScans = t.scan_ids;
         }
 
-        const shelfUrl = preScan ? `https://${instHost}/reporting/scans/${preScan}` : (t.digital_shelf_scan_url || null);
-        const postShelfUrl = postScan ? `https://${instHost}/reporting/scans/${postScan}` : null;
+        const allScans = Array.from(new Set([...preScans, ...postScans]));
+        const shelfUrl = preScans[0] ? `https://${instHost}/reporting/scans/${preScans[0]}` : (t.digital_shelf_scan_url || null);
+        const postShelfUrl = postScans[0] ? `https://${instHost}/reporting/scans/${postScans[0]}` : null;
 
         // Must have at least one scan ID or digital shelf link
-        if (!preScan && !postScan && !shelfUrl && !postShelfUrl) {
+        if (!allScans.length && !shelfUrl && !postShelfUrl) {
           continue;
         }
 
@@ -4285,8 +4343,11 @@
           status: t.status || 'completed',
           task_date: t.task_date || fromDate,
           performer: perf,
-          pre_scan_id: preScan,
-          post_scan_id: postScan,
+          pre_scan_ids: preScans,
+          post_scan_ids: postScans,
+          all_scan_ids: allScans,
+          pre_scan_id: preScans[0] || null,
+          post_scan_id: postScans[0] || null,
           digital_shelf_url: shelfUrl,
           post_digital_shelf_url: postShelfUrl,
           total_actions: t.total_action_items || t.actions_count || t.item_count || 0,
@@ -4317,18 +4378,26 @@
           stBadge = 'background:rgba(239,68,68,0.12); color:#DC2626; border:1px solid rgba(239,68,68,0.3);';
         }
 
-        const preScanLink = item.pre_scan_id
-          ? `<a href="https://${instHost}/reporting/scans/${item.pre_scan_id}" target="_blank" rel="noopener" style="font-weight:700; color:#2563EB; text-decoration:none;">📸 #${item.pre_scan_id} ↗</a>`
+        const preScanLinks = (item.pre_scan_ids && item.pre_scan_ids.length > 0)
+          ? item.pre_scan_ids.map(sid => `
+              <a href="https://${instHost}/reporting/scans/${sid}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:2px; font-weight:700; color:#2563EB; text-decoration:none; margin:2px 3px 2px 0; font-size:11px; background:rgba(37,99,235,0.08); padding:2px 7px; border-radius:4px; border:1px solid rgba(37,99,235,0.22);" title="Open Pre-Photo Bay Scan #${sid} in Digital Shelf">
+                📸 #${sid} ↗
+              </a>
+            `).join(' ')
           : '<span style="color:var(--text-muted);">—</span>';
 
-        const postScanLink = item.post_scan_id
-          ? `<a href="https://${instHost}/reporting/scans/${item.post_scan_id}" target="_blank" rel="noopener" style="font-weight:700; color:#059669; text-decoration:none;">📸 #${item.post_scan_id} ↗</a>`
+        const postScanLinks = (item.post_scan_ids && item.post_scan_ids.length > 0)
+          ? item.post_scan_ids.map(sid => `
+              <a href="https://${instHost}/reporting/scans/${sid}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:2px; font-weight:700; color:#059669; text-decoration:none; margin:2px 3px 2px 0; font-size:11px; background:rgba(5,150,105,0.08); padding:2px 7px; border-radius:4px; border:1px solid rgba(5,150,105,0.22);" title="Open Post-Photo Bay Scan #${sid} in Digital Shelf">
+                📸 #${sid} ↗
+              </a>
+            `).join(' ')
           : '<span style="color:var(--text-muted);">—</span>';
 
         const digitalLink = item.digital_shelf_url
-          ? `<a href="${escapeHtml(item.digital_shelf_url)}" target="_blank" rel="noopener" class="btn btn--outline btn--sm" style="font-size:10.5px; padding:2px 8px; text-decoration:none;">Open Shelf Report ↗</a>`
+          ? `<a href="${escapeHtml(item.digital_shelf_url)}" target="_blank" rel="noopener" class="btn btn--outline btn--sm" style="font-size:10.5px; padding:3px 9px; text-decoration:none;">Open Shelf Report ↗</a>`
           : (item.post_digital_shelf_url
-              ? `<a href="${escapeHtml(item.post_digital_shelf_url)}" target="_blank" rel="noopener" class="btn btn--outline btn--sm" style="font-size:10.5px; padding:2px 8px; text-decoration:none;">Open Post Report ↗</a>`
+              ? `<a href="${escapeHtml(item.post_digital_shelf_url)}" target="_blank" rel="noopener" class="btn btn--outline btn--sm" style="font-size:10.5px; padding:3px 9px; text-decoration:none;">Open Post Report ↗</a>`
               : '<span style="color:var(--text-muted);">—</span>');
 
         return `
@@ -4354,8 +4423,8 @@
               <div style="font-size:11.5px; font-weight:600;">${escapeHtml(item.task_date)}</div>
               <div style="font-size:10.5px; color:var(--text-muted);">👤 ${escapeHtml(item.performer)}</div>
             </td>
-            <td>${preScanLink}</td>
-            <td>${postScanLink}</td>
+            <td style="max-width:280px;">${preScanLinks}</td>
+            <td style="max-width:280px;">${postScanLinks}</td>
             <td>${digitalLink}</td>
             <td style="font-weight:700; font-size:12px;">${item.total_actions} actions</td>
           </tr>
@@ -4419,7 +4488,19 @@
       alert('Please select at least one task using the checkboxes to export.');
       return;
     }
-    const headers = ['Task ID', 'Retailer', 'Store', 'Status', 'Date', 'Performer', 'Pre-Photo Scan ID', 'Post-Photo Scan ID', 'Digital Shelf URL', 'Actions Count'];
+    const headers = [
+      'Task ID',
+      'Retailer',
+      'Store',
+      'Status',
+      'Date',
+      'Performer',
+      'Pre-Photo Scan IDs (All Bays)',
+      'Post-Photo Scan IDs (All Bays)',
+      'All Scan IDs Combined',
+      'Digital Shelf URL',
+      'Total Actions'
+    ];
     const rows = selectedTasks.map(t => [
       t.task_id,
       `"${String(t.retailer).replace(/"/g, '""')}"`,
@@ -4427,8 +4508,9 @@
       t.status,
       t.task_date,
       `"${String(t.performer).replace(/"/g, '""')}"`,
-      t.pre_scan_id || '',
-      t.post_scan_id || '',
+      `"${(t.pre_scan_ids || (t.pre_scan_id ? [t.pre_scan_id] : [])).join(', ')}"`,
+      `"${(t.post_scan_ids || (t.post_scan_id ? [t.post_scan_id] : [])).join(', ')}"`,
+      `"${(t.all_scan_ids || []).join(', ')}"`,
       t.digital_shelf_url || '',
       t.total_actions || 0,
     ]);
@@ -4455,10 +4537,16 @@
     }
     const ids = [];
     selectedTasks.forEach(t => {
-      if (t.pre_scan_id) ids.push(String(t.pre_scan_id));
-      if (t.post_scan_id && t.post_scan_id !== t.pre_scan_id) ids.push(String(t.post_scan_id));
+      if (Array.isArray(t.all_scan_ids) && t.all_scan_ids.length > 0) {
+        t.all_scan_ids.forEach(sid => ids.push(String(sid)));
+      } else {
+        if (Array.isArray(t.pre_scan_ids)) t.pre_scan_ids.forEach(sid => ids.push(String(sid)));
+        else if (t.pre_scan_id) ids.push(String(t.pre_scan_id));
+        if (Array.isArray(t.post_scan_ids)) t.post_scan_ids.forEach(sid => ids.push(String(sid)));
+        else if (t.post_scan_id) ids.push(String(t.post_scan_id));
+      }
     });
-    const uniqueIds = Array.from(new Set(ids));
+    const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
     if (!uniqueIds.length) {
       alert('No scan IDs found in selected tasks.');
       return;
@@ -4692,6 +4780,7 @@
     filterStagingTable,
     openCredentialsModal,
     closeCredentialsModal,
+    setAuthTab,
     onModalInstanceSelect,
     testCredentialsConnection,
     saveCredentialsAndReload,
