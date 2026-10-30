@@ -9303,3 +9303,24 @@ button.ir-review-row {
   box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4) !important;
 }
 
+.btn-playable-guide {
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border: none !important;
+  padding: 6px 14px !important;
+  border-radius: 20px !important;
+  cursor: pointer !important;
+  box-shadow: 0 3px 12px rgba(79, 70, 229, 0.35) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+.btn-playable-guide:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.5) !important;
+}
+
+@keyframes pulsePlay {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.85; }
+}
+

@@ -1080,6 +1080,8 @@ TASK_CACHE_TTL_SECONDS = 1800
 TASK_LIST_CACHE: Dict[Any, Any] = {}
 # (instance, task_id) -> (fetched_at, task_flow_dict)
 TASK_FLOW_CACHE: Dict[Tuple[str, int], Tuple[float, Dict[str, Any]]] = {}
+# (base_url, task_id) -> scan metadata {pre_photo_scan_id, post_photo_scan_id, digital_shelf_scan_url, post_digital_shelf_scan_url}
+TASK_SCAN_CACHE: Dict[Tuple[str, int], Dict[str, Any]] = {}
 
 
 def instance_slug_from_url(base_url: str) -> str:
@@ -3098,20 +3100,125 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         stored = load_history(IR_HISTORY_FILE)
         remote, remote_error, host_note = self._fetch_instance_tasks(base_url, instance, range_info, task_type=task_type)
         _, signed_token = signed_in_backend(base_url, INSTANCE_TOKENS)
+        history_view = build_history_view(
+            apply_filters(stored),
+            apply_filters(remote),
+            instance,
+            range_info,
+            remote_error,
+            available=in_range(remote) or in_range(stored),
+        )
+        if signed_token and history_view.get("tasks"):
+            self._enrich_tasks_with_scans(base_url, signed_token, history_view["tasks"])
         return {
             "status": "success",
             "signed_in": bool(signed_token),
             "host_note": host_note,
             "filters": {"type": task_type, "statuses": statuses, "title": title},
-            **build_history_view(
-                apply_filters(stored),
-                apply_filters(remote),
-                instance,
-                range_info,
-                remote_error,
-                available=in_range(remote) or in_range(stored),
-            ),
+            **history_view,
         }
+
+    def _enrich_tasks_with_scans(self, base_url: str, token: str, tasks: List[Dict[str, Any]]) -> None:
+        if not token or not tasks:
+            return
+
+        to_fetch = []
+        for t in tasks[:45]:
+            tid = t.get("task_id")
+            if not tid or not str(tid).isdigit():
+                continue
+            tid_int = int(tid)
+            cache_key = (base_url, tid_int)
+            if cache_key in TASK_SCAN_CACHE:
+                cached = TASK_SCAN_CACHE[cache_key]
+                t["pre_photo_scan_id"] = cached.get("pre_photo_scan_id")
+                t["post_photo_scan_id"] = cached.get("post_photo_scan_id")
+                t["digital_shelf_scan_url"] = cached.get("digital_shelf_scan_url")
+                t["post_digital_shelf_scan_url"] = cached.get("post_digital_shelf_scan_url")
+            else:
+                disk_p = os.path.join(os.path.dirname(__file__), "data", "ir_tasks", f"{tid}.json")
+                if os.path.exists(disk_p):
+                    try:
+                        with open(disk_p, "r", encoding="utf-8") as f:
+                            disk_d = json.load(f)
+                        meta = disk_d.get("metadata") or {}
+                        pre = meta.get("pre_photo_scan_id") or meta.get("scan_id")
+                        post = meta.get("post_photo_scan_id")
+                        if pre or post:
+                            res = {
+                                "pre_photo_scan_id": int(pre) if pre and str(pre).isdigit() else None,
+                                "post_photo_scan_id": int(post) if post and str(post).isdigit() else None,
+                                "digital_shelf_scan_url": f"{base_url}/reporting/scans/{pre}" if pre else None,
+                                "post_digital_shelf_scan_url": f"{base_url}/reporting/scans/{post}" if post else None,
+                            }
+                            TASK_SCAN_CACHE[cache_key] = res
+                            t["pre_photo_scan_id"] = res["pre_photo_scan_id"]
+                            t["post_photo_scan_id"] = res["post_photo_scan_id"]
+                            t["digital_shelf_scan_url"] = res["digital_shelf_scan_url"]
+                            t["post_digital_shelf_scan_url"] = res["post_digital_shelf_scan_url"]
+                            continue
+                    except Exception:
+                        pass
+                to_fetch.append(tid_int)
+
+        if not to_fetch:
+            return
+
+        headers = {"Authorization": f"Token {token}", "Accept": "application/json"}
+
+        def fetch_for_task(tid: int):
+            pre_scan = None
+            post_scan = None
+            try:
+                req = urllib.request.Request(f"{base_url}/api/v1/tasks/{tid}/action-list/retailer/?limit=1", headers=headers)
+                with urllib.request.urlopen(req, context=ssl_ctx, timeout=5) as r:
+                    d = json.loads(r.read().decode("utf-8"))
+                    rows = d.get("results") if isinstance(d, dict) else d
+                    if rows and isinstance(rows, list) and len(rows) > 0:
+                        act = rows[0]
+                        s = (act.get("current_position") or {}).get("scan_id") or (act.get("expected_position") or {}).get("scan_id") or act.get("processing_action") or act.get("scan_id")
+                        if s and str(s).isdigit():
+                            pre_scan = int(s)
+            except Exception:
+                pass
+
+            try:
+                req = urllib.request.Request(f"{base_url}/api/v1/tasks/{tid}/action-list/retailer/?stage=post_photo&limit=1", headers=headers)
+                with urllib.request.urlopen(req, context=ssl_ctx, timeout=5) as r:
+                    d = json.loads(r.read().decode("utf-8"))
+                    rows = d.get("results") if isinstance(d, dict) else d
+                    if rows and isinstance(rows, list) and len(rows) > 0:
+                        act = rows[0]
+                        s = (act.get("current_position") or {}).get("scan_id") or (act.get("expected_position") or {}).get("scan_id") or act.get("processing_action") or act.get("scan_id")
+                        if s and str(s).isdigit():
+                            post_scan = int(s)
+            except Exception:
+                pass
+
+            shelf_url = f"{base_url}/reporting/scans/{pre_scan}" if pre_scan else (f"{base_url}/reporting/scans/{post_scan}" if post_scan else None)
+            post_shelf_url = f"{base_url}/reporting/scans/{post_scan}" if post_scan else None
+
+            res = {
+                "pre_photo_scan_id": pre_scan,
+                "post_photo_scan_id": post_scan,
+                "digital_shelf_scan_url": shelf_url,
+                "post_digital_shelf_scan_url": post_shelf_url,
+            }
+            TASK_SCAN_CACHE[(base_url, tid)] = res
+            return tid, res
+
+        with ThreadPoolExecutor(max_workers=min(10, len(to_fetch))) as pool:
+            results = list(pool.map(fetch_for_task, to_fetch))
+
+        res_map = {tid: data for tid, data in results}
+        for t in tasks:
+            tid = t.get("task_id")
+            if tid and str(tid).isdigit() and int(tid) in res_map:
+                data = res_map[int(tid)]
+                t["pre_photo_scan_id"] = data["pre_photo_scan_id"]
+                t["post_photo_scan_id"] = data["post_photo_scan_id"]
+                t["digital_shelf_scan_url"] = data["digital_shelf_scan_url"]
+                t["post_digital_shelf_scan_url"] = data["post_digital_shelf_scan_url"]
 
     def _fetch_live_task_status(self, base_url: str, task_id: int) -> Optional[Dict[str, Any]]:
         """Fetch 100% real-time task status directly from retailer backend API without any caching."""
