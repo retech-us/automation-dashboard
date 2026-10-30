@@ -337,6 +337,7 @@ def filter_entries(
     task_type: Optional[str] = None,
     statuses: Optional[List[str]] = None,
     title_contains: Optional[str] = None,
+    only_assigned: bool = False,
 ) -> List[Dict[str, Any]]:
     """Keep rows for one instance inside a date window, optionally by type, status and title."""
     first, last = _parse_date(start), _parse_date(end)
@@ -367,9 +368,12 @@ def filter_entries(
             continue
         if wanted and normalize_status(entry.get("status")) not in wanted:
             continue
-        # Exclude explicitly unassigned tasks
+        # Exclude explicitly unassigned tasks or require strictly assigned
         perf = entry.get("performer") or entry.get("performer_username")
-        if perf and str(perf).strip().lower() == "unassigned":
+        if only_assigned:
+            if not perf or str(perf).strip().lower() in ("", "none", "null", "unassigned"):
+                continue
+        elif perf and str(perf).strip().lower() == "unassigned":
             continue
         kept.append(entry)
     return kept
