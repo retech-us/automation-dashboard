@@ -4212,7 +4212,7 @@
     `;
 
     try {
-      const url = `/api/runner/ir_history?instance=${encodeURIComponent(inst)}&from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(toDate)}&range=custom&status=${encodeURIComponent(requestedStatuses.join(','))}`;
+      const url = `/api/runner/ir_history?instance=${encodeURIComponent(inst)}&from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(toDate)}&range=custom&assigned=1&status=${encodeURIComponent(requestedStatuses.join(','))}`;
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -4247,12 +4247,18 @@
 
         if (!isIR) continue;
 
-        const st = String(t.status || '').toLowerCase().replace(/[\s-]/g, '_');
-        if (st.includes('unassigned') || st === 'not_started' || st === 'new' || st === 'created') {
+        // Strictly assigned tasks only (disqualify null, empty, None, or 'unassigned')
+        const perf = String(t.performer || t.performer_username || t.performer_name || '').trim();
+        if (!perf || perf.toLowerCase() === 'unassigned' || perf.toLowerCase() === 'none' || perf.toLowerCase() === 'null') {
           continue;
         }
 
-        seen.add(tid);
+        // Strictly completed, in_progress, or incomplete statuses
+        const st = String(t.status || '').toLowerCase().replace(/[\s-]/g, '_');
+        const isValidStatus = st.includes('complete') || st.includes('progress') || st.includes('active') || st.includes('incomp') || st.includes('done') || st.includes('finish') || st.includes('fail') || st.includes('cancel');
+        if (!isValidStatus || st.includes('unassigned') || st === 'not_started' || st === 'new' || st === 'created') {
+          continue;
+        }
 
         // Resolve authentic scan IDs
         let preScan = t.pre_photo_scan_id || t.scan_id;
@@ -4265,13 +4271,20 @@
         const shelfUrl = preScan ? `https://${instHost}/reporting/scans/${preScan}` : (t.digital_shelf_scan_url || null);
         const postShelfUrl = postScan ? `https://${instHost}/reporting/scans/${postScan}` : null;
 
+        // Must have at least one scan ID or digital shelf link
+        if (!preScan && !postScan && !shelfUrl && !postShelfUrl) {
+          continue;
+        }
+
+        seen.add(tid);
+
         exportList.push({
           task_id: tid,
           retailer: t.retailer || (inst.includes('harr') ? 'Harris Teeter' : 'Kroger'),
           store: t.store_name || t.store_code || t.store_id || 'Store',
           status: t.status || 'completed',
           task_date: t.task_date || fromDate,
-          performer: t.performer || t.performer_username || t.performer_name || 'Store Associate',
+          performer: perf,
           pre_scan_id: preScan,
           post_scan_id: postScan,
           digital_shelf_url: shelfUrl,
@@ -4282,13 +4295,13 @@
 
       loadedExportTasks = exportList;
       if (countPill) countPill.textContent = `${exportList.length} task${exportList.length === 1 ? '' : 's'} found`;
-      if (summaryText) summaryText.textContent = `Found ${exportList.length} Intelligent Reset task${exportList.length === 1 ? '' : 's'} between ${fromDate} and ${toDate} for ${inst.toUpperCase()}. Ready to export.`;
+      if (summaryText) summaryText.textContent = `Found ${exportList.length} assigned Intelligent Reset task${exportList.length === 1 ? '' : 's'} with scans between ${fromDate} and ${toDate} for ${inst.toUpperCase()}. Ready to export.`;
 
       if (!exportList.length) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted); font-size:12.5px;">
-              No matching Intelligent Reset tasks found between <strong>${fromDate}</strong> and <strong>${toDate}</strong> for ${inst.toUpperCase()}. Try another date range or verify instance credentials.
+            <td colspan="9" style="text-align:center; padding:32px; color:var(--text-muted); font-size:12.5px;">
+              No matching assigned Intelligent Reset tasks with scan data found between <strong>${fromDate}</strong> and <strong>${toDate}</strong> for ${inst.toUpperCase()}. Try another date range or verify instance credentials.
             </td>
           </tr>
         `;

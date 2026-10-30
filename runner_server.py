@@ -3082,6 +3082,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         task_type = first("type", "")
         title = first("title", "")
         statuses = [value for value in (first("status", "") or "").split(",") if value.strip()]
+        only_assigned = first("assigned", "") in ("1", "true")
 
         def apply_filters(entries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             return filter_entries(
@@ -3092,6 +3093,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 task_type=task_type,
                 statuses=statuses or None,
                 title_contains=title,
+                only_assigned=only_assigned,
             )
 
         def in_range(entries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

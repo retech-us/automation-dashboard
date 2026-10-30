@@ -1,6 +1,6 @@
 {
   "status": "live",
-  "lastUpdated": "2026-10-30T12:27:34.145255+00:00",
+  "lastUpdated": "2026-10-30T12:29:16.122211+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "projectName": "Rebotics 3",
@@ -22,8 +22,8 @@
     "Lowest": 0
   },
   "byComponent": {
-    "ANDR": 250,
     "IOS": 249,
+    "ANDR": 250,
     "General": 162,
     "BE REBM": 208,
     "HAWKEYE": 22,
@@ -39,16 +39,16 @@
     "SOLUTIONS": 1
   },
   "byStatus": {
+    "Dev Complete": 14,
     "To  Do": 159,
     "In Progress": 32,
-    "Dev Complete": 13,
-    "Code Review": 15,
     "UAT": 257,
     "QA": 55,
     "Waiting for clarification": 36,
     "PRODUCTION READY": 78,
     "Invalid": 63,
     "Staging": 8,
+    "Code Review": 14,
     "Done": 284
   },
   "filterOptions": {
@@ -216,6 +216,33 @@
     ]
   },
   "issues": [
+    {
+      "key": "REB3-21140",
+      "summary": " [iOS] Improper Error Handling When Non-Assignee Attempts to Update a Task",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "Dev Complete",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "vikas yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
+      "tester": "Swati Goel",
+      "reporter": "Swati Goel",
+      "created": "2026-10-30T00:04:14.468-0700",
+      "updated": "2026-10-30T05:27:47.446-0700",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21140"
+    },
     {
       "key": "REB3-21147",
       "summary": "[ANDR] Calendar highlighting for previous visits",
@@ -408,33 +435,6 @@
         "IOS"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-21138"
-    },
-    {
-      "key": "REB3-21140",
-      "summary": " [iOS] Improper Error Handling When Non-Assignee Attempts to Update a Task",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Code Review",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "vikas yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
-      "tester": "Swati Goel",
-      "reporter": "Swati Goel",
-      "created": "2026-10-30T00:04:14.468-0700",
-      "updated": "2026-10-30T04:53:58.178-0700",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "IOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-21140"
     },
     {
       "key": "REB3-21106",
@@ -884,7 +884,7 @@
       "reporter": "vikas yadav",
       "created": "2026-10-09T05:27:47.781-0700",
       "updated": "2026-10-30T02:45:12.401-0700",
-      "ageDays": 20,
+      "ageDays": 21,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20939"
@@ -7448,7 +7448,7 @@
       "reporter": "Irbaz Khan",
       "created": "2026-10-01T05:28:18.848-0700",
       "updated": "2026-10-28T23:15:46.460-0700",
-      "ageDays": 28,
+      "ageDays": 29,
       "staleDays": 1,
       "labels": [
         "QKTP"
@@ -7911,7 +7911,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-19T05:28:31.047-0700",
       "updated": "2026-10-28T23:15:45.101-0700",
-      "ageDays": 71,
+      "ageDays": 72,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20431"
@@ -9133,7 +9133,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-08-07T05:27:44.402-0700",
       "updated": "2026-10-28T23:15:39.521-0700",
-      "ageDays": 83,
+      "ageDays": 84,
       "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20286"
@@ -10600,7 +10600,7 @@
       "reporter": "Irbaz Khan",
       "created": "2026-08-12T05:28:52.857-0700",
       "updated": "2026-10-28T23:15:35.382-0700",
-      "ageDays": 78,
+      "ageDays": 79,
       "staleDays": 1,
       "labels": [
         "HAWKEYE"
@@ -19061,7 +19061,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-08-10T05:27:56.346-0700",
       "updated": "2026-10-13T05:47:18.658-0700",
-      "ageDays": 80,
+      "ageDays": 81,
       "staleDays": 16,
       "labels": [
         "ALBT",
@@ -23178,7 +23178,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-09-21T05:28:30.285-0700",
       "updated": "2026-10-08T22:55:58.469-0700",
-      "ageDays": 38,
+      "ageDays": 39,
       "staleDays": 21,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20704"
