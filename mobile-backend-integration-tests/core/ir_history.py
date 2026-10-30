@@ -361,6 +361,10 @@ def filter_entries(
             continue
         if wanted and normalize_status(entry.get("status")) not in wanted:
             continue
+        # Exclude explicitly unassigned tasks
+        perf = entry.get("performer") or entry.get("performer_username")
+        if perf and str(perf).strip().lower() == "unassigned":
+            continue
         kept.append(entry)
     return kept
 

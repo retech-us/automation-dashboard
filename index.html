@@ -261,6 +261,9 @@
             <span id="ir-auth-status-dot" class="ir-auth-dot" title="No active session token"></span>
             Sign in
           </button>
+          <button type="button" id="btn-ir-guide" class="btn btn--primary btn--sm ir-guide-button" onclick="window.IrTaskFlow.startDashboardTour()" title="Interactive Dashboard Tour &amp; Feature Walkthrough" style="display:inline-flex; align-items:center; gap:6px; font-weight:700; box-shadow:0 2px 8px rgba(79,70,229,0.25);">
+            <span id="ir-guide-play-icon">▶</span> Interactive Guide
+          </button>
           <input type="hidden" id="ir-simple-task-input" value="" />
           <datalist id="ir-task-catalog-list"></datalist>
         </div>
@@ -279,6 +282,7 @@
           <button type="button" class="ir-subnav-btn" role="tab" data-subview="story" aria-selected="false">Action timeline</button>
           <button type="button" class="ir-subnav-btn" role="tab" data-subview="history" aria-selected="false">Recent tasks</button>
           <button type="button" class="ir-subnav-btn" role="tab" data-subview="compare" aria-selected="false">Compare</button>
+          <button type="button" class="ir-subnav-btn" role="tab" data-subview="export" aria-selected="false">📦 Scan IDs Export</button>
         </nav>
 
         <!-- Dynamic Inline Auth Required Alert Banner -->
@@ -687,26 +691,36 @@
 
           <!-- Fold for Technical Lineage (Engineers & QA Only) -->
           <details class="ir-tech-lineage-fold" style="margin-top:24px;">
-            <summary style="font-size:11.5px; font-weight:700; color:var(--text-muted); cursor:pointer; padding:8px 12px; background:var(--bg); border:1px dashed var(--border); border-radius:var(--radius-sm);">
-              ⚙️ View Technical Database Provenance &amp; SQL Ledger (For Developers &amp; QA)
+            <summary style="font-size:12px; font-weight:700; color:var(--text); cursor:pointer; padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); display:flex; justify-content:space-between; align-items:center;">
+              <span>⚙️ View Technical Database Provenance &amp; SQL Ledger (For Developers &amp; QA)</span>
+              <span id="ir-tech-lineage-count" class="meta-pill" style="font-size:11px;">0 actions</span>
             </summary>
-            <div style="padding:12px 0; overflow-x:auto;">
-              <table class="ir-history-table" style="width:100%;">
-                <thead>
-                  <tr>
-                    <th>Timestamp</th>
-                    <th>Phase</th>
-                    <th>Event Type</th>
-                    <th>Bay</th>
-                    <th>Detail</th>
-                    <th>Source Table &amp; Column</th>
-                    <th>Row ID</th>
-                  </tr>
-                </thead>
-                <tbody id="ir-tech-lineage-tbody">
-                  <!-- Populated dynamically -->
-                </tbody>
-              </table>
+            <div style="padding:14px 0;">
+              <!-- Ledger Toolbar -->
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; padding:0 4px;">
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <button type="button" id="btn-ir-ledger-mode-actions" class="btn btn--sm btn--primary" onclick="window.IrTaskFlow.setLedgerMode('actions')">
+                    ⚡ All Actions &amp; Time Taken
+                  </button>
+                  <button type="button" id="btn-ir-ledger-mode-events" class="btn btn--sm btn--outline" onclick="window.IrTaskFlow.setLedgerMode('events')">
+                    📋 Milestones &amp; Batches
+                  </button>
+                </div>
+                <div>
+                  <input type="text" id="ir-ledger-search" class="ir-flow-input" placeholder="🔍 Search action, UPC, product, or bay..." oninput="window.IrTaskFlow.filterLedger(this.value)" style="max-width:280px; font-size:11.5px; padding:5px 10px; height:32px;" />
+                </div>
+              </div>
+
+              <div style="overflow-x:auto;">
+                <table class="ir-history-table" style="width:100%;">
+                  <thead id="ir-tech-lineage-thead">
+                    <!-- Populated dynamically based on ledger mode -->
+                  </thead>
+                  <tbody id="ir-tech-lineage-tbody">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
             </div>
           </details>
         </div>
@@ -1326,6 +1340,100 @@
         </div>
       </section>
 
+      <!-- SUBVIEW 5: Scan IDs Export & Digital Shelf Links -->
+      <section id="ir-subview-export" class="ir-subview-panel" hidden>
+        <div class="panel" style="padding:20px 24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+            <div>
+              <h3 style="font-size:16px; font-weight:800; margin:0 0 4px 0;">📦 Scan IDs &amp; Digital Shelf Link Exporter</h3>
+              <p style="color:var(--text-muted); font-size:12px; margin:0;">
+                Select a date and export all authentic scan IDs, bay scans, and reporting URLs for completed, in-progress, and incomplete tasks
+              </p>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button type="button" id="btn-ir-export-csv" class="btn btn--primary btn--sm" onclick="window.IrTaskFlow.exportScansToCsv()" style="display:inline-flex; align-items:center; gap:6px;">
+                📥 Export CSV
+              </button>
+              <button type="button" id="btn-ir-copy-scans" class="btn btn--outline btn--sm" onclick="window.IrTaskFlow.copyAllScanIds()" style="display:inline-flex; align-items:center; gap:6px;">
+                📋 Copy All Scan IDs
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Toolbar -->
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 18px; margin-bottom:16px; display:flex; flex-wrap:wrap; align-items:center; gap:16px;">
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <label for="ir-export-date" style="font-size:11px; font-weight:700; color:var(--text-muted);">Select Date</label>
+              <input type="date" id="ir-export-date" class="ir-flow-input" style="font-size:12px; padding:6px 10px; height:34px;" />
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <label for="ir-export-instance" style="font-size:11px; font-weight:700; color:var(--text-muted);">Instance</label>
+              <select id="ir-export-instance" class="ir-flow-input" style="font-size:12px; padding:6px 10px; height:34px;">
+                <option value="harr" selected>Harris Teeter (harr)</option>
+                <option value="krcs">Kroger (krcs)</option>
+                <option value="albt">Albertsons (albt)</option>
+                <option value="stgsams">Sam's Club (stgsams)</option>
+                <option value="schn">Schnucks (schn)</option>
+                <option value="wake">Wakefern (wake)</option>
+              </select>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <label style="font-size:11px; font-weight:700; color:var(--text-muted);">Task Statuses</label>
+              <div style="display:flex; align-items:center; gap:12px; margin-top:5px;">
+                <label style="font-size:11.5px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
+                  <input type="checkbox" id="ir-export-st-completed" checked /> Completed
+                </label>
+                <label style="font-size:11.5px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
+                  <input type="checkbox" id="ir-export-st-inprogress" checked /> In Progress
+                </label>
+                <label style="font-size:11.5px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
+                  <input type="checkbox" id="ir-export-st-incomplete" checked /> Incomplete
+                </label>
+              </div>
+            </div>
+
+            <div style="margin-left:auto; display:flex; align-items:flex-end;">
+              <button type="button" id="btn-ir-fetch-scans" class="btn btn--primary btn--sm" onclick="window.IrTaskFlow.fetchScanExportData()" style="height:34px; padding:0 16px; font-weight:700;">
+                🔍 Fetch Scans
+              </button>
+            </div>
+          </div>
+
+          <!-- Status and Summary note -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span id="ir-export-summary-text" style="font-size:12px; color:var(--text-muted);">Select a date and click Fetch Scans.</span>
+            <span id="ir-export-count-pill" class="meta-pill" style="font-size:11px;">0 tasks found</span>
+          </div>
+
+          <!-- Results Table -->
+          <div class="ir-table-wrap" style="overflow-x:auto;">
+            <table class="ir-history-table" style="width:100%;">
+              <thead>
+                <tr>
+                  <th style="width:90px;">Task ID</th>
+                  <th>Retailer &amp; Store</th>
+                  <th>Status</th>
+                  <th>Task Date &amp; Performer</th>
+                  <th>Pre-Photo Scan ID</th>
+                  <th>Post-Photo Scan ID</th>
+                  <th>Digital Shelf Link</th>
+                  <th>Total Actions</th>
+                </tr>
+              </thead>
+              <tbody id="ir-export-tbody">
+                <tr>
+                  <td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted); font-size:12.5px;">
+                    No scan data loaded yet. Pick a date above and click <strong>Fetch Scans</strong>.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- Action Batch Item Slide-over Drawer -->
       <div id="ir-flow-drawer-overlay" class="ir-flow-drawer-overlay" onclick="window.IrTaskFlow.openItemDrawer('', [])"></div>
       <aside id="ir-flow-drawer" class="ir-flow-drawer" aria-label="Action Batch Items Detail">
@@ -1587,6 +1695,39 @@
     </div>
   </dialog>
 
+  <!-- Interactive Dashboard Tour Walkthrough Modal -->
+  <div id="ir-tour-overlay" class="ir-tour-overlay" style="display:none;" onclick="window.IrTaskFlow.closeDashboardTour()"></div>
+  <div id="ir-tour-card" class="ir-tour-card" style="display:none;" role="dialog" aria-modal="true" aria-label="Dashboard Tour">
+    <div class="ir-tour-card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="meta-pill" id="ir-tour-step-badge" style="background:#4F46E5; color:#fff; font-weight:800; font-size:10px;">Step 1 of 7</span>
+        <h4 id="ir-tour-title" style="margin:0; font-size:14px; font-weight:800; color:var(--text);">Instance &amp; Task Selection</h4>
+      </div>
+      <button type="button" class="btn btn--ghost btn--sm" onclick="window.IrTaskFlow.closeDashboardTour()" style="font-size:14px; padding:2px 8px;">✕</button>
+    </div>
+    <div class="ir-tour-card-body">
+      <p id="ir-tour-desc" style="font-size:12px; color:var(--text-muted); line-height:1.5; margin:0 0 12px 0;">
+        Select an instance from the dropdown. Recently performed Intelligent Reset tasks load automatically with live duration, associate activity, and compliance.
+      </p>
+      <div class="ir-tour-progress-bar" style="background:rgba(0,0,0,0.08); height:4px; border-radius:2px; overflow:hidden;">
+        <div id="ir-tour-progress-fill" style="width:14%; height:100%; background:#4F46E5; border-radius:2px; transition:width 0.3s ease;"></div>
+      </div>
+    </div>
+    <div class="ir-tour-card-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+      <button type="button" id="btn-ir-tour-play" class="btn btn--outline btn--sm" onclick="window.IrTaskFlow.toggleTourPlay()" style="font-size:11px;">
+        ⏸️ Pause
+      </button>
+      <div style="display:flex; gap:6px;">
+        <button type="button" id="btn-ir-tour-prev" class="btn btn--outline btn--sm" onclick="window.IrTaskFlow.prevTourStep()" style="font-size:11px;" disabled>
+          ◀ Back
+        </button>
+        <button type="button" id="btn-ir-tour-next" class="btn btn--primary btn--sm" onclick="window.IrTaskFlow.nextTourStep()" style="font-size:11px;">
+          Next ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="assets/bootstrap.js?v=20260901a"></script>
   <script src="assets/js/auth-gate.js?v=20260923b"></script>
   <script src="assets/js/live-tracker.js?v=20260817p"></script>
@@ -1594,7 +1735,7 @@
   <script src="assets/js/issue-bridge.js?v=20261007e"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20261007a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261030a"></script>
+  <script src="assets/js/ir-flow.js?v=20261030b"></script>
   <script src="assets/js/agent-center.js?v=20261012f"></script>
   <script src="assets/js/sentry-usage.js?v=20261012c"></script>
   <script src="assets/js/app.v16.js?v=20261012a"></script>

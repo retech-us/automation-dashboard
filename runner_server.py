@@ -6194,6 +6194,17 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         password = str(payload.get("password") or "").strip()
         override_token = payload.get("token")
 
+        # If a username is provided, password MUST be provided to authenticate as that user
+        if username and not password:
+            return {
+                "status": "error",
+                "connected": False,
+                "latency_ms": 0,
+                "base_url": base_url,
+                "has_saved_token": bool(base_url in INSTANCE_TOKENS),
+                "message": f"Password is required to authenticate as '{username}'.",
+            }
+
         # When credentials are provided, ignore any stale override_token so fresh login occurs
         if username and password:
             override_token = None
