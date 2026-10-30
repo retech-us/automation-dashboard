@@ -3124,14 +3124,19 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         if not token or not tasks:
             return
 
-        to_fetch = []
+        task_meta_map: Dict[int, Dict[str, Any]] = {}
+        to_fetch: List[int] = []
+
+        ir_data_dir = os.path.join(os.path.dirname(__file__), "data", "ir_tasks")
+
         for t in tasks[:45]:
             tid = t.get("task_id")
             if not tid or not str(tid).isdigit():
                 continue
             tid_int = int(tid)
+            task_meta_map[tid_int] = t
             cache_key = (base_url, tid_int)
-            if cache_key in TASK_SCAN_CACHE and "all_scan_ids" in TASK_SCAN_CACHE[cache_key]:
+            if cache_key in TASK_SCAN_CACHE and TASK_SCAN_CACHE[cache_key].get("enriched") and "all_scan_ids" in TASK_SCAN_CACHE[cache_key]:
                 cached = TASK_SCAN_CACHE[cache_key]
                 t["pre_photo_scan_id"] = cached.get("pre_photo_scan_id")
                 t["post_photo_scan_id"] = cached.get("post_photo_scan_id")
@@ -3141,46 +3146,6 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 t["digital_shelf_scan_url"] = cached.get("digital_shelf_scan_url")
                 t["post_digital_shelf_scan_url"] = cached.get("post_digital_shelf_scan_url")
             else:
-                disk_p = os.path.join(os.path.dirname(__file__), "data", "ir_tasks", f"{tid}.json")
-                if os.path.exists(disk_p):
-                    try:
-                        with open(disk_p, "r", encoding="utf-8") as f:
-                            disk_d = json.load(f)
-                        meta = disk_d.get("metadata") or {}
-                        disk_pre_scans = set()
-                        disk_post_scans = set()
-                        for key in ("pre_photo_scan_id", "scan_id"):
-                            v = meta.get(key)
-                            if v and str(v).isdigit():
-                                disk_pre_scans.add(int(v))
-                        if meta.get("post_photo_scan_id") and str(meta.get("post_photo_scan_id")).isdigit():
-                            disk_post_scans.add(int(meta.get("post_photo_scan_id")))
-                        for act in disk_d.get("action_items") or disk_d.get("items") or []:
-                            for key in ("current_position", "expected_position"):
-                                s = (act.get(key) or {}).get("scan_id")
-                                if s and str(s).isdigit():
-                                    disk_pre_scans.add(int(s))
-                        if disk_pre_scans or disk_post_scans:
-                            pre_list = sorted(list(disk_pre_scans))
-                            post_list = sorted(list(disk_post_scans))
-                            all_list = sorted(list(disk_pre_scans.union(disk_post_scans)))
-                            pre_p = pre_list[0] if pre_list else None
-                            post_p = post_list[0] if post_list else None
-                            res = {
-                                "pre_photo_scan_id": pre_p,
-                                "post_photo_scan_id": post_p,
-                                "pre_photo_scan_ids": pre_list,
-                                "post_photo_scan_ids": post_list,
-                                "all_scan_ids": all_list,
-                                "digital_shelf_scan_url": f"{base_url}/reporting/scans/{pre_p}" if pre_p else None,
-                                "post_digital_shelf_scan_url": f"{base_url}/reporting/scans/{post_p}" if post_p else None,
-                            }
-                            TASK_SCAN_CACHE[cache_key] = res
-                            for k, v in res.items():
-                                t[k] = v
-                            continue
-                    except Exception:
-                        pass
                 to_fetch.append(tid_int)
 
         if not to_fetch:
@@ -3189,6 +3154,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         headers = {"Authorization": f"Token {token}", "Accept": "application/json"}
 
         def fetch_for_task(tid: int):
+            t_obj = task_meta_map.get(tid) or {}
             pre_scans = set()
             post_scans = set()
             # 1. Action list pre-photo across all bays (fetch up to 1000 items)
@@ -3233,6 +3199,80 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             except Exception:
                 pass
 
+            # 3. Post-photo sequence enrichment:
+            # When physical changes only occur in a subset of bays, action-list/retailer?stage=post_photo
+            # only associates actions with those bays. We probe the immediate scan range to retrieve
+            # ALL bays photographed during post-photo by matching store, planogram, and performer.
+            if post_scans:
+                try:
+                    anchor_id = min(post_scans)
+                    anchor_req = urllib.request.Request(f"{base_url}/api/v1/realograms/scans/{anchor_id}/", headers=headers)
+                    with urllib.request.urlopen(anchor_req, context=ssl_ctx, timeout=5) as r:
+                        anchor = json.loads(r.read().decode("utf-8"))
+
+                    target_store_custom = anchor.get("store", {}).get("custom_id") or t_obj.get("store_custom_id")
+                    target_store_id = anchor.get("store", {}).get("id") or t_obj.get("store_id")
+                    target_pog = anchor.get("planogram", {}).get("id")
+                    target_user = anchor.get("user", {}).get("username") or t_obj.get("performer_username")
+
+                    min_p = min(post_scans)
+                    max_p = max(post_scans)
+                    margin = max(6, len(pre_scans) - len(post_scans) + 3)
+                    to_probe = [sid for sid in range(min_p - margin, max_p + margin + 1) if sid not in post_scans]
+
+                    def probe_post_scan(sid: int) -> Optional[int]:
+                        try:
+                            s_req = urllib.request.Request(f"{base_url}/api/v1/realograms/scans/{sid}/", headers=headers)
+                            with urllib.request.urlopen(s_req, context=ssl_ctx, timeout=4) as sr:
+                                sd = json.loads(sr.read().decode("utf-8"))
+                                s_custom = sd.get("store", {}).get("custom_id")
+                                s_sid = sd.get("store", {}).get("id")
+                                store_ok = (target_store_custom and s_custom == target_store_custom) or (target_store_id and s_sid == target_store_id)
+                                pog_ok = (not target_pog) or (sd.get("planogram", {}).get("id") == target_pog)
+                                user_ok = (not target_user) or (sd.get("user", {}).get("username") == target_user)
+                                if store_ok and pog_ok and user_ok:
+                                    return sid
+                        except Exception:
+                            pass
+                        return None
+
+                    with ThreadPoolExecutor(max_workers=min(10, max(1, len(to_probe)))) as probe_pool:
+                        for matched in probe_pool.map(probe_post_scan, to_probe):
+                            if matched:
+                                post_scans.add(matched)
+                except Exception:
+                    pass
+
+            # 4. Pre-photo sequence gap check
+            if len(pre_scans) >= 2:
+                min_pre = min(pre_scans)
+                max_pre = max(pre_scans)
+                if 2 <= (max_pre - min_pre) <= 25 and len(pre_scans) < (max_pre - min_pre + 1):
+                    try:
+                        anchor_pre_id = min(pre_scans)
+                        anchor_req = urllib.request.Request(f"{base_url}/api/v1/realograms/scans/{anchor_pre_id}/", headers=headers)
+                        with urllib.request.urlopen(anchor_req, context=ssl_ctx, timeout=5) as r:
+                            anchor_pre = json.loads(r.read().decode("utf-8"))
+                        target_store_custom = anchor_pre.get("store", {}).get("custom_id") or t_obj.get("store_custom_id")
+                        target_pog = anchor_pre.get("planogram", {}).get("id")
+                        target_user = anchor_pre.get("user", {}).get("username") or t_obj.get("performer_username")
+                        for sid in range(min_pre, max_pre + 1):
+                            if sid in pre_scans:
+                                continue
+                            try:
+                                s_req = urllib.request.Request(f"{base_url}/api/v1/realograms/scans/{sid}/", headers=headers)
+                                with urllib.request.urlopen(s_req, context=ssl_ctx, timeout=4) as sr:
+                                    sd = json.loads(sr.read().decode("utf-8"))
+                                    s_custom = sd.get("store", {}).get("custom_id")
+                                    if ((target_store_custom and s_custom == target_store_custom) and
+                                        (not target_pog or sd.get("planogram", {}).get("id") == target_pog) and
+                                        (not target_user or sd.get("user", {}).get("username") == target_user)):
+                                        pre_scans.add(sid)
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
+
             pre_list = sorted(list(pre_scans))
             post_list = sorted(list(post_scans))
             all_list = sorted(list(pre_scans.union(post_scans)))
@@ -3244,6 +3284,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             post_shelf_url = f"{base_url}/reporting/scans/{post_primary}" if post_primary else None
 
             res = {
+                "enriched": True,
                 "pre_photo_scan_id": pre_primary,
                 "post_photo_scan_id": post_primary,
                 "pre_photo_scan_ids": pre_list,
