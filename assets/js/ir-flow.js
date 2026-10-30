@@ -4314,10 +4314,15 @@
 
         const digitalLink = item.digital_shelf_url
           ? `<a href="${escapeHtml(item.digital_shelf_url)}" target="_blank" rel="noopener" class="btn btn--outline btn--sm" style="font-size:10.5px; padding:2px 8px; text-decoration:none;">Open Shelf Report ↗</a>`
-          : '<span style="color:var(--text-muted);">—</span>';
+          : (item.post_digital_shelf_url
+              ? `<a href="${escapeHtml(item.post_digital_shelf_url)}" target="_blank" rel="noopener" class="btn btn--outline btn--sm" style="font-size:10.5px; padding:2px 8px; text-decoration:none;">Open Post Report ↗</a>`
+              : '<span style="color:var(--text-muted);">—</span>');
 
         return `
           <tr>
+            <td style="text-align:center;">
+              <input type="checkbox" class="ir-export-task-cb" data-task-id="${item.task_id}" onchange="window.IrTaskFlow.onExportTaskCheckChange()" checked />
+            </td>
             <td style="font-family:monospace; font-weight:800; font-size:12px;">
               <a href="javascript:void(0)" onclick="window.IrTaskFlow.loadTask('${item.task_id}', '${inst}')" style="color:#4F46E5; text-decoration:underline;" title="Click to view full reset details">
                 #${escapeHtml(item.task_id)}
@@ -4344,11 +4349,15 @@
         `;
       }).join('');
 
+      updateExportSelectedCount();
+      const selectAll = byId('ir-export-select-all');
+      if (selectAll) { selectAll.checked = true; selectAll.indeterminate = false; }
+
     } catch (err) {
       if (summaryText) summaryText.textContent = `Error fetching scan data: ${err.message || err}`;
       tbody.innerHTML = `
         <tr>
-          <td colspan="8" style="text-align:center; padding:32px; color:#DC2626; font-size:12.5px;">
+          <td colspan="9" style="text-align:center; padding:32px; color:#DC2626; font-size:12.5px;">
             ❌ Failed to fetch tasks: ${escapeHtml(err.message || String(err))}
           </td>
         </tr>
@@ -4358,13 +4367,47 @@
     }
   }
 
+  function getSelectedExportTasks() {
+    const cbs = document.querySelectorAll('.ir-export-task-cb:checked');
+    const checkedIds = new Set(Array.from(cbs).map(cb => String(cb.dataset.taskId)));
+    return loadedExportTasks.filter(t => checkedIds.has(String(t.task_id)));
+  }
+
+  function toggleSelectAllExport(checked) {
+    const cbs = document.querySelectorAll('.ir-export-task-cb');
+    cbs.forEach(cb => { cb.checked = checked; });
+    updateExportSelectedCount();
+  }
+
+  function onExportTaskCheckChange() {
+    const allCbs = document.querySelectorAll('.ir-export-task-cb');
+    const checkedCbs = document.querySelectorAll('.ir-export-task-cb:checked');
+    const selectAll = byId('ir-export-select-all');
+    if (selectAll) {
+      selectAll.checked = allCbs.length > 0 && checkedCbs.length === allCbs.length;
+      selectAll.indeterminate = checkedCbs.length > 0 && checkedCbs.length < allCbs.length;
+    }
+    updateExportSelectedCount();
+  }
+
+  function updateExportSelectedCount() {
+    const checkedCbs = document.querySelectorAll('.ir-export-task-cb:checked');
+    const checkedCount = checkedCbs.length;
+    const totalCount = loadedExportTasks.length;
+    const selectedPill = byId('ir-export-selected-pill');
+    if (selectedPill) {
+      selectedPill.textContent = `${checkedCount} of ${totalCount} selected`;
+    }
+  }
+
   function exportScansToCsv() {
-    if (!loadedExportTasks || !loadedExportTasks.length) {
-      alert('No scan data loaded to export. Please click "Fetch Scans" first.');
+    const selectedTasks = getSelectedExportTasks();
+    if (!selectedTasks.length) {
+      alert('Please select at least one task using the checkboxes to export.');
       return;
     }
     const headers = ['Task ID', 'Retailer', 'Store', 'Status', 'Date', 'Performer', 'Pre-Photo Scan ID', 'Post-Photo Scan ID', 'Digital Shelf URL', 'Actions Count'];
-    const rows = loadedExportTasks.map(t => [
+    const rows = selectedTasks.map(t => [
       t.task_id,
       `"${String(t.retailer).replace(/"/g, '""')}"`,
       `"${String(t.store).replace(/"/g, '""')}"`,
@@ -4392,18 +4435,19 @@
   }
 
   function copyAllScanIds() {
-    if (!loadedExportTasks || !loadedExportTasks.length) {
-      alert('No scan data loaded. Please click "Fetch Scans" first.');
+    const selectedTasks = getSelectedExportTasks();
+    if (!selectedTasks.length) {
+      alert('Please select at least one task using the checkboxes to copy scan IDs.');
       return;
     }
     const ids = [];
-    loadedExportTasks.forEach(t => {
+    selectedTasks.forEach(t => {
       if (t.pre_scan_id) ids.push(String(t.pre_scan_id));
       if (t.post_scan_id && t.post_scan_id !== t.pre_scan_id) ids.push(String(t.post_scan_id));
     });
     const uniqueIds = Array.from(new Set(ids));
     if (!uniqueIds.length) {
-      alert('No scan IDs found in current tasks.');
+      alert('No scan IDs found in selected tasks.');
       return;
     }
     navigator.clipboard.writeText(uniqueIds.join(', ')).then(() => {
@@ -4421,53 +4465,79 @@
   /* ─── Interactive Tour & Walkthrough System ─── */
   const TOUR_STEPS = [
     {
+      targetId: 'overall-banner',
+      tab: 'overview',
+      fallbackSelector: '.header',
+      title: '1. Quality at a Glance & Release Confidence',
+      desc: 'Welcome to Store Intell QA Automation Dashboard. The executive radial gauge instantly reveals release confidence across Web, Mobile, and API suites: Green (Ready), Amber (Caution), or Red (Blocked).',
+    },
+    {
+      targetId: 'business-areas',
+      tab: 'overview',
+      fallbackSelector: '.tab-nav',
+      title: '2. Critical Product Areas & Test Suites',
+      desc: 'Live test suites monitor Core Web Portal, Shelf Reset Sequencing Engine, Store Mobile App, and Retailer Backend APIs. Drill into any card to inspect active test counts, pass ratios, and execution health.',
+    },
+    {
+      targetId: 'failures-list',
+      tab: 'attention',
+      fallbackSelector: '#panel-attention',
+      title: '3. Needs Attention & Defect Triage Radar',
+      desc: 'Aggregates broken tests and regressions grouped by root cause. Provides immediate stack traces, triage suggestions, and impacted components so engineers resolve bugs quickly.',
+    },
+    {
+      targetId: 'trends-panel',
+      tab: 'trends',
+      fallbackSelector: '#panel-trends',
+      title: '4. Quality Trends & AI QA Velocity',
+      desc: 'Tracks sprint-over-sprint pass-rate trajectories and stability metrics. Demonstrates AI-assisted testing impact: self-healing locators and automated test maintenance.',
+    },
+    {
+      targetId: 'jira-panel-wrapper',
+      tab: 'jira',
+      fallbackSelector: '#panel-jira',
+      title: '5. Jira Quality, Epics & Sprint Delivery',
+      desc: 'Directly synchronized with Jira: bridges automated QA runs with active sprint delivery, epic completion, defect lifecycles, and release sign-off.',
+    },
+    {
       targetId: 'ir-instance-picker',
+      tab: 'ir',
+      subview: 'summary',
       fallbackSelector: '.ir-control-center',
-      title: '1. Instance & Task Selection',
-      desc: 'Select a retailer instance (Harris Teeter, Kroger, Albertsons) from the dropdown. The system automatically fetches recently performed Intelligent Reset tasks. You can search by task ID, title, or filter by associate performer.',
-      subview: 'summary',
+      title: '6. Intelligent Reset: Instance & Task Browser',
+      desc: 'Select a retailer backend (Harris Teeter, Kroger, Albertsons, Sam’s Club) and browse recent physical store reset tasks by associate performer, scheduled date, or task ID.',
     },
     {
-      targetId: 'btn-ir-credentials',
-      fallbackSelector: '.ir-task-browser',
-      title: '2. Instance Credentials & Auth Token',
-      desc: 'Click "Sign in" to authenticate with the live retailer backend. Enter your username and password, or provide a direct bearer token. Connectivity and token validation are tested in real time.',
+      targetId: 'ir-exec-verdict-card',
+      tab: 'ir',
       subview: 'summary',
-    },
-    {
-      targetId: 'ir-3stage-compliance-card',
       fallbackSelector: '#ir-subview-summary',
-      title: '3. 3-Stage Compliance Scorecard',
-      desc: 'Tracks end-to-end shelf quality: Stage 1 (Initial Pre-Compliance Baseline from shelf photos), Stage 2 (Realized Compliance after user movements), and Stage 3 (Final verified post-photo quality and total compliance lift).',
-      subview: 'summary',
+      title: '7. 3-Stage Quality Gates & Executive Verdict',
+      desc: 'Audits physical store planogram resets across 3 mandatory quality gates: 1. Pre-Compliance Baseline (initial camera scan), 2. After-Action Compliance (associate moves/swaps), and 3. Post-Photo Verified Shelf Quality.',
     },
     {
-      targetId: 'ir-bay-breakdown-card',
+      targetId: 'ir-staging-section',
+      tab: 'ir',
+      subview: 'summary',
       fallbackSelector: '#ir-subview-summary',
-      title: '4. Bay Breakdown & Realogram Shelves',
-      desc: 'View physical bay metrics and shelf structures. Discrepancies between physical realogram shelves and target planograms are flagged automatically, providing immediate spatial visibility.',
-      subview: 'summary',
+      title: '8. Movement Sequence & Shelf Staging',
+      desc: 'Step-by-step physical shelf staging showing where products start and where they must go. Associate audit trail records every UPC move, swap, and placement across bays.',
     },
     {
-      targetId: 'ir-action-cards-grid',
-      fallbackSelector: '#ir-subview-summary',
-      title: '5. Action Drawer & Digital Shelf Scans',
-      desc: 'Click any action batch card or "View Products" to open the interactive slide-over drawer. See exact planogram vs realogram coordinates, shelf move trajectories, and click "Open in Digital Shelf Scan" to verify authentic backend reporting scans.',
-      subview: 'summary',
-    },
-    {
-      targetId: 'ir-tech-lineage-tbody',
-      fallbackSelector: '.ir-tech-lineage-fold',
-      title: '6. Technical Database Provenance & SQL Ledger',
-      desc: 'Engineered for QA and Developers: toggle between "All Actions & Time Taken" and "Milestones & Batches" to inspect individual action timestamps, execution durations, database table lineage, and row IDs.',
+      targetId: 'ir-audit-provenance-section',
+      tab: 'ir',
       subview: 'story',
+      fallbackSelector: '.ir-tech-lineage-fold',
+      title: '9. Technical Database Provenance & SQL Ledger',
+      desc: 'For developers and QA: toggle between "All Actions & Time Taken" and "Milestones & Batches" to inspect individual action timestamps, execution durations (+1.8s, +2.4s), database table lineage, and row IDs.',
     },
     {
       targetId: 'ir-subview-export',
-      fallbackSelector: '.ir-subnav-bar',
-      title: '7. Scan IDs Export & Digital Shelf Links',
-      desc: 'Switch to the "Scan IDs Export" tab to pick any date and export all authentic scan IDs, bay scans, and reporting URLs for completed, in-progress, and incomplete tasks directly to CSV or your clipboard.',
+      tab: 'ir',
       subview: 'export',
+      fallbackSelector: '.ir-subnav-bar',
+      title: '10. Scan IDs Export & Digital Shelf Reports',
+      desc: 'Filter tasks by date range (Today, 7 Days, 30 Days) to extract authentic Pre-Photo and Post-Photo scan IDs. Use the checkboxes to choose exactly which tasks to export to CSV or copy to clipboard.',
     },
   ];
 
@@ -4523,7 +4593,15 @@
     currentTourStep = stepIdx;
     const step = TOUR_STEPS[stepIdx];
 
-    // Switch subview if needed
+    // 1. Switch top-level tab if needed
+    if (step.tab) {
+      const tabBtn = document.querySelector(`.tab-btn[data-tab="${step.tab}"]`);
+      if (tabBtn && tabBtn.getAttribute('aria-selected') !== 'true') {
+        tabBtn.click();
+      }
+    }
+
+    // 2. Switch subview if needed
     if (step.subview && currentSubView !== step.subview) {
       switchSubView(step.subview);
     }
@@ -4556,7 +4634,7 @@
         targetEl.classList.add('ir-tour-spotlight');
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }, 150);
+    }, 200);
   }
 
   function nextTourStep() {
@@ -4610,6 +4688,8 @@
     initScanExportView,
     setExportRange,
     fetchScanExportData,
+    toggleSelectAllExport,
+    onExportTaskCheckChange,
     exportScansToCsv,
     copyAllScanIds,
     startDashboardTour,
