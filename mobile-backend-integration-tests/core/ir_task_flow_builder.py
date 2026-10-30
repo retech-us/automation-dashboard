@@ -1848,7 +1848,18 @@ def synthesize_task_flow_from_raw_actions(
 
         rog_sh_count = max(bay_rog_shelves) if bay_rog_shelves else 0
         pog_sh_count = max(bay_pog_shelves) if bay_pog_shelves else 0
-        has_shelf_disc = bool(rog_sh_count > 0 and pog_sh_count > 0 and rog_sh_count != pog_sh_count)
+        
+        # When backend confirms fixture is validated or compliant, action list only represents
+        # delta actions; untouched compliant shelves (e.g. top shelf) generate zero actions and
+        # must not be misconstrued as a physical shelf count discrepancy.
+        is_fixture_valid = bool(meta.get("is_fixture_validated"))
+        if is_fixture_valid:
+            has_shelf_disc = False
+            shelf_max = max(rog_sh_count, pog_sh_count)
+            rog_sh_count = shelf_max
+            pog_sh_count = shelf_max
+        else:
+            has_shelf_disc = bool(rog_sh_count > 0 and pog_sh_count > 0 and rog_sh_count != pog_sh_count)
 
         act_comp_val = meta.get("action_compliance")
         bay_shelf_url = f"https://{inst_host}/reporting/scans/{scan_id}" if scan_id else None
