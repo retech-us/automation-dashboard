@@ -3449,6 +3449,28 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 duration_completed_at = completed_dt.strftime("%Y-%m-%d %H:%M:%S")
                 end_time_str = completed_dt.strftime("%H:%M:%S")
 
+            pre_scan_cand = None
+            for act in (raw_actions or []):
+                s_cand = (
+                    (act.get("current_position") or {}).get("scan_id")
+                    or (act.get("expected_position") or {}).get("scan_id")
+                    or act.get("scan_id")
+                )
+                if s_cand and str(s_cand).isdigit():
+                    pre_scan_cand = int(s_cand)
+                    break
+
+            post_scan_cand = None
+            for act in (post_raw_actions or []):
+                s_cand = (
+                    (act.get("current_position") or {}).get("scan_id")
+                    or (act.get("expected_position") or {}).get("scan_id")
+                    or act.get("scan_id")
+                )
+                if s_cand and str(s_cand).isdigit():
+                    post_scan_cand = int(s_cand)
+                    break
+
             meta_override = {
                 "retailer": "Harris Teeter" if "harr" in instance.lower() else "Kroger",
                 "instance": instance,
@@ -3467,6 +3489,8 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "consolidated_action_compliance": action_comp,
                 "consolidated_post_compliance": final_comp,
                 "section_compliance_map": section_compliance_map,
+                "pre_photo_scan_id": pre_scan_cand,
+                "post_photo_scan_id": post_scan_cand,
                 "wall_duration_min": duration_val,
                 "duration_sec": duration_sec,
                 "duration_source": duration_source,
