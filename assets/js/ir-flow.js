@@ -2369,6 +2369,7 @@
     const batches = data.action_batches || {};
     const events = data.events || [];
     const baySummaries = data.bay_summaries || {};
+    const firstBay = Object.values(baySummaries)[0];
 
     // 1. Calculate Core Non-Tech Metrics
     let movedCount = 0;
@@ -2562,8 +2563,8 @@
       ? finalScore
       : (meta.final_compliance != null ? Math.round(Number(meta.final_compliance)) : null);
 
-    const actionOverride = (evidenceInfo && evidenceInfo.actionScore != null)
-      ? evidenceInfo.actionScore
+    const actionOverride = (actionScoreOverride != null)
+      ? actionScoreOverride
       : (meta.action_compliance != null ? Math.round(Number(meta.action_compliance)) : null);
 
     const totalBatchItems = movedCount + restockedCount + removedCount + exceptionCount;
