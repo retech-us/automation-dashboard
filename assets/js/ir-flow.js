@@ -1787,14 +1787,15 @@
       });
     }
 
-    // Real Shelf Discrepancy: check number of shelves in planogram vs number of shelves in realogram (not product position)
-    // When backend validates the fixture (is_fixture_validated === true), physical fixture and planogram match.
-    const isFixtureValidated = Boolean(meta && (meta.is_fixture_validated === true || meta.is_fixture_validated === 'true'));
+    // Real Shelf Discrepancy: check physical fixture shelf count in planogram vs realogram.
+    // Moving a product from one shelf to another is a normal ACTION_MOVE, NOT a shelf discrepancy.
+    // Shelf discrepancy is strictly when the physical fixture shelf count differs from planogram fixture.
     const shelfDiscrepancies = [];
-    const bayShelfMap = new Map();
+    const isFixtureValidated = Boolean(meta && (meta.is_fixture_validated === true || meta.is_fixture_validated === 'true'));
+    const hasExplicitFixtureDiscrepancy = Boolean(meta && (meta.fixture_discrepancy === true || meta.has_shelf_discrepancy === true));
 
-    if (!isFixtureValidated) {
-      // 1. Gather shelf counts from bay_summaries if present and has_shelf_discrepancy explicitly flagged
+    // Only inspect explicit backend fixture discrepancy flags; never infer shelf discrepancy from product moves
+    if (!isFixtureValidated && hasExplicitFixtureDiscrepancy) {
       const baySummariesObj = (evidenceInfo && evidenceInfo.baySummaries) || (currentFlowData && currentFlowData.bay_summaries) || (meta && meta.bay_summaries) || {};
       Object.entries(baySummariesObj).forEach(([bName, bData]) => {
         const pCount = Number(bData.pog_shelf_count || 0);
@@ -1807,28 +1808,6 @@
           });
         }
       });
-
-      // 2. Only flag a discrepancy from action items if an item is directed to a shelf that physically does not exist (pog shelf > realogram shelf)
-      if (!shelfDiscrepancies.length) {
-        allGeneratedItems.forEach((item) => {
-          const b = item.from_bay || item.to_bay || 'Bay 1';
-          const entry = bayShelfMap.get(b) || { rog: new Set(), pog: new Set() };
-          const fs = item.from_shelf != null ? Number(item.from_shelf) : null;
-          const ts = item.to_shelf != null ? Number(item.to_shelf) : null;
-          if (fs != null && !Number.isNaN(fs) && fs > 0) entry.rog.add(fs);
-          if (ts != null && !Number.isNaN(ts) && ts > 0) entry.pog.add(ts);
-          bayShelfMap.set(b, entry);
-        });
-        bayShelfMap.forEach((entry, b) => {
-          const rMax = entry.rog.size ? Math.max(...entry.rog) : 0;
-          const pMax = entry.pog.size ? Math.max(...entry.pog) : 0;
-          // Note: If rMax > pMax, that often just means higher shelves were already compliant with zero actions.
-          // A genuine physical conflict is when planogram assigns a product to a shelf higher than the physical fixture (pMax > rMax).
-          if (rMax > 0 && pMax > rMax) {
-            shelfDiscrepancies.push({ bay: b, pogCount: pMax, rogCount: rMax });
-          }
-        });
-      }
     }
 
     if (shelfDiscrepancies.length > 0) {
