@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-10-30T06:25:19Z",
-  "durationMs": 24225690,
+  "finishedAt": "2026-10-31T04:09:45Z",
+  "durationMs": 16170826,
   "summary": {
     "total": 25,
-    "passed": 12,
-    "failed": 1,
-    "broken": 12,
+    "passed": 14,
+    "failed": 0,
+    "broken": 11,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/40974067641",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/41145205161",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -44,17 +44,17 @@
     {
       "name": "Navigate through task with survey",
       "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Product name after UPC should match expected expected [BLU BUF DG FD NTRL ADLT CHKN BRN RICE] but found [BLBF CHK BRN RC WGT CNTRL]",
       "feature": "Navigation through steps of the task"
     },
     {
       "name": "Navigate through task with survey",
       "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
-      "status": "failed",
-      "category": "assertion",
-      "reason": "Assertion failed in 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Product name after UPC should match expected expected [BLU BUF DG FD NTRL ADLT CHKN BRN RICE] but found [BLBF CHK BRN RC WGT CNTRL]",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Could not start or resume task. Status: UNKNOWN",
       "feature": "Navigation through steps of the task"
     },
     {
@@ -69,8 +69,8 @@
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 60 seconds",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -85,38 +85,38 @@
       "name": "Tracked Capture Screen View POG from section level",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
       "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen section rejection",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
       "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
     "locator": 6,
-    "timeout": 9,
+    "timeout": 8,
     "assertion": 1,
-    "unknown": 12
+    "unknown": 16
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 12,
-    "review": 13,
+    "passed": 14,
+    "review": 11,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 48.0,
+      "passPct": 56.0,
       "total": 25,
-      "failed": 13
+      "failed": 11
     }
   ],
   "platform": "iOS",
@@ -132,7 +132,7 @@
       "status": "failure"
     }
   ],
-  "runId": "40974067641",
-  "runNumber": 343,
+  "runId": "41145205161",
+  "runNumber": 344,
   "environment": "CI"
 }
