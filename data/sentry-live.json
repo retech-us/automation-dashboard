@@ -1,10 +1,8 @@
 {
-  "generated_at": "2026-11-02T14:04:27+00:00",
+  "generated_at": "2026-11-02T14:20:10+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
-  "errors": [
-    "period_usage: The read operation timed out"
-  ],
+  "errors": [],
   "billing_period": {
     "start": "2026-10-25",
     "end": "2026-11-24",
@@ -542,7 +540,7 @@
       "date": "2026-10-29",
       "accepted": 45036193,
       "quota_dropped": 89052592,
-      "dropped": 254258710
+      "dropped": 254259011
     },
     {
       "date": "2026-10-30",
@@ -554,7 +552,7 @@
       "date": "2026-10-31",
       "accepted": 0,
       "quota_dropped": 28974940,
-      "dropped": 55602696
+      "dropped": 55602941
     },
     {
       "date": "2026-11-01",
@@ -565,8 +563,8 @@
     {
       "date": "2026-11-02",
       "accepted": 0,
-      "quota_dropped": 37197715,
-      "dropped": 80085850
+      "quota_dropped": 39128962,
+      "dropped": 84213026
     }
   ],
   "months": [
@@ -589,24 +587,24 @@
       "days_covered": 31,
       "accepted_total": 271017293,
       "quota_dropped": 2328981917,
-      "all_dropped": 5032530200
+      "all_dropped": 5032530746
     },
     {
       "month": "2026-11",
       "days_covered": 2,
       "accepted_total": 0,
-      "quota_dropped": 60906104,
-      "all_dropped": 127071702
+      "quota_dropped": 62837351,
+      "all_dropped": 131198878
     }
   ],
   "span_drop_reasons_90d": {
-    "rate_limited/span_usage_exceeded": 5147563992,
-    "client_discard/ratelimit_backoff": 3908985220,
+    "rate_limited/span_usage_exceeded": 5149495239,
+    "client_discard/ratelimit_backoff": 3910876994,
     "invalid/too_large:transaction": 1204117479,
-    "client_discard/sample_rate": 1097882389,
+    "client_discard/sample_rate": 1098111177,
     "rate_limited/spike_protection": 323296540,
-    "client_discard/backpressure": 150959837,
-    "client_discard/network_error": 7720244,
+    "client_discard/backpressure": 151034560,
+    "client_discard/network_error": 7721331,
     "client_discard/before_send": 1563220,
     "client_discard/send_error": 1456411,
     "filtered/web-crawlers": 795191,
@@ -614,18 +612,29 @@
     "client_discard/buffer_overflow": 274208,
     "filtered/filtered-transaction": 118814,
     "client_discard/cache_overflow": 105698,
-    "client_discard/queue_overflow": 97263,
+    "client_discard/queue_overflow": 97366,
     "invalid/invalid_transaction": 16430,
     "client_discard/no_parent_span": 3731,
     "filtered/legacy-browsers": 1048,
     "invalid/internal": 2
   },
+  "period_usage": {
+    "error": 252828,
+    "log_byte": 1990390116,
+    "replay": 74368,
+    "span": 271017293,
+    "attachment": 12886969,
+    "profile_duration_ui": 40.5,
+    "profile_duration": 0.0,
+    "monitor_seat": 0,
+    "uptime": 0
+  },
   "error_outcomes_30d": {
     "filtered": 79,
-    "rate_limited": 2056,
-    "client_discard": 2751163,
-    "accepted": 916559,
     "invalid": 240,
+    "rate_limited": 2056,
+    "client_discard": 2755136,
+    "accepted": 917378,
     "abuse": 3
   },
   "projects_period": [
