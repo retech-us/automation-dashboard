@@ -1,8 +1,11 @@
 {
-  "generated_at": "2026-11-02T14:32:12+00:00",
+  "generated_at": "2026-11-02T14:47:13+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
-  "errors": [],
+  "errors": [
+    "period_usage: The read operation timed out",
+    "environments_30d: The read operation timed out"
+  ],
   "billing_period": {
     "start": "2026-10-25",
     "end": "2026-11-24",
@@ -540,13 +543,13 @@
       "date": "2026-10-29",
       "accepted": 45036193,
       "quota_dropped": 89052592,
-      "dropped": 254259011
+      "dropped": 254259248
     },
     {
       "date": "2026-10-30",
       "accepted": 0,
       "quota_dropped": 98628520,
-      "dropped": 183425450
+      "dropped": 183425675
     },
     {
       "date": "2026-10-31",
@@ -563,8 +566,8 @@
     {
       "date": "2026-11-02",
       "accepted": 0,
-      "quota_dropped": 40898317,
-      "dropped": 87941030
+      "quota_dropped": 42848108,
+      "dropped": 92054679
     }
   ],
   "months": [
@@ -587,55 +590,44 @@
       "days_covered": 31,
       "accepted_total": 271017293,
       "quota_dropped": 2328981917,
-      "all_dropped": 5032530746
+      "all_dropped": 5032531208
     },
     {
       "month": "2026-11",
       "days_covered": 2,
       "accepted_total": 0,
-      "quota_dropped": 64606706,
-      "all_dropped": 134927461
+      "quota_dropped": 66556497,
+      "all_dropped": 139041110
     }
   ],
   "span_drop_reasons_90d": {
-    "rate_limited/span_usage_exceeded": 5151264594,
-    "client_discard/ratelimit_backoff": 3912597063,
+    "rate_limited/span_usage_exceeded": 5153214385,
+    "client_discard/ratelimit_backoff": 3914467309,
     "invalid/too_large:transaction": 1204117479,
-    "client_discard/sample_rate": 1098291516,
+    "client_discard/sample_rate": 1098512857,
     "rate_limited/spike_protection": 323296540,
-    "client_discard/backpressure": 151092870,
-    "client_discard/network_error": 7721677,
-    "client_discard/before_send": 1563268,
+    "client_discard/backpressure": 151164141,
+    "client_discard/network_error": 7723012,
+    "client_discard/before_send": 1563361,
     "client_discard/send_error": 1456411,
     "filtered/web-crawlers": 795191,
     "invalid/too_large:span": 472469,
     "client_discard/buffer_overflow": 274208,
     "filtered/filtered-transaction": 118814,
     "client_discard/cache_overflow": 105698,
-    "client_discard/queue_overflow": 97482,
+    "client_discard/queue_overflow": 97516,
     "invalid/invalid_transaction": 16430,
     "client_discard/no_parent_span": 3731,
     "filtered/legacy-browsers": 1048,
     "invalid/internal": 2
   },
-  "period_usage": {
-    "error": 253481,
-    "log_byte": 2000817868,
-    "replay": 74579,
-    "span": 271017293,
-    "attachment": 12886969,
-    "profile_duration_ui": 40.5,
-    "profile_duration": 0.0,
-    "monitor_seat": 0,
-    "uptime": 0
-  },
   "error_outcomes_30d": {
     "invalid": 240,
-    "filtered": 79,
-    "accepted": 918040,
     "rate_limited": 2056,
-    "client_discard": 2758311,
-    "abuse": 3
+    "filtered": 79,
+    "abuse": 3,
+    "client_discard": 2763371,
+    "accepted": 918951
   },
   "projects_period": [
     {
@@ -662,295 +654,5 @@
       "project": "race-platform",
       "accepted": 331269
     }
-  ],
-  "environments_30d": [
-    {
-      "project": "rebm",
-      "environment": "krcs",
-      "stored": 159232850.0,
-      "extrapolated": 216957047.0
-    },
-    {
-      "project": "rebm",
-      "environment": "harr",
-      "stored": 27174122.0,
-      "extrapolated": 34322422.0
-    },
-    {
-      "project": "rebm",
-      "environment": "albt",
-      "stored": 20414679.0,
-      "extrapolated": 59825008.0
-    },
-    {
-      "project": "rebm",
-      "environment": "krog",
-      "stored": 12552505.0,
-      "extrapolated": 13604982.0
-    },
-    {
-      "project": "rebm",
-      "environment": "prgm",
-      "stored": 10795415.0,
-      "extrapolated": 16194062.0
-    },
-    {
-      "project": "rebm",
-      "environment": "whfd",
-      "stored": 8214708.0,
-      "extrapolated": 8274648.0
-    },
-    {
-      "project": "rebm",
-      "environment": "qktp",
-      "stored": 5308352.0,
-      "extrapolated": 158455632.0
-    },
-    {
-      "project": "rebm",
-      "environment": "mjhd",
-      "stored": 5291570.0,
-      "extrapolated": 16024072.0
-    },
-    {
-      "project": "android",
-      "environment": "production",
-      "stored": 4055954.0,
-      "extrapolated": 4056163.0
-    },
-    {
-      "project": "rebotics-frontend",
-      "environment": "production",
-      "stored": 3811791.0,
-      "extrapolated": 3811791.0
-    },
-    {
-      "project": "rebm",
-      "environment": "spar",
-      "stored": 3715258.0,
-      "extrapolated": 6933306.0
-    },
-    {
-      "project": "ios",
-      "environment": "production",
-      "stored": 3459458.0,
-      "extrapolated": 10889123.0
-    },
-    {
-      "project": "rebm",
-      "environment": "sona",
-      "stored": 2891858.0,
-      "extrapolated": 10311431.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "stgalbt",
-      "stored": 1298176.0,
-      "extrapolated": 1298176.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "epsilon",
-      "stored": 1178812.0,
-      "extrapolated": 1178812.0
-    },
-    {
-      "project": "rebm",
-      "environment": "weis",
-      "stored": 857783.0,
-      "extrapolated": 965675.0
-    },
-    {
-      "project": "race-platform",
-      "environment": "dev01",
-      "stored": 169763.0,
-      "extrapolated": 172518.0
-    },
-    {
-      "project": "race-platform",
-      "environment": "test01",
-      "stored": 157083.0,
-      "extrapolated": 159610.0
-    },
-    {
-      "project": "rebm",
-      "environment": "wstm",
-      "stored": 134543.0,
-      "extrapolated": 190671.0
-    },
-    {
-      "project": "rebm",
-      "environment": "rsmn",
-      "stored": 121177.0,
-      "extrapolated": 121177.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "qktp",
-      "stored": 49318.0,
-      "extrapolated": 277841536.0
-    },
-    {
-      "project": "rebm",
-      "environment": "stgsams",
-      "stored": 40359.0,
-      "extrapolated": 2937459.0
-    },
-    {
-      "project": "rebm",
-      "environment": "prge",
-      "stored": 22893.0,
-      "extrapolated": 256904.0
-    },
-    {
-      "project": "rebm",
-      "environment": "albtqa",
-      "stored": 22100.0,
-      "extrapolated": 73499.0
-    },
-    {
-      "project": "rebm",
-      "environment": "stgalbt",
-      "stored": 19685.0,
-      "extrapolated": 19144541.0
-    },
-    {
-      "project": "ios",
-      "environment": "alpha",
-      "stored": 6961.0,
-      "extrapolated": 6961.0
-    },
-    {
-      "project": "race-platform",
-      "environment": "test02",
-      "stored": 4423.0,
-      "extrapolated": 4423.0
-    },
-    {
-      "project": "rebm",
-      "environment": "qktpdev",
-      "stored": 3365.0,
-      "extrapolated": 3291074.0
-    },
-    {
-      "project": "rebm",
-      "environment": "srai",
-      "stored": 1878.0,
-      "extrapolated": 1878.0
-    },
-    {
-      "project": "rebm",
-      "environment": "wtrs",
-      "stored": 1618.0,
-      "extrapolated": 1618000.0
-    },
-    {
-      "project": "ios",
-      "environment": "debug",
-      "stored": 1260.0,
-      "extrapolated": 1260.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "albt",
-      "stored": 341.0,
-      "extrapolated": 3410000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "stguk",
-      "stored": 268.0,
-      "extrapolated": 2680000.0
-    },
-    {
-      "project": "rebm",
-      "environment": "stgeu",
-      "stored": 208.0,
-      "extrapolated": 208000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "cpgd",
-      "stored": 168.0,
-      "extrapolated": 1680000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "sona",
-      "stored": 121.0,
-      "extrapolated": 1210000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "qktpdev",
-      "stored": 86.0,
-      "extrapolated": 860000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "wtrs",
-      "stored": 73.0,
-      "extrapolated": 730000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "srai",
-      "stored": 69.0,
-      "extrapolated": 690000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "qktpdemo",
-      "stored": 66.0,
-      "extrapolated": 660000.0
-    },
-    {
-      "project": "hawkeye",
-      "environment": "stgeu",
-      "stored": 55.0,
-      "extrapolated": 550000.0
-    },
-    {
-      "project": "rebotics-frontend",
-      "environment": "(none)",
-      "stored": 31.0,
-      "extrapolated": 31.0
-    },
-    {
-      "project": "rebm",
-      "environment": "swe",
-      "stored": 26.0,
-      "extrapolated": 26000.0
-    }
-  ],
-  "span_ops_30d": {
-    "rebm": {
-      "event.django": 204613335.0,
-      "middleware.django": 27605964.0,
-      "db": 19978957.0,
-      "http.server": 1507404.0,
-      "view.render": 1300755.0,
-      "view.response.render": 1294123.0,
-      "http.client": 256803.0,
-      "db.redis": 245208.0,
-      "http.client.stream": 14400.0,
-      "template.render": 3.0
-    },
-    "android": {
-      "http.client": 3073676.0,
-      "activity.load": 281387.0,
-      "ui.load": 266051.0,
-      "ui.load.initial_display": 266051.0,
-      "Instance , albt|ModelName , LineDetection_Mobile_3_May_2023": 60131.0,
-      "Instance , krcs|ModelName , LineDetection_Android_3_May_2023": 35266.0,
-      "Instance , kroger|ModelName , LineDetection_Android_3_May_2023": 23347.0,
-      "app.start.warm": 10637.0,
-      "Instance , whfd|ModelName , LineDetection_Android_3_May_2023": 9888.0,
-      "app.start.cold": 9225.0,
-      "process.load": 8576.0,
-      "Instance , harr|ModelName , LineDetection_Android_3_May_2023": 6471.0,
-      "Instance , albertsons|ModelName , LineDetection_Mobile_3_May_2023": 2694.0,
-      "Instance , weis|ModelName , LineDetection_Android_3_May_2023": 2554.0
-    }
-  }
+  ]
 }
