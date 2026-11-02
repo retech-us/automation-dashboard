@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-11-02T15:18:53+00:00",
+  "generated_at": "2026-11-02T15:32:30+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
   "errors": [
-    "subscription: HTTP Error 502: Bad Gateway (needs org:billing; plan caps fall back to config)",
-    "daily: HTTP Error 502: Bad Gateway",
-    "error_outcomes_30d: HTTP Error 502: Bad Gateway",
-    "projects_period: HTTP Error 502: Bad Gateway",
-    "environments_30d: HTTP Error 502: Bad Gateway"
+    "subscription: HTTP Error 504: Gateway Timeout (needs org:billing; plan caps fall back to config)",
+    "daily: The read operation timed out",
+    "period_usage: The read operation timed out",
+    "error_outcomes_30d: HTTP Error 504: Gateway Timeout",
+    "projects_period: The read operation timed out",
+    "environments_30d: HTTP Error 504: Gateway Timeout"
   ],
   "billing_period": {
     "start": "2026-10-01",
     "end": "2026-10-31",
     "source": "config"
   },
-  "reserved": {},
-  "period_usage": {}
+  "reserved": {}
 }
