@@ -1323,6 +1323,47 @@ def format_duration_hm(wall_min: Optional[Any]) -> str:
     return f"{hour_str} {min_str}"
 
 
+_RECORDED_ACTION_TIME_FIELDS = (
+    "action_created_at",
+    "performed_at",
+    "created_at",
+    "updated_at",
+    "modified",
+)
+
+
+def _recorded_clock(value: Any) -> Optional[str]:
+    """Normalize a database timestamp to the ledger clock format."""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    normalized = text.replace("Z", "+00:00")
+    try:
+        parsed = datetime.datetime.fromisoformat(normalized)
+    except ValueError:
+        try:
+            parsed = datetime.datetime.strptime(text.split(".")[0], "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return None
+    if parsed.tzinfo is not None:
+        parsed = parsed.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+    return parsed.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def recorded_action_time(item: Dict[str, Any]) -> Optional[str]:
+    """Return the action row's own timestamp. Task start and end are not a substitute."""
+    sources = [item]
+    nested_action = item.get("action_record") or item.get("compliance_action")
+    if isinstance(nested_action, dict):
+        sources.append(nested_action)
+    for source in sources:
+        for field_name in _RECORDED_ACTION_TIME_FIELDS:
+            recorded = _recorded_clock(source.get(field_name))
+            if recorded:
+                return recorded
+    return None
+
+
 def synthesize_task_flow_from_raw_actions(
     task_id: int,
     raw_actions: List[Dict[str, Any]],
@@ -1727,14 +1768,7 @@ def synthesize_task_flow_from_raw_actions(
                         else:
                             crop_img = raw_crop
 
-                    step_delta_sec = max(4, int(10 + (abs(hash(f"{raw_id}_{idx}")) % 15)))
-                    if total_span_sec and len(grp_items) > 1:
-                        item_offset = int((float(idx) / float(len(grp_items))) * min(400, max(25, len(grp_items) * 10)))
-                        item_dt = batch_time + datetime.timedelta(seconds=item_offset)
-                    else:
-                        item_dt = current_time + datetime.timedelta(seconds=idx * step_delta_sec)
-                    item_ts = item_dt.strftime("%Y-%m-%d %H:%M:%S")
-                    item_duration_str = f"{step_delta_sec}s"
+                    item_ts = recorded_action_time(item)
 
                     flow_items.append(FlowItem(
                         ledger_id=raw_id,
@@ -1773,8 +1807,8 @@ def synthesize_task_flow_from_raw_actions(
                         bounding_box=bbox_data,
                         crop_image_url=crop_img,
                         ts=item_ts,
-                        time_taken_sec=step_delta_sec,
-                        time_taken_str=item_duration_str,
+                        time_taken_sec=None,
+                        time_taken_str=None,
                     ))
 
                 batch_scan_id = flow_items[0].scan_id if flow_items else item_scan_id
