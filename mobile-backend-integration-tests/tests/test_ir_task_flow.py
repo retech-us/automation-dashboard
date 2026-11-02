@@ -347,6 +347,43 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
         self.assertEqual(item["bounding_box"]["y"], 640.0)
         self.assertEqual(item["crop_image_url"], "https://bucket-test.s3.amazonaws.com/crop.png")
 
+    def test_action_ledger_uses_database_timestamp_and_leaves_missing_time_blank(self):
+        actions = [
+            {
+                "id": 11,
+                "action": "ACTION_MOVE",
+                "product_title": "Recorded product",
+                "created_at": "2026-10-13T19:18:42.120000Z",
+                "current_position": {"shelf": 1, "position": "1", "section_info": {"name": "1"}},
+            },
+            {
+                "id": 12,
+                "action": "ACTION_REMOVE",
+                "product_title": "Unstamped product",
+                "current_position": {"shelf": 1, "position": "2", "section_info": {"name": "1"}},
+            },
+        ]
+
+        flow = synthesize_task_flow_from_raw_actions(
+            555,
+            actions,
+            metadata_override={
+                "duration_started_at": "2026-10-13 15:00:00",
+                "duration_completed_at": "2026-10-13 16:00:00",
+            },
+        )
+        items = [
+            item
+            for batch in flow["action_batches"].values()
+            for item in batch["items"]
+        ]
+        by_id = {item["ledger_id"]: item for item in items}
+
+        self.assertEqual(by_id[11]["ts"], "2026-10-13 19:18:42")
+        self.assertIsNone(by_id[11]["time_taken_sec"])
+        self.assertIsNone(by_id[12]["ts"])
+        self.assertIsNone(by_id[12]["time_taken_sec"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4057,7 +4057,7 @@
             ...item,
             batch_id: bId,
             bay: item.to_bay || item.from_bay || batch.bay || 'Bay 1',
-            ts: item.ts || item.created_at || batch.created_at || null,
+            ts: item.ts || item.created_at || null,
             source_table: 'public.planograms_compliance_planogramcomplianceaction',
           });
         }
@@ -4065,6 +4065,9 @@
 
       // Sort items chronologically from start to last actions
       allItems.sort((a, b) => {
+        const aMissing = !a.ts;
+        const bMissing = !b.ts;
+        if (aMissing !== bMissing) return aMissing ? 1 : -1;
         const ta = parseLedgerTimestamp(a.ts);
         const tb = parseLedgerTimestamp(b.ts);
         if (ta !== tb) return ta - tb;
@@ -4126,7 +4129,7 @@
         thead.innerHTML = `
           <tr>
             <th style="min-width:160px; cursor:pointer;" onclick="window.IrTaskFlow.toggleLedgerSort()" title="Click to toggle sorting (Start → Last vs. Last → Start)">
-              Timestamp &amp; Time Taken <span style="font-size:10px; color:#2563EB;">${sortIndicator}</span>
+              Database action time <span style="font-size:10px; color:#2563EB;">${sortIndicator}</span>
             </th>
             <th>Bay</th>
             <th>Action Type</th>
@@ -4139,9 +4142,13 @@
         `;
       }
 
+      const recordedTimes = allItems.filter((item) => item.ts).length;
       if (countEl) {
         const gapExtra = totalLargeGaps > 0 ? ` · ⚠️ ${totalLargeGaps} large gap${totalLargeGaps === 1 ? '' : 's'}` : '';
-        countEl.textContent = `${filtered.length} action${filtered.length === 1 ? '' : 's'}${currentLedgerFilter || currentLedgerGapsOnly ? ' matching' : ' recorded'}${gapExtra}`;
+        const timeNote = recordedTimes
+          ? ''
+          : ' · database did not return an action time';
+        countEl.textContent = `${filtered.length} action${filtered.length === 1 ? '' : 's'}${currentLedgerFilter || currentLedgerGapsOnly ? ' matching' : ' recorded'}${timeNote}${gapExtra}`;
       }
 
       if (!filtered.length) {
@@ -4172,7 +4179,7 @@
 
         const durationPill = it.time_taken_str
           ? `<span class="meta-pill" style="font-size:10px; font-weight:700; background:rgba(37,99,235,0.08); color:#2563EB; border-color:rgba(37,99,235,0.2); padding:1px 6px;">⏱️ ${escapeHtml(it.time_taken_str)}</span>`
-          : `<span class="meta-pill" style="font-size:10px; background:rgba(148,163,184,0.1); color:var(--text-muted); padding:1px 6px;">⏱️ 12s</span>`;
+          : '';
 
         let rowStyle = '';
         let gapBadgeHtml = '';
@@ -4204,7 +4211,7 @@
         return `
           <tr style="${rowStyle}">
             <td>
-              <div style="font-family:monospace; font-size:11px; font-weight:700;">${escapeHtml(it.ts || (currentFlowData && currentFlowData.metadata && currentFlowData.metadata.duration_started_at) || '08:32:45')}</div>
+              <div style="font-family:monospace; font-size:11px; font-weight:700; color:${it.ts ? 'var(--text)' : 'var(--text-muted)'};">${it.ts ? escapeHtml(it.ts) : 'Not recorded'}</div>
               <div style="margin-top:3px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
                 ${durationPill}
               </div>
