@@ -1,8 +1,12 @@
 {
-  "generated_at": "2026-11-03T13:47:00+00:00",
+  "generated_at": "2026-11-03T14:03:47+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
-  "errors": [],
+  "errors": [
+    "error_outcomes_30d: The read operation timed out",
+    "projects_period: HTTP Error 504: Gateway Timeout",
+    "span_ops_30d: HTTP Error 504: Gateway Timeout"
+  ],
   "billing_period": {
     "start": "2026-10-25",
     "end": "2026-11-24",
@@ -16,8 +20,8 @@
     "profile_duration_ui": 0.0,
     "span": 5000000,
     "log_byte": 5000000000.0,
-    "error": 1000000,
-    "replay": 300000
+    "replay": 300000,
+    "error": 1000000
   },
   "daily": [
     {
@@ -558,13 +562,13 @@
       "date": "2026-11-02",
       "accepted": 0,
       "quota_dropped": 102703157,
-      "dropped": 218673743
+      "dropped": 218674625
     },
     {
       "date": "2026-11-03",
       "accepted": 0,
-      "quota_dropped": 38124370,
-      "dropped": 75821800
+      "quota_dropped": 40107090,
+      "dropped": 79830140
     }
   ],
   "months": [
@@ -593,35 +597,35 @@
       "month": "2026-11",
       "days_covered": 3,
       "accepted_total": 0,
-      "quota_dropped": 164535916,
-      "all_dropped": 341483997
+      "quota_dropped": 166518636,
+      "all_dropped": 345493219
     }
   ],
   "span_drop_reasons_90d": {
-    "rate_limited/span_usage_exceeded": 5251193804,
-    "client_discard/ratelimit_backoff": 4001686565,
+    "rate_limited/span_usage_exceeded": 5253176524,
+    "client_discard/ratelimit_backoff": 4003420286,
     "invalid/too_large:transaction": 1132575888,
-    "client_discard/sample_rate": 1098892971,
+    "client_discard/sample_rate": 1099118164,
     "rate_limited/spike_protection": 323270773,
-    "client_discard/backpressure": 154069873,
-    "client_discard/network_error": 7638217,
+    "client_discard/backpressure": 154136912,
+    "client_discard/network_error": 7638647,
     "client_discard/send_error": 1451384,
-    "client_discard/before_send": 1395306,
+    "client_discard/before_send": 1395363,
     "filtered/web-crawlers": 747595,
     "invalid/too_large:span": 395407,
     "client_discard/buffer_overflow": 274208,
     "filtered/filtered-transaction": 111841,
     "client_discard/cache_overflow": 106289,
-    "client_discard/queue_overflow": 98992,
+    "client_discard/queue_overflow": 99054,
     "invalid/invalid_transaction": 15934,
     "client_discard/no_parent_span": 3785,
     "filtered/legacy-browsers": 1048,
     "invalid/internal": 2
   },
   "period_usage": {
-    "error": 297548,
-    "log_byte": 2360609689,
-    "replay": 85599,
+    "error": 299029,
+    "log_byte": 2372388865,
+    "replay": 85832,
     "span": 271017293,
     "attachment": 13341215,
     "profile_duration_ui": 40.5,
@@ -629,40 +633,6 @@
     "monitor_seat": 0,
     "uptime": 0
   },
-  "error_outcomes_30d": {
-    "rate_limited": 2056,
-    "accepted": 956735,
-    "client_discard": 2827603,
-    "filtered": 81,
-    "invalid": 247,
-    "abuse": 3
-  },
-  "projects_period": [
-    {
-      "project": "rebm",
-      "accepted": 256816711
-    },
-    {
-      "project": "android",
-      "accepted": 4060823
-    },
-    {
-      "project": "rebotics-frontend",
-      "accepted": 3811529
-    },
-    {
-      "project": "ios",
-      "accepted": 3469408
-    },
-    {
-      "project": "hawkeye",
-      "accepted": 2527553
-    },
-    {
-      "project": "race-platform",
-      "accepted": 331269
-    }
-  ],
   "environments_30d": [
     {
       "project": "rebm",
@@ -922,35 +892,5 @@
       "stored": 26.0,
       "extrapolated": 26000.0
     }
-  ],
-  "span_ops_30d": {
-    "rebm": {
-      "event.django": 204613335.0,
-      "middleware.django": 27605964.0,
-      "db": 19978957.0,
-      "http.server": 1507404.0,
-      "view.render": 1300755.0,
-      "view.response.render": 1294123.0,
-      "http.client": 256803.0,
-      "db.redis": 245208.0,
-      "http.client.stream": 14400.0,
-      "template.render": 3.0
-    },
-    "android": {
-      "http.client": 3073676.0,
-      "activity.load": 281387.0,
-      "ui.load": 266051.0,
-      "ui.load.initial_display": 266051.0,
-      "Instance , albt|ModelName , LineDetection_Mobile_3_May_2023": 60131.0,
-      "Instance , krcs|ModelName , LineDetection_Android_3_May_2023": 35266.0,
-      "Instance , kroger|ModelName , LineDetection_Android_3_May_2023": 23347.0,
-      "app.start.warm": 10637.0,
-      "Instance , whfd|ModelName , LineDetection_Android_3_May_2023": 9888.0,
-      "app.start.cold": 9225.0,
-      "process.load": 8576.0,
-      "Instance , harr|ModelName , LineDetection_Android_3_May_2023": 6471.0,
-      "Instance , albertsons|ModelName , LineDetection_Mobile_3_May_2023": 2694.0,
-      "Instance , weis|ModelName , LineDetection_Android_3_May_2023": 2554.0
-    }
-  }
+  ]
 }
