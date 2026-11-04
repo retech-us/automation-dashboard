@@ -230,6 +230,21 @@ class StatusNormalisationTests(unittest.TestCase):
         self.assertEqual([e["status"] for e in entries], ["not_started", "in_progress"])
         self.assertEqual([e["status_label"] for e in entries], ["Not started", "In progress"])
 
+    def test_task_status_uses_the_backend_id_before_the_display_name(self):
+        from core.ir_history import task_status_parts
+
+        slug, name = task_status_parts({"id": "incomplete", "name": "Incomplete"})
+        self.assertEqual(slug, "incomplete")
+        self.assertEqual(name, "Incomplete")
+
+        slug, name = task_status_parts({"id": "created", "name": "Not started"})
+        self.assertEqual(slug, "not_started")
+        self.assertEqual(name, "Not started")
+
+        slug, name = task_status_parts(None)
+        self.assertEqual(slug, "unknown")
+        self.assertNotEqual(slug, "completed")
+
     def test_performer_name_prefers_full_name_then_username(self):
         entries = normalize_instance_tasks(
             [

@@ -379,10 +379,27 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
         ]
         by_id = {item["ledger_id"]: item for item in items}
 
+        self.assertEqual(flow["metadata"]["status"], "unknown")
+        self.assertIsNone(flow["metadata"]["final_compliance"])
         self.assertEqual(by_id[11]["ts"], "2026-10-13 19:18:42")
         self.assertIsNone(by_id[11]["time_taken_sec"])
         self.assertIsNone(by_id[12]["ts"])
         self.assertIsNone(by_id[12]["time_taken_sec"])
+
+    def test_incomplete_task_is_not_reported_as_completed(self):
+        flow = synthesize_task_flow_from_raw_actions(
+            556,
+            [{
+                "id": 1,
+                "action": "ACTION_MOVE",
+                "current_position": {"shelf": 1, "position": "1", "section_info": {"name": "1"}},
+            }],
+            metadata_override={"status": "incomplete", "status_reason": "Stopped before completion"},
+        )
+
+        self.assertEqual(flow["metadata"]["status"], "incomplete")
+        self.assertIsNone(flow["metadata"]["final_compliance"])
+        self.assertEqual(flow["metadata"]["quality_gate"], "INCOMPLETE")
 
 
 if __name__ == "__main__":

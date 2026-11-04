@@ -257,6 +257,22 @@ def status_label(slug: str) -> str:
     return _STATUS_LABELS.get(slug) or str(slug).replace("_", " ").capitalize()
 
 
+def task_status_parts(value: Any) -> Tuple[str, str]:
+    """Return the same status slug and label used by the recent-task list.
+
+    The machine id wins over the display name. A missing status stays unknown
+    instead of being treated as completed.
+    """
+    if isinstance(value, dict):
+        slug = normalize_status(value)
+        name = value.get("name") or status_label(slug)
+        return slug, str(name)
+    if value:
+        slug = normalize_status(value)
+        return slug, status_label(slug)
+    return "unknown", "Unknown"
+
+
 def _named(value: Any) -> Tuple[Optional[str], Any]:
     """Pull (name, id) out of the backend's {"id": .., "name": ..} reference objects."""
     if isinstance(value, dict):

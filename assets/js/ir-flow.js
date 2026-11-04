@@ -21,6 +21,32 @@
     return document.getElementById(id);
   }
 
+  function classifyTaskStatus(status) {
+    const raw = String(status || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+    const aliases = {
+      not_started: 'not_started',
+      notstarted: 'not_started',
+      new: 'not_started',
+      created: 'not_started',
+      in_progress: 'in_progress',
+      inprogress: 'in_progress',
+      started: 'in_progress',
+      active: 'in_progress',
+      completed: 'completed',
+      complete: 'completed',
+      done: 'completed',
+      finished: 'completed',
+      incomplete: 'incomplete',
+      failed: 'incomplete',
+      cancelled: 'incomplete',
+      canceled: 'incomplete',
+      on_hold: 'on_hold',
+      hold: 'on_hold',
+      paused: 'on_hold',
+    };
+    return aliases[raw] || raw || 'unknown';
+  }
+
   function normalizeInstanceUrl(inst) {
     if (!inst) return 'https://harr.rebotics.net';
     let clean = String(inst).trim();
@@ -1233,19 +1259,23 @@
       }
       renderSimplifiedView(data);
       const liveTaskId = data.metadata ? data.metadata.task_id : targetId;
-      const taskStatus = (data.metadata && data.metadata.status ? data.metadata.status : '').toLowerCase();
+      const taskStatus = classifyTaskStatus(data.metadata && data.metadata.status);
       if (statusBadge) {
         const retailLabel = data.metadata ? (data.metadata.retailer || inst.toUpperCase()) : inst.toUpperCase();
-        let statusText = 'Loaded';
-        if (taskStatus === 'completed' || taskStatus === 'done') statusText = 'Completed';
-        else if (taskStatus === 'incomplete' || taskStatus === 'failed' || taskStatus === 'cancelled') statusText = 'Incomplete';
-        else if (taskStatus.includes('progress') || taskStatus.includes('started') || taskStatus.includes('active')) statusText = 'In Progress';
+        const statusLabels = {
+          completed: 'Completed',
+          incomplete: 'Incomplete',
+          in_progress: 'In Progress',
+          not_started: 'Not started',
+          on_hold: 'On hold',
+        };
+        const statusText = statusLabels[taskStatus] || (data.metadata && data.metadata.status_name) || 'Unknown';
         statusBadge.textContent = `Task #${liveTaskId} · ${statusText} (${retailLabel})`;
       }
       syncEmbeddedTabs(liveTaskId, inst);
 
       // If task is in-progress on store floor, poll real-time status directly from backend every 8s
-      if (taskStatus.includes('progress') || taskStatus.includes('started') || taskStatus.includes('active')) {
+      if (taskStatus === 'in_progress' || taskStatus === 'not_started') {
         liveStatusPollInterval = setInterval(async () => {
           try {
             const pollRes = await fetch(`/api/runner/task_status?task_id=${encodeURIComponent(liveTaskId)}&instance=${encodeURIComponent(inst)}&_t=${Date.now()}`, {
@@ -1253,10 +1283,10 @@
             });
             if (pollRes.ok) {
               const pollData = await pollRes.json();
-              if (pollData && (pollData.is_completed || (pollData.status && pollData.status.toLowerCase().includes('complet')))) {
+              const polled = classifyTaskStatus(pollData && pollData.status);
+              if (polled !== taskStatus && (polled === 'completed' || polled === 'incomplete' || polled === 'on_hold')) {
                 clearInterval(liveStatusPollInterval);
                 liveStatusPollInterval = null;
-                // Live associate reset just finished! Re-load task to update all graphs and verdict immediately
                 loadTask(liveTaskId, inst);
               }
             }
@@ -2526,10 +2556,10 @@
       }
     }
     
-    const rawStatus = (meta.status || '').toLowerCase();
-    const isIncomplete = rawStatus === 'incomplete' || rawStatus === 'failed' || rawStatus === 'cancelled';
-    const isInProgress = rawStatus === 'in_progress' || rawStatus === 'started' || rawStatus === 'not_started' || rawStatus === 'active';
-    const isCompleted = !isIncomplete && !isInProgress;
+    const taskState = classifyTaskStatus(meta.status);
+    const isIncomplete = taskState === 'incomplete';
+    const isInProgress = taskState === 'in_progress' || taskState === 'not_started' || taskState === 'on_hold';
+    const isCompleted = taskState === 'completed';
     const isPassed = isCompleted && (finalScore !== null && finalScore >= 95);
     renderTaskInsights(
       meta,
@@ -2627,10 +2657,9 @@
       } else {
         verdictCard.className = 'ir-exec-verdict ir-exec-verdict--review';
         byId('ir-exec-verdict-icon').textContent = '⚠️';
-        byId('ir-exec-verdict-title').textContent = finalScore !== null
-          ? `Needs Store Attention — ${finalScore}% Compliance (Target: 95%)`
-          : `Needs Store Attention — Verification Pending`;
-        byId('ir-exec-verdict-desc').textContent = `${assocName} performed adjustments on ${meta.task_title}. Shelf accuracy finished below the 95% release standard.${unperfNote} Review flagged items below.`;
+        const liveLabel = meta.status_name || meta.status || 'Unknown';
+        byId('ir-exec-verdict-title').textContent = `Task status: ${liveLabel}`;
+        byId('ir-exec-verdict-desc').textContent = `${assocName} has task ${meta.task_title || 'this reset'} in status “${liveLabel}”. The verdict uses the same live retailer status as the recent-task list.${unperfNote}`;
       }
 
       byId('ir-exec-meta-store').textContent = storeLabel;
@@ -3004,9 +3033,9 @@
       return;
     }
 
-    const rawStatus = (meta.status || '').toLowerCase();
-    const isIncomplete = rawStatus === 'incomplete' || rawStatus === 'failed' || rawStatus === 'cancelled';
-    const isInProgress = rawStatus === 'in_progress' || rawStatus === 'started' || rawStatus === 'not_started' || rawStatus === 'active';
+    const taskState = classifyTaskStatus(meta.status);
+    const isIncomplete = taskState === 'incomplete';
+    const isInProgress = taskState === 'in_progress' || taskState === 'not_started' || taskState === 'on_hold';
 
     function formatTimeLabel(ts, fallback) {
       if (!ts) return fallback || '';
@@ -3095,7 +3124,7 @@
         tag: 'Active',
         color: '#F59E0B',
       });
-    } else {
+    } else if (taskState === 'completed') {
       storySteps.push(
         {
           time: postPhotoTimeFormatted,
@@ -3122,6 +3151,16 @@
           color: '#64748B',
         }
       );
+    } else {
+      const liveLabel = meta.status_name || meta.status || 'Unknown';
+      storySteps.push({
+        time: 'Current',
+        icon: '⚠️',
+        title: `Task status: ${liveLabel}`,
+        desc: `The live retailer status is “${liveLabel}”. This matches the status shown in the recent-task list.`,
+        tag: liveLabel,
+        color: '#F59E0B',
+      });
     }
 
     container.innerHTML = storySteps.map((step, idx) => `
