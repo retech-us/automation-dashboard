@@ -75,6 +75,7 @@ from core.ir_history import (
     load_history,
     normalize_instance_tasks,
     signed_in_backend,
+    task_status_parts,
     record_entry,
     resolve_range,
     save_history,
@@ -3322,13 +3323,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             req = urllib.request.Request(f"{base_url}/api/v1/tasks/{task_id}/", headers=headers)
             with urllib.request.urlopen(req, context=ssl_ctx, timeout=8) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
-            st_obj = data.get("status")
-            status_name = "completed"
-            if isinstance(st_obj, dict):
-                status_name = st_obj.get("name") or st_obj.get("id") or "completed"
-            elif st_obj:
-                status_name = str(st_obj)
-            status_slug = status_name.strip().lower().replace(" ", "_").replace("-", "_")
+            status_slug, status_name = task_status_parts(data.get("status"))
 
             perf = data.get("performer") or {}
             if isinstance(perf, dict):
@@ -3406,13 +3401,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             pog_name = pogs[0].get("name") if pogs and isinstance(pogs[0], dict) else task_obj.get("title")
 
             # Status
-            raw_st = task_obj.get("status")
-            status_name = "completed"
-            if isinstance(raw_st, dict):
-                status_name = raw_st.get("name") or raw_st.get("id") or "completed"
-            elif raw_st:
-                status_name = str(raw_st)
-            status_slug = status_name.strip().lower().replace(" ", "_").replace("-", "_")
+            status_slug, status_name = task_status_parts(task_obj.get("status"))
 
             # Compliance: synchronize live retailer capture reports for pre_photo and post_photo
             pog_comp = task_obj.get("pog_compliance") or []
@@ -3683,6 +3672,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                 "performer": p_name,
                 "task_date": task_obj.get("task_date") or (task_obj.get("created_at") or "")[:10] or "2026-09-20",
                 "status": status_slug,
+                "status_name": status_name,
                 "status_reason": task_obj.get("status_reason") or ("Stopped before completion" if status_slug in ("incomplete", "failed", "cancelled") else ""),
                 "final_compliance": final_comp,
                 "action_compliance": action_comp,
@@ -4967,8 +4957,11 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         # Try live fetch
         live_flow = self._fetch_live_task_flow(base_url, instance, task_id)
         if live_flow:
+            if live_st:
+                live_flow.setdefault("metadata", {})["status"] = live_st["status"]
+                live_flow["metadata"]["status_name"] = live_st.get("status_name") or live_st["status"]
             live_status = str((live_flow.get("metadata") or {}).get("status") or "").lower()
-            if live_status not in ("in_progress", "started", "active", "not_started", "new"):
+            if live_status not in ("in_progress", "started", "active", "not_started", "new", "on_hold"):
                 TASK_FLOW_CACHE[cache_key] = (time.time(), live_flow)
                 try:
                     os.makedirs(os.path.dirname(disk_flow_path), exist_ok=True)
@@ -4978,8 +4971,28 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     pass
             return live_flow
 
-        # Fallback to local / benchmark reference builder
-        return get_task_flow(task_id, instance=instance)
+        if live_st:
+            return {
+                "status": "success",
+                "task_id": task_id,
+                "metadata": {
+                    "task_id": task_id,
+                    "instance": instance,
+                    "status": live_st["status"],
+                    "status_name": live_st.get("status_name") or live_st["status"],
+                    "task_title": live_st.get("title") or f"Task #{task_id}",
+                    "performer_name": live_st.get("performer_name"),
+                    "final_compliance": None,
+                    "status_reason": "The action detail could not be loaded. The task status is the live retailer status.",
+                },
+                "events": [],
+                "action_batches": {},
+                "bay_summaries": {},
+            }
+        return {
+            "status": "error",
+            "message": f"Live task #{task_id} could not be loaded from {instance}.",
+        }
 
     def _send_svg_crop_fallback(self, scan_id: int, shelf: Optional[int], pos_str: str, message: str = "Scan Item Crop"):
         sh_lbl = f"Shelf {shelf}" if shelf is not None else ""

@@ -1845,18 +1845,21 @@ def synthesize_task_flow_from_raw_actions(
                     badge_type="warning" if "REJECT" in state else "success",
                 ))
 
-        status_slug = str(meta.get("status") or "completed").lower()
-        is_incomplete = status_slug in ("incomplete", "failed", "cancelled")
-        is_in_progress = status_slug in ("in_progress", "started", "not_started", "new")
+        from core.ir_history import normalize_status
+
+        status_slug = normalize_status(meta.get("status")) if meta.get("status") else "unknown"
+        is_incomplete = status_slug in ("incomplete", "failed", "cancelled", "canceled")
+        is_in_progress = status_slug in ("in_progress", "not_started", "on_hold")
+        is_completed = status_slug == "completed"
 
         initial_comp = float(meta.get("initial_compliance") or 35.0)
         final_comp_raw = meta.get("final_compliance")
-        if is_incomplete or is_in_progress:
-            final_comp = None
+        if is_incomplete or is_in_progress or not is_completed:
+            final_comp = float(final_comp_raw) if final_comp_raw is not None else None
         elif final_comp_raw is not None:
             final_comp = float(final_comp_raw)
         else:
-            final_comp = 98.0
+            final_comp = None
 
         if is_incomplete:
             gate_status = "INCOMPLETE"
@@ -2051,7 +2054,7 @@ def synthesize_task_flow_from_raw_actions(
             "initial_compliance": initial_comp,
             "action_compliance": meta.get("action_compliance") if meta.get("action_compliance") is not None else (initial_comp if is_incomplete else None),
             "final_compliance": final_comp,
-            "status": meta.get("status") or "completed",
+            "status": status_slug,
             "status_reason": meta.get("status_reason") or ("Stopped before completion" if is_incomplete else ""),
             "quality_gate": gate_status,
             "bays": sorted_bays,
