@@ -5,24 +5,24 @@
   "repository": "retech-us/retech-web-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-11-03T06:32:38Z",
-  "durationMs": 11400104,
+  "finishedAt": "2026-11-04T06:45:05Z",
+  "durationMs": 12101365,
   "summary": {
     "total": 112,
-    "passed": 60,
-    "failed": 5,
-    "broken": 29,
-    "skipped": 18
+    "passed": 66,
+    "failed": 6,
+    "broken": 25,
+    "skipped": 15
   },
   "reportUrl": "https://retech-us.github.io/retech-web-automation/",
-  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/41571610512",
+  "ciRunUrl": "https://github.com/retech-us/retech-web-automation/actions/runs/41766557143",
   "topFailures": [
     {
       "name": "Input UPC action by subuser, submit train transaction approved by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:101",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:101': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI Train Tab",
+      "category": "login",
+      "reason": "Login/auth failure in 'src/test/resources/features/ApprovalAi.feature:101': invalid element state: Element is not currently interactable and may not be manipulated",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -37,8 +37,8 @@
       "name": "Submit PLUNF action by subuser, approved by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:59",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:59': Element could not be found or healed after attempts. Screen=ApprovalAiPageObject Purpose=AI PLUNF Tab",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:59'",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -60,17 +60,9 @@
     {
       "name": "Submit correction action by subuser, rejected by superuser and verify history tab",
       "fullName": "src/test/resources/features/ApprovalAi.feature:157",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:157'",
-      "feature": "Verify Approval AI tab Products approvals"
-    },
-    {
-      "name": "Submit exception action by subuser, approved by superuser and verify history tab",
-      "fullName": "src/test/resources/features/ApprovalAi.feature:31",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/features/ApprovalAi.feature:31'",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/features/ApprovalAi.feature:157'",
       "feature": "Verify Approval AI tab Products approvals"
     },
     {
@@ -96,29 +88,37 @@
       "category": "locator",
       "reason": "UI element not found or not interactable in 'src/test/resources/features/PriceTags.feature:47': Element 'PriceTagPageObject:Price Tag Finish Button' not found: AI heal was rejected by validation (Tag mismatch. expected=button actual=sl-scan-price-tags) and declared locators did not match.",
       "feature": "Verify price tag corrections and approvals"
+    },
+    {
+      "name": "Submit train transaction by subuser, approved by superuser and verify history tab",
+      "fullName": "src/test/resources/features/ApprovalAi.feature:87",
+      "status": "broken",
+      "category": "locator",
+      "reason": "UI element not found or not interactable in 'src/test/resources/features/ApprovalAi.feature:87': Element could not be found or healed after attempts. Screen=ScanDetailsPageObject Purpose=Counter Train",
+      "feature": "Verify Approval AI tab Products approvals"
     }
   ],
   "failureCategories": {
-    "login": 4,
-    "locator": 15,
-    "timeout": 8,
-    "data": 1,
-    "assertion": 5,
+    "login": 5,
+    "locator": 10,
+    "timeout": 7,
+    "data": 2,
+    "assertion": 6,
     "unknown": 1
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report - parallel-tests",
   "counts": {
     "total": 112,
-    "passed": 60,
-    "review": 34,
-    "skipped": 18
+    "passed": 66,
+    "review": 31,
+    "skipped": 15
   },
   "historyTrend": [
     {
-      "passPct": 53.6,
+      "passPct": 58.9,
       "total": 112,
-      "failed": 34
+      "failed": 31
     },
     {
       "passPct": 35.1,
@@ -151,6 +151,6 @@
       "status": "failure"
     }
   ],
-  "runId": "41571610512",
-  "runNumber": 1082
+  "runId": "41766557143",
+  "runNumber": 1083
 }
