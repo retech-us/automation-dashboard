@@ -1,31 +1,31 @@
 {
   "status": "live",
-  "lastUpdated": "2026-11-05T10:46:33.611862+00:00",
+  "lastUpdated": "2026-11-05T11:03:31.573142+00:00",
   "jiraUrl": "https://retech.atlassian.net",
   "projectKey": "REB3",
   "projectName": "Rebotics 3",
   "executedJql": "project = \"REB3\" ORDER BY updated DESC",
   "summary": {
     "totalDefects": 1000,
-    "openDefects": 187,
+    "openDefects": 188,
     "blockers": 109,
     "inProgress": 445,
     "inQa": 42,
     "resolvedThisWeek": 8,
-    "resolvedTotal": 326
+    "resolvedTotal": 325
   },
   "byPriority": {
     "Highest": 109,
     "High": 244,
-    "Medium": 605,
-    "Low": 42,
+    "Medium": 604,
+    "Low": 43,
     "Lowest": 0
   },
   "byComponent": {
-    "General": 152,
-    "BE REBM": 201,
+    "ANDR": 265,
     "IOS": 256,
-    "ANDR": 264,
+    "General": 152,
+    "BE REBM": 200,
     "DE": 24,
     "HAWKEYE": 21,
     "FE Hawkeye": 24,
@@ -39,15 +39,15 @@
     "SOLUTIONS": 1
   },
   "byStatus": {
-    "To  Do": 153,
+    "To  Do": 154,
+    "QA": 42,
+    "UAT": 312,
     "In Progress": 26,
     "Staging": 11,
-    "Dev Complete": 10,
-    "QA": 42,
-    "UAT": 311,
     "Waiting for clarification": 34,
     "PRODUCTION READY": 75,
-    "Done": 279,
+    "Dev Complete": 9,
+    "Done": 278,
     "Code Review": 12,
     "Invalid": 47
   },
@@ -211,6 +211,85 @@
   },
   "issues": [
     {
+      "key": "REB3-21211",
+      "summary": "[ANDR]Post Photo Flow - Re-entering Incomplete Task Skips Information/Post Photo Screen and Shows Incomplete Marking Pop-up Directly",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "To  Do",
+      "statusCategory": "new",
+      "priority": "Low",
+      "component": "ANDR",
+      "assignee": "Gaurav Tripathi",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/990b4383c9588e551be49750a65e7215?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FGT-5.png",
+      "tester": "Rohan Patil",
+      "reporter": "Rohan Patil",
+      "created": "2026-11-05T03:00:34.740-0800",
+      "updated": "2026-11-05T03:03:13.101-0800",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [],
+      "url": "https://retech.atlassian.net/browse/REB3-21211"
+    },
+    {
+      "key": "REB3-21200",
+      "summary": "[iOS]\"Manage user\" button is not visible to Team Lead until the sub user has started the bay/task",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "QA",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "vikas yadav",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
+      "tester": "Swati Goel",
+      "reporter": "Swati Goel",
+      "created": "2026-11-04T03:33:26.927-0800",
+      "updated": "2026-11-05T02:59:21.526-0800",
+      "ageDays": 0,
+      "staleDays": 0,
+      "labels": [
+        "IOS"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21200"
+    },
+    {
+      "key": "REB3-21198",
+      "summary": "[iOS]User redirected to Post Photo intermittently while Set Bay actions are still pending",
+      "project": "Rebotics 3",
+      "projectKey": "REB3",
+      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
+      "isReleased": false,
+      "releaseStatus": "Unreleased",
+      "type": "Bug",
+      "epic": "None",
+      "status": "UAT",
+      "statusCategory": "indeterminate",
+      "priority": "Medium",
+      "component": "IOS",
+      "assignee": "Nitish Kumar",
+      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
+      "tester": "Swati Goel",
+      "reporter": "Swati Goel",
+      "created": "2026-11-04T00:03:30.633-0800",
+      "updated": "2026-11-05T02:48:59.435-0800",
+      "ageDays": 1,
+      "staleDays": 0,
+      "labels": [
+        "ios"
+      ],
+      "url": "https://retech.atlassian.net/browse/REB3-21198"
+    },
+    {
       "key": "REB3-19652",
       "summary": "[PRGM] CONTRACTUAL - Previous Visit Context for App Users",
       "project": "Rebotics 3",
@@ -334,33 +413,6 @@
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21050"
-    },
-    {
-      "key": "REB3-21200",
-      "summary": "[iOS]\"Manage user\" button is not visible to Team Lead until the sub user has started the bay/task",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "Dev Complete",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "vikas yadav",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/0fe631501a8c824e099eeb70ff875240?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FVY-2.png",
-      "tester": "Swati Goel",
-      "reporter": "Swati Goel",
-      "created": "2026-11-04T03:33:26.927-0800",
-      "updated": "2026-11-05T01:24:39.040-0800",
-      "ageDays": 0,
-      "staleDays": 0,
-      "labels": [
-        "IOS"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-21200"
     },
     {
       "key": "REB3-21207",
@@ -690,7 +742,7 @@
       "reporter": "Brianne Tanke",
       "created": "2026-05-18T03:57:13.467-0700",
       "updated": "2026-11-04T22:46:41.727-0800",
-      "ageDays": 170,
+      "ageDays": 171,
       "staleDays": 0,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19653"
@@ -941,33 +993,6 @@
       "url": "https://retech.atlassian.net/browse/REB3-21182"
     },
     {
-      "key": "REB3-21198",
-      "summary": "[iOS]User redirected to Post Photo intermittently while Set Bay actions are still pending",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.38 IR HF ALBT_KRCS_HARR",
-      "isReleased": false,
-      "releaseStatus": "Unreleased",
-      "type": "Bug",
-      "epic": "None",
-      "status": "QA",
-      "statusCategory": "indeterminate",
-      "priority": "Medium",
-      "component": "IOS",
-      "assignee": "Nitish Kumar",
-      "assigneeAvatar": "https://secure.gravatar.com/avatar/a3487e7962e852c0234528a9180db51a?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FNK-5.png",
-      "tester": "Swati Goel",
-      "reporter": "Swati Goel",
-      "created": "2026-11-04T00:03:30.633-0800",
-      "updated": "2026-11-04T04:49:45.576-0800",
-      "ageDays": 1,
-      "staleDays": 0,
-      "labels": [
-        "ios"
-      ],
-      "url": "https://retech.atlassian.net/browse/REB3-21198"
-    },
-    {
       "key": "REB3-20701",
       "summary": "[iOS] Offline Task Not Syncing on iOS with Full Internet Connectivity",
       "project": "Rebotics 3",
@@ -1044,7 +1069,7 @@
       "created": "2026-11-03T04:57:19.431-0800",
       "updated": "2026-11-04T03:00:14.583-0800",
       "ageDays": 1,
-      "staleDays": 0,
+      "staleDays": 1,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21186"
     },
@@ -1922,7 +1947,7 @@
       "created": "2026-07-27T00:23:48.579-0700",
       "updated": "2026-11-03T02:58:51.705-0800",
       "ageDays": 101,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [
         "Customer"
       ],
@@ -1949,7 +1974,7 @@
       "created": "2026-10-18T23:23:28.649-0700",
       "updated": "2026-11-03T02:56:15.876-0800",
       "ageDays": 17,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21046"
     },
@@ -1974,7 +1999,7 @@
       "created": "2026-08-26T14:29:45.130-0700",
       "updated": "2026-11-03T02:54:15.770-0800",
       "ageDays": 70,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20484"
     },
@@ -1999,7 +2024,7 @@
       "created": "2026-08-17T14:26:41.431-0700",
       "updated": "2026-11-03T02:48:54.151-0800",
       "ageDays": 79,
-      "staleDays": 1,
+      "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20413"
     },
@@ -2314,7 +2339,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-11-01T02:50:26.679-0800",
       "updated": "2026-11-02T23:52:53.702-0800",
-      "ageDays": 3,
+      "ageDays": 4,
       "staleDays": 2,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21154"
@@ -2521,7 +2546,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-11-01T02:58:13.518-0800",
       "updated": "2026-11-02T23:26:38.594-0800",
-      "ageDays": 3,
+      "ageDays": 4,
       "staleDays": 2,
       "labels": [
         "ANDR"
@@ -3759,7 +3784,7 @@
       "created": "2026-10-22T03:39:44.404-0700",
       "updated": "2026-10-30T03:49:21.007-0700",
       "ageDays": 14,
-      "staleDays": 5,
+      "staleDays": 6,
       "labels": [
         "IOS",
         "PRGM"
@@ -4319,7 +4344,7 @@
       "created": "2026-10-27T23:03:53.200-0700",
       "updated": "2026-10-29T03:46:40.959-0700",
       "ageDays": 8,
-      "staleDays": 6,
+      "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21105"
     },
@@ -8157,7 +8182,7 @@
       "reporter": "vikas yadav",
       "created": "2026-05-12T03:51:34.424-0700",
       "updated": "2026-10-28T23:28:46.506-0700",
-      "ageDays": 176,
+      "ageDays": 177,
       "staleDays": 7,
       "labels": [
         "iOS"
@@ -9067,7 +9092,7 @@
       "reporter": "Shrey Jain",
       "created": "2026-09-22T03:55:54.093-0700",
       "updated": "2026-10-28T23:15:48.417-0700",
-      "ageDays": 43,
+      "ageDays": 44,
       "staleDays": 7,
       "labels": [
         "QKTP"
@@ -9252,7 +9277,7 @@
       "reporter": "Shrey Jain",
       "created": "2026-09-22T03:55:19.652-0700",
       "updated": "2026-10-28T23:15:47.663-0700",
-      "ageDays": 43,
+      "ageDays": 44,
       "staleDays": 7,
       "labels": [
         "QKTP"
@@ -10952,7 +10977,7 @@
       "reporter": "Ulan Sarymsakov",
       "created": "2026-08-10T03:51:26.969-0700",
       "updated": "2026-10-28T23:15:40.109-0700",
-      "ageDays": 86,
+      "ageDays": 87,
       "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20299"
@@ -13773,7 +13798,7 @@
       "reporter": "Brianne Tanke",
       "created": "2026-05-14T04:03:27.777-0700",
       "updated": "2026-10-28T23:15:29.794-0700",
-      "ageDays": 174,
+      "ageDays": 175,
       "staleDays": 7,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-19636"
@@ -14081,7 +14106,7 @@
       "reporter": "Dheeraj Suyal",
       "created": "2026-04-15T03:54:20.284-0700",
       "updated": "2026-10-28T23:15:28.691-0700",
-      "ageDays": 203,
+      "ageDays": 204,
       "staleDays": 7,
       "labels": [
         "Customer"
@@ -15327,7 +15352,7 @@
       "reporter": "Swati Goel",
       "created": "2026-10-19T03:48:32.092-0700",
       "updated": "2026-10-28T22:54:26.379-0700",
-      "ageDays": 16,
+      "ageDays": 17,
       "staleDays": 7,
       "labels": [
         "iOS"
@@ -17741,7 +17766,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-10-17T03:56:42.922-0700",
       "updated": "2026-10-23T08:16:16.188-0700",
-      "ageDays": 18,
+      "ageDays": 19,
       "staleDays": 12,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-21041"
@@ -18634,7 +18659,7 @@
       "reporter": "Gautam Chakraborty",
       "created": "2026-10-09T03:54:12.607-0700",
       "updated": "2026-10-15T04:21:09.077-0700",
-      "ageDays": 26,
+      "ageDays": 27,
       "staleDays": 20,
       "labels": [
         "AD-HOC",
@@ -18771,7 +18796,7 @@
       "reporter": "Saharsh Solanki",
       "created": "2026-10-14T04:03:04.901-0700",
       "updated": "2026-10-14T22:11:16.220-0700",
-      "ageDays": 21,
+      "ageDays": 22,
       "staleDays": 21,
       "labels": [
         "Backend",
@@ -19023,7 +19048,7 @@
       "reporter": "Ayushi Maheshwari",
       "created": "2026-09-17T03:50:33.033-0700",
       "updated": "2026-10-13T23:49:43.243-0700",
-      "ageDays": 48,
+      "ageDays": 49,
       "staleDays": 22,
       "labels": [
         "Android",
@@ -19193,7 +19218,7 @@
       "reporter": "Gaurav Tripathi",
       "created": "2026-07-27T03:52:33.531-0700",
       "updated": "2026-10-13T23:49:39.158-0700",
-      "ageDays": 100,
+      "ageDays": 101,
       "staleDays": 22,
       "labels": [
         "PILOT",
@@ -22490,7 +22515,7 @@
       "reporter": "Swati Goel",
       "created": "2026-09-30T03:59:29.831-0700",
       "updated": "2026-10-08T23:15:04.615-0700",
-      "ageDays": 35,
+      "ageDays": 36,
       "staleDays": 27,
       "labels": [
         "IOS"
@@ -24425,7 +24450,7 @@
       "reporter": "Rohan Patil",
       "created": "2026-09-18T03:50:35.025-0700",
       "updated": "2026-10-08T22:56:07.684-0700",
-      "ageDays": 47,
+      "ageDays": 48,
       "staleDays": 27,
       "labels": [
         "ANDR"
@@ -24627,7 +24652,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-09-22T04:00:32.506-0700",
       "updated": "2026-10-08T22:56:02.567-0700",
-      "ageDays": 43,
+      "ageDays": 44,
       "staleDays": 27,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20714"
@@ -24652,7 +24677,7 @@
       "reporter": "Hemant Singh",
       "created": "2026-09-22T03:58:48.974-0700",
       "updated": "2026-10-08T22:56:01.919-0700",
-      "ageDays": 43,
+      "ageDays": 44,
       "staleDays": 27,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20713"
@@ -25942,7 +25967,7 @@
       "reporter": "Brianne Tanke",
       "created": "2026-07-24T03:53:06.335-0700",
       "updated": "2026-10-06T08:04:35.499-0700",
-      "ageDays": 103,
+      "ageDays": 104,
       "staleDays": 29,
       "labels": [],
       "url": "https://retech.atlassian.net/browse/REB3-20139"
@@ -26920,7 +26945,7 @@
       "reporter": "Artem Kanarev",
       "created": "2026-08-31T03:50:39.953-0700",
       "updated": "2026-10-01T08:05:48.096-0700",
-      "ageDays": 65,
+      "ageDays": 66,
       "staleDays": 34,
       "labels": [
         "AD-HOC",
@@ -26928,31 +26953,6 @@
         "SONA"
       ],
       "url": "https://retech.atlassian.net/browse/REB3-20510"
-    },
-    {
-      "key": "REB3-20412",
-      "summary": "[IR][ALBT][SAS] Validate Advanced Product Filters for Intelligent Reset",
-      "project": "Rebotics 3",
-      "projectKey": "REB3",
-      "fixVersion": "SI 2026.03.36 IR HF ALBT_KRCS_HARR",
-      "isReleased": true,
-      "releaseStatus": "Released",
-      "type": "Story",
-      "epic": "REB3-12731 - POG Reset Labor Cost Reduction - Task Actions Redesign (Intelligent Reset)",
-      "status": "Done",
-      "statusCategory": "done",
-      "priority": "Medium",
-      "component": "BE REBM",
-      "assignee": "Gautam Chakraborty",
-      "assigneeAvatar": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/5ab92d9b4373ef2a697c8291/0789e0a1-bd02-4a33-a441-06d26339b267/48",
-      "tester": "Gaurav Jain",
-      "reporter": "Gaurav Jain",
-      "created": "2026-08-17T14:09:41.123-0700",
-      "updated": "2026-10-01T05:20:47.668-0700",
-      "ageDays": 79,
-      "staleDays": 34,
-      "labels": [],
-      "url": "https://retech.atlassian.net/browse/REB3-20412"
     }
   ]
 }
