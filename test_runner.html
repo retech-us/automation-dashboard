@@ -2923,7 +2923,7 @@
         const result = validation || { state: 'blocked', can_start: false, findings: [] };
         const placement = result.placement || {};
         const placementText = placement.status === 'ready'
-            ? ` Realogram versus planogram (${placement.stage || 'scan'}): ${placement.different_position} products are in a different position, ${placement.same_position} match, and ${placement.not_on_planogram} are not on the planogram.`
+            ? ` Realogram versus planogram (${placement.stage || 'scan'}): ${placement.different_position} products are in a different position, ${placement.same_position} match, and ${placement.not_on_planogram} are not on the planogram. ${placement.ok_wrong_position_no_action || 0} marked ok in a different position have no action.`
             : '';
         if (result.can_start) {
             const phase = result.warning_count > 0 ? 'ready_with_warnings' : 'ready';

@@ -17,6 +17,8 @@ from urllib.parse import parse_qs, urlparse
 
 SlotKey = Tuple[str, str]
 
+GENERATED_ACTION_TYPES = ("ACTION_MOVE", "ACTION_REMOVE", "ACTION_ADD")
+
 
 def parse_scan_url(value: str) -> Dict[str, str]:
     """Read scan id, store, planogram, and date from a reporting URL or a bare id."""
@@ -77,7 +79,14 @@ def compare_realogram_positions(scans: List[Dict[str, Any]], slots: Dict[SlotKey
     for scan in scans:
         section = str(scan.get("section") or "")
         stage = str(scan.get("stage") or "scan")
-        bucket = by_stage.setdefault(stage, {"same": {}, "different": {}, "absent": {}})
+        bucket = by_stage.setdefault(stage, {"same": {}, "different": {}, "absent": {}, "ok_wrong": {}})
+        # A product has an action when the scan lists a report action that starts at
+        # its slot for the same UPC, or the product itself is tagged with an action.
+        acted_slots = {
+            (str(action.get("upc") or ""), str(action.get("from") or ""))
+            for action in scan.get("actions") or []
+            if action.get("upc") and action.get("from")
+        }
         for item in scan.get("items") or []:
             upc = str(item.get("upc") or "")
             slot = str(item.get("pos") or "")
@@ -96,19 +105,34 @@ def compare_realogram_positions(scans: List[Dict[str, Any]], slots: Dict[SlotKey
                 bucket["same"][key] = record
             elif home:
                 bucket["different"][key] = record
+                if item.get("type") == "ok":
+                    expected = slots.get((section, slot)) or {}
+                    has_action = (upc, slot) in acted_slots or item.get("action_type") in GENERATED_ACTION_TYPES
+                    bucket["ok_wrong"][key] = {
+                        **record,
+                        "scan_id": scan.get("id"),
+                        "expected_upc": expected.get("upc") or "",
+                        "expected_product": expected.get("name") or "",
+                        "has_action": has_action,
+                    }
             else:
                 bucket["absent"][key] = record
 
-    stages = {
-        stage: {
+    stages = {}
+    for stage, bucket in by_stage.items():
+        ok_wrong = list(bucket["ok_wrong"].values())
+        no_action = [row for row in ok_wrong if not row["has_action"]]
+        stages[stage] = {
             "same_position": len(bucket["same"]),
             "different_position": len(bucket["different"]),
             "not_on_planogram": len(bucket["absent"]),
             "detected_products": len(bucket["same"]) + len(bucket["different"]) + len(bucket["absent"]),
+            "ok_wrong_position": len(ok_wrong),
+            "ok_wrong_position_no_action": len(no_action),
+            "ok_wrong_position_with_action": len(ok_wrong) - len(no_action),
+            "ok_wrong_position_no_action_items": no_action[:200],
             "examples": list(bucket["different"].values())[:20],
         }
-        for stage, bucket in by_stage.items()
-    }
     chosen = "pre_photo" if "pre_photo" in stages else next(iter(stages), "")
     selected = stages.get(chosen, {})
     return {
@@ -118,6 +142,10 @@ def compare_realogram_positions(scans: List[Dict[str, Any]], slots: Dict[SlotKey
         "same_position": selected.get("same_position", 0),
         "different_position": selected.get("different_position", 0),
         "not_on_planogram": selected.get("not_on_planogram", 0),
+        "ok_wrong_position": selected.get("ok_wrong_position", 0),
+        "ok_wrong_position_no_action": selected.get("ok_wrong_position_no_action", 0),
+        "ok_wrong_position_with_action": selected.get("ok_wrong_position_with_action", 0),
+        "ok_wrong_position_no_action_items": selected.get("ok_wrong_position_no_action_items", []),
         "examples": selected.get("examples", []),
     }
 

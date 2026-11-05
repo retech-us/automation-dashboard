@@ -4850,6 +4850,47 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             "product_variance": product_variance,
         }
 
+    def _handle_ir_placement(self, query: Dict[str, List[str]]) -> Dict[str, Any]:
+        """Count products marked ok in a different slot than the planogram that got no action."""
+        instance = (query.get("instance") or [None])[0] or EXECUTION_STATE.get("instance_slug") or "harr"
+        base_url = normalize_backend_url(instance)
+        task_id_raw = (query.get("task_id") or [None])[0]
+        if not task_id_raw or not str(task_id_raw).isdigit():
+            return {"status": "error", "error": "A numeric task_id is required"}
+        token = INSTANCE_TOKENS.get(base_url) or TOKEN
+        if not token:
+            return {"status": "unavailable", "error": f"Sign in to {instance} to compare the scans with the planogram."}
+        task_id = int(task_id_raw)
+        scan_ids: List[int] = []
+        errors: List[str] = []
+        for stage in ("pre_photo", "post_photo"):
+            raw_items, error, _status, _url = fetch_task_action_list(base_url, token, task_id, stage=stage)
+            if error:
+                errors.append(f"{stage}: {error}")
+                continue
+            for item in raw_items or []:
+                for holder in ((item.get("current_position") or {}), (item.get("expected_position") or {})):
+                    scan_id = holder.get("scan_id")
+                    if str(scan_id or "").isdigit() and int(scan_id) not in scan_ids:
+                        scan_ids.append(int(scan_id))
+        if not scan_ids:
+            if errors and all("401" in message or "403" in message for message in errors):
+                return {
+                    "status": "unavailable",
+                    "error": f"The saved {instance.upper()} session has expired. Sign in again to compare the scans with the planogram.",
+                }
+            return {
+                "status": "unavailable",
+                "error": "; ".join(errors) or "The action list did not reference any scan.",
+            }
+        try:
+            report = placement_for_task_scans(base_url, token, [{"id": scan_id} for scan_id in scan_ids])
+        except Exception as exc:
+            return {"status": "unavailable", "error": f"Scan comparison failed: {exc}"}
+        report["task_id"] = task_id
+        report["scan_ids"] = scan_ids
+        return report
+
     def _handle_task_flow(self, query: Dict[str, List[str]]) -> Dict[str, Any]:
         """Serve 10-event chronological task execution flow and action drilldown."""
         instance = (query.get("instance") or [None])[0] or EXECUTION_STATE.get("instance_slug") or "harr"
@@ -5480,6 +5521,12 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
         elif self.path.startswith("/api/runner/compare_tasks"):
             self._send_json(self._handle_compare_tasks(
+                urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            ))
+            return
+
+        elif self.path.startswith("/api/runner/ir_placement"):
+            self._send_json(self._handle_ir_placement(
                 urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             ))
             return
@@ -6985,7 +7032,9 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
                     "message": (
                         f"{placement['different_position']} detected products are in a different position "
                         f"from the planogram. {placement['same_position']} match their planogram slot. "
-                        f"{placement['not_on_planogram']} are not on this planogram."
+                        f"{placement['not_on_planogram']} are not on this planogram. "
+                        f"{placement.get('ok_wrong_position_no_action', 0)} of the products marked ok are in a "
+                        f"different position and have no generated action."
                     ),
                     "action_ids": [],
                     "upc": "",
