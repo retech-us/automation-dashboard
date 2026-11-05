@@ -8057,9 +8057,60 @@ code {
   border: 1px solid var(--border);
 }
 
-.ir-placement-check[hidden],
-.ir-placement-details[hidden] {
+.ir-placement-check[hidden] {
   display: none;
+}
+
+.ir-placement-stages {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ir-placement-stage {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  border-top: 3px solid var(--border);
+}
+
+.ir-placement-stage--pre_photo {
+  border-top-color: #2563eb;
+}
+
+.ir-placement-stage--post_photo {
+  border-top-color: var(--warn);
+}
+
+.ir-placement-stage header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.ir-placement-stage h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.ir-placement-stage header strong {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ir-placement-stage p {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+@media (max-width: 900px) {
+  .ir-placement-stages {
+    grid-template-columns: 1fr;
+  }
 }
 
 [data-theme="light"] .ir-placement-check {
