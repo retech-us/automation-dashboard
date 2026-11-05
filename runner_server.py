@@ -819,6 +819,27 @@ def normalize_backend_url(raw: str) -> str:
     return raw.rstrip("/")
 
 
+SCAN_CROP_PATH = "/api/runner/scan_crop"
+
+
+def add_instance_to_crop_urls(value: Any, instance: str) -> Any:
+    """Tell every scan-crop URL which instance owns the scan.
+
+    Without it the crop endpoint falls back to one default instance, asks it for
+    a scan it does not have, and the tile ends up as a placeholder.
+    """
+    if isinstance(value, str):
+        if value.startswith(SCAN_CROP_PATH) and "instance=" not in value:
+            separator = "&" if "?" in value else "?"
+            return f"{value}{separator}instance={urllib.parse.quote(str(instance), safe='')}"
+        return value
+    if isinstance(value, list):
+        return [add_instance_to_crop_urls(item, instance) for item in value]
+    if isinstance(value, dict):
+        return {key: add_instance_to_crop_urls(item, instance) for key, item in value.items()}
+    return value
+
+
 def switch_or_verify_repo_branch(repo_path: Path, branch_name: str) -> Tuple[bool, str]:
     if not repo_path.exists() or not branch_name:
         return True, ""
@@ -5051,7 +5072,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "image/svg+xml")
         self.send_header("Content-Length", str(len(svg_bytes)))
-        self.send_header("Cache-Control", "public, max-age=3600")
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(svg_bytes)
 
@@ -5532,9 +5553,9 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
             return
 
         elif self.path.startswith("/api/runner/task_flow"):
-            self._send_json(self._handle_task_flow(
-                urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-            ))
+            flow_query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            flow_instance = (flow_query.get("instance") or [None])[0] or EXECUTION_STATE.get("instance_slug") or "harr"
+            self._send_json(add_instance_to_crop_urls(self._handle_task_flow(flow_query), flow_instance))
             return
 
         elif self.path.startswith("/api/runner/task_status"):

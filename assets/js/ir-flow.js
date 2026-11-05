@@ -1507,16 +1507,24 @@
     return '';
   }
 
+  // The crop endpoint must know which instance owns the scan, or it asks the wrong one.
+  function withCropInstance(url) {
+    if (typeof url !== 'string' || !url.startsWith('/api/runner/scan_crop') || url.includes('instance=')) return url;
+    const inst = getSelectedInstance();
+    if (!inst) return url;
+    return `${url}${url.includes('?') ? '&' : '?'}instance=${encodeURIComponent(inst)}`;
+  }
+
   function resolveIdentifyCrop(item) {
     if (!item) return '';
     // Priority 1: Already provided live crop URL or API URL
     const cUrl = item.crop_image_url || item.crop_image || item.cropped_image_url;
     if (cUrl && typeof cUrl === 'string' && (cUrl.startsWith('http') || cUrl.startsWith('/api/'))) {
-      return cUrl;
+      return withCropInstance(cUrl);
     }
     const img = item.image;
     if (img && typeof img === 'string' && (img.startsWith('http') || img.startsWith('/api/'))) {
-      return img;
+      return withCropInstance(img);
     }
     // Priority 2: Construct live scan crop endpoint from Digital Shelf scan metadata
     const sId = item.scan_id || resolveItemScanId(item);
@@ -1524,7 +1532,7 @@
     const pos = item.from_pos != null ? item.from_pos : item.to_pos;
     const itemId = item.item_id || item.realogram_item_id || '';
     if (sId && sh != null && pos != null) {
-      return `/api/runner/scan_crop?scan_id=${encodeURIComponent(sId)}&item_id=${encodeURIComponent(itemId)}&shelf=${encodeURIComponent(sh)}&pos=${encodeURIComponent(pos)}`;
+      return withCropInstance(`/api/runner/scan_crop?scan_id=${encodeURIComponent(sId)}&item_id=${encodeURIComponent(itemId)}&shelf=${encodeURIComponent(sh)}&pos=${encodeURIComponent(pos)}`);
     }
     return '';
   }
