@@ -206,6 +206,66 @@ class ScanIssueInvestigatorTests(unittest.TestCase):
         self.assertEqual(report["not_on_planogram"], 1)
         self.assertEqual(report["examples"][0]["belongs_at"], "1 7:2")
 
+    def test_counts_ok_products_in_the_wrong_slot_that_got_no_action(self):
+        slots = {
+            ("1", "7:1"): {"upc": "AAA", "name": "HOMESTYLE"},
+            ("1", "7:2"): {"upc": "BBB", "name": "LEMON"},
+            ("1", "7:3"): {"upc": "CCC", "name": "BALSAMIC"},
+            ("1", "7:4"): {"upc": "DDD", "name": "RANCH"},
+        }
+        report = compare_realogram_positions(
+            [{
+                "id": 5,
+                "section": "1",
+                "stage": "pre_photo",
+                "items": [
+                    # ok, wrong slot, no action: the defect
+                    {"upc": "BBB", "label": "LEMON", "pos": "7:1", "type": "ok", "action_type": "ACTION_CORRECT"},
+                    # same product facing seen twice in the same slot counts once
+                    {"upc": "BBB", "label": "LEMON", "pos": "7:1", "type": "ok", "action_type": "ACTION_CORRECT"},
+                    # ok, wrong slot, and the scan asked to move it: not the defect
+                    {"upc": "CCC", "label": "BALSAMIC", "pos": "7:4", "type": "ok", "action_type": "ACTION_MOVE"},
+                    # ok and in its own slot
+                    {"upc": "DDD", "label": "RANCH", "pos": "7:4", "type": "ok", "action_type": "ACTION_CORRECT"},
+                    # wrong slot but not marked ok
+                    {"upc": "AAA", "label": "HOMESTYLE", "pos": "7:3", "type": "invader", "action_type": "ACTION_REMOVE"},
+                ],
+                "actions": [
+                    {"upc": "CCC", "action": "ACTION_MOVE", "reason": "Fixed Item", "from": "7:4", "to": "7:3", "state": "STATE_ACCEPTED"},
+                ],
+            }],
+            slots,
+        )
+        self.assertEqual(report["ok_wrong_position"], 2)
+        self.assertEqual(report["ok_wrong_position_no_action"], 1)
+        self.assertEqual(report["ok_wrong_position_with_action"], 1)
+        missed = report["ok_wrong_position_no_action_items"]
+        self.assertEqual(len(missed), 1)
+        self.assertEqual(missed[0]["slot"], "7:1")
+        self.assertEqual(missed[0]["upc"], "BBB")
+        self.assertEqual(missed[0]["expected_upc"], "AAA")
+        self.assertEqual(missed[0]["expected_product"], "HOMESTYLE")
+        self.assertEqual(missed[0]["belongs_at"], "1 7:2")
+
+    def test_an_action_on_another_slot_of_the_same_upc_does_not_cover_this_slot(self):
+        slots = {("1", "1:1"): {"upc": "AAA", "name": "A"}, ("1", "1:2"): {"upc": "BBB", "name": "B"}}
+        report = compare_realogram_positions(
+            [{
+                "id": 6,
+                "section": "1",
+                "stage": "pre_photo",
+                "items": [
+                    {"upc": "AAA", "label": "A", "pos": "1:2", "type": "ok", "action_type": "ACTION_CORRECT"},
+                    {"upc": "AAA", "label": "A", "pos": "2:1", "type": "ok", "action_type": "ACTION_CORRECT"},
+                ],
+                "actions": [{"upc": "AAA", "action": "ACTION_MOVE", "from": "2:1", "to": "1:1", "state": "STATE_NEW"}],
+            }],
+            slots,
+        )
+        self.assertEqual(report["ok_wrong_position"], 2)
+        self.assertEqual(report["ok_wrong_position_no_action"], 1)
+        self.assertEqual(report["ok_wrong_position_no_action_items"][0]["slot"], "1:2")
+
 
 if __name__ == "__main__":
     unittest.main()

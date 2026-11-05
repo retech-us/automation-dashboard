@@ -1235,6 +1235,7 @@
     checkAuthStatus(inst);
     setGlobalProgressBar(true);
     renderTaskLoadingState(targetId, inst);
+    resetPlacementCheck('');
 
     // Clear previous live status poll if any
     if (liveStatusPollInterval) {
@@ -1259,6 +1260,7 @@
       }
       renderSimplifiedView(data);
       const liveTaskId = data.metadata ? data.metadata.task_id : targetId;
+      loadPlacementCheck(liveTaskId, inst);
       const taskStatus = classifyTaskStatus(data.metadata && data.metadata.status);
       if (statusBadge) {
         const retailLabel = data.metadata ? (data.metadata.retailer || inst.toUpperCase()) : inst.toUpperCase();
@@ -1301,6 +1303,99 @@
       }
     } finally {
       setGlobalProgressBar(false);
+    }
+  }
+
+  let placementRequestSeq = 0;
+
+  function resetPlacementCheck(message) {
+    placementRequestSeq += 1;
+    const card = byId('ir-placement-check');
+    if (!card) return;
+    card.hidden = !message;
+    setText('ir-placement-count', '—');
+    setText('ir-placement-sub', message || '');
+    const stages = byId('ir-placement-stages');
+    if (stages) stages.innerHTML = '';
+    const details = byId('ir-placement-details');
+    if (details) details.hidden = true;
+    const rows = byId('ir-placement-rows');
+    if (rows) rows.innerHTML = '';
+  }
+
+  function renderPlacementCheck(report) {
+    const card = byId('ir-placement-check');
+    if (!card) return;
+    card.hidden = false;
+    if (!report || report.status !== 'ready') {
+      setText('ir-placement-count', '—');
+      setText('ir-placement-sub', (report && report.error) || 'The scans could not be compared with the planogram.');
+      return;
+    }
+    const stageLabels = { pre_photo: 'Pre-photo', post_photo: 'Post-photo' };
+    const stages = report.by_stage || {};
+    const order = ['pre_photo', 'post_photo'].filter((key) => stages[key]);
+    Object.keys(stages).forEach((key) => { if (!order.includes(key)) order.push(key); });
+
+    const headline = stages[report.stage] || {};
+    const noAction = Number(headline.ok_wrong_position_no_action || 0);
+    const withAction = Number(headline.ok_wrong_position_with_action || 0);
+    const okWrong = Number(headline.ok_wrong_position || 0);
+    const label = (stageLabels[report.stage] || report.stage || 'scan').toLowerCase();
+    setText('ir-placement-count', String(noAction));
+    if (okWrong === 0) {
+      setText('ir-placement-sub', `No product in the ${label} scans is marked OK in a different slot than the planogram.`);
+    } else {
+      setText(
+        'ir-placement-sub',
+        `${noAction} of ${okWrong} products marked OK in the ${label} scans sit in a different slot than the planogram and have no generated action. ${withAction} more are in a different slot and do have an action.`,
+      );
+    }
+
+    const chips = byId('ir-placement-stages');
+    if (chips) {
+      chips.innerHTML = order.map((key) => {
+        const stage = stages[key];
+        return `<span class="ir-recon-tag">${escapeHtml(stageLabels[key] || key)}: ${Number(stage.ok_wrong_position_no_action || 0)} no action · ${Number(stage.ok_wrong_position_with_action || 0)} with action · ${Number(stage.same_position || 0)} in the right slot</span>`;
+      }).join('');
+    }
+
+    const rows = [];
+    order.forEach((key) => {
+      (stages[key].ok_wrong_position_no_action_items || []).forEach((item) => rows.push({ ...item, stage: key }));
+    });
+    const tbody = byId('ir-placement-rows');
+    const details = byId('ir-placement-details');
+    if (tbody) {
+      tbody.innerHTML = rows.map((item) => {
+        const expected = item.expected_product
+          ? `${escapeHtml(item.expected_product)} <small>${escapeHtml(item.expected_upc)}</small>`
+          : 'No planogram product in this slot';
+        return `<tr>
+          <td>${escapeHtml(stageLabels[item.stage] || item.stage)}</td>
+          <td>${escapeHtml(item.section)}</td>
+          <td>${escapeHtml(item.slot)}</td>
+          <td>${escapeHtml(item.product || '—')} <small>${escapeHtml(item.upc)}</small></td>
+          <td>${expected}</td>
+          <td>${escapeHtml(item.belongs_at || '—')}</td>
+        </tr>`;
+      }).join('');
+    }
+    if (details) details.hidden = rows.length === 0;
+  }
+
+  async function loadPlacementCheck(taskId, inst) {
+    if (!taskId || taskId === 'latest') return;
+    resetPlacementCheck('Comparing the scans with the planogram…');
+    const seq = placementRequestSeq;
+    try {
+      const resp = await fetch(`/api/runner/ir_placement?task_id=${encodeURIComponent(taskId)}&instance=${encodeURIComponent(inst)}&_t=${Date.now()}`, { cache: 'no-store' });
+      const report = resp.ok ? await resp.json() : { status: 'unavailable', error: `The comparison returned HTTP ${resp.status}.` };
+      if (seq !== placementRequestSeq) return;
+      renderPlacementCheck(report);
+    } catch (err) {
+      if (seq !== placementRequestSeq) return;
+      renderPlacementCheck({ status: 'unavailable', error: `The comparison could not be loaded: ${err.message || err}` });
     }
   }
 
@@ -5022,6 +5117,7 @@
     quickSelect,
     onInstanceChange,
     onPerformerChange,
+    renderPlacementCheck,
     loadCurrentInputs,
     switchSubView,
     openItemDrawer,
