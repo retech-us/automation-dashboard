@@ -3162,8 +3162,11 @@ function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
   }
   if (tab === 'shelf-mobile') {
     const frame = document.getElementById('iframe-shelf-mobile');
-    if (frame && !frame.getAttribute('src')) {
-      frame.src = 'shelf_reset_mobile.html?v=20261014b';
+    const mobileSrc = 'shelf_reset_mobile.html?v=20261106b';
+    if (window.IrTaskFlow && typeof window.IrTaskFlow.openShelfMobile === 'function') {
+      window.IrTaskFlow.openShelfMobile(frame, mobileSrc);
+    } else if (frame && !frame.getAttribute('src')) {
+      frame.src = mobileSrc;
     }
   }
   if (tab === 'ir-studio') {

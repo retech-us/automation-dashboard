@@ -550,6 +550,31 @@ def placement_for_task_scans(
     return report
 
 
+def fetch_scan_payloads(
+    base_url: str,
+    token: str,
+    scan_ids: List[int],
+    opener: Optional[Callable[..., Any]] = None,
+) -> List[Dict[str, Any]]:
+    """Fetch each scan's detected items. Raises only when every scan failed."""
+    open_request = opener or _default_opener
+    payloads: List[Dict[str, Any]] = []
+    errors: List[str] = []
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        futures = [
+            pool.submit(_get_json, open_request, base_url, token, f"/api/v4/processing/actions/{scan_id}/")
+            for scan_id in scan_ids[:20]
+        ]
+        for future in futures:
+            try:
+                payloads.append(future.result())
+            except Exception as exc:
+                errors.append(str(exc))
+    if not payloads and errors:
+        raise RuntimeError(errors[0])
+    return payloads
+
+
 def investigate_scan_problem(base_url: str, token: str, problem: str, scan_url: str, opener: Optional[Callable[..., Any]] = None) -> Dict[str, Any]:
     """Fetch live evidence and answer the problem the user described."""
     return fetch_investigation(base_url, token, scan_url, problem=problem, opener=opener)

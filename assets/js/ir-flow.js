@@ -1395,21 +1395,51 @@
     }
   }
 
+  // The task last loaded in this tab. Shelf Reset Mobile must show this same task.
+  let loadedTask = null;
+
+  function postTaskToMobileFrame(frame, task) {
+    try {
+      frame.contentWindow.postMessage({
+        type: 'IR_SYNC_TASK',
+        taskId: task.taskId,
+        instance: task.instance
+      }, '*');
+      frame.dataset.syncedTask = `${task.instance}:${task.taskId}`;
+    } catch (e) {
+      console.warn('Could not postMessage to mobileFrame', e);
+    }
+  }
+
+  // The Shelf Reset Mobile address for the task loaded here (the plain address when none is loaded).
+  function shelfMobileUrl(baseSrc) {
+    if (!loadedTask) return baseSrc;
+    const query = `task_id=${encodeURIComponent(loadedTask.taskId)}&instance=${encodeURIComponent(loadedTask.instance)}`;
+    return `${baseSrc}${baseSrc.includes('?') ? '&' : '?'}${query}`;
+  }
+
+  // Open the Shelf Reset Mobile tab on the task loaded here. A message sent before
+  // the page has a source would be lost, so the first open carries the task in its URL.
+  function openShelfMobile(frame, baseSrc, forceReload) {
+    if (!frame) return;
+    if (forceReload || !frame.getAttribute('src')) {
+      frame.src = shelfMobileUrl(baseSrc);
+      if (loadedTask) frame.dataset.syncedTask = `${loadedTask.instance}:${loadedTask.taskId}`;
+      return;
+    }
+    if (loadedTask && frame.dataset.syncedTask !== `${loadedTask.instance}:${loadedTask.taskId}` && frame.contentWindow) {
+      postTaskToMobileFrame(frame, loadedTask);
+    }
+  }
+
   function syncEmbeddedTabs(taskId, instance) {
     if (!taskId || taskId === 'latest') return;
     const inst = instance || getSelectedInstance() || 'harr';
+    loadedTask = { taskId: String(taskId), instance: inst };
 
     const mobileFrame = byId('iframe-shelf-mobile');
-    if (mobileFrame && mobileFrame.contentWindow) {
-      try {
-        mobileFrame.contentWindow.postMessage({
-          type: 'IR_SYNC_TASK',
-          taskId: String(taskId),
-          instance: inst
-        }, '*');
-      } catch (e) {
-        console.warn('Could not postMessage to mobileFrame', e);
-      }
+    if (mobileFrame && mobileFrame.getAttribute('src') && mobileFrame.contentWindow) {
+      postTaskToMobileFrame(mobileFrame, loadedTask);
     }
 
     const studioFrame = byId('iframe-ir-studio');
@@ -5126,6 +5156,8 @@
     switchSubView,
     openItemDrawer,
     syncEmbeddedTabs,
+    openShelfMobile,
+    shelfMobileUrl,
     compareTasks,
     onCompareInstanceChange,
     filterProductVariance,
