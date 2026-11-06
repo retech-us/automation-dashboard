@@ -1494,6 +1494,31 @@
       color: #fca5a5 !important;
       font-weight: 800;
     }
+    /* A destination some step needs while a product still stands there (any step, not only the active one). */
+    .slot-tile.blocked-dest {
+      border: 2px dashed #fb923c !important;
+      background: rgba(251, 146, 60, 0.16) !important;
+    }
+    .sequence-check {
+      margin: 0 0 12px 0;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.5);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .sequence-check.is-blocked { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+    .sequence-check.is-clear { border-color: rgba(52, 211, 153, 0.6); }
+    .sequence-check h4 { margin: 0 0 4px 0; font-size: 12px; color: #fff; }
+    .sequence-check .seq-row {
+      display: flex; gap: 8px; align-items: flex-start; justify-content: space-between;
+      padding: 6px 0; border-top: 1px solid rgba(148, 163, 184, 0.18);
+    }
+    .sequence-check .seq-row button {
+      flex: none; border: 0; border-radius: 4px; padding: 3px 8px; font-size: 10px; font-weight: 700;
+      cursor: pointer; background: #334155; color: #fff;
+    }
     @keyframes pulse-blocker {
       0%, 100% { border-color: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
       50% { border-color: #f87171; box-shadow: 0 0 18px rgba(239, 68, 68, 0.85); }
@@ -2249,15 +2274,23 @@
         </div>
       </div>
 
+      <!-- 3.2b Sequence check: the backend order, checked and left unchanged -->
+      <div id="sequence-check" class="sequence-check" style="display:none;"></div>
+
       <!-- 3.3 Full Trace Table -->
       <div class="trace-wrapper">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
           <div style="font-size:12px; font-weight:700; color:#fff;">
             Backend actions (<span id="trace-step-count">0</span>)
-            <div style="font-size:10px; font-weight:500; color:var(--text-dim);">Identify and remove cover every bay first. Then each bay: set aside, fix in bay, add to shelf, restock.</div>
+            <div id="trace-order-caption" style="font-size:10px; font-weight:500; color:var(--text-dim);">Listed in the order the backend returned them. Nothing is sorted, merged, or converted.</div>
+            <div style="display:flex; gap:6px; margin-top:6px;">
+              <button type="button" id="order-mode-mobile" onclick="setOrderMode('mobile')" style="border:0; border-radius:999px; padding:3px 10px; font-size:10px; font-weight:800; cursor:pointer;">Mobile order</button>
+              <button type="button" id="order-mode-backend" onclick="setOrderMode('backend')" style="border:0; border-radius:999px; padding:3px 10px; font-size:10px; font-weight:800; cursor:pointer;">Backend order</button>
+            </div>
           </div>
           <div class="trace-filter-bar" id="trace-filter-chips">
             <button class="t-filter-chip active" data-type="ALL">All</button>
+            <button class="t-filter-chip" data-type="BLOCKED" style="color:#fb923c;">⛔ Blocked destinations</button>
             <button class="t-filter-chip" data-type="RULE_BREAK" style="color:#f87171;">🚩 Rule breaks</button>
             <button class="t-filter-chip" data-type="pull">📤 Pull (Remove)</button>
             <button class="t-filter-chip" data-type="set_aside">📦 Set-Aside (Cart)</button>
@@ -2452,21 +2485,30 @@
           const taskInstance = instanceSlug(task.instance || wanted);
           return taskInstance === wanted && (!type || type.includes("intelligent reset"));
         });
-        if (!tasks.length) {
+        // A task asked for by id is loaded as asked, even when it is outside the recent list.
+        const requested = /^\d+$/.test(String(selectedTask || "").trim()) ? String(selectedTask).trim() : "";
+        if (!tasks.length && !requested) {
           showShelfLoader(false);
           clearInstanceTasks(data.remote_error || data.plain_language_summary || `No Intelligent Reset tasks were found for ${inst}.`);
           return;
         }
-        populateTaskOptions(tasks.map((task) => ({
+        const options = tasks.map((task) => ({
           id: task.task_id,
           instance: wanted,
           group: "Intelligent Reset",
           label: `Task #${task.task_id} • ${task.title || task.category || "Intelligent Reset"} • ${task.status_label || task.status || ""}`,
-        })), selectedTask, wanted);
+        }));
+        if (requested && !tasks.some((task) => String(task.task_id) === requested)) {
+          options.unshift({
+            id: requested,
+            instance: wanted,
+            group: "Intelligent Reset",
+            label: `Task #${requested} • loaded in the Intelligent Reset tab`,
+          });
+        }
+        populateTaskOptions(options, requested || selectedTask, wanted);
         setShelfStatus("");
-        const chosen = selectedTask && tasks.some((task) => String(task.task_id) === String(selectedTask))
-          ? selectedTask
-          : tasks[0].task_id;
+        const chosen = requested || tasks[0].task_id;
         await loadDataset(chosen, inst);
       } catch (err) {
         showShelfLoader(false);
@@ -2603,6 +2645,16 @@
       await loadTasksForInstance(instanceFilter || state.instance, selectedVal);
     }
 
+    function setOrderMode(mode) {
+      const next = mode === "backend" ? "backend" : "mobile";
+      state.orderMode = next === "mobile" && (state.mobileSteps || []).length ? "mobile" : "backend";
+      state.steps = state.orderMode === "mobile" ? state.mobileSteps : (state.backendSteps || state.steps);
+      state.stepIndex = 0;
+      state.history = [];
+      state.activeTraceFilter = "ALL";
+      render();
+    }
+
     function applyLoadedData(data, datasetName) {
       state.dataset = String(datasetName || data.task_id || "8788767");
       state.stepIndex = 0;
@@ -2613,12 +2665,18 @@
         s.bay = normalizeBay(s.bay);
         return s;
       });
-      state.steps = (data.steps || []).map(st => {
+      const normalizeStep = (st) => {
         if (st.fromLocation) st.fromLocation.bay = normalizeBay(st.fromLocation.bay);
         if (st.toLocation) st.toLocation.bay = normalizeBay(st.toLocation.bay);
         if (st.bay) st.bay = normalizeBay(st.bay);
         return st;
-      });
+      };
+      state.backendSteps = (data.steps || []).map(normalizeStep);
+      state.mobileSteps = (data.mobile_steps || []).map(normalizeStep);
+      state.mobileHidden = (data.mobile_hidden || []).map(normalizeStep);
+      state.mobileSummary = (data.mobile_order && data.mobile_order.summary) || "";
+      state.orderMode = state.mobileSteps.length ? "mobile" : "backend";
+      state.steps = state.orderMode === "mobile" ? state.mobileSteps : state.backendSteps;
       state.source = data.source || `Task #${state.dataset}`;
       if (data.instance) state.instance = data.instance;
 
@@ -2646,6 +2704,8 @@
 
       state.backendMode = true;
       state.validation = data.validation || null;
+      state.shelfScan = data.shelf_scan || null;
+      state.activeTraceFilter = "ALL";
       const instBadge = (state.instance || "HARR").toUpperCase();
       const validationState = state.validation ? state.validation.state : "pending";
       const subTitle = document.getElementById("brand-subtitle");
@@ -3060,7 +3120,7 @@
         const validationEl = document.getElementById("kpi-cart-stops");
         if (validationEl) validationEl.textContent = validation.state || "—";
         const summary = validation.summary || "Validation reports problems and leaves the backend list unchanged.";
-        const listNote = `• ${state.steps.length} step${state.steps.length === 1 ? "" : "s"}: identify, remove, then each bay`;
+        const listNote = `• ${state.steps.length} step${state.steps.length === 1 ? "" : "s"}, in the order the backend returned them`;
         const findingNote = `• ${summary}`;
         const naiveCart = document.getElementById("comp-naive-cart");
         const rules = validation.rule_check || {};
@@ -3574,6 +3634,14 @@
       const blockingSlots = new Set();
       let blockingDetails = null;
 
+      // Every destination that is occupied when a step needs it, with the steps that need it.
+      const blockedDestinations = new Map();
+      state.steps.forEach((step, i) => {
+        if (!isBlockedStep(step) || !step.toSlotId) return;
+        if (!blockedDestinations.has(step.toSlotId)) blockedDestinations.set(step.toSlotId, []);
+        blockedDestinations.get(step.toSlotId).push(i + 1);
+      });
+
       if (activeStep) {
         if (activeStep.slotId) sourceSlots.add(activeStep.slotId);
         if (activeStep.toSlotId && activeStep.toSlotId !== activeStep.slotId) {
@@ -3725,14 +3793,17 @@
           if (isSource) classes.push("active-source");
           if (isTarget && !isBlocking) classes.push("active-target");
           if (isBlocking) classes.push("blocking-space");
+          const neededAtSteps = blockedDestinations.get(s.id);
+          const isBlockedDest = !isBlocking && Boolean(neededAtSteps);
+          if (isBlockedDest) classes.push("blocked-dest");
 
           const posTag = `P${loc.position}`;
-          const statusIcon = isBlocking ? "⛔ BLOCKED" : (isSource ? "★ FROM" : (isTarget ? "★ TO" : (isCorrect ? "✓" : (isEmpty ? "○" : "!"))));
+          const statusIcon = isBlocking ? "⛔ BLOCKED" : (isBlockedDest ? `⛔ Step ${neededAtSteps.join(", ")}` : (isSource ? "★ FROM" : (isTarget ? "★ TO" : (isCorrect ? "✓" : (isEmpty ? "○" : "!")))));
 
           return `
             <div class="${classes.join(" ")}" 
                  onclick="inspectSlot('${s.id}')"
-                 title="Bay: ${loc.bay} • Shelf: ${loc.shelf} • Position: ${loc.position}\nSlot ID: ${s.id}${isBlocking ? '\n⛔ BLOCKED SPACE: Target destination is currently occupied!' : ''}\nCurrent: ${s.current || 'Vacant'}\nTarget: ${s.target || 'None'}">
+                 title="Bay: ${loc.bay} • Shelf: ${loc.shelf} • Position: ${loc.position}\nSlot ID: ${s.id}${isBlocking ? '\n⛔ BLOCKED SPACE: Target destination is currently occupied!' : ''}${isBlockedDest ? `\n⛔ Occupied when step ${neededAtSteps.join(", ")} needs it` : ''}\nCurrent: ${s.current || 'Vacant'}\nTarget: ${s.target || 'None'}">
               <div class="slot-tile-pos-row" ${isBlocking ? 'style="background:#dc2626; color:#ffffff; margin:-5px -5px 4px -5px; padding:2px 4px; border-radius:3px 3px 0 0;"' : ''}>
                 <span class="pos-tag" ${isBlocking ? 'style="color:#fee2e2; font-weight:800;"' : ''}>${posTag}</span>
                 <span style="font-weight:800; font-size:${isBlocking ? '8px' : '9px'};">${statusIcon}</span>
@@ -3993,15 +4064,131 @@
       renderTraceTable();
     }
 
+    function escapeText(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    // A step is blocked when a product is still standing where it must place something.
+    function isBlockedStep(step) {
+      return Boolean(step && step.target_occupancy && step.target_occupancy.blocking);
+    }
+
+    const SEQUENCE_CODES = ["OCCUPIED_DESTINATION", "DESTINATION_CLEARED_LATER", "MUTUAL_BLOCK", "SET_ASIDE_WITHOUT_PLACEMENT"];
+
+    // Reports on the backend order. It never sorts, hides, or changes a step.
+    function renderSequenceCheck() {
+      const box = document.getElementById("sequence-check");
+      if (!box) return;
+      const hidden = state.mobileHidden || [];
+      if (!state.backendMode || (!state.steps.length && !hidden.length)) {
+        box.style.display = "none";
+        box.innerHTML = "";
+        return;
+      }
+      const validation = state.validation || {};
+      const check = validation.sequence_check || {};
+      const mobile = state.orderMode === "mobile";
+      const all = validation.findings || [];
+      // In mobile order the step numbers differ, so blocked destinations come from the steps on screen.
+      const findings = mobile
+        ? [
+            ...state.steps.filter(isBlockedStep).map((step) => ({
+              severity: "critical",
+              title: step.target_occupancy.status === "occupied"
+                ? "Destination is occupied and nothing clears it"
+                : "Destination is cleared after it is needed",
+              message: `${step.item}: ${step.target_occupancy.text}`,
+              index: step.index,
+            })),
+            ...hidden.map((step) => ({
+              severity: "warning",
+              title: "Not on the mobile screen",
+              message: `${step.item || step.action_label || "Action"}: ${step.mobile_note}`,
+            })),
+            ...all.filter((item) => !SEQUENCE_CODES.includes(item.code)),
+          ]
+        : [
+            ...all.filter((item) => SEQUENCE_CODES.includes(item.code)),
+            ...all.filter((item) => !SEQUENCE_CODES.includes(item.code)),
+          ];
+      // Sequence findings carry a step number. Other findings carry a row number, so find the step by action id.
+      const stepFor = (item) => {
+        if (mobile && Number.isInteger(item.index)) return item.index;
+        if (!mobile && SEQUENCE_CODES.includes(item.code)) return Number.isInteger(item.index) ? item.index : (item.steps || [])[0];
+        const ids = (item.action_ids || []).map(String);
+        const at = state.steps.findIndex((s) => ids.includes(String(s.id)));
+        return at >= 0 ? at + 1 : null;
+      };
+      const scan = state.shelfScan || {};
+      const source = scan.status === "used"
+        ? `Occupied slots are checked against the action rows and the before photo (${scan.positions} positions seen).`
+        : `Occupied slots are checked against the action rows only. ${escapeText(scan.message || "")}`;
+      const blockedOnScreen = mobile
+        ? state.steps.filter(isBlockedStep).length
+        : (check.blocked_destinations || 0);
+      const blocked = mobile ? blockedOnScreen : blockedOnScreen + (check.mutual_blocks || 0);
+      box.className = `sequence-check ${blocked || (!mobile && validation.state === "blocked") ? "is-blocked" : (findings.length ? "" : "is-clear")}`;
+      box.style.display = "";
+      const headline = mobile
+        ? (blockedOnScreen
+          ? `${blockedOnScreen} destination${blockedOnScreen === 1 ? " is" : "s are"} occupied when the associate reaches ${blockedOnScreen === 1 ? "that step" : "them"}`
+          : "No destination is occupied when the associate reaches it")
+        : (blocked
+        ? `${check.blocked_destinations || 0} destination${check.blocked_destinations === 1 ? " is" : "s are"} occupied when ${check.blocked_destinations === 1 ? "its step comes" : "their steps come"} up`
+          + ` (${check.destination_never_cleared || 0} never cleared, ${check.destination_cleared_later || 0} cleared later)`
+          + `${check.mutual_blocks ? `, and ${check.mutual_blocks} group${check.mutual_blocks === 1 ? "" : "s"} of steps wait on each other` : ""}`
+        : "No destination is occupied when its step comes up, and no steps wait on each other");
+      const shown = findings.slice(0, 40);
+      const rows = shown.map((item) => {
+        const step = stepFor(item);
+        const icon = item.severity === "critical" ? "⛔" : "⚠️";
+        return `<div class="seq-row"><div><strong>${icon} ${escapeText(item.title)}</strong><div style="white-space:pre-line;">${escapeText(item.message)}</div></div>`
+          + (step ? `<button onclick="jumpToStep(${step - 1})">Step ${step}</button>` : "")
+          + `</div>`;
+      }).join("");
+      const orderTitle = mobile ? "Sequence check · mobile order" : "Sequence check · backend order";
+      const orderNote = mobile
+        ? (state.mobileSummary || "Identify for every bay, then Remove for every bay, then each bay: Set aside, Fix in bay, Add to shelf.")
+        : "Steps are shown exactly as the backend returned them.";
+      box.innerHTML = `<h4>${orderTitle}</h4>`
+        + `<div style="color:#e2e8f0; font-weight:700;">${headline}.</div>`
+        + `<div>${orderNote} This check only reports; it changes nothing. ${source}</div>`
+        + rows
+        + (findings.length > shown.length ? `<div style="padding-top:6px;">${findings.length - shown.length} more findings. Use the “Blocked destinations” and “Rule breaks” filters below.</div>` : "");
+    }
+
     // Render Searchable Action Trace Table
     function renderTraceTable() {
       document.getElementById("trace-step-count").textContent = state.steps.length;
+      const caption = document.getElementById("trace-order-caption");
+      const mobileButton = document.getElementById("order-mode-mobile");
+      const backendButton = document.getElementById("order-mode-backend");
+      const mobileOn = state.orderMode === "mobile";
+      if (caption) {
+        const hiddenCount = (state.mobileHidden || []).length;
+        caption.textContent = mobileOn
+          ? `The order the associate app shows. Identify every bay, then Remove every bay, then each bay: Set aside, Fix in bay, Add to shelf.${hiddenCount ? ` ${hiddenCount} finished, repeated, or unknown action${hiddenCount === 1 ? " is" : "s are"} listed in the check above and not on the phone.` : ""}`
+          : "The order the backend returned the rows. Nothing is sorted, merged, or converted.";
+      }
+      const paint = (button, on) => {
+        if (!button) return;
+        button.style.background = on ? "#2563eb" : "#1e293b";
+        button.style.color = on ? "#fff" : "#94a3b8";
+      };
+      paint(mobileButton, mobileOn);
+      paint(backendButton, !mobileOn);
+      renderSequenceCheck();
       const ruleBreakCount = state.steps.filter((s) => (s.rule_flags || []).length).length;
+      const blockedCount = state.steps.filter(isBlockedStep).length;
       document.querySelectorAll(".t-filter-chip").forEach((chip) => {
         const type = chip.getAttribute("data-type");
         if (type === "RULE_BREAK") {
           chip.style.display = state.backendMode ? "" : "none";
           chip.textContent = `🚩 Rule breaks (${ruleBreakCount})`;
+        } else if (type === "BLOCKED") {
+          chip.style.display = state.backendMode ? "" : "none";
+          chip.textContent = `⛔ Blocked destinations (${blockedCount})`;
         } else if (state.backendMode && type !== "ALL") {
           chip.style.display = "none";
         }
@@ -4013,6 +4200,7 @@
         .filter(s => {
           if (filterType === "ALL") return true;
           if (filterType === "RULE_BREAK") return (s.rule_flags || []).length > 0;
+          if (filterType === "BLOCKED") return isBlockedStep(s);
           if (filterType === "move" || filterType === "fix_in_bay") {
             return s.type === "move" || s.type === "fix_in_bay" || s.type === "slide";
           }
@@ -4025,6 +4213,8 @@
       if (!filteredSteps.length) {
         tbody.innerHTML = filterType === "RULE_BREAK"
           ? `<tr><td colspan="6" style="text-align:center; padding:12px; color:#34d399;">No backend rule breaks in this task.</td></tr>`
+          : filterType === "BLOCKED"
+          ? `<tr><td colspan="6" style="text-align:center; padding:12px; color:#34d399;">No destination is occupied when its step comes up.</td></tr>`
           : `<tr><td colspan="6" style="text-align:center; padding:12px; color:var(--text-dim);">No steps matching '${filterType}' filter</td></tr>`;
         return;
       }
@@ -4054,7 +4244,14 @@
           const flagged = ((state.validation && state.validation.findings) || []).some((finding) =>
             (finding.action_ids || []).map(String).includes(String(s.id))
           );
-          const look = occupancyStyle(s.target_occupancy);
+          const look = { ...occupancyStyle(s.target_occupancy) };
+          if (isBlockedStep(s)) {
+            const occ = s.target_occupancy;
+            look.short = occ.status === "occupied_cleared_later"
+              ? `Occupied until step ${occ.cleared_at_step}`
+              : "Occupied, never cleared";
+            look.icon = "⛔";
+          }
           const occTitle = s.target_occupancy ? s.target_occupancy.text : "This action does not place a product.";
           const blocker = s.target_occupancy && s.target_occupancy.status !== "vacant" && s.target_occupancy.occupant_product
             ? `<div title="${occTitle.replace(/"/g, '&quot;')}" style="max-width:120px; font-size:9px; color:${look.color}; white-space:normal; line-height:1.2;">${s.target_occupancy.occupant_product}${s.target_occupancy.occupant_upc ? `<br>UPC ${s.target_occupancy.occupant_upc}` : ""}</div>`
@@ -4086,7 +4283,7 @@
         }
 
         return band + `
-          <tr class="${isCurrent ? 'current-step' : (isDone ? 'done-step' : '')}" onclick="jumpToStep(${s.origIndex})" title="Click to jump to Step ${s.origIndex + 1}" style="${(s.rule_flags || []).length ? 'background:rgba(248,113,113,0.12); box-shadow:inset 3px 0 0 #f87171;' : ''}">
+          <tr class="${isCurrent ? 'current-step' : (isDone ? 'done-step' : '')}" onclick="jumpToStep(${s.origIndex})" title="Click to jump to Step ${s.origIndex + 1}" style="${(s.rule_flags || []).length ? 'background:rgba(248,113,113,0.12); box-shadow:inset 3px 0 0 #f87171;' : (isBlockedStep(s) ? 'background:rgba(251,146,60,0.14); box-shadow:inset 3px 0 0 #fb923c;' : '')}">
             <td style="font-family:'JetBrains Mono',monospace; color:${isCurrent ? 'var(--accent-blue)' : (isDone ? 'var(--accent-green)' : 'var(--text-dim)')};">
               ${isDone ? '✓' : (s.origIndex + 1)}
             </td>
@@ -4422,6 +4619,9 @@
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeButton(savedTheme);
 
+    // The task the Intelligent Reset tab has loaded. Every reload here keeps it.
+    let syncedTask = "";
+
     // Listen for parent dashboard task synchronization
     window.addEventListener('message', (event) => {
       if (!event.data) return;
@@ -4436,12 +4636,13 @@
           const instSelect = document.getElementById('instance-selector');
           if (instSelect) instSelect.value = syncedInstance;
         }
-        loadTasksForInstance(state.instance, "", { submitCredentials: true });
+        loadTasksForInstance(state.instance, syncedTask || state.dataset, { submitCredentials: true });
         return;
       }
       if (event.data.type === 'IR_SYNC_TASK') {
         const { taskId, instance } = event.data;
         if (!taskId) return;
+        syncedTask = String(taskId);
         if (instance) state.instance = instance;
         const instSelect = document.getElementById('instance-selector');
         if (instSelect && instance) instSelect.value = instance;
@@ -4453,9 +4654,10 @@
     const paramTask = urlParams.get('task_id') || urlParams.get('task');
     const paramInst = urlParams.get('instance') || urlParams.get('retailer');
     state.instance = paramInst || "harr";
+    syncedTask = paramTask || "";
     const bootInstance = document.getElementById("instance-selector");
     if (bootInstance) bootInstance.value = state.instance;
-    loadTasksForInstance(state.instance, paramTask || "");
+    loadTasksForInstance(state.instance, syncedTask);
   </script>
 </body>
 </html>

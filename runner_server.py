@@ -46,11 +46,13 @@ from core.invariants_validator import validate_all_invariants, InvariantCheckRes
 from core.action_generation_validator import validate_action_generation
 from core.backend_shelf_actions import (
     convert_same_bay_set_asides_to_fix_in_bay,
+    mobile_display_actions,
     present_backend_actions,
+    shelf_products_from_scans,
     shelf_slots_from_backend_actions,
     validate_backend_shelf_actions,
 )
-from core.scan_issue_investigator import investigate_scan_problem, parse_scan_url, placement_for_task_scans
+from core.scan_issue_investigator import fetch_scan_payloads, investigate_scan_problem, parse_scan_url, placement_for_task_scans
 from core.html_report_generator import generate_html_validation_report
 from core.e2e_audit_engine import audit_task_execution, derive_why_user_performs_action
 from core.e2e_audit_report_generator import generate_e2e_audit_html_report
@@ -1459,15 +1461,59 @@ def _shelf_task_scan_status(base_url: str, task_id: int, token: str) -> str:
         return ""
 
 
+def _action_scan_ids(raw_items: List[Dict[str, Any]]) -> List[int]:
+    """Scan ids the action rows point at, in first-seen order."""
+    found: List[int] = []
+    for row in raw_items:
+        for field in ("current_position", "expected_position"):
+            position = row.get(field) if isinstance(row.get(field), dict) else {}
+            scan_id = position.get("scan_id")
+            if str(scan_id or "").isdigit() and int(scan_id) not in found:
+                found.append(int(scan_id))
+    return found
+
+
+def _shelf_scan_products(
+    base_url: str,
+    token: str,
+    raw_items: List[Dict[str, Any]],
+) -> Tuple[Optional[Dict[Tuple[str, str, str], Dict[str, str]]], Dict[str, Any]]:
+    """Products the before photo saw, so a product with no action still counts as occupying its slot."""
+    scan_ids = _action_scan_ids(raw_items)
+    if not scan_ids:
+        return None, {
+            "status": "not_used", "scans": 0, "positions": 0,
+            "message": "The action rows reference no scan, so occupancy comes from the action rows only.",
+        }
+    try:
+        payloads = fetch_scan_payloads(base_url, token, scan_ids)
+    except Exception as exc:
+        return None, {
+            "status": "unavailable", "scans": 0, "positions": 0,
+            "message": f"The before photo could not be read ({exc}), so occupancy comes from the action rows only.",
+        }
+    products = shelf_products_from_scans(payloads)
+    if not products:
+        return None, {
+            "status": "not_used", "scans": len(payloads), "positions": 0,
+            "message": "The before photo lists no products, so occupancy comes from the action rows only.",
+        }
+    return products, {"status": "used", "scans": len(payloads), "positions": len(products)}
+
+
 def _backend_actions_payload(
     base_url: str,
     task_id: int,
     raw_items: List[Dict[str, Any]],
     message: str,
     converted_count: int = 0,
+    shelf_products: Optional[Dict[Tuple[str, str, str], Dict[str, str]]] = None,
+    shelf_scan: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Return the retailer rows in store walk order, plus a read-only report."""
-    actions = present_backend_actions(raw_items)
+    """Return the retailer rows in the order the backend sent them, plus a read-only report."""
+    actions = present_backend_actions(raw_items, shelf_products=shelf_products)
+    mobile = mobile_display_actions(raw_items, shelf_products=shelf_products)
+    validation = validate_backend_shelf_actions(raw_items, shelf_products=shelf_products)
     instance = base_url.replace("https://", "").replace("http://", "").split(".")[0]
     return {
         "status": "success",
@@ -1479,15 +1525,20 @@ def _backend_actions_payload(
         "action_count": len(actions),
         "actions": actions,
         "steps": actions,
-        "slots": shelf_slots_from_backend_actions(raw_items),
-        "validation": validate_backend_shelf_actions(raw_items),
+        "mobile_steps": mobile["steps"],
+        "mobile_hidden": mobile["hidden"],
+        "mobile_order": {"order": mobile["order"], "summary": mobile["summary"]},
+        "slots": shelf_slots_from_backend_actions(raw_items, shelf_products=shelf_products),
+        "validation": validation,
+        "sequence": validation["sequence_check"],
+        "shelf_scan": shelf_scan or {"status": "not_used", "scans": 0, "positions": 0},
         "converted_same_bay_set_asides": converted_count,
         "message": message,
     }
 
 
 def run_shelf_reset_backend_actions(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Load one task's retailer action list without sequencing or local fixtures."""
+    """Load one task's retailer action list in the backend's own order, with no sorting and no local fixtures."""
     payload = payload or {}
     raw_instance = payload.get("base_url") or payload.get("instance") or ""
     if not str(raw_instance).strip():
@@ -1541,24 +1592,23 @@ def run_shelf_reset_backend_actions(payload: Dict[str, Any]) -> Dict[str, Any]:
             "message": f"Could not load Task #{task_id} from {base_url}. {exc}",
         }
 
-    # Automatically convert same-bay set_asides to fix_in_bay per new API rules (unless explicitly disabled)
-    auto_convert = payload.get("auto_convert_same_bay", True)
+    # The rows are shown exactly as the backend sent them. Rewriting same-bay set asides is opt-in.
     converted_count = 0
-    if auto_convert:
+    if payload.get("auto_convert_same_bay") is True:
         raw_items, converted_count = convert_same_bay_set_asides_to_fix_in_bay(raw_items)
-        if converted_count > 0:
-            msg = f"Loaded {len(raw_items)} backend actions for Task #{task_id} ({converted_count} same-bay set-aside actions converted to FixInBay per new API rules)."
-        else:
-            msg = f"Loaded {len(raw_items)} backend actions for Task #{task_id}."
-    else:
-        msg = f"Loaded {len(raw_items)} backend actions for Task #{task_id}."
+    msg = f"Showing {len(raw_items)} backend actions for Task #{task_id} in the order the backend returned them."
+    if converted_count:
+        msg += f" {converted_count} same-bay set-aside action(s) were converted to fix in bay because you asked for that."
 
+    shelf_products, shelf_scan = _shelf_scan_products(base_url, token, raw_items)
     return _backend_actions_payload(
         base_url,
         task_id,
         raw_items,
         msg,
         converted_count=converted_count,
+        shelf_products=shelf_products,
+        shelf_scan=shelf_scan,
     )
 
 
@@ -5652,7 +5702,7 @@ class ReboticsRunnerHandler(SimpleHTTPRequestHandler):
 
         elif self.path.startswith("/api/runner/shelf_reset/backend_actions"):
             qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-            auto_conv = qs.get("auto_convert_same_bay", ["true"])[0].lower() != "false"
+            auto_conv = qs.get("auto_convert_same_bay", ["false"])[0].lower() == "true"
             res = run_shelf_reset_backend_actions({
                 "task_id": qs.get("task_id", [None])[0],
                 "instance": qs.get("instance", [None])[0],
