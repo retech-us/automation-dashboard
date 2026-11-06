@@ -45,6 +45,7 @@ from core.action_list_ui_mapper import partition_ui_models_by_bay, BayUiSummary,
 from core.invariants_validator import validate_all_invariants, InvariantCheckResult
 from core.action_generation_validator import validate_action_generation
 from core.backend_shelf_actions import (
+    blocked_summary,
     convert_same_bay_set_asides_to_fix_in_bay,
     mobile_display_actions,
     present_backend_actions,
@@ -1528,6 +1529,7 @@ def _backend_actions_payload(
         "mobile_steps": mobile["steps"],
         "mobile_hidden": mobile["hidden"],
         "mobile_order": {"order": mobile["order"], "summary": mobile["summary"]},
+        "blocked_summary": {"mobile": blocked_summary(mobile["steps"]), "backend": blocked_summary(actions)},
         "slots": shelf_slots_from_backend_actions(raw_items, shelf_products=shelf_products),
         "validation": validation,
         "sequence": validation["sequence_check"],
