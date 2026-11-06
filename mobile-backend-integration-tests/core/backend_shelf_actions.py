@@ -183,8 +183,17 @@ def convert_same_bay_set_asides_to_fix_in_bay(raw_items: List[Dict[str, Any]]) -
     return converted, converted_count
 
 
+def _is_restock(row: Dict[str, Any]) -> bool:
+    expected_raw = _position(row.get("expected_position")) or {}
+    expected_action = str(expected_raw.get("action") or "").lower()
+    root = str(row.get("action") or "").lower()
+    return expected_action == "place_on_shelf_restock" or "restock" in root or bool(row.get("is_new_restock_item"))
+
+
 def _rule_flags(row: Dict[str, Any]) -> List[Dict[str, str]]:
-    """Reset-rule breaks on one backend row."""
+    """Reset-rule breaks on one backend row. A restock, even onto the same place, is not one."""
+    if _is_restock(row):
+        return []
     current_raw = _position(row.get("current_position")) or {}
     expected_raw = _position(row.get("expected_position")) or {}
     current = _location(current_raw or None)
@@ -335,6 +344,7 @@ def shelf_products_from_scans(scans: List[Dict[str, Any]]) -> Dict[SlotKey, Dict
             found[key] = {
                 "product": str(item.get("label") or "").strip() or "Unidentified product",
                 "upc": str(item.get("upc") or "").strip(),
+                "scan_type": str(item.get("type") or "").strip().lower(),
             }
     return found
 
@@ -370,6 +380,7 @@ def _initial_occupants(
                 "product": found.get("product") or "Unidentified product",
                 "upc": str(found.get("upc") or ""),
                 "source": "shelf_scan",
+                "scan_type": str(found.get("scan_type") or ""),
             }
     from_rows = set()
     for row in raw_items:
@@ -388,6 +399,54 @@ def _initial_occupants(
                 "source": "action_list",
             }
     return occupant
+
+
+def _occupant_status(
+    holder: Dict[str, Any],
+    source: str,
+    has_action: bool,
+    later: Optional[Dict[str, Any]],
+    placed_at_step: Optional[int],
+    roles: List[str],
+) -> Tuple[str, str]:
+    """Say what kind of product blocks a position, and in one sentence why it will (not) leave."""
+    if source == "earlier_step":
+        return "placed_earlier", f"It was placed here at step {placed_at_step or '?'}."
+    if source == "shelf_scan" and not has_action:
+        scan_type = str(holder.get("scan_type") or "").strip().lower()
+        if scan_type == "ok":
+            return "marked_ok", "It is marked OK in the before photo and has no action, so nothing will move it."
+        seen_as = f" (scan type: {scan_type})" if scan_type else ""
+        return "detected_no_action", (
+            f"It was seen in the before photo{seen_as}, is not marked OK, and has no action, so nothing will move it."
+        )
+    if later:
+        return "moves_later", (
+            f"This product needs to move ({later['role']}, step {later['index']}), "
+            "but this step puts another product there before that move."
+        )
+    names = ", ".join(sorted(set(roles))) or "an action"
+    return "has_action", f"It has an action ({names}) that does not take it off this position, so nothing will move it."
+
+
+def blocked_summary(steps: List[Dict[str, Any]]) -> Dict[str, int]:
+    """Count blocked placements by what is standing in the way."""
+    counts = {"total": 0, "marked_ok": 0, "no_action": 0, "moves_later": 0, "other": 0}
+    for step in steps:
+        occupancy = step.get("target_occupancy") or {}
+        if not occupancy.get("blocking"):
+            continue
+        counts["total"] += 1
+        kind = occupancy.get("occupant_kind")
+        if kind == "marked_ok":
+            counts["marked_ok"] += 1
+        elif kind == "detected_no_action":
+            counts["no_action"] += 1
+        elif occupancy.get("status") == "occupied_cleared_later":
+            counts["moves_later"] += 1
+        else:
+            counts["other"] += 1
+    return counts
 
 
 def _walk_occupancy(
@@ -491,12 +550,21 @@ def _walk_occupancy(
                     or (holder_upc and u.get("upc") == holder_upc and (u.get("source") == target or u.get("target") == target))
                 ]
                 holder_actions_str = ", ".join(holder_actions) if holder_actions else "No other action in this task."
-                occupant_source = holder.get("source") or "earlier_step"
+                # A unit placed by an earlier step carries its own source slot, so only these two names count.
+                occupant_source = holder.get("source") if holder.get("source") in ("shelf_scan", "action_list") else "earlier_step"
                 occupant_has_action = occupant_source != "shelf_scan" or any(
                     u["source"] == target and _same_product(u, holder) for u in units
                 )
+                occupant_kind, occupant_note = _occupant_status(
+                    holder, occupant_source, occupant_has_action, later, holder_step,
+                    [u["role"] for u in units if holder_id is not None and u.get("id") == holder_id],
+                )
 
                 if later:
+                    later.setdefault("earlier_placements", []).append({
+                        "index": unit["index"],
+                        "product": unit.get("product") or "another product",
+                    })
                     result = {
                         "status": "occupied_cleared_later",
                         "title": "Occupied now",
@@ -516,6 +584,8 @@ def _walk_occupancy(
                         "occupant_actions": holder_actions_str,
                         "occupant_source": occupant_source,
                         "occupant_has_action": occupant_has_action,
+                        "occupant_kind": occupant_kind,
+                        "occupant_note": occupant_note,
                         "cleared_by_role": later["role"],
                         "blocking": True,
                     }
@@ -537,6 +607,8 @@ def _walk_occupancy(
                         "occupant_actions": holder_actions_str,
                         "occupant_source": occupant_source,
                         "occupant_has_action": occupant_has_action,
+                        "occupant_kind": occupant_kind,
+                        "occupant_note": occupant_note,
                         "blocking": True,
                     }
         if unit["source"] and unit.get("clears_source"):
@@ -579,6 +651,14 @@ def _present_units(
         seq_lbl = band(unit)
         if grp:
             seq_lbl = f"{seq_lbl} · Group {grp}"
+        earlier = unit.get("earlier_placements") or []
+        sequence_flag = ""
+        if earlier:
+            named = ", ".join(f"step {item['index']} ({item['product']})" for item in earlier)
+            sequence_flag = (
+                f"This product needs to move, but {named} "
+                "puts another product on this place first."
+            )
 
         presented.append({
             "index": unit["index"],
@@ -611,6 +691,7 @@ def _present_units(
             "rationale": str(row.get("reason") or ""),
             "on_mobile": unit.get("on_mobile", True),
             "mobile_note": unit.get("mobile_note") or "",
+            "sequence_flag": sequence_flag,
         })
     return presented
 
@@ -629,22 +710,24 @@ def present_backend_actions(
     return _present_units(units, occupancy, _backend_band)
 
 
-# The Android associate app (ActionListUiMapper, current per-bay flow) shows:
 # Identify for every bay, Remove for every bay, then one bay at a time:
-# Set aside, Fix in bay, Add to shelf. Restock is shown inside Add to shelf.
-# Move to another bay is shown inside Set aside, sorted at the destination bay.
-# A set aside is sorted at the bay it is picked from; its add is sorted at the bay it is placed.
+# Set aside, Fix in bay, Pick from (a move to another bay, filed at the bay it is picked from),
+# Add to shelf, then Restock. A set aside is filed at the bay it is picked from; its add at the bay it is placed.
 _MOBILE_PRIORITY = {
     "identify": 0,
     "remove": 1,
     "set_aside": 2,
-    "move_to_bay": 2,
     "fix_in_bay": 3,
-    "add_to_shelf": 4,
-    "restock": 4,
+    "backend_shelf_move": 3,
+    "move_to_bay": 4,
+    "add_to_shelf": 5,
+    "restock": 6,
 }
-_MOBILE_BAND = {0: "Identify", 1: "Remove", 2: "Set aside", 3: "Fix in bay", 4: "Add to shelf"}
-_MOBILE_DESTINATION_ROLES = {"move_to_bay", "fix_in_bay", "add_to_shelf", "restock", "backend_shelf_move"}
+_MOBILE_BAND = {
+    0: "Identify", 1: "Remove", 2: "Set aside", 3: "Fix in bay",
+    4: "Pick from", 5: "Add to shelf", 6: "Restock",
+}
+_MOBILE_DESTINATION_ROLES = {"fix_in_bay", "add_to_shelf", "restock", "backend_shelf_move"}
 
 
 def _sort_num(value: Any, default: int = -1) -> int:
@@ -731,8 +814,7 @@ def mobile_display_actions(
         "order": "mobile",
         "summary": (
             "Identify for every bay, then Remove for every bay, then each bay: "
-            "Set aside, Fix in bay, Add to shelf. Restock is shown with Add to shelf. "
-            "A move to another bay is shown with Set aside, at the bay it is going to."
+            "Set aside, Fix in bay, Pick from, Add to shelf, then Restock."
         ),
         "steps": _present_units(shown, occupancy, _mobile_band),
         "hidden": _present_units(hidden, [None] * len(hidden), _mobile_band),
@@ -873,14 +955,15 @@ def validate_backend_shelf_actions(
                 "MISSING_TARGET_COORDINATES", "critical", "Expected position is incomplete",
                 f"{action} is missing an expected bay, shelf, or position.", row,
             ))
-        if current_key and expected_key and current_key == expected_key and "remove" not in action and "identify" not in action:
+        same_place = bool(current_key and expected_key and current_key == expected_key)
+        if same_place and "remove" not in action and "identify" not in action and not _is_restock(row):
             findings.append(_finding(
                 "REDUNDANT_SAME_SLOT_MOVE", "critical", "Product already in place",
                 f"{_product(row) or 'Product'} is already at {_slot_text(current)}.", row,
             ))
         if expected_key:
             target_claims.setdefault(expected_key, []).append(row)
-        if action == "place_on_shelf_restock" and current_key:
+        if action == "place_on_shelf_restock" and current_key and not same_place:
             findings.append(_finding(
                 "INVALID_RESTOCK_SOURCE", "critical", "Restock includes a shelf source",
                 "A restock row also names a current shelf position.", row,
@@ -959,10 +1042,10 @@ def validate_backend_shelf_actions(
         who = f"Step {unit['index']} (Action {unit['id']}, {unit['product']})"
         if result["status"] == "occupied":
             never_cleared += 1
-            seen = "" if result.get("occupant_has_action") else " It has no action of its own in this task."
             item = _finding(
                 "OCCUPIED_DESTINATION", "critical", "Destination is occupied and nothing clears it",
-                f"{who} goes to {target_str}, but {occupant} is there and no step in the backend list moves or removes it.{seen}",
+                f"{who} goes to {target_str}, but {occupant} is there and no step in the backend list moves or removes it. "
+                f"{result['occupant_note']}",
                 flagged,
             )
         else:
@@ -977,14 +1060,16 @@ def validate_backend_shelf_actions(
         item["target"] = target_str
         item["occupant_product"] = result["occupant_product"]
         item["occupant_upc"] = result.get("occupant_upc") or ""
+        item["occupant_kind"] = result["occupant_kind"]
+        item["occupant_note"] = result["occupant_note"]
         findings.append(item)
 
     groups = _mutual_blocks(units, _initial_occupants(raw_items, shelf_products))
     for group in groups:
-        steps = ", ".join(str(unit["index"]) for unit in group)
+        ids = ", ".join(str(unit["id"]) for unit in group)
         item = _finding(
             "MUTUAL_BLOCK", "critical", "Steps wait on each other",
-            f"Steps {steps} wait on each other: each goes to a position the next one is still standing in, "
+            f"Actions {ids} wait on each other: each goes to a position the next one is still standing in, "
             "so none can go first. Each is a direct move, with no set aside to break the loop.",
             dict(group[0]["row"], _presentation_index=group[0]["index"]),
         )
@@ -996,7 +1081,7 @@ def validate_backend_shelf_actions(
     for unit in orphans:
         findings.append(_finding(
             "SET_ASIDE_WITHOUT_PLACEMENT", "warning", "Set aside has no destination",
-            f"Step {unit['index']} (Action {unit['id']}, {unit['product']}) picks the product up, "
+            f"Action {unit['id']} ({unit['product']}) picks the product up, "
             "and the backend gives no position to put it back.",
             dict(unit["row"], _presentation_index=unit["index"]),
         ))

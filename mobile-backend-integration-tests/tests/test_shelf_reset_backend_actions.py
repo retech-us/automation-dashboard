@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 import runner_server
 from core.backend_shelf_actions import (
+    blocked_summary,
     mobile_display_actions,
     present_backend_actions,
     shelf_products_from_scans,
@@ -117,11 +118,11 @@ class BackendActionPresentationTests(unittest.TestCase):
             [
                 (5, "identify", "All bays · Identify"),
                 (4, "remove", "All bays · Remove"),
-                (6, "move_to_bay", "Bay 01 · Set aside"),
                 (3, "set_aside", "Bay 01 · Set aside"),
                 (2, "fix_in_bay", "Bay 02 · Fix in bay"),
-                (1, "restock", "Bay 02 · Add to shelf"),
+                (6, "move_to_bay", "Bay 02 · Pick from"),
                 (3, "add_to_shelf", "Bay 02 · Add to shelf"),
+                (1, "restock", "Bay 02 · Restock"),
             ],
         )
         self.assertEqual(mobile["hidden"], [])
@@ -233,6 +234,48 @@ class BackendActionPresentationTests(unittest.TestCase):
         self.assertEqual(report["rule_check"]["rows_breaking_rules"], 3)
         self.assertEqual(report["state"], "blocked")
 
+    def test_restock_onto_the_same_place_is_not_a_rule_break(self):
+        raw = [
+            _row(1, "place_on_shelf_restock",
+                 current=_position("place_on_shelf_restock", "1", 2, 3),
+                 expected=_position("place_on_shelf_restock", "1", 2, 3),
+                 product_title="Backroom item", upc="111"),
+            _row(2, "place_on_shelf_restock",
+                 current=_position(None, "1", 2, 1),
+                 expected=_position("place_on_shelf_restock", "1", 4, 1),
+                 product_title="Same bay restock", upc="222"),
+        ]
+        presented = present_backend_actions(raw)
+        self.assertEqual(presented[0]["rule_flags"], [])
+        self.assertEqual(presented[1]["rule_flags"], [])
+        findings = validate_backend_shelf_actions(raw)["findings"]
+        codes = {item["code"] for item in findings}
+        self.assertNotIn("REDUNDANT_SAME_SLOT_MOVE", codes)
+        self.assertNotIn("SAME_BAY_MOVE_NOT_FIX_IN_BAY", codes)
+        same_place = [item for item in findings if 1 in (item.get("action_ids") or [])]
+        self.assertEqual(same_place, [])
+
+    def test_a_move_is_flagged_when_another_product_is_sent_there_first(self):
+        raw = [
+            _row(1, "fix_position_fix_in_bay",
+                 current=_position("fix_position_fix_in_bay", "1", 1, 2),
+                 expected=_position("fix_position_fix_in_bay", "1", 1, 1),
+                 product_title="Incoming", upc="111"),
+            _row(2, "fix_position_move_to_bay",
+                 current=_position("fix_position_move_to_bay", "1", 1, 1),
+                 expected=_position("fix_position_move_to_bay", "2", 1, 1),
+                 product_title="Leaves later", upc="222"),
+        ]
+        presented = present_backend_actions(raw)
+        blocked = presented[0]["target_occupancy"]
+        self.assertEqual(blocked["status"], "occupied_cleared_later")
+        self.assertEqual(blocked["occupant_kind"], "moves_later")
+        self.assertIn("needs to move", blocked["occupant_note"])
+        self.assertIn("step 2", blocked["occupant_note"])
+        self.assertIn("step 1", presented[1]["sequence_flag"])
+        self.assertIn("Incoming", presented[1]["sequence_flag"])
+        self.assertIn("before", presented[0]["target_occupancy"]["occupant_note"])
+
     def test_destination_is_blocked_when_its_product_leaves_only_later(self):
         raw = [
             _row(1, "place_on_shelf_add_to_bay",
@@ -295,6 +338,89 @@ class BackendActionPresentationTests(unittest.TestCase):
         self.assertFalse(blocked["occupant_has_action"])
         self.assertEqual(presented[1]["target_occupancy"]["status"], "vacant")
         self.assertEqual(present_backend_actions(raw)[0]["target_occupancy"]["status"], "vacant")
+
+    def test_blocked_destination_says_whether_the_product_there_is_marked_ok(self):
+        def blocked_by(scan_item, extra_rows=()):
+            raw = [
+                _row(1, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 3, 2),
+                     product_title="Incoming", upc="111"),
+                *extra_rows,
+            ]
+            shelf = shelf_products_from_scans([{"stage": "pre_photo", "section": "1", "items": [scan_item]}])
+            return present_backend_actions(raw, shelf_products=shelf)[0]["target_occupancy"]
+
+        ok = blocked_by({"upc": "222", "label": "Shelf product", "on_shelf_position": "3:2", "type": "ok"})
+        self.assertEqual(ok["occupant_kind"], "marked_ok")
+        self.assertIn("marked OK", ok["occupant_note"])
+        self.assertIn("no action", ok["occupant_note"])
+
+        other = blocked_by({"upc": "222", "label": "Shelf product", "on_shelf_position": "3:2", "type": "unknown"})
+        self.assertEqual(other["occupant_kind"], "detected_no_action")
+        self.assertIn("not marked OK", other["occupant_note"])
+        self.assertIn("unknown", other["occupant_note"])
+
+        later = blocked_by(
+            {"upc": "222", "label": "Shelf product", "on_shelf_position": "3:2", "type": "ok"},
+            extra_rows=[_row(2, "remove", current=_position("remove", "1", 3, 2), product_title="Shelf product", upc="222")],
+        )
+        self.assertEqual(later["occupant_kind"], "moves_later")
+        self.assertEqual(later["status"], "occupied_cleared_later")
+        self.assertIn("needs to move", later["occupant_note"])
+        self.assertIn("before that move", later["occupant_note"])
+
+        identify_only = blocked_by(
+            {"upc": "", "label": "", "on_shelf_position": "3:2", "type": "unknown"},
+            extra_rows=[_row(3, "identify", current=_position("identify", "1", 3, 2), product_title="Unidentified", upc="")],
+        )
+        self.assertEqual(identify_only["status"], "occupied")
+        self.assertEqual(identify_only["occupant_kind"], "has_action")
+        self.assertIn("identify", identify_only["occupant_note"])
+        self.assertIn("does not take it off", identify_only["occupant_note"])
+
+    def test_blocker_placed_by_an_earlier_step_is_named_as_such(self):
+        raw = [
+            _row(1, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 1, 1),
+                 product_title="First", upc="111"),
+            _row(2, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 1, 1),
+                 product_title="Second", upc="222"),
+        ]
+        second = present_backend_actions(raw)[1]["target_occupancy"]
+        self.assertEqual(second["occupant_kind"], "placed_earlier")
+        self.assertIn("placed here at step 1", second["occupant_note"])
+
+    def test_blocked_summary_counts_blockers_by_what_holds_the_position(self):
+        raw = [
+            _row(1, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 1, 1),
+                 product_title="A", upc="1"),
+            _row(2, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 2, 1),
+                 product_title="B", upc="2"),
+            _row(3, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 3, 1),
+                 product_title="C", upc="3"),
+            _row(4, "remove", current=_position("remove", "1", 3, 1), product_title="Leaves", upc="4"),
+            _row(5, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 4, 1),
+                 product_title="D", upc="5"),
+        ]
+        shelf = shelf_products_from_scans([{"stage": "pre_photo", "section": "1", "items": [
+            {"upc": "90", "label": "OK product", "on_shelf_position": "1:1", "type": "ok"},
+            {"upc": "91", "label": "Seen only", "on_shelf_position": "2:1", "type": "unknown"},
+            {"upc": "4", "label": "Leaves", "on_shelf_position": "3:1", "type": "ok"},
+        ]}])
+        counts = blocked_summary(present_backend_actions(raw, shelf_products=shelf))
+        self.assertEqual(counts, {"total": 3, "marked_ok": 1, "no_action": 1, "moves_later": 1, "other": 0})
+        self.assertEqual(blocked_summary([]), {"total": 0, "marked_ok": 0, "no_action": 0, "moves_later": 0, "other": 0})
+
+    def test_blocked_finding_repeats_the_occupant_note(self):
+        raw = [
+            _row(1, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 3, 2),
+                 product_title="Incoming", upc="111"),
+        ]
+        shelf = shelf_products_from_scans([{"stage": "pre_photo", "section": "1", "items": [
+            {"upc": "222", "label": "Shelf product", "on_shelf_position": "3:2", "type": "ok"},
+        ]}])
+        found = [item for item in validate_backend_shelf_actions(raw, shelf_products=shelf)["findings"]
+                 if item["code"] == "OCCUPIED_DESTINATION"]
+        self.assertEqual(found[0]["occupant_kind"], "marked_ok")
+        self.assertIn("marked OK", found[0]["message"])
 
     def test_shelf_scan_product_with_a_later_removal_is_cleared_later(self):
         raw = [
@@ -399,6 +525,9 @@ class BackendActionPresentationTests(unittest.TestCase):
         self.assertEqual(sorted(mutual[0]["action_ids"]), [1, 2])
         self.assertEqual(mutual[0]["severity"], "critical")
         self.assertIn("each other", mutual[0]["message"].lower())
+        # Step numbers differ between the two orders, so the message names actions, not steps.
+        self.assertIn("Actions 1, 2", mutual[0]["message"])
+        self.assertNotIn("Steps", mutual[0]["message"])
 
     def test_backend_named_swap_is_not_reported_as_a_deadlock(self):
         raw = [
@@ -472,8 +601,8 @@ class ShelfScanOccupantTests(unittest.TestCase):
             },
         ]
         found = shelf_products_from_scans(scans)
-        self.assertEqual(found[("01", "3", "2")], {"product": "Marked OK here", "upc": "222"})
-        self.assertEqual(found[("01", "3", "5")], {"product": "Unidentified product", "upc": ""})
+        self.assertEqual(found[("01", "3", "2")], {"product": "Marked OK here", "upc": "222", "scan_type": "ok"})
+        self.assertEqual(found[("01", "3", "5")], {"product": "Unidentified product", "upc": "", "scan_type": "unknown"})
         self.assertNotIn(("01", "3", "6"), found)
         self.assertNotIn(("01", "1", "1"), found)
         self.assertEqual(len(found), 2)
@@ -610,13 +739,16 @@ class ShelfResetBackendEndpointTests(unittest.TestCase):
         self.assertEqual([step["id"] for step in result["steps"]], [8, 3])
         self.assertEqual([step["id"] for step in result["mobile_steps"]], [3, 8])
         self.assertEqual(result["mobile_steps"][0]["sequence_label"], "All bays · Remove")
-        self.assertEqual(result["mobile_steps"][1]["sequence_label"], "Bay 1 · Add to shelf")
+        self.assertEqual(result["mobile_steps"][1]["sequence_label"], "Bay 1 · Restock")
         self.assertEqual(result["steps"][0]["target_occupancy"]["status"], "occupied_cleared_later")
         self.assertEqual(result["sequence"]["order"], "backend")
         self.assertEqual(result["sequence"]["blocked_destinations"], 1)
         self.assertEqual(result["validation"]["sequence_check"]["destination_cleared_later"], 1)
         self.assertEqual(result["shelf_scan"]["status"], "not_used")
         self.assertIn("order the backend returned", result["message"])
+        # The phone order removes the old product first, so only the backend order is blocked here.
+        self.assertEqual(result["blocked_summary"]["backend"]["total"], 1)
+        self.assertEqual(result["blocked_summary"]["mobile"]["total"], 0)
 
     def test_endpoint_checks_destinations_against_the_before_photo(self):
         raw = [
@@ -643,6 +775,9 @@ class ShelfResetBackendEndpointTests(unittest.TestCase):
         self.assertEqual(occupancy["occupant_product"], "Marked OK here")
         self.assertEqual(result["shelf_scan"], {"status": "used", "scans": 1, "positions": 1})
         self.assertEqual(result["validation"]["sequence_check"]["destination_never_cleared"], 1)
+        self.assertEqual(occupancy["occupant_kind"], "marked_ok")
+        self.assertEqual(result["blocked_summary"]["mobile"]["marked_ok"], 1)
+        self.assertEqual(result["blocked_summary"]["backend"]["marked_ok"], 1)
 
     def test_endpoint_says_so_when_the_before_photo_cannot_be_read(self):
         raw = [
@@ -714,7 +849,7 @@ class ShelfResetMobileContractTests(unittest.TestCase):
         frame_tag = index[index.index('<iframe id="iframe-shelf-mobile"'):]
         frame_tag = frame_tag[:frame_tag.index(">")]
         self.assertNotIn(" src=", frame_tag)
-        self.assertIn("openShelfMobile(f, 'shelf_reset_mobile.html?v=20261106b', true)", index)
+        self.assertIn("openShelfMobile(f, 'shelf_reset_mobile.html?v=20261106e', true)", index)
         self.assertIn("IrTaskFlow.shelfMobileUrl('shelf_reset_mobile.html')", index)
 
     def test_page_marks_every_blocked_destination_and_reports_the_sequence(self):
@@ -730,4 +865,19 @@ class ShelfResetMobileContractTests(unittest.TestCase):
         self.assertNotIn("identify, remove, then each bay", page)
         self.assertNotIn("Identify and remove cover every bay first", page)
         self.assertIn("const look = { ...occupancyStyle(s.target_occupancy) }", page)
+
+    def test_page_explains_each_block_inside_the_action_sequence(self):
+        page = (ROOT / "shelf_reset_mobile.html").read_text(encoding="utf-8")
+        self.assertIn("Where the associate gets blocked", page)
+        self.assertIn("Marked OK · no action", page)
+        self.assertIn("function blockerSentence", page)
+        # A row under each blocked step puts the reason inside the sequence the associate follows.
+        self.assertIn("blockerRowHtml(s)", page)
+        # The three phases of the associate app are named in the panel.
+        self.assertIn("① Identify all bays", page)
+        self.assertIn("② Remove all bays", page)
+        self.assertIn("③ Bay by bay", page)
+        self.assertIn("pick from", page)
+        self.assertIn("Needs to move first", page)
+        self.assertIn("state.blockedSummary", page)
         self.assertIn("hidden", page[page.index('id="view-tab-rules"') - 80:page.index('id="view-tab-rules"') + 120])

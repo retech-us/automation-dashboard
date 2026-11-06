@@ -1855,6 +1855,82 @@
     .trace-table tr.current-step td { background: rgba(56, 189, 248, 0.12) !important; font-weight: 700; }
     .trace-table tr.done-step td { color: var(--text-dim); }
 
+    /* ==========================================================================
+       FLAT LAYOUT: sections are separated by space and hairlines, not boxes.
+       Row 1: phone | current action | shelf map. Row 2: blocked steps | action sequence.
+       ========================================================================== */
+    body { padding: 12px 20px 32px; }
+    .top-header {
+      background: transparent; border: 0; border-radius: 0;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 0 12px; margin-bottom: 16px;
+    }
+    .view-mode-tabs { display: none; }
+    .top-header .header-controls { width: 100%; }
+    #shelf-auth-status { order: 99; flex-basis: 100%; max-width: none !important; }
+    #shelf-auth-status:empty { display: none; }
+    .dashboard-grid {
+      grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) minmax(0, 1.15fr);
+      grid-template-areas: "mobile details map";
+      gap: 28px;
+    }
+    .col-mobile { grid-area: mobile; }
+    .col-action-details { grid-area: details; }
+    .col-planogram { grid-area: map; }
+    .panel-card, .col-mobile {
+      background: transparent; border: 0; border-radius: 0; padding: 0; box-shadow: none;
+    }
+    .panel-card-header { padding-bottom: 8px; }
+    .active-step-focus-card, .slot-clearance-box, .clean-spec-grid {
+      background: transparent; border: 0; border-radius: 0; padding: 0;
+    }
+    .slot-clearance-box { border-top: 1px solid var(--border-subtle); padding-top: 10px; }
+    .clean-spec-grid { border-top: 1px solid var(--border-subtle); padding-top: 10px; }
+    .clearance-qa-card { background: transparent; border: 0; padding: 0; }
+    .comparison-strip { border-top: 1px solid var(--border-subtle); padding-top: 10px; }
+    .comp-panel, .comp-panel.naive, .comp-panel.optimized { background: transparent; border: 0; padding: 0; }
+    .shelf-beam-layer {
+      background: transparent; border: 0; border-radius: 0; padding: 6px 0 10px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .sequence-section {
+      display: grid;
+      grid-template-columns: minmax(340px, 0.85fr) minmax(0, 1.6fr);
+      gap: 28px;
+      align-items: start;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .sequence-section .sequence-check {
+      margin: 0; padding: 0 0 0 14px; border: 0; border-radius: 0; background: transparent;
+      border-left: 3px solid rgba(148, 163, 184, 0.35);
+      max-height: 70vh; overflow: auto;
+    }
+    .sequence-section .sequence-check.is-blocked { border-left-color: #ef4444; background: transparent; }
+    .sequence-section .sequence-check.is-clear { border-left-color: rgba(52, 211, 153, 0.7); }
+    .sequence-section .sequence-check h4 { font-size: 13px; }
+    .sequence-section .trace-table-box { max-height: 70vh; border: 0; border-radius: 0; background: transparent; }
+    .sequence-section .trace-table th { background: var(--bg-deep); }
+    /* With no blocked panel shown, the table takes the whole row. */
+    .sequence-section:has(> .sequence-check[style*="display: none"]),
+    .sequence-section:has(> .sequence-check[style*="display:none"]) { grid-template-columns: minmax(0, 1fr); }
+
+    @media (max-width: 1280px) {
+      .dashboard-grid {
+        grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+        grid-template-areas: "mobile details" "mobile map";
+      }
+      .sequence-section { grid-template-columns: minmax(0, 1fr); }
+      .sequence-section .sequence-check { max-height: none; }
+    }
+    @media (max-width: 760px) {
+      body { padding: 8px 10px 24px; }
+      .dashboard-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "mobile" "details" "map"; }
+      .col-mobile { position: static; }
+    }
+
     /* Custom Scrollbars */
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-thumb { background: #223252; border-radius: 4px; }
@@ -2274,56 +2350,60 @@
         </div>
       </div>
 
-      <!-- 3.2b Sequence check: the backend order, checked and left unchanged -->
-      <div id="sequence-check" class="sequence-check" style="display:none;"></div>
-
-      <!-- 3.3 Full Trace Table -->
-      <div class="trace-wrapper">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-          <div style="font-size:12px; font-weight:700; color:#fff;">
-            Backend actions (<span id="trace-step-count">0</span>)
-            <div id="trace-order-caption" style="font-size:10px; font-weight:500; color:var(--text-dim);">Listed in the order the backend returned them. Nothing is sorted, merged, or converted.</div>
-            <div style="display:flex; gap:6px; margin-top:6px;">
-              <button type="button" id="order-mode-mobile" onclick="setOrderMode('mobile')" style="border:0; border-radius:999px; padding:3px 10px; font-size:10px; font-weight:800; cursor:pointer;">Mobile order</button>
-              <button type="button" id="order-mode-backend" onclick="setOrderMode('backend')" style="border:0; border-radius:999px; padding:3px 10px; font-size:10px; font-weight:800; cursor:pointer;">Backend order</button>
-            </div>
-          </div>
-          <div class="trace-filter-bar" id="trace-filter-chips">
-            <button class="t-filter-chip active" data-type="ALL">All</button>
-            <button class="t-filter-chip" data-type="BLOCKED" style="color:#fb923c;">⛔ Blocked destinations</button>
-            <button class="t-filter-chip" data-type="RULE_BREAK" style="color:#f87171;">🚩 Rule breaks</button>
-            <button class="t-filter-chip" data-type="pull">📤 Pull (Remove)</button>
-            <button class="t-filter-chip" data-type="set_aside">📦 Set-Aside (Cart)</button>
-            <button class="t-filter-chip" data-type="move">⚡ Move / Fix-in-Bay</button>
-            <button class="t-filter-chip" data-type="place_from_cart">📥 From Cart</button>
-            <button class="t-filter-chip" data-type="hold">✋ Hold</button>
-            <button class="t-filter-chip" data-type="restock">➕ Restock</button>
-          </div>
-        </div>
-
-        <div class="trace-table-box">
-          <table class="trace-table">
-            <thead>
-              <tr>
-                <th style="width: 32px;">#</th>
-                <th style="width: 34%;">Action</th>
-                <th style="width: 64px;">From</th>
-                <th style="width: 64px;">To</th>
-                <th>Product</th>
-                <th style="width: 96px;">Target</th>
-              </tr>
-            </thead>
-            <tbody id="trace-table-body">
-              <!-- Rendered dynamically -->
-            </tbody>
-          </table>
-        </div>
-      </div>
       </div>
 
     </section>
 
   </main>
+
+  <!-- Full-width row: where the associate gets blocked, next to the action sequence -->
+  <section id="sequence-section" class="sequence-section" aria-label="Action sequence">
+    <!-- 3.2b Sequence check: the backend order, checked and left unchanged -->
+    <div id="sequence-check" class="sequence-check" style="display:none;"></div>
+
+    <!-- 3.3 Full Trace Table -->
+    <div class="trace-wrapper">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+        <div style="font-size:12px; font-weight:700; color:#fff;">
+          Backend actions (<span id="trace-step-count">0</span>)
+          <div id="trace-order-caption" style="font-size:10px; font-weight:500; color:var(--text-dim);">Listed in the order the backend returned them. Nothing is sorted, merged, or converted.</div>
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <button type="button" id="order-mode-mobile" onclick="setOrderMode('mobile')" style="border:0; border-radius:999px; padding:3px 10px; font-size:10px; font-weight:800; cursor:pointer;">Mobile order</button>
+            <button type="button" id="order-mode-backend" onclick="setOrderMode('backend')" style="border:0; border-radius:999px; padding:3px 10px; font-size:10px; font-weight:800; cursor:pointer;">Backend order</button>
+          </div>
+        </div>
+        <div class="trace-filter-bar" id="trace-filter-chips">
+          <button class="t-filter-chip active" data-type="ALL">All</button>
+          <button class="t-filter-chip" data-type="BLOCKED" style="color:#fb923c;">⛔ Blocked destinations</button>
+          <button class="t-filter-chip" data-type="RULE_BREAK" style="color:#f87171;">🚩 Rule breaks</button>
+          <button class="t-filter-chip" data-type="pull">📤 Pull (Remove)</button>
+          <button class="t-filter-chip" data-type="set_aside">📦 Set-Aside (Cart)</button>
+          <button class="t-filter-chip" data-type="move">⚡ Move / Fix-in-Bay</button>
+          <button class="t-filter-chip" data-type="place_from_cart">📥 From Cart</button>
+          <button class="t-filter-chip" data-type="hold">✋ Hold</button>
+          <button class="t-filter-chip" data-type="restock">➕ Restock</button>
+        </div>
+      </div>
+
+      <div class="trace-table-box">
+        <table class="trace-table">
+          <thead>
+            <tr>
+              <th style="width: 32px;">#</th>
+              <th style="width: 34%;">Action</th>
+              <th style="width: 64px;">From</th>
+              <th style="width: 64px;">To</th>
+              <th>Product</th>
+              <th style="width: 180px;">Target</th>
+            </tr>
+          </thead>
+          <tbody id="trace-table-body">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 
   <script>
     // State management & LocalStorage persistence
@@ -2675,6 +2755,7 @@
       state.mobileSteps = (data.mobile_steps || []).map(normalizeStep);
       state.mobileHidden = (data.mobile_hidden || []).map(normalizeStep);
       state.mobileSummary = (data.mobile_order && data.mobile_order.summary) || "";
+      state.blockedSummary = data.blocked_summary || {};
       state.orderMode = state.mobileSteps.length ? "mobile" : "backend";
       state.steps = state.orderMode === "mobile" ? state.mobileSteps : state.backendSteps;
       state.source = data.source || `Task #${state.dataset}`;
@@ -3549,7 +3630,7 @@
               const look = occupancyStyle(occ);
               clStrip.style.display = "flex";
               clIcon.textContent = look.icon;
-              clTxt.textContent = `Target: ${occ.title}. ${occ.text}`;
+              clTxt.textContent = `Target: ${occ.title}. ${occ.text}${occ.occupant_note ? ` ${occ.occupant_note}` : ""}`;
               clTxt.style.color = look.color;
               if (occ.blocking) {
                 clStrip.style.border = "1.5px solid #ef4444";
@@ -3636,10 +3717,13 @@
 
       // Every destination that is occupied when a step needs it, with the steps that need it.
       const blockedDestinations = new Map();
+      const blockedBadges = new Map();
       state.steps.forEach((step, i) => {
         if (!isBlockedStep(step) || !step.toSlotId) return;
         if (!blockedDestinations.has(step.toSlotId)) blockedDestinations.set(step.toSlotId, []);
         blockedDestinations.get(step.toSlotId).push(i + 1);
+        const look = OCCUPANT_BADGE[step.target_occupancy.occupant_kind];
+        if (look) blockedBadges.set(step.toSlotId, look.text);
       });
 
       if (activeStep) {
@@ -3803,7 +3887,7 @@
           return `
             <div class="${classes.join(" ")}" 
                  onclick="inspectSlot('${s.id}')"
-                 title="Bay: ${loc.bay} • Shelf: ${loc.shelf} • Position: ${loc.position}\nSlot ID: ${s.id}${isBlocking ? '\n⛔ BLOCKED SPACE: Target destination is currently occupied!' : ''}${isBlockedDest ? `\n⛔ Occupied when step ${neededAtSteps.join(", ")} needs it` : ''}\nCurrent: ${s.current || 'Vacant'}\nTarget: ${s.target || 'None'}">
+                 title="Bay: ${loc.bay} • Shelf: ${loc.shelf} • Position: ${loc.position}\nSlot ID: ${s.id}${isBlocking ? '\n⛔ BLOCKED SPACE: Target destination is currently occupied!' : ''}${isBlockedDest ? `\n⛔ Occupied when step ${neededAtSteps.join(", ")} needs it${blockedBadges.get(s.id) ? ` (${blockedBadges.get(s.id)})` : ''}` : ''}\nCurrent: ${s.current || 'Vacant'}\nTarget: ${s.target || 'None'}">
               <div class="slot-tile-pos-row" ${isBlocking ? 'style="background:#dc2626; color:#ffffff; margin:-5px -5px 4px -5px; padding:2px 4px; border-radius:3px 3px 0 0;"' : ''}>
                 <span class="pos-tag" ${isBlocking ? 'style="color:#fee2e2; font-weight:800;"' : ''}>${posTag}</span>
                 <span style="font-weight:800; font-size:${isBlocking ? '8px' : '9px'};">${statusIcon}</span>
@@ -4074,9 +4158,50 @@
       return Boolean(step && step.target_occupancy && step.target_occupancy.blocking);
     }
 
-    const SEQUENCE_CODES = ["OCCUPIED_DESTINATION", "DESTINATION_CLEARED_LATER", "MUTUAL_BLOCK", "SET_ASIDE_WITHOUT_PLACEMENT"];
+    // Findings about blocked destinations are shown as steps below, so the "other findings" list leaves them out.
+    const SEQUENCE_CODES = ["OCCUPIED_DESTINATION", "DESTINATION_CLEARED_LATER"];
 
-    // Reports on the backend order. It never sorts, hides, or changes a step.
+    const OCCUPANT_BADGE = {
+      marked_ok: { text: "Marked OK · no action", color: "#fbbf24" },
+      detected_no_action: { text: "Not marked OK · no action", color: "#f87171" },
+      has_action: { text: "Has its own action", color: "#fb923c" },
+      moves_later: { text: "Needs to move first", color: "#fb923c" },
+      placed_earlier: { text: "Placed by an earlier step", color: "#fb923c" },
+    };
+
+    function occupantBadge(occ) {
+      const look = occ && OCCUPANT_BADGE[occ.occupant_kind];
+      return look
+        ? `<span style="display:inline-block; padding:1px 6px; border-radius:999px; border:1px solid ${look.color}; color:${look.color}; font-size:9.5px; font-weight:800; white-space:nowrap;">${look.text}</span>`
+        : "";
+    }
+
+    function destinationText(step) {
+      const to = step.toLocation;
+      return to && to.bay != null && to.bay !== ""
+        ? `Bay ${to.bay}, Shelf ${to.shelf}, Position ${to.position}`
+        : "its destination";
+    }
+
+    // One plain sentence: what the step needs, what stands there, and whether anything will move it.
+    function blockerSentence(step) {
+      const occ = step.target_occupancy || {};
+      const who = `${occ.occupant_product || "A product"}${occ.occupant_upc ? ` (UPC ${occ.occupant_upc})` : ""}`;
+      const until = occ.status === "occupied_cleared_later"
+        ? ` It only leaves at step ${occ.cleared_at_step}, after this one.`
+        : "";
+      return `${step.item || "This product"} goes to ${destinationText(step)}, but ${who} is standing there.${until} ${occ.occupant_note || ""}`.trim();
+    }
+
+    // The three phases of the associate app, then bay by bay.
+    function mobilePhase(step) {
+      const label = step.sequence_label || "";
+      if (label.startsWith("All bays · Identify")) return 0;
+      if (label.startsWith("All bays · Remove")) return 1;
+      return 2;
+    }
+
+    // Reports on the order on screen. It never sorts, hides, or changes a step.
     function renderSequenceCheck() {
       const box = document.getElementById("sequence-check");
       if (!box) return;
@@ -4089,73 +4214,106 @@
       const validation = state.validation || {};
       const check = validation.sequence_check || {};
       const mobile = state.orderMode === "mobile";
-      const all = validation.findings || [];
-      // In mobile order the step numbers differ, so blocked destinations come from the steps on screen.
-      const findings = mobile
-        ? [
-            ...state.steps.filter(isBlockedStep).map((step) => ({
-              severity: "critical",
-              title: step.target_occupancy.status === "occupied"
-                ? "Destination is occupied and nothing clears it"
-                : "Destination is cleared after it is needed",
-              message: `${step.item}: ${step.target_occupancy.text}`,
-              index: step.index,
-            })),
-            ...hidden.map((step) => ({
-              severity: "warning",
-              title: "Not on the mobile screen",
-              message: `${step.item || step.action_label || "Action"}: ${step.mobile_note}`,
-            })),
-            ...all.filter((item) => !SEQUENCE_CODES.includes(item.code)),
-          ]
-        : [
-            ...all.filter((item) => SEQUENCE_CODES.includes(item.code)),
-            ...all.filter((item) => !SEQUENCE_CODES.includes(item.code)),
-          ];
-      // Sequence findings carry a step number. Other findings carry a row number, so find the step by action id.
+      const blockedSteps = state.steps.map((step, at) => ({ step, at })).filter(({ step }) => isBlockedStep(step));
+      const counts = (state.blockedSummary || {})[mobile ? "mobile" : "backend"] || { total: blockedSteps.length };
+
+      // Findings that are not a blocked destination. Their step is found by action id because step numbers differ per order.
+      const others = [
+        ...(mobile ? hidden.map((step) => ({
+          severity: "warning",
+          title: "Not on the mobile screen",
+          message: `${step.item || step.action_label || "Action"}: ${step.mobile_note}`,
+        })) : []),
+        ...(validation.findings || []).filter((item) => !SEQUENCE_CODES.includes(item.code)),
+      ];
       const stepFor = (item) => {
-        if (mobile && Number.isInteger(item.index)) return item.index;
-        if (!mobile && SEQUENCE_CODES.includes(item.code)) return Number.isInteger(item.index) ? item.index : (item.steps || [])[0];
         const ids = (item.action_ids || []).map(String);
         const at = state.steps.findIndex((s) => ids.includes(String(s.id)));
         return at >= 0 ? at + 1 : null;
       };
-      const scan = state.shelfScan || {};
-      const source = scan.status === "used"
-        ? `Occupied slots are checked against the action rows and the before photo (${scan.positions} positions seen).`
-        : `Occupied slots are checked against the action rows only. ${escapeText(scan.message || "")}`;
-      const blockedOnScreen = mobile
-        ? state.steps.filter(isBlockedStep).length
-        : (check.blocked_destinations || 0);
-      const blocked = mobile ? blockedOnScreen : blockedOnScreen + (check.mutual_blocks || 0);
-      box.className = `sequence-check ${blocked || (!mobile && validation.state === "blocked") ? "is-blocked" : (findings.length ? "" : "is-clear")}`;
-      box.style.display = "";
-      const headline = mobile
-        ? (blockedOnScreen
-          ? `${blockedOnScreen} destination${blockedOnScreen === 1 ? " is" : "s are"} occupied when the associate reaches ${blockedOnScreen === 1 ? "that step" : "them"}`
-          : "No destination is occupied when the associate reaches it")
-        : (blocked
-        ? `${check.blocked_destinations || 0} destination${check.blocked_destinations === 1 ? " is" : "s are"} occupied when ${check.blocked_destinations === 1 ? "its step comes" : "their steps come"} up`
-          + ` (${check.destination_never_cleared || 0} never cleared, ${check.destination_cleared_later || 0} cleared later)`
-          + `${check.mutual_blocks ? `, and ${check.mutual_blocks} group${check.mutual_blocks === 1 ? "" : "s"} of steps wait on each other` : ""}`
-        : "No destination is occupied when its step comes up, and no steps wait on each other");
-      const shown = findings.slice(0, 40);
-      const rows = shown.map((item) => {
+
+      const blockedGroups = [];
+      blockedSteps.forEach(({ step, at }) => {
+        const label = step.sequence_label || "Backend order";
+        const last = blockedGroups[blockedGroups.length - 1];
+        if (last && last.label === label) last.items.push({ step, at });
+        else blockedGroups.push({ label, items: [{ step, at }] });
+      });
+      const groupHtml = blockedGroups.map((group) => `
+        <div style="margin-top:8px;">
+          <div style="font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#93c5fd;">${escapeText(group.label)}</div>
+          ${group.items.map(({ step, at }) => `
+            <div class="seq-row">
+              <div>
+                <div style="color:#e2e8f0; font-weight:700;">⛔ ${escapeText(step.item || "Product")} → ${escapeText(destinationText(step))} ${occupantBadge(step.target_occupancy)}</div>
+                <div>${escapeText(blockerSentence(step))}</div>
+              </div>
+              <button onclick="jumpToStep(${at})">Step ${at + 1}</button>
+            </div>`).join("")}
+        </div>`).join("");
+
+      const moveFlags = state.steps.map((step, at) => ({ step, at })).filter(({ step }) => step.sequence_flag);
+      const flagHtml = moveFlags.map(({ step, at }) => `
+        <div class="seq-row">
+          <div>
+            <div style="color:#e2e8f0; font-weight:700;">🚩 ${escapeText(step.item || "Product")} needs to move</div>
+            <div>${escapeText(step.sequence_flag)}</div>
+          </div>
+          <button onclick="jumpToStep(${at})">Step ${at + 1}</button>
+        </div>`).join("");
+
+      const reasons = [];
+      if (counts.marked_ok) reasons.push(`${counts.marked_ok} held by a product marked OK (no action, never leaves)`);
+      if (counts.no_action) reasons.push(`${counts.no_action} held by a product that is not marked OK and has no action`);
+      if (counts.moves_later) reasons.push(`${counts.moves_later} held by a product that needs to move first`);
+      if (counts.other) reasons.push(`${counts.other} held by another product with an action that does not clear it`);
+
+      const phaseNames = ["① Identify all bays", "② Remove all bays", "③ Bay by bay: set aside → fix in bay → pick from → add to shelf → restock"];
+      const phaseCounts = [0, 0, 0];
+      blockedSteps.forEach(({ step }) => { phaseCounts[mobilePhase(step)] += 1; });
+      const phaseHtml = mobile
+        ? `<div style="display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 2px;">${phaseNames.map((name, i) =>
+            `<span style="padding:3px 8px; border-radius:6px; font-size:10px; font-weight:700; background:${phaseCounts[i] ? "rgba(239,68,68,0.18)" : "rgba(52,211,153,0.12)"}; color:${phaseCounts[i] ? "#fecaca" : "#6ee7b7"};">${name}: ${phaseCounts[i] ? `${phaseCounts[i]} blocked` : "clear"}</span>`
+          ).join("")}</div>`
+        : "";
+
+      const otherRows = others.slice(0, 40).map((item) => {
         const step = stepFor(item);
         const icon = item.severity === "critical" ? "⛔" : "⚠️";
         return `<div class="seq-row"><div><strong>${icon} ${escapeText(item.title)}</strong><div style="white-space:pre-line;">${escapeText(item.message)}</div></div>`
           + (step ? `<button onclick="jumpToStep(${step - 1})">Step ${step}</button>` : "")
           + `</div>`;
       }).join("");
-      const orderTitle = mobile ? "Sequence check · mobile order" : "Sequence check · backend order";
-      const orderNote = mobile
-        ? (state.mobileSummary || "Identify for every bay, then Remove for every bay, then each bay: Set aside, Fix in bay, Add to shelf.")
-        : "Steps are shown exactly as the backend returned them.";
-      box.innerHTML = `<h4>${orderTitle}</h4>`
+
+      const scan = state.shelfScan || {};
+      const source = scan.status === "used"
+        ? `Positions are checked against the action rows and the before photo (${scan.positions} positions seen).`
+        : `Positions are checked against the action rows only. ${escapeText(scan.message || "")}`;
+      const blocked = counts.total || 0;
+      box.className = `sequence-check ${blocked || check.mutual_blocks ? "is-blocked" : (others.length ? "" : "is-clear")}`;
+      box.style.display = "";
+      const headline = blocked
+        ? `${blocked} step${blocked === 1 ? "" : "s"} ${blocked === 1 ? "is" : "are"} blocked: another product is standing where the associate must place something`
+        : "No step is blocked by a product standing in its destination";
+      box.innerHTML = `<h4>Where the associate gets blocked · ${mobile ? "mobile order" : "backend order"}</h4>`
         + `<div style="color:#e2e8f0; font-weight:700;">${headline}.</div>`
-        + `<div>${orderNote} This check only reports; it changes nothing. ${source}</div>`
-        + rows
-        + (findings.length > shown.length ? `<div style="padding-top:6px;">${findings.length - shown.length} more findings. Use the “Blocked destinations” and “Rule breaks” filters below.</div>` : "");
+        + (reasons.length ? `<div>${reasons.join(" · ")}.</div>` : "")
+        + phaseHtml
+        + groupHtml
+        + flagHtml
+        + (others.length ? `<details style="margin-top:8px;"><summary style="cursor:pointer; font-weight:700; color:#cbd5e1;">Other findings (${others.length})</summary>${otherRows}</details>` : "")
+        + `<div style="padding-top:8px; color:var(--text-dim);">Read-only: nothing is sorted or changed. ${source}</div>`;
+    }
+
+    // A row under a blocked step, so the blocker is visible inside the action sequence itself.
+    function blockerRowHtml(step) {
+      return `<tr><td colspan="6" style="padding:4px 8px 8px 22px; font-size:10.5px; color:#fdba74; background:rgba(251,146,60,0.08); white-space:normal; line-height:1.35;">`
+        + `⛔ ${occupantBadge(step.target_occupancy)} ${escapeText(blockerSentence(step))}</td></tr>`;
+    }
+
+    function sequenceFlagRowHtml(step) {
+      return `<tr><td colspan="6" style="padding:4px 8px 8px 22px; font-size:10.5px; color:#fecaca; background:rgba(248,113,113,0.08); white-space:normal; line-height:1.35;">`
+        + `🚩 ${escapeText(step.sequence_flag)}</td></tr>`;
     }
 
     // Render Searchable Action Trace Table
@@ -4168,7 +4326,7 @@
       if (caption) {
         const hiddenCount = (state.mobileHidden || []).length;
         caption.textContent = mobileOn
-          ? `The order the associate app shows. Identify every bay, then Remove every bay, then each bay: Set aside, Fix in bay, Add to shelf.${hiddenCount ? ` ${hiddenCount} finished, repeated, or unknown action${hiddenCount === 1 ? " is" : "s are"} listed in the check above and not on the phone.` : ""}`
+          ? `The order the associate follows. Identify every bay, then Remove every bay, then each bay: Set aside, Fix in bay, Pick from, Add to shelf, Restock.${hiddenCount ? ` ${hiddenCount} finished, repeated, or unknown action${hiddenCount === 1 ? " is" : "s are"} listed in the check above and not on the phone.` : ""}`
           : "The order the backend returned the rows. Nothing is sorted, merged, or converted.";
       }
       const paint = (button, on) => {
@@ -4254,7 +4412,7 @@
           }
           const occTitle = s.target_occupancy ? s.target_occupancy.text : "This action does not place a product.";
           const blocker = s.target_occupancy && s.target_occupancy.status !== "vacant" && s.target_occupancy.occupant_product
-            ? `<div title="${occTitle.replace(/"/g, '&quot;')}" style="max-width:120px; font-size:9px; color:${look.color}; white-space:normal; line-height:1.2;">${s.target_occupancy.occupant_product}${s.target_occupancy.occupant_upc ? `<br>UPC ${s.target_occupancy.occupant_upc}` : ""}</div>`
+            ? `<div title="${occTitle.replace(/"/g, '&quot;')}" style="max-width:170px; font-size:9.5px; color:${look.color}; white-space:normal; line-height:1.2;">${escapeText(s.target_occupancy.occupant_product)}${s.target_occupancy.occupant_upc ? `<br>UPC ${escapeText(s.target_occupancy.occupant_upc)}` : ""}${s.target_occupancy.blocking ? `<br>${occupantBadge(s.target_occupancy)}` : ""}</div>`
             : "";
           clearancePill = `<span title="${occTitle.replace(/"/g, '&quot;')}" style="font-size:10px; color:${look.color}; font-weight:700;">${look.icon} ${look.short}</span>${blocker}${flagged ? '<div style="font-size:9.5px; color:#f87171; font-weight:700;">review</div>' : ''}`;
         }
@@ -4314,7 +4472,8 @@
               ${clearancePill}
             </td>
           </tr>
-        `;
+        ` + (state.backendMode && isBlockedStep(s) ? blockerRowHtml(s) : "")
+          + (state.backendMode && s.sequence_flag ? sequenceFlagRowHtml(s) : "");
       }).join("");
     }
 
@@ -4484,6 +4643,8 @@
       if (simTab) simTab.classList.toggle('active', !isRules);
       if (rulesTab) rulesTab.classList.toggle('active', isRules);
       if (gridEl) gridEl.style.display = isRules ? 'none' : 'grid';
+      const sequenceEl = document.getElementById('sequence-section');
+      if (sequenceEl) sequenceEl.style.display = isRules ? 'none' : '';
       if (rulesEl) rulesEl.classList.toggle('visible', isRules);
 
       if (isRules && !rulesMarkdownCache) {
