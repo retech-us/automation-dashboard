@@ -1513,7 +1513,8 @@ def _backend_actions_payload(
 ) -> Dict[str, Any]:
     """Return the retailer rows in the order the backend sent them, plus a read-only report."""
     actions = present_backend_actions(raw_items, shelf_products=shelf_products)
-    mobile = mobile_display_actions(raw_items, shelf_products=shelf_products)
+    # Finished actions stay in the phone-order replay, so a completed task can still be checked.
+    mobile = mobile_display_actions(raw_items, shelf_products=shelf_products, include_handled=True)
     validation = validate_backend_shelf_actions(raw_items, shelf_products=shelf_products)
     instance = base_url.replace("https://", "").replace("http://", "").split(".")[0]
     return {
