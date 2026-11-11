@@ -328,14 +328,29 @@
       line-height: 1.3;
     }
 
-    .backend-action-name {
-      display: block;
+    .kind-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid currentColor;
       font-size: 11px;
-      font-weight: 700;
-      line-height: 1.35;
-      overflow-wrap: break-word;
+      font-weight: 800;
+      letter-spacing: 0.01em;
       text-transform: none;
-      letter-spacing: 0;
+      line-height: 1.3;
+      background: transparent;
+    }
+    .kind-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin: 4px 0 8px;
+      font-size: 11px;
+    }
+    .kind-legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); }
+    .kind-legend i {
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block;
     }
 
     .type-pill.fix_in_bay { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.35); }
@@ -2367,6 +2382,7 @@
         <div style="font-size:12px; font-weight:700; color:#fff;">
           Backend actions (<span id="trace-step-count">0</span>)
           <div id="trace-order-caption" style="font-size:10px; font-weight:500; color:var(--text-dim);">Listed in the order the backend returned them. Nothing is sorted, merged, or converted.</div>
+          <div id="kind-legend"></div>
           <div style="display:flex; gap:6px; margin-top:6px;">
             <button type="button" id="order-mode-mobile" onclick="setOrderMode('mobile')" style="border:0; border-radius:999px; padding:3px 10px; font-size:10px; font-weight:800; cursor:pointer;">Mobile order</button>
             <button type="button" id="order-mode-backend" onclick="setOrderMode('backend')" style="border:0; border-radius:999px; padding:3px 10px; font-size:10px; font-weight:800; cursor:pointer;">Backend order</button>
@@ -3302,6 +3318,51 @@
       return String(name || "").replaceAll("_", "_" + String.fromCharCode(0x200b));
     }
 
+    // One name and one color per kind, so the list does not depend on the raw backend action name.
+    const ACTION_KIND = {
+      set_aside: { name: "Set aside", does: "Pick it up and hold it", color: "#fbbf24" },
+      fix_in_bay: { name: "Fix in bay", does: "Slide it to another spot in this bay", color: "#34d399" },
+      move_to_bay: { name: "Pick from", does: "Pick it up and take it to another bay", color: "#38bdf8" },
+      add_to_shelf: { name: "Add to shelf", does: "Put the held item onto the shelf", color: "#a78bfa" },
+      restock: { name: "Restock", does: "Bring it from the backroom and place it", color: "#22d3ee" },
+      identify: { name: "Identify", does: "Scan the product", color: "#cbd5e1" },
+      remove: { name: "Remove", does: "Take it off the shelf", color: "#fb7185" },
+      backend_shelf_move: { name: "Swap or slide", does: "The backend named how this move is done", color: "#c084fc" },
+    };
+
+    function actionKind(step) {
+      return (step && ACTION_KIND[step.type]) || {
+        name: (step && step.action_label) || "Action",
+        does: "",
+        color: "#94a3b8",
+      };
+    }
+
+    function kindPill(step) {
+      const kind = actionKind(step);
+      const raw = step && step.backend_action ? ` title="${escapeText(step.backend_action)}"` : "";
+      return `<span class="kind-pill"${raw} style="color:${kind.color};">${escapeText(kind.name)}</span>`;
+    }
+
+    function bandColor(label) {
+      const text = String(label || "").toLowerCase();
+      if (text.includes("set aside")) return "#fbbf24";
+      if (text.includes("fix in bay")) return "#34d399";
+      if (text.includes("pick from")) return "#38bdf8";
+      if (text.includes("add to shelf")) return "#a78bfa";
+      if (text.includes("restock")) return "#22d3ee";
+      if (text.includes("identify")) return "#cbd5e1";
+      if (text.includes("remove")) return "#fb7185";
+      return "#93c5fd";
+    }
+
+    function kindLegendHtml() {
+      return `<div class="kind-legend">${["set_aside", "fix_in_bay", "move_to_bay", "add_to_shelf", "restock"].map((key) => {
+        const kind = ACTION_KIND[key];
+        return `<span><i style="background:${kind.color};"></i><strong style="color:${kind.color};">${kind.name}</strong> ${kind.does}</span>`;
+      }).join("")}</div>`;
+    }
+
     const OCCUPANCY_STYLE = {
       vacant: { icon: "🟢", color: "#34d399", short: "Empty" },
       occupied_cleared_later: { icon: "🟠", color: "#fbbf24", short: "Occupied now" },
@@ -3343,9 +3404,10 @@
 
     function formatHumanFriendlyAction(step, prodTitle, fromLoc, toLoc) {
       if (step.backend_action) {
+        const kind = actionKind(step);
         return {
-          title: step.action_label || readableAction(step.backend_action),
-          subtitle: (step.movement && step.movement.text) || `${compactSlot(fromLoc)} → ${compactSlot(toLoc)}`,
+          title: kind.name,
+          subtitle: (step.movement && step.movement.text) || kind.does,
         };
       }
       const shortTitle = prodTitle ? (prodTitle.length > 26 ? prodTitle.substring(0, 24) + '...' : prodTitle) : 'Item';
@@ -3607,8 +3669,11 @@
             phasePill.style.display = "";
             phasePill.textContent = step.sequence_label || step.action_label || "Backend action";
           }
-          pill.textContent = step.action_label || step.state || "Backend";
-          pill.className = "type-pill";
+          const kind = actionKind(step);
+          pill.textContent = kind.name;
+          pill.className = "kind-pill";
+          pill.style.color = kind.color;
+          pill.title = kind.does;
           const source = step.fromLocation;
           const dest = step.toLocation;
           document.getElementById("lbl-from-bay").textContent = source && source.bay ? source.bay : "—";
@@ -3648,7 +3713,9 @@
           const rawName = document.getElementById("card-raw-action");
           if (rawName) {
             rawName.style.display = "block";
-            rawName.innerHTML = `${movementBadge(step.movement)}<div>Backend action: ${step.backend_action}${step.upc ? ` · UPC ${step.upc}` : ""}</div>${ruleFlagsHtml(step, false)}`;
+            const extra = `${movementBadge(step.movement)}${ruleFlagsHtml(step, false)}`;
+            rawName.style.display = extra ? "block" : "none";
+            rawName.innerHTML = extra;
           }
         } else {
         const shelfNum = parseInt(fromLoc.shelf || (toLoc ? toLoc.shelf : '1'), 10);
@@ -3942,14 +4009,17 @@
       document.getElementById("details-step-badge").textContent = `STEP ${state.stepIndex + 1}`;
 
       if (step.backend_action) {
+        const kind = actionKind(step);
         const typePill = document.getElementById("deep-dive-type-pill");
-        typePill.className = "type-pill";
-        typePill.textContent = step.action_label || readableAction(step.backend_action);
+        typePill.className = "kind-pill";
+        typePill.textContent = kind.name;
+        typePill.style.color = kind.color;
+        typePill.title = kind.does;
         const cartTag = document.getElementById("deep-dive-cart-tag");
         if (cartTag) {
           cartTag.style.display = "inline-flex";
           const flagged = (step.rule_flags || []).length;
-          cartTag.textContent = flagged ? `🚩 ${readableAction(step.backend_action)} · rule break` : readableAction(step.backend_action);
+          cartTag.textContent = flagged ? `🚩 Rule break` : kind.does;
           cartTag.title = flagged ? step.rule_flags.map((flag) => flag.message).join(" ") : "Action sent by the backend";
           cartTag.style.color = flagged ? "#f87171" : "";
         }
@@ -4232,25 +4302,59 @@
         return at >= 0 ? at + 1 : null;
       };
 
+      // Several facings of one product going to one place are one blocked place, listed once.
       const blockedGroups = [];
+      const seenPlaces = new Set();
+      const firstForPlace = {};
       blockedSteps.forEach(({ step, at }) => {
+        const placeKey = `${destinationText(step)}|${step.item || ""}`;
+        if (seenPlaces.has(placeKey)) {
+          firstForPlace[placeKey].also.push(at + 1);
+          return;
+        }
+        seenPlaces.add(placeKey);
+        const entry = { step, at, also: [] };
+        firstForPlace[placeKey] = entry;
         const label = step.sequence_label || "Backend order";
         const last = blockedGroups[blockedGroups.length - 1];
-        if (last && last.label === label) last.items.push({ step, at });
-        else blockedGroups.push({ label, items: [{ step, at }] });
+        if (last && last.label === label) last.items.push(entry);
+        else blockedGroups.push({ label, items: [entry] });
       });
       const groupHtml = blockedGroups.map((group) => `
         <div style="margin-top:8px;">
-          <div style="font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#93c5fd;">${escapeText(group.label)}</div>
-          ${group.items.map(({ step, at }) => `
+          <div style="font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:${bandColor(group.label)};">${escapeText(group.label)}</div>
+          ${group.items.map(({ step, at, also }) => `
             <div class="seq-row">
               <div>
                 <div style="color:#e2e8f0; font-weight:700;">⛔ ${escapeText(step.item || "Product")} → ${escapeText(destinationText(step))} ${occupantBadge(step.target_occupancy)}</div>
                 <div>${escapeText(blockerSentence(step))}</div>
+                ${also.length ? `<div style="color:#94a3b8;">Same place, other facings: steps ${also.join(", ")}.</div>` : ""}
               </div>
               <button onclick="jumpToStep(${at})">Step ${at + 1}</button>
             </div>`).join("")}
         </div>`).join("");
+
+      // The direct answer: for every place that starts occupied, did a remove / set aside / pick from empty it in time?
+      const verdictLine = (name, c) => {
+        if (!c || c.total == null) return "";
+        const never = (c.marked_ok || 0) + (c.no_action || 0) + (c.other || 0);
+        const parts = [
+          `<span style="color:#6ee7b7;">✅ ${c.room_made || 0} emptied in time</span>`,
+          `<span style="color:${c.moves_later ? "#fb923c" : "#6ee7b7"};">⏱ ${c.moves_later || 0} emptied too late</span>`,
+          `<span style="color:${never ? "#f87171" : "#6ee7b7"};">⛔ ${never} never emptied</span>`,
+        ];
+        return `<div style="display:flex; flex-wrap:wrap; gap:12px; align-items:baseline;"><strong style="min-width:120px; color:#e2e8f0;">${name}</strong>${parts.join("")}</div>`;
+      };
+      const summaries = state.blockedSummary || {};
+      const verdictHtml = summaries.backend
+        ? `<div style="margin:8px 0 4px; padding:8px 10px; border-radius:8px; background:rgba(15,23,42,0.55); border:1px solid rgba(148,163,184,0.25);">
+            <div style="color:#e2e8f0; font-weight:800; margin-bottom:4px;">Did the backend make room before each placement?</div>
+            <div style="color:#94a3b8; margin-bottom:4px;">Counted per place on the shelf, not per step. “Emptied” means a Remove, Set aside, or Pick from takes the old product away before the new one arrives.</div>
+            ${verdictLine("Phone order", summaries.mobile)}
+            ${verdictLine("Backend row order", summaries.backend)}
+            <div style="color:#94a3b8; margin-top:4px;">“Never emptied”: the backend sent no action that takes the old product off that place (it is marked OK, unidentified, or has an action that leaves it there). This is a gap in the backend actions, not an ordering problem.</div>
+          </div>`
+        : "";
 
       const moveFlags = state.steps.map((step, at) => ({ step, at })).filter(({ step }) => step.sequence_flag);
       const flagHtml = moveFlags.map(({ step, at }) => `
@@ -4265,12 +4369,12 @@
       const reasons = [];
       if (counts.marked_ok) reasons.push(`${counts.marked_ok} held by a product marked OK (no action, never leaves)`);
       if (counts.no_action) reasons.push(`${counts.no_action} held by a product that is not marked OK and has no action`);
-      if (counts.moves_later) reasons.push(`${counts.moves_later} held by a product that needs to move first`);
-      if (counts.other) reasons.push(`${counts.other} held by another product with an action that does not clear it`);
+      if (counts.moves_later) reasons.push(`${counts.moves_later} held by a product that the backend does move, but only later in this order`);
+      if (counts.other) reasons.push(`${counts.other} held by another product whose action does not take it off the place (for example only an Identify)`);
 
       const phaseNames = ["① Identify all bays", "② Remove all bays", "③ Bay by bay: set aside → fix in bay → pick from → add to shelf → restock"];
       const phaseCounts = [0, 0, 0];
-      blockedSteps.forEach(({ step }) => { phaseCounts[mobilePhase(step)] += 1; });
+      blockedGroups.forEach((group) => group.items.forEach(({ step }) => { phaseCounts[mobilePhase(step)] += 1; }));
       const phaseHtml = mobile
         ? `<div style="display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 2px;">${phaseNames.map((name, i) =>
             `<span style="padding:3px 8px; border-radius:6px; font-size:10px; font-weight:700; background:${phaseCounts[i] ? "rgba(239,68,68,0.18)" : "rgba(52,211,153,0.12)"}; color:${phaseCounts[i] ? "#fecaca" : "#6ee7b7"};">${name}: ${phaseCounts[i] ? `${phaseCounts[i]} blocked` : "clear"}</span>`
@@ -4293,11 +4397,12 @@
       box.className = `sequence-check ${blocked || check.mutual_blocks ? "is-blocked" : (others.length ? "" : "is-clear")}`;
       box.style.display = "";
       const headline = blocked
-        ? `${blocked} step${blocked === 1 ? "" : "s"} ${blocked === 1 ? "is" : "are"} blocked: another product is standing where the associate must place something`
+        ? `${blocked} place${blocked === 1 ? "" : "s"} ${blocked === 1 ? "is" : "are"} blocked (${counts.steps || blocked} step${(counts.steps || blocked) === 1 ? "" : "s"}): another product is standing where the associate must place something`
         : "No step is blocked by a product standing in its destination";
       box.innerHTML = `<h4>Where the associate gets blocked · ${mobile ? "mobile order" : "backend order"}</h4>`
         + `<div style="color:#e2e8f0; font-weight:700;">${headline}.</div>`
         + (reasons.length ? `<div>${reasons.join(" · ")}.</div>` : "")
+        + verdictHtml
         + phaseHtml
         + groupHtml
         + flagHtml
@@ -4325,8 +4430,9 @@
       const mobileOn = state.orderMode === "mobile";
       if (caption) {
         const hiddenCount = (state.mobileHidden || []).length;
+        const doneCount = state.steps.filter((s) => s.already_handled).length;
         caption.textContent = mobileOn
-          ? `The order the associate follows. Identify every bay, then Remove every bay, then each bay: Set aside, Fix in bay, Pick from, Add to shelf, Restock.${hiddenCount ? ` ${hiddenCount} finished, repeated, or unknown action${hiddenCount === 1 ? " is" : "s are"} listed in the check above and not on the phone.` : ""}`
+          ? `The order the associate follows. Identify every bay, then Remove every bay, then each bay: Set aside, Fix in bay, Pick from, Add to shelf, Restock.${doneCount ? ` ${doneCount} action${doneCount === 1 ? " was" : "s were"} already done on the phone; they are replayed here so the plan can still be checked.` : ""}${hiddenCount ? ` ${hiddenCount} repeated or unknown action${hiddenCount === 1 ? " is" : "s are"} listed in the check above and not on the phone.` : ""}`
           : "The order the backend returned the rows. Nothing is sorted, merged, or converted.";
       }
       const paint = (button, on) => {
@@ -4336,6 +4442,8 @@
       };
       paint(mobileButton, mobileOn);
       paint(backendButton, !mobileOn);
+      const legend = document.getElementById("kind-legend");
+      if (legend) legend.innerHTML = state.backendMode ? kindLegendHtml() : "";
       renderSequenceCheck();
       const ruleBreakCount = state.steps.filter((s) => (s.rule_flags || []).length).length;
       const blockedCount = state.steps.filter(isBlockedStep).length;
@@ -4380,7 +4488,7 @@
       let lastSequence = "";
       tbody.innerHTML = filteredSteps.map(s => {
         const band = state.backendMode && s.sequence_label && s.sequence_label !== lastSequence
-          ? `<tr><td colspan="6" style="padding:6px 8px; font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#93c5fd; background:rgba(59,130,246,0.08);">${s.sequence_label}</td></tr>`
+          ? `<tr><td colspan="6" style="padding:8px 8px 4px; font-size:11px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:${bandColor(s.sequence_label)}; border-top:1px solid rgba(148,163,184,0.25);">${escapeText(s.sequence_label)}</td></tr>`
           : "";
         if (s.sequence_label) lastSequence = s.sequence_label;
         const isCurrent = s.origIndex === state.stepIndex;
@@ -4446,13 +4554,11 @@
               ${isDone ? '✓' : (s.origIndex + 1)}
             </td>
             <td>
-              <span class="${s.backend_action ? 'backend-action-name' : 'type-pill ' + typePillClass}" style="${s.backend_action ? '' : 'padding:1px 5px; font-size:8.5px;'}">
-                ${s.backend_action ? (s.action_label || readableAction(s.backend_action)) : (s.type === 'fix_in_bay' ? '⚡ fix_in_bay' : (s.type === 'set_aside' ? '📦 set_aside' : (s.type === 'pull' ? '📤 pull' : s.type)))}
-              </span>
+              ${s.backend_action ? kindPill(s) : `<span class="type-pill ${typePillClass}" style="padding:1px 5px; font-size:8.5px;">${s.type === 'fix_in_bay' ? '⚡ fix_in_bay' : (s.type === 'set_aside' ? '📦 set_aside' : (s.type === 'pull' ? '📤 pull' : s.type))}</span>`}
               ${(s.group || s.item_group) ? `<span class="type-pill" style="padding:1px 5px; font-size:8.5px; background:rgba(99,102,241,0.2); color:#818cf8; border:1px solid rgba(99,102,241,0.4); margin-left:3px;">GROUP ${s.group || s.item_group}</span>` : ''}
               ${s.is_swap ? `<span class="type-pill swap" style="padding:1px 5px; font-size:8.5px; margin-left:3px;">SWAP</span>` : ''}
               ${s.is_slide ? `<span class="type-pill slide" style="padding:1px 5px; font-size:8.5px; margin-left:3px;">SLIDE</span>` : ''}
-              ${s.backend_action ? `<div style="font-size:9.5px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; overflow-wrap:anywhere;">${readableAction(s.backend_action)}</div>` : ''}
+              ${s.backend_action ? `<div style="font-size:10px; color:var(--text-dim);">${escapeText(actionKind(s).does)}</div>` : ''}
               ${s.backend_action ? movementBadge(s.movement) : ''}
               ${s.backend_action ? ruleFlagsHtml(s, true) : ''}
             </td>

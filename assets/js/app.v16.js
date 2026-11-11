@@ -3162,7 +3162,7 @@ function setActiveTab(tab, { persist = true, updateUrl = true } = {}) {
   }
   if (tab === 'shelf-mobile') {
     const frame = document.getElementById('iframe-shelf-mobile');
-    const mobileSrc = 'shelf_reset_mobile.html?v=20261106e';
+    const mobileSrc = 'shelf_reset_mobile.html?v=20261106g';
     if (window.IrTaskFlow && typeof window.IrTaskFlow.openShelfMobile === 'function') {
       window.IrTaskFlow.openShelfMobile(frame, mobileSrc);
     } else if (frame && !frame.getAttribute('src')) {

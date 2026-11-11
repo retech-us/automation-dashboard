@@ -406,8 +406,50 @@ class BackendActionPresentationTests(unittest.TestCase):
             {"upc": "4", "label": "Leaves", "on_shelf_position": "3:1", "type": "ok"},
         ]}])
         counts = blocked_summary(present_backend_actions(raw, shelf_products=shelf))
-        self.assertEqual(counts, {"total": 3, "marked_ok": 1, "no_action": 1, "moves_later": 1, "other": 0})
-        self.assertEqual(blocked_summary([]), {"total": 0, "marked_ok": 0, "no_action": 0, "moves_later": 0, "other": 0})
+        self.assertEqual(counts, {
+            "total": 3, "steps": 3, "marked_ok": 1, "no_action": 1, "moves_later": 1, "other": 0, "room_made": 0,
+        })
+        self.assertEqual(blocked_summary([]), {
+            "total": 0, "steps": 0, "marked_ok": 0, "no_action": 0, "moves_later": 0, "other": 0, "room_made": 0,
+        })
+
+    def test_blocked_summary_counts_each_place_once_and_counts_places_made_ready(self):
+        shelf = shelf_products_from_scans([{"stage": "pre_photo", "section": "1", "items": [
+            {"upc": "90", "label": "OK product", "on_shelf_position": "1:1", "type": "ok"},
+            {"upc": "4", "label": "Leaves", "on_shelf_position": "2:1", "type": "ok"},
+        ]}])
+        raw = [
+            # Two facings of one product go to the same blocked place.
+            _row(1, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 1, 1),
+                 product_title="A", upc="1"),
+            _row(2, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 1, 1),
+                 product_title="A", upc="1"),
+            # This place is emptied first, so room is made in time.
+            _row(3, "remove", current=_position("remove", "1", 2, 1), product_title="Leaves", upc="4"),
+            _row(4, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 2, 1),
+                 product_title="B", upc="2"),
+        ]
+        counts = blocked_summary(present_backend_actions(raw, shelf_products=shelf))
+        self.assertEqual(counts["total"], 1)
+        self.assertEqual(counts["steps"], 2)
+        self.assertEqual(counts["marked_ok"], 1)
+        self.assertEqual(counts["room_made"], 1)
+
+    def test_mobile_order_can_include_actions_already_handled_on_the_phone(self):
+        raw = [
+            _row(1, "remove", current=_position("remove", "1", 1, 1), product_title="Old", upc="4",
+                 state="STATE_ACCEPTED"),
+            _row(2, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 1, 1),
+                 product_title="New", upc="5", state="STATE_ACCEPTED"),
+        ]
+        plain = mobile_display_actions(raw)
+        self.assertEqual(len(plain["steps"]), 0)
+        self.assertEqual(len(plain["hidden"]), 2)
+        full = mobile_display_actions(raw, include_handled=True)
+        self.assertEqual(len(full["steps"]), 2)
+        self.assertEqual(full["hidden"], [])
+        self.assertTrue(all(step["already_handled"] for step in full["steps"]))
+        self.assertEqual(full["steps"][1]["target_occupancy"]["status"], "vacant")
 
     def test_blocked_finding_repeats_the_occupant_note(self):
         raw = [
@@ -750,6 +792,28 @@ class ShelfResetBackendEndpointTests(unittest.TestCase):
         self.assertEqual(result["blocked_summary"]["backend"]["total"], 1)
         self.assertEqual(result["blocked_summary"]["mobile"]["total"], 0)
 
+    def test_endpoint_replays_the_phone_order_for_a_task_that_is_already_done(self):
+        raw = [
+            _row(8, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 1, 1),
+                 product_title="Incoming", upc="111", state="STATE_ACCEPTED"),
+            _row(3, "remove", current=_position("remove", "1", 1, 1), product_title="Old", upc="222",
+                 state="STATE_ACCEPTED"),
+        ]
+
+        def fake_access(*_args):
+            return "token", "saved"
+
+        with patch.object(runner_server, "investigation_access", fake_access), \
+             patch.object(runner_server, "fetch_shelf_reset_actions", return_value=(raw, "https://harr.rebotics.net/actions")):
+            result = runner_server.run_shelf_reset_backend_actions({"instance": "harr", "task_id": 5})
+
+        self.assertEqual([step["id"] for step in result["mobile_steps"]], [3, 8])
+        self.assertEqual(result["mobile_hidden"], [])
+        self.assertTrue(result["mobile_steps"][0]["already_handled"])
+        self.assertEqual(result["blocked_summary"]["backend"]["moves_later"], 1)
+        self.assertEqual(result["blocked_summary"]["mobile"]["room_made"], 1)
+        self.assertEqual(result["blocked_summary"]["mobile"]["total"], 0)
+
     def test_endpoint_checks_destinations_against_the_before_photo(self):
         raw = [
             _row(1, "place_on_shelf_restock",
@@ -849,7 +913,9 @@ class ShelfResetMobileContractTests(unittest.TestCase):
         frame_tag = index[index.index('<iframe id="iframe-shelf-mobile"'):]
         frame_tag = frame_tag[:frame_tag.index(">")]
         self.assertNotIn(" src=", frame_tag)
-        self.assertIn("openShelfMobile(f, 'shelf_reset_mobile.html?v=20261106e', true)", index)
+        self.assertIn("openShelfMobile(f, 'shelf_reset_mobile.html?v=20261106g', true)", index)
+        self.assertIn("Did the backend make room before each placement?", page)
+        self.assertIn("never emptied", page)
         self.assertIn("IrTaskFlow.shelfMobileUrl('shelf_reset_mobile.html')", index)
 
     def test_page_marks_every_blocked_destination_and_reports_the_sequence(self):
@@ -879,5 +945,9 @@ class ShelfResetMobileContractTests(unittest.TestCase):
         self.assertIn("③ Bay by bay", page)
         self.assertIn("pick from", page)
         self.assertIn("Needs to move first", page)
+        self.assertIn("Pick it up and hold it", page)
+        self.assertIn("Slide it to another spot in this bay", page)
+        self.assertIn("Put the held item onto the shelf", page)
+        self.assertIn("Bring it from the backroom and place it", page)
         self.assertIn("state.blockedSummary", page)
         self.assertIn("hidden", page[page.index('id="view-tab-rules"') - 80:page.index('id="view-tab-rules"') + 120])

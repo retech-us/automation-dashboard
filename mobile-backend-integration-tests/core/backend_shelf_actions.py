@@ -430,12 +430,29 @@ def _occupant_status(
 
 
 def blocked_summary(steps: List[Dict[str, Any]]) -> Dict[str, int]:
-    """Count blocked placements by what is standing in the way."""
-    counts = {"total": 0, "marked_ok": 0, "no_action": 0, "moves_later": 0, "other": 0}
+    """Count blocked places by what is standing in the way.
+
+    A place is counted once, however many facings or steps want it. `steps` counts the
+    steps. `room_made` counts places that were occupied at the start and are emptied
+    by an earlier step before a product arrives.
+    """
+    counts = {
+        "total": 0, "steps": 0, "marked_ok": 0, "no_action": 0, "moves_later": 0, "other": 0, "room_made": 0,
+    }
+    blocked_places: set = set()
+    ready_places: set = set()
     for step in steps:
         occupancy = step.get("target_occupancy") or {}
+        destination = step.get("toLocation") or {}
+        place = tuple(str(destination.get(key) or "").strip().lstrip("0") for key in ("bay", "shelf", "position"))
+        if occupancy.get("status") == "vacant" and occupancy.get("cleared_at_step"):
+            ready_places.add(place)
         if not occupancy.get("blocking"):
             continue
+        counts["steps"] += 1
+        if place in blocked_places:
+            continue
+        blocked_places.add(place)
         counts["total"] += 1
         kind = occupancy.get("occupant_kind")
         if kind == "marked_ok":
@@ -446,6 +463,7 @@ def blocked_summary(steps: List[Dict[str, Any]]) -> Dict[str, int]:
             counts["moves_later"] += 1
         else:
             counts["other"] += 1
+    counts["room_made"] = len(ready_places - blocked_places)
     return counts
 
 
@@ -692,6 +710,7 @@ def _present_units(
             "on_mobile": unit.get("on_mobile", True),
             "mobile_note": unit.get("mobile_note") or "",
             "sequence_flag": sequence_flag,
+            "already_handled": bool(unit.get("already_handled", _is_handled(unit))),
         })
     return presented
 
@@ -765,14 +784,19 @@ def _mobile_band(unit: Dict[str, Any]) -> str:
     return f"Bay {bay} · {_MOBILE_BAND[priority]}"
 
 
-def _mobile_note(unit: Dict[str, Any], first_origin_for_id: Dict[Any, int]) -> str:
+def _is_handled(unit: Dict[str, Any]) -> bool:
+    state = str(unit["row"].get("state") or "")
+    return bool(state) and state != "STATE_IDLE"
+
+
+def _mobile_note(unit: Dict[str, Any], first_origin_for_id: Dict[Any, int], include_handled: bool = False) -> str:
     """Why the associate app leaves a step off the screen. Empty when the step is shown.
 
     Finished rows are removed before the app collapses repeated ids, so a later idle
     row with the same id is still shown. An unknown action still takes its id.
     """
     state = str(unit["row"].get("state") or "")
-    if state and state != "STATE_IDLE":
+    if _is_handled(unit) and not include_handled:
         return f"Already handled ({state}). Mobile only lists actions still to do."
     action_id = unit.get("id")
     if action_id is not None:
@@ -789,21 +813,25 @@ def _mobile_note(unit: Dict[str, Any], first_origin_for_id: Dict[Any, int]) -> s
 def mobile_display_actions(
     raw_items: List[Dict[str, Any]],
     shelf_products: Optional[Dict[SlotKey, Dict[str, str]]] = None,
+    include_handled: bool = False,
 ) -> Dict[str, Any]:
     """Every action, in the order the Android associate app shows, plus the ones it hides.
 
     The order is applied to the steps. Rows are not rewritten. Occupancy is replayed
     in this order, because that is the order the associate reaches each destination.
+    `include_handled` keeps finished actions in the list, flagged `already_handled`, so a
+    task that is already done can still be checked against the phone order.
     """
     units = _walk_units(raw_items)
     seen: Dict[Any, int] = {}
     shown: List[Dict[str, Any]] = []
     hidden: List[Dict[str, Any]] = []
     for unit in units:
-        note = _mobile_note(unit, seen)
+        note = _mobile_note(unit, seen, include_handled)
         copy = dict(unit)
         copy["on_mobile"] = not note
         copy["mobile_note"] = note
+        copy["already_handled"] = _is_handled(unit)
         (hidden if note else shown).append(copy)
     shown = sorted(shown, key=_mobile_sort_key)
     for index, unit in enumerate(shown, start=1):
