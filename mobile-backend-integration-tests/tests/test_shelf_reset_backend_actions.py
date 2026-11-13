@@ -407,15 +407,15 @@ class BackendActionPresentationTests(unittest.TestCase):
         ]}])
         counts = blocked_summary(present_backend_actions(raw, shelf_products=shelf))
         self.assertEqual(counts, {
-            "total": 3, "steps": 3, "marked_ok": 1, "no_action": 1, "moves_later": 1, "other": 0, "room_made": 0,
+            "total": 2, "steps": 2, "no_action": 1, "moves_later": 1, "other": 0, "room_made": 0, "kept_ok": 1,
         })
         self.assertEqual(blocked_summary([]), {
-            "total": 0, "steps": 0, "marked_ok": 0, "no_action": 0, "moves_later": 0, "other": 0, "room_made": 0,
+            "total": 0, "steps": 0, "no_action": 0, "moves_later": 0, "other": 0, "room_made": 0, "kept_ok": 0,
         })
 
     def test_blocked_summary_counts_each_place_once_and_counts_places_made_ready(self):
         shelf = shelf_products_from_scans([{"stage": "pre_photo", "section": "1", "items": [
-            {"upc": "90", "label": "OK product", "on_shelf_position": "1:1", "type": "ok"},
+            {"upc": "90", "label": "Seen only", "on_shelf_position": "1:1", "type": "unknown"},
             {"upc": "4", "label": "Leaves", "on_shelf_position": "2:1", "type": "ok"},
         ]}])
         raw = [
@@ -432,7 +432,7 @@ class BackendActionPresentationTests(unittest.TestCase):
         counts = blocked_summary(present_backend_actions(raw, shelf_products=shelf))
         self.assertEqual(counts["total"], 1)
         self.assertEqual(counts["steps"], 2)
-        self.assertEqual(counts["marked_ok"], 1)
+        self.assertEqual(counts["no_action"], 1)
         self.assertEqual(counts["room_made"], 1)
 
     def test_mobile_order_can_include_actions_already_handled_on_the_phone(self):
@@ -457,12 +457,103 @@ class BackendActionPresentationTests(unittest.TestCase):
                  product_title="Incoming", upc="111"),
         ]
         shelf = shelf_products_from_scans([{"stage": "pre_photo", "section": "1", "items": [
-            {"upc": "222", "label": "Shelf product", "on_shelf_position": "3:2", "type": "ok"},
+            {"upc": "222", "label": "Shelf product", "on_shelf_position": "3:2", "type": "unknown"},
         ]}])
         found = [item for item in validate_backend_shelf_actions(raw, shelf_products=shelf)["findings"]
                  if item["code"] == "OCCUPIED_DESTINATION"]
-        self.assertEqual(found[0]["occupant_kind"], "marked_ok")
-        self.assertIn("marked OK", found[0]["message"])
+        self.assertEqual(found[0]["occupant_kind"], "detected_no_action")
+        self.assertIn("not marked OK", found[0]["message"])
+
+    def test_a_place_marked_ok_stays_ok_when_another_product_is_sent_there(self):
+        raw = [
+            _row(1, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 3, 2),
+                 product_title="Incoming", upc="111"),
+            _row(2, "place_on_shelf_restock", expected=_position("place_on_shelf_restock", "1", 3, 2),
+                 product_title="Second incoming", upc="333"),
+        ]
+        shelf = shelf_products_from_scans([{"stage": "pre_photo", "section": "1", "items": [
+            {"upc": "222", "label": "Shelf product", "on_shelf_position": "3:2", "type": "ok"},
+        ]}])
+        steps = present_backend_actions(raw, shelf_products=shelf)
+        self.assertEqual([step["target_occupancy"]["status"] for step in steps], ["kept_ok", "kept_ok"])
+        self.assertFalse(any(step["target_occupancy"]["blocking"] for step in steps))
+        self.assertEqual(steps[1]["target_occupancy"]["occupant_product"], "Shelf product")
+        report = validate_backend_shelf_actions(raw, shelf_products=shelf)
+        self.assertEqual(report["sequence_check"]["blocked_destinations"], 0)
+        self.assertEqual(report["sequence_check"]["destination_kept_ok"], 2)
+        self.assertEqual(blocked_summary(steps)["kept_ok"], 1)
+
+    def test_same_bay_set_aside_is_allowed_as_a_hold_that_makes_room(self):
+        # A at 1:1 belongs at 1:2, and B at 1:2 belongs at 1:1. A is held so B can move into its spot.
+        raw = [
+            _row(1, "ACTION_MOVE",
+                 current=_position("set_aside", "1", 1, 1),
+                 expected=_position("place_on_shelf_add_to_bay", "1", 1, 2),
+                 product_title="A", upc="1"),
+            _row(2, "fix_position_fix_in_bay",
+                 current=_position("fix_position_fix_in_bay", "1", 1, 2),
+                 expected=_position("fix_position_fix_in_bay", "1", 1, 1),
+                 product_title="B", upc="2"),
+        ]
+        mobile = mobile_display_actions(raw)["steps"]
+        self.assertEqual([(step["id"], step["type"]) for step in mobile],
+                         [(1, "set_aside"), (2, "fix_in_bay"), (1, "add_to_shelf")])
+        pick, _move, place = mobile
+        self.assertEqual(pick["rule_flags"], [])
+        self.assertEqual(pick["hold"]["role"], "pick")
+        self.assertEqual(pick["hold"]["place_step"], 3)
+        self.assertEqual(pick["hold"]["place_at"], "Bay 1, Shelf 1, Position 2")
+        self.assertEqual(pick["hold"]["makes_room_step"], 2)
+        self.assertEqual(pick["hold"]["makes_room_for"], "B")
+        self.assertEqual(pick["hold"]["waits_for"], "B")
+        self.assertEqual(place["hold"]["role"], "place")
+        self.assertEqual(place["hold"]["pick_step"], 1)
+        self.assertEqual(place["target_occupancy"]["status"], "vacant")
+        backend = present_backend_actions(raw)
+        self.assertEqual(backend[0]["hold"]["place_step"], 2)
+        self.assertEqual(backend[0]["hold"]["makes_room_step"], 3)
+        report = validate_backend_shelf_actions(raw)
+        self.assertEqual(report["rule_check"]["same_bay_set_aside"], 0)
+        self.assertEqual(report["rule_check"]["same_bay_hold_for_room"], 1)
+
+    def test_same_bay_set_aside_that_makes_no_room_is_still_a_rule_break(self):
+        raw = [
+            # Its expected place is empty, so it can go there directly.
+            _row(1, "ACTION_MOVE",
+                 current=_position("set_aside", "1", 1, 1),
+                 expected=_position("place_on_shelf_add_to_bay", "1", 1, 2),
+                 product_title="A", upc="1"),
+            # Its expected place is emptied by a Remove, which the phone runs before any set aside.
+            _row(2, "ACTION_MOVE",
+                 current=_position("set_aside", "1", 2, 1),
+                 expected=_position("place_on_shelf_add_to_bay", "1", 2, 2),
+                 product_title="C", upc="3"),
+            _row(3, "remove", current=_position("remove", "1", 2, 2), product_title="D", upc="4"),
+        ]
+        steps = mobile_display_actions(raw)["steps"]
+        first = next(step for step in steps if step["id"] == 1 and step["type"] == "set_aside")
+        second = next(step for step in steps if step["id"] == 2 and step["type"] == "set_aside")
+        self.assertIsNone(first["hold"])
+        self.assertEqual([flag["code"] for flag in first["rule_flags"]], ["SAME_BAY_SET_ASIDE"])
+        self.assertIn("already empty", first["rule_flags"][0]["message"])
+        self.assertIn("already empty", second["rule_flags"][0]["message"])
+        report = validate_backend_shelf_actions(raw)
+        self.assertEqual(report["rule_check"]["same_bay_set_aside"], 2)
+        self.assertEqual(report["rule_check"]["same_bay_hold_for_room"], 0)
+
+    def test_same_bay_set_aside_is_flagged_when_nothing_needs_its_spot(self):
+        raw = [
+            _row(1, "ACTION_MOVE",
+                 current=_position("set_aside", "1", 2, 1),
+                 expected=_position("place_on_shelf_add_to_bay", "1", 2, 2),
+                 product_title="C", upc="3"),
+        ]
+        shelf = shelf_products_from_scans([{"stage": "pre_photo", "section": "1", "items": [
+            {"upc": "9", "label": "Unknown here", "on_shelf_position": "2:2", "type": "unknown"},
+        ]}])
+        step = mobile_display_actions(raw, shelf_products=shelf)["steps"][0]
+        self.assertIsNone(step["hold"])
+        self.assertIn("makes no room", step["rule_flags"][0]["message"])
 
     def test_shelf_scan_product_with_a_later_removal_is_cleared_later(self):
         raw = [
@@ -835,13 +926,15 @@ class ShelfResetBackendEndpointTests(unittest.TestCase):
 
         self.assertEqual(fetched.call_args.args[2], [555])
         occupancy = result["steps"][0]["target_occupancy"]
-        self.assertEqual(occupancy["status"], "occupied")
+        self.assertEqual(occupancy["status"], "kept_ok")
         self.assertEqual(occupancy["occupant_product"], "Marked OK here")
         self.assertEqual(result["shelf_scan"], {"status": "used", "scans": 1, "positions": 1})
-        self.assertEqual(result["validation"]["sequence_check"]["destination_never_cleared"], 1)
+        self.assertEqual(result["validation"]["sequence_check"]["destination_never_cleared"], 0)
+        self.assertEqual(result["validation"]["sequence_check"]["destination_kept_ok"], 1)
         self.assertEqual(occupancy["occupant_kind"], "marked_ok")
-        self.assertEqual(result["blocked_summary"]["mobile"]["marked_ok"], 1)
-        self.assertEqual(result["blocked_summary"]["backend"]["marked_ok"], 1)
+        self.assertEqual(result["blocked_summary"]["mobile"]["kept_ok"], 1)
+        self.assertEqual(result["blocked_summary"]["backend"]["kept_ok"], 1)
+        self.assertEqual(result["blocked_summary"]["backend"]["total"], 0)
 
     def test_endpoint_says_so_when_the_before_photo_cannot_be_read(self):
         raw = [
@@ -935,7 +1028,11 @@ class ShelfResetMobileContractTests(unittest.TestCase):
     def test_page_explains_each_block_inside_the_action_sequence(self):
         page = (ROOT / "shelf_reset_mobile.html").read_text(encoding="utf-8")
         self.assertIn("Where the associate gets blocked", page)
-        self.assertIn("Marked OK · no action", page)
+        self.assertIn("Marked OK · kept", page)
+        # A hold says where and when the held product goes back, and the phone lists what is in hand.
+        self.assertIn("function holdNoteHtml", page)
+        self.assertIn("function productsInHand", page)
+        self.assertIn("Hold to make room", page)
         self.assertIn("function blockerSentence", page)
         # A row under each blocked step puts the reason inside the sequence the associate follows.
         self.assertIn("blockerRowHtml(s)", page)

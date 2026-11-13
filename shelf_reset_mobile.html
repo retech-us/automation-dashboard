@@ -1946,6 +1946,62 @@
       .col-mobile { position: static; }
     }
 
+    /* Hold, kept-OK, and in-hand notes */
+    .hold-note {
+      margin-top: 4px; padding: 5px 7px; border-radius: 6px; white-space: normal; line-height: 1.35;
+      background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.55);
+      color: #fde68a; font-size: 10.5px; font-family: 'DM Sans', sans-serif;
+    }
+    .hold-note strong { color: #fbbf24; }
+    .holding-item-name:has(.holding-list) { white-space: normal; max-width: none; font-weight: 500; }
+    .holding-list { display: flex; flex-direction: column; gap: 2px; max-height: 64px; overflow-y: auto; }
+    .holding-list div { font-size: 10.5px; color: #fde68a; line-height: 1.3; overflow-wrap: anywhere; }
+    .slot-tile.kept-ok { border-color: rgba(52, 211, 153, 0.8) !important; }
+    .slot-tile.held-place { border: 1.5px dashed #fbbf24 !important; }
+    .leg-dot.kept-ok { background: #34d399; box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.35); }
+    .leg-dot.held { background: transparent; border: 1.5px dashed #fbbf24; }
+    .leg-dot.blocked { background: #ef4444; }
+
+    /* One screen on a laptop or desktop: every panel scrolls inside itself, the page does not. */
+    @media (min-width: 1200px) and (min-height: 680px) {
+      html, body { height: 100vh; overflow: hidden; }
+      body { padding: 8px 16px 10px; }
+      .top-header { padding: 0 0 6px; margin-bottom: 8px; gap: 6px 14px; min-height: 0; flex-shrink: 0; }
+      .brand-text p { font-size: 10.5px; max-width: 520px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .top-header .header-controls { width: auto; flex: 1 1 640px; justify-content: flex-end; }
+      .header-kpis { order: 2; }
+      .workspace {
+        flex: 1 1 auto; min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(290px, 320px) minmax(0, 1fr) minmax(0, 1.1fr);
+        grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas: "mobile details map" "mobile trace blocked";
+        gap: 10px 20px;
+      }
+      .workspace > .dashboard-grid, .workspace > .sequence-section { display: contents; }
+      .col-mobile, .col-action-details, .col-planogram, .sequence-check, .trace-wrapper { min-height: 0; overflow: hidden; }
+      .col-mobile { grid-area: mobile; position: static; overflow-y: auto; }
+      .col-action-details { grid-area: details; display: flex; flex-direction: column; gap: 6px; }
+      .col-action-details .action-details-scroll-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 4px; }
+      .col-planogram { grid-area: map; display: flex; flex-direction: column; gap: 6px; }
+      .col-planogram #shelf-rack-container { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 4px; }
+      .sequence-section .trace-wrapper { grid-area: trace; display: flex; flex-direction: column; border-top: 1px solid var(--border-subtle); padding-top: 8px; }
+      .sequence-section .trace-wrapper .trace-table-box { flex: 1 1 auto; min-height: 0; max-height: none; }
+      .sequence-section .sequence-check {
+        grid-area: blocked; max-height: none; overflow-y: auto;
+        border-top: 1px solid var(--border-subtle); padding-top: 8px;
+      }
+      .workspace:has(#sequence-check[style*="display: none"]) .trace-wrapper,
+      .workspace:has(#sequence-check[style*="display:none"]) .trace-wrapper { grid-column: 2 / 4; }
+      .panel-card-header { padding-bottom: 4px; }
+      .panel-subtitle { display: none; }
+      .phone-frame { max-width: 320px; }
+      /* Each row already says what its action does, so the legend is dropped and the caption kept to one line. */
+      .trace-wrapper #kind-legend { display: none; }
+      .trace-wrapper #trace-order-caption { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+      .trace-wrapper > div:first-child > div:first-child { min-width: 0; flex: 1 1 320px; }
+    }
+
     /* Custom Scrollbars */
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-thumb { background: #223252; border-radius: 4px; }
@@ -1985,7 +2041,7 @@
       </div>
       <div class="kpi-chip">
         <span>Order:</span>
-        <strong>Backend list</strong>
+        <strong id="kpi-order">Phone</strong>
       </div>
     </div>
 
@@ -2049,7 +2105,8 @@
     </div>
   </section>
 
-  <!-- Main 3-Horizontal-Card Layout -->
+  <!-- One screen: phone | current action + action list | shelf map + where blocked -->
+  <div class="workspace">
   <main id="main-dashboard-grid" class="dashboard-grid">
 
     <!-- =======================================================================
@@ -2088,10 +2145,10 @@
           <div id="holding-banner" class="holding-banner">
             <div style="font-size:18px;">✋</div>
             <div style="flex:1; min-width:0;">
-              <div class="holding-badge">Item In Hands</div>
+              <div id="holding-badge" class="holding-badge">Item In Hands</div>
               <div id="holding-item-name" class="holding-item-name">Tomato Soup</div>
             </div>
-            <div style="font-size:9.5px; color:#fde68a;">Keep ready</div>
+            <div id="holding-when" style="font-size:9.5px; color:#fde68a;">Keep ready</div>
           </div>
 
           <!-- Active Step Card -->
@@ -2194,7 +2251,7 @@
             </div>
             <div style="display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-dim); margin-top:1px;">
               <span>Progress: <strong id="mobile-pct-text" style="color:#ffffff;">0%</strong></span>
-              <span>Touches: <strong id="mobile-touch-text" style="color:#ffffff;">0</strong></span>
+              <span>Steps done: <strong id="mobile-touch-text" style="color:#ffffff;">0</strong></span>
             </div>
           </div>
 
@@ -2248,6 +2305,9 @@
         <span><strong class="leg-dot empty"></strong> Vacant</span>
         <span><strong class="leg-dot active-source"></strong> Pick From (Blue)</span>
         <span><strong class="leg-dot active-target"></strong> Place To (Purple)</span>
+        <span><strong class="leg-dot blocked"></strong> Blocked</span>
+        <span><strong class="leg-dot kept-ok"></strong> Marked OK, kept</span>
+        <span><strong class="leg-dot held"></strong> Held product goes back here</span>
       </div>
 
       <!-- Scrollable Shelf Rack Layers (Shelf 7 down to Shelf 1) -->
@@ -2285,7 +2345,7 @@
         <!-- Plain language rationale -->
         <div id="plain-rationale-box" class="non-tech-reasoning-quote fix-mode">
           <div style="font-size:9.5px; font-weight:800; text-transform:uppercase; color:#34d399; margin-bottom:2px;">
-            Backend reason
+            What to do and why
           </div>
           <p id="plain-rationale-text">
             Destination slot is verified empty. The associate shifts this product directly across shelves within Bay 1, avoiding putting the item into a staging cart and saving 2 physical touches!
@@ -2420,6 +2480,7 @@
       </div>
     </div>
   </section>
+  </div>
 
   <script>
     // State management & LocalStorage persistence
@@ -3101,6 +3162,8 @@
         heldItem: state.heldItem,
       });
 
+      // A place marked OK keeps its product, so the map does not overwrite it.
+      const keepTarget = isKeptOk(step);
       if (sType === "remove" || sType === "pull") {
         const s = state.slots.find(x => x.id === fromId);
         if (s) s.current = null;
@@ -3116,9 +3179,9 @@
         const fromS = state.slots.find(x => x.id === fromId);
         const toS = state.slots.find(x => x.id === toId);
         if (fromS && toS) {
-          toS.current = fromS.current || prodName;
+          if (!keepTarget) toS.current = fromS.current || prodName;
           fromS.current = null;
-        } else if (toS) {
+        } else if (toS && !keepTarget) {
           toS.current = prodName;
         }
       } else if (sType === "swap") {
@@ -3149,7 +3212,7 @@
         }
       } else if (sType === "restock" || sType === "add_to_shelf") {
         const s = state.slots.find(x => x.id === toId);
-        if (s) s.current = prodName;
+        if (s && !keepTarget) s.current = prodName;
       }
 
       state.stepIndex++;
@@ -3215,42 +3278,17 @@
         const countEl = document.getElementById("kpi-saved-pct");
         if (countEl) countEl.textContent = String(state.steps.length);
         const validationEl = document.getElementById("kpi-cart-stops");
-        if (validationEl) validationEl.textContent = validation.state || "—";
-        const summary = validation.summary || "Validation reports problems and leaves the backend list unchanged.";
-        const listNote = `• ${state.steps.length} step${state.steps.length === 1 ? "" : "s"}, in the order the backend returned them`;
-        const findingNote = `• ${summary}`;
-        const naiveCart = document.getElementById("comp-naive-cart");
-        const rules = validation.rule_check || {};
-        const sameBaySetAside = rules.same_bay_set_aside || 0;
-        const notFixInBay = (rules.same_bay_move_not_fix_in_bay || 0) + (rules.fix_in_bay_across_bays || 0);
-
-        // Per-bay and task-wide breakdown
-        const activeBay = state.activeBayFilter;
-        const baySteps = activeBay === "ALL" ? state.steps : state.steps.filter(s => s.bay === activeBay || (s.fromLocation && s.fromLocation.bay === activeBay) || (s.toLocation && s.toLocation.bay === activeBay));
-        const baySetAside = baySteps.filter(s => s.type === "set_aside").length;
-        const bayFixInBay = baySteps.filter(s => s.type === "fix_in_bay").length;
-
-        if (naiveCart) {
-          if (activeBay !== "ALL") {
-            naiveCart.innerHTML = `• Bay ${activeBay}: <strong>${baySetAside}</strong> items set aside (Backend generated <strong>${bayFixInBay}</strong> direct in-bay fixes; task-wide ${sameBaySetAside} in other bays)`;
-          } else {
-            naiveCart.innerHTML = `• Task-wide: <strong>${sameBaySetAside}</strong> same-bay items sent to cart (Bay 2 has 0 set-aside actions; all same-bay in Bay 2 are direct moves)`;
-          }
+        if (validationEl) {
+          validationEl.textContent = validation.state
+            ? `${validation.state} · ${validation.critical_count || 0} critical, ${validation.warning_count || 0} warning`
+            : "—";
+          validationEl.title = validation.summary || "";
         }
-
-        const naiveTouches = document.getElementById("comp-naive-touches");
-        if (naiveTouches) {
-          naiveTouches.textContent = `• ${sameBaySetAside ? "🚩" : "✅"} Same-bay set aside: ${sameBaySetAside} · ${notFixInBay ? "🚩" : "✅"} Same-bay moves outside fix in bay: ${notFixInBay}`;
-          naiveTouches.style.color = sameBaySetAside || notFixInBay ? "#f87171" : "";
-        }
-        const naiveAisles = document.getElementById("comp-naive-aisles");
-        if (naiveAisles) naiveAisles.textContent = `• Swap and slide come only from the backend: ${rules.backend_swap_actions || 0} swap, ${rules.backend_slide_actions || 0} slide`;
-        const optShifts = document.getElementById("comp-opt-shifts");
-        if (optShifts) optShifts.textContent = findingNote;
-        const optSaved = document.getElementById("comp-opt-saved");
-        if (optSaved) optSaved.textContent = `• ${validation.critical_count || 0} critical, ${validation.warning_count || 0} warning`;
-        const optAisles = document.getElementById("comp-opt-aisles");
-        if (optAisles) optAisles.textContent = "• Findings do not reorder or remove actions";
+        const orderEl = document.getElementById("kpi-order");
+        if (orderEl) orderEl.textContent = state.orderMode === "mobile" ? "Phone" : "Backend rows";
+        // The task-wide counts live in the header and the blocked panel, so this strip stays hidden.
+        const strip = document.querySelector(".comparison-strip");
+        if (strip) strip.style.display = "none";
         return;
       }
       const mismatchedTotal = state.slots.filter(s => s.current !== s.target).length;
@@ -3365,6 +3403,7 @@
 
     const OCCUPANCY_STYLE = {
       vacant: { icon: "🟢", color: "#34d399", short: "Empty" },
+      kept_ok: { icon: "✅", color: "#34d399", short: "Marked OK, kept" },
       occupied_cleared_later: { icon: "🟠", color: "#fbbf24", short: "Occupied now" },
       occupied: { icon: "🔴", color: "#f87171", short: "Occupied" },
     };
@@ -3392,7 +3431,8 @@
       if (compact) {
         return flags.map((flag) => `<div title="${flag.message.replace(/"/g, '&quot;')}" style="font-size:9.5px; color:#f87171; font-weight:800;">🚩 ${flag.title}</div>`).join("");
       }
-      return flags.map((flag) => `<div style="margin-top:4px; padding:4px 6px; border-radius:6px; background:rgba(248,113,113,0.14); border:1px solid rgba(248,113,113,0.5); color:#fecaca; font-size:10px; font-weight:700; white-space:normal;">🚩 Backend rule break: ${flag.title}<div style="font-weight:500;">${flag.message}</div></div>`).join("");
+      // The phone shows the rule and why in one short line. The full message is in Action details.
+      return flags.map((flag) => `<div title="${escapeText(flag.message)}" style="margin-top:4px; padding:4px 6px; border-radius:6px; background:rgba(248,113,113,0.14); border:1px solid rgba(248,113,113,0.5); color:#fecaca; font-size:10.5px; font-weight:700; white-space:normal; font-family:'DM Sans',sans-serif; line-height:1.35;">🚩 ${escapeText(flag.title)}<div style="font-weight:500;">${escapeText(flag.why || flag.rule || flag.message)}</div></div>`).join("");
     }
 
     function compactSlot(location) {
@@ -3405,8 +3445,11 @@
     function formatHumanFriendlyAction(step, prodTitle, fromLoc, toLoc) {
       if (step.backend_action) {
         const kind = actionKind(step);
+        const title = step.hold
+          ? (step.hold.role === "pick" ? "Hold to make room" : "Put back held product")
+          : kind.name;
         return {
-          title: kind.name,
+          title,
           subtitle: (step.movement && step.movement.text) || kind.does,
         };
       }
@@ -3480,9 +3523,27 @@
 
       // Holding banner
       const banner = document.getElementById("holding-banner");
-      if (state.heldItem) {
+      const nameEl = document.getElementById("holding-item-name");
+      const badgeEl = document.getElementById("holding-badge");
+      const whenEl = document.getElementById("holding-when");
+      if (state.backendMode) {
+        const inHand = productsInHand();
+        banner.classList.toggle("visible", inHand.length > 0);
+        if (inHand.length) {
+          const holds = inHand.filter(({ step }) => step.hold).length;
+          badgeEl.textContent = holds === inHand.length
+            ? `Holding ${holds} to make room`
+            : (holds ? `${inHand.length} picked up · ${holds} held to make room` : `${inHand.length} set aside`);
+          nameEl.innerHTML = `<div class="holding-list">${inHand.map(({ step, placeAt }) =>
+            `<div>${step.hold ? "✋" : "📦"} <strong>${escapeText(step.item || "Product")}</strong> → ${escapeText(destinationText(step))}${placeAt >= 0 ? ` · step ${placeAt + 1}` : " · no put-back step"}</div>`
+          ).join("")}</div>`;
+          whenEl.textContent = "";
+        }
+      } else if (state.heldItem) {
         banner.classList.add("visible");
-        document.getElementById("holding-item-name").textContent = state.heldItem;
+        badgeEl.textContent = "Item In Hands";
+        nameEl.textContent = state.heldItem;
+        whenEl.textContent = "Keep ready";
       } else {
         banner.classList.remove("visible");
       }
@@ -3695,7 +3756,7 @@
               const look = occupancyStyle(occ);
               clStrip.style.display = "flex";
               clIcon.textContent = look.icon;
-              clTxt.textContent = `Target: ${occ.title}. ${occ.text}${occ.occupant_note ? ` ${occ.occupant_note}` : ""}`;
+              clTxt.textContent = `Target: ${occ.title}. ${occ.text}${occ.occupant_note && occ.blocking ? ` ${occ.occupant_note}` : ""}`;
               clTxt.style.color = look.color;
               if (occ.blocking) {
                 clStrip.style.border = "1.5px solid #ef4444";
@@ -3713,7 +3774,7 @@
           const rawName = document.getElementById("card-raw-action");
           if (rawName) {
             rawName.style.display = "block";
-            const extra = `${movementBadge(step.movement)}${ruleFlagsHtml(step, false)}`;
+            const extra = `${holdNoteHtml(step)}${movementBadge(step.movement)}${ruleFlagsHtml(step, false)}`;
             rawName.style.display = extra ? "block" : "none";
             rawName.innerHTML = extra;
           }
@@ -3785,6 +3846,10 @@
       // Every destination that is occupied when a step needs it, with the steps that need it.
       const blockedDestinations = new Map();
       const blockedBadges = new Map();
+      const keptOkSlots = new Set(state.steps.filter((step) => isKeptOk(step) && step.toSlotId).map((step) => step.toSlotId));
+      const heldPlaces = new Map(productsInHand()
+        .filter(({ step }) => step.toSlotId)
+        .map(({ step, placeAt }) => [step.toSlotId, placeAt >= 0 ? placeAt + 1 : null]));
       state.steps.forEach((step, i) => {
         if (!isBlockedStep(step) || !step.toSlotId) return;
         if (!blockedDestinations.has(step.toSlotId)) blockedDestinations.set(step.toSlotId, []);
@@ -3811,7 +3876,10 @@
           const occ = activeStep.target_occupancy;
           const activeProd = activeStep.item || activeStep.productTitle || "";
           const isDestOccupied = destSlot && destSlot.current && destSlot.current !== activeProd;
-          const isBlocked = (occ && (occ.blocking || (occ.status && occ.status.startsWith('occupied')))) || isDestOccupied;
+          // A backend step carries the server's own check, which already knows a place marked OK is kept.
+          const isBlocked = activeStep.backend_action
+            ? Boolean(occ && occ.blocking)
+            : (occ && (occ.blocking || (occ.status && occ.status.startsWith('occupied')))) || isDestOccupied;
           if (isBlocked) {
             blockingSlots.add(activeStep.toSlotId);
             blockingDetails = {
@@ -3947,14 +4015,19 @@
           const neededAtSteps = blockedDestinations.get(s.id);
           const isBlockedDest = !isBlocking && Boolean(neededAtSteps);
           if (isBlockedDest) classes.push("blocked-dest");
+          const isKeptOkSlot = keptOkSlots.has(s.id);
+          const isHeldPlace = heldPlaces.has(s.id);
+          if (isKeptOkSlot) classes.push("kept-ok");
+          if (isHeldPlace) classes.push("held-place");
 
           const posTag = `P${loc.position}`;
-          const statusIcon = isBlocking ? "⛔ BLOCKED" : (isBlockedDest ? `⛔ Step ${neededAtSteps.join(", ")}` : (isSource ? "★ FROM" : (isTarget ? "★ TO" : (isCorrect ? "✓" : (isEmpty ? "○" : "!")))));
+          const heldStep = heldPlaces.get(s.id);
+          const statusIcon = isBlocking ? "⛔ BLOCKED" : (isBlockedDest ? `⛔ Step ${neededAtSteps.join(", ")}` : (isSource ? "★ FROM" : (isTarget ? "★ TO" : (isHeldPlace ? `✋ ${heldStep ? `Step ${heldStep}` : "Held"}` : (isKeptOkSlot ? "✓ OK" : (isCorrect ? "✓" : (isEmpty ? "○" : "!")))))));
 
           return `
             <div class="${classes.join(" ")}" 
                  onclick="inspectSlot('${s.id}')"
-                 title="Bay: ${loc.bay} • Shelf: ${loc.shelf} • Position: ${loc.position}\nSlot ID: ${s.id}${isBlocking ? '\n⛔ BLOCKED SPACE: Target destination is currently occupied!' : ''}${isBlockedDest ? `\n⛔ Occupied when step ${neededAtSteps.join(", ")} needs it${blockedBadges.get(s.id) ? ` (${blockedBadges.get(s.id)})` : ''}` : ''}\nCurrent: ${s.current || 'Vacant'}\nTarget: ${s.target || 'None'}">
+                 title="Bay: ${loc.bay} • Shelf: ${loc.shelf} • Position: ${loc.position}\nSlot ID: ${s.id}${isBlocking ? '\n⛔ BLOCKED SPACE: Target destination is currently occupied!' : ''}${isKeptOkSlot ? '\n✓ Marked OK in the before photo: kept OK for now' : ''}${isHeldPlace ? `\n✋ A held product goes back here${heldStep ? ` at step ${heldStep}` : ''}` : ''}${isBlockedDest ? `\n⛔ Occupied when step ${neededAtSteps.join(", ")} needs it${blockedBadges.get(s.id) ? ` (${blockedBadges.get(s.id)})` : ''}` : ''}\nCurrent: ${s.current || 'Vacant'}\nTarget: ${s.target || 'None'}">
               <div class="slot-tile-pos-row" ${isBlocking ? 'style="background:#dc2626; color:#ffffff; margin:-5px -5px 4px -5px; padding:2px 4px; border-radius:3px 3px 0 0;"' : ''}>
                 <span class="pos-tag" ${isBlocking ? 'style="color:#fee2e2; font-weight:800;"' : ''}>${posTag}</span>
                 <span style="font-weight:800; font-size:${isBlocking ? '8px' : '9px'};">${statusIcon}</span>
@@ -4023,14 +4096,17 @@
           cartTag.title = flagged ? step.rule_flags.map((flag) => flag.message).join(" ") : "Action sent by the backend";
           cartTag.style.color = flagged ? "#f87171" : "";
         }
-        const findings = ((state.validation && state.validation.findings) || []).filter((finding) =>
-          (finding.action_ids || []).map(String).includes(String(step.id))
-        );
+        const findings = findingsForStep(step);
         const reason = step.reason ? `Backend reason: ${step.reason}.` : "The backend did not include a reason.";
         const meaning = step.action_meaning ? `${step.action_meaning} ` : "";
         const movementText = step.movement && step.movement.text ? ` Move: ${step.movement.text}.` : "";
         const sequenceText = step.sequence_label ? `${step.sequence_label}. ` : "";
-        document.getElementById("plain-rationale-text").textContent = `${sequenceText}${meaning}${reason}${movementText}`;
+        const hold = step.hold;
+        const holdText = !hold ? ""
+          : hold.role === "pick"
+            ? `Hold to make room: keep it in hand and put it back at ${hold.place_at}${hold.place_step ? ` at step ${hold.place_step}` : ""}.${hold.makes_room_for ? ` Its spot goes to ${hold.makes_room_for}${hold.makes_room_step ? ` at step ${hold.makes_room_step}` : ""}.` : ""} `
+            : `Put back the product held since ${hold.pick_step ? `step ${hold.pick_step}` : "an earlier step"} (picked from ${hold.pick_from}). `;
+        document.getElementById("plain-rationale-text").textContent = `${holdText}${sequenceText}${meaning}${reason}${movementText}`;
         const fromLoc = step.fromLocation;
         const toLoc = step.toLocation;
         document.getElementById("spec-full-from").textContent = fromLoc
@@ -4063,6 +4139,8 @@
             initOccupiedEl.textContent = "This action does not place a product.";
           } else if (occ.status === "vacant") {
             initOccupiedEl.textContent = `Yes. ${occ.text}`;
+          } else if (occ.status === "kept_ok") {
+            initOccupiedEl.textContent = `Treated as OK. ${occ.text}`;
           } else {
             const originStr = occ.occupant_origin ? ` [Origin: ${occ.occupant_origin}]` : "";
             initOccupiedEl.textContent = `No. ${occ.text}${originStr}`;
@@ -4073,6 +4151,8 @@
             clearedBeforeEl.textContent = "—";
           } else if (occ.status === "vacant") {
             clearedBeforeEl.textContent = occ.cleared_at_step ? `Step ${occ.cleared_at_step}` : "Empty from the start of the list";
+          } else if (occ.status === "kept_ok") {
+            clearedBeforeEl.textContent = "Not needed for now: the product marked OK stays and the place is not counted as blocked.";
           } else if (occ.cleared_at_step) {
             clearedBeforeEl.textContent = `Step ${occ.cleared_at_step} (${occ.cleared_by_role || 'move'}), after this step`;
           } else {
@@ -4082,7 +4162,7 @@
         if (provTextEl) {
           const findingText = findings.length ? `Validation: ${findings.map((finding) => finding.message).join(" ")} ` : "";
           let extra = "";
-          if (occ && occ.status !== "vacant") {
+          if (occ && occ.status !== "vacant" && occ.status !== "kept_ok") {
             const occId = occ.occupant_id ? ` (Action #${occ.occupant_id})` : "";
             const occUpc = occ.occupant_upc ? ` [UPC ${occ.occupant_upc}]` : "";
             extra = ` | Occupant: ${occ.occupant_product || 'Product'}${occUpc}${occId}. ${occ.occupant_origin || ''} ${occ.occupant_identification || ''} Actions for occupant: ${occ.occupant_actions || 'None'}.`;
@@ -4228,11 +4308,54 @@
       return Boolean(step && step.target_occupancy && step.target_occupancy.blocking);
     }
 
+    function isKeptOk(step) {
+      return Boolean(step && step.target_occupancy && step.target_occupancy.status === "kept_ok");
+    }
+
+    // Set-aside products picked up before the step on screen and not put back yet, with the step that puts each back.
+    function productsInHand() {
+      const now = state.stepIndex;
+      const out = [];
+      state.steps.forEach((step, at) => {
+        if (step.type !== "set_aside" || at >= now) return;
+        const placeAt = step.hold && step.hold.place_step
+          ? step.hold.place_step - 1
+          : state.steps.findIndex((other, i) => i > at && other.type === "add_to_shelf" && String(other.id) === String(step.id));
+        if (placeAt >= 0 && placeAt < now) return;
+        out.push({ step, placeAt });
+      });
+      return out;
+    }
+
+    // A same-bay set aside the check accepted: why it is held, and where and when it goes back.
+    function holdNoteHtml(step) {
+      const hold = step && step.hold;
+      if (!hold) return "";
+      if (hold.role === "pick") {
+        const room = hold.makes_room_for
+          ? ` Its spot is needed by <strong>${escapeText(hold.makes_room_for)}</strong>${hold.makes_room_step ? ` at step ${hold.makes_room_step}` : ""}.`
+          : "";
+        const waits = hold.waits_for ? ` ${escapeText(hold.waits_for)} is still standing at the expected position.` : "";
+        return `<div class="hold-note">✋ <strong>Hold to make room.</strong> Keep it in hand, not in a cart. Put it back at <strong>${escapeText(hold.place_at)}</strong>${hold.place_step ? ` at <strong>step ${hold.place_step}</strong>` : ""}.${room}${waits}</div>`;
+      }
+      return `<div class="hold-note">✋ <strong>Put back the held product.</strong> It was picked up at ${hold.pick_step ? `step ${hold.pick_step}` : "an earlier step"} from ${escapeText(hold.pick_from)}.</div>`;
+    }
+
     // Findings about blocked destinations are shown as steps below, so the "other findings" list leaves them out.
     const SEQUENCE_CODES = ["OCCUPIED_DESTINATION", "DESTINATION_CLEARED_LATER"];
 
+    // Validation findings for one action. Blocked-destination findings use backend row order and its step
+    // numbers, so phone order relies on each step's own target check instead.
+    function findingsForStep(step) {
+      const mobile = state.orderMode === "mobile";
+      return ((state.validation && state.validation.findings) || []).filter((finding) =>
+        (finding.action_ids || []).map(String).includes(String(step.id))
+        && !(mobile && SEQUENCE_CODES.includes(finding.code))
+      );
+    }
+
     const OCCUPANT_BADGE = {
-      marked_ok: { text: "Marked OK · no action", color: "#fbbf24" },
+      marked_ok: { text: "Marked OK · kept", color: "#34d399" },
       detected_no_action: { text: "Not marked OK · no action", color: "#f87171" },
       has_action: { text: "Has its own action", color: "#fb923c" },
       moves_later: { text: "Needs to move first", color: "#fb923c" },
@@ -4337,11 +4460,12 @@
       // The direct answer: for every place that starts occupied, did a remove / set aside / pick from empty it in time?
       const verdictLine = (name, c) => {
         if (!c || c.total == null) return "";
-        const never = (c.marked_ok || 0) + (c.no_action || 0) + (c.other || 0);
+        const never = (c.no_action || 0) + (c.other || 0);
         const parts = [
           `<span style="color:#6ee7b7;">✅ ${c.room_made || 0} emptied in time</span>`,
           `<span style="color:${c.moves_later ? "#fb923c" : "#6ee7b7"};">⏱ ${c.moves_later || 0} emptied too late</span>`,
           `<span style="color:${never ? "#f87171" : "#6ee7b7"};">⛔ ${never} never emptied</span>`,
+          ...(c.kept_ok ? [`<span style="color:#6ee7b7;">✓ ${c.kept_ok} marked OK, kept</span>`] : []),
         ];
         return `<div style="display:flex; flex-wrap:wrap; gap:12px; align-items:baseline;"><strong style="min-width:120px; color:#e2e8f0;">${name}</strong>${parts.join("")}</div>`;
       };
@@ -4352,7 +4476,18 @@
             <div style="color:#94a3b8; margin-bottom:4px;">Counted per place on the shelf, not per step. “Emptied” means a Remove, Set aside, or Pick from takes the old product away before the new one arrives.</div>
             ${verdictLine("Phone order", summaries.mobile)}
             ${verdictLine("Backend row order", summaries.backend)}
-            <div style="color:#94a3b8; margin-top:4px;">“Never emptied”: the backend sent no action that takes the old product off that place (it is marked OK, unidentified, or has an action that leaves it there). This is a gap in the backend actions, not an ordering problem.</div>
+            <div style="color:#94a3b8; margin-top:4px;">“Never emptied”: the backend sent no action that takes the old product off that place (it is unidentified, not marked OK, or has an action that leaves it there). This is a gap in the backend actions, not an ordering problem. A place whose product is marked OK in the before photo stays OK for now and is not counted as blocked.</div>
+          </div>`
+        : "";
+
+      // Same-bay set aside is allowed only as a hold that frees a spot for another product.
+      const rules = validation.rule_check || {};
+      const holdCount = rules.same_bay_hold_for_room || 0;
+      const needlessCount = rules.same_bay_set_aside || 0;
+      const holdHtml = holdCount || needlessCount
+        ? `<div style="margin:6px 0 2px; display:flex; flex-wrap:wrap; gap:12px;">
+            <span style="color:#fbbf24;">✋ ${holdCount} same-bay hold${holdCount === 1 ? "" : "s"} to make room (allowed)</span>
+            <span style="color:${needlessCount ? "#f87171" : "#6ee7b7"};">🚩 ${needlessCount} same-bay set aside${needlessCount === 1 ? "" : "s"} that make no room</span>
           </div>`
         : "";
 
@@ -4367,7 +4502,6 @@
         </div>`).join("");
 
       const reasons = [];
-      if (counts.marked_ok) reasons.push(`${counts.marked_ok} held by a product marked OK (no action, never leaves)`);
       if (counts.no_action) reasons.push(`${counts.no_action} held by a product that is not marked OK and has no action`);
       if (counts.moves_later) reasons.push(`${counts.moves_later} held by a product that the backend does move, but only later in this order`);
       if (counts.other) reasons.push(`${counts.other} held by another product whose action does not take it off the place (for example only an Identify)`);
@@ -4402,6 +4536,7 @@
       box.innerHTML = `<h4>Where the associate gets blocked · ${mobile ? "mobile order" : "backend order"}</h4>`
         + `<div style="color:#e2e8f0; font-weight:700;">${headline}.</div>`
         + (reasons.length ? `<div>${reasons.join(" · ")}.</div>` : "")
+        + holdHtml
         + verdictHtml
         + phaseHtml
         + groupHtml
@@ -4431,7 +4566,7 @@
       if (caption) {
         const hiddenCount = (state.mobileHidden || []).length;
         const doneCount = state.steps.filter((s) => s.already_handled).length;
-        caption.textContent = mobileOn
+        caption.title = caption.textContent = mobileOn
           ? `The order the associate follows. Identify every bay, then Remove every bay, then each bay: Set aside, Fix in bay, Pick from, Add to shelf, Restock.${doneCount ? ` ${doneCount} action${doneCount === 1 ? " was" : "s were"} already done on the phone; they are replayed here so the plan can still be checked.` : ""}${hiddenCount ? ` ${hiddenCount} repeated or unknown action${hiddenCount === 1 ? " is" : "s are"} listed in the check above and not on the phone.` : ""}`
           : "The order the backend returned the rows. Nothing is sorted, merged, or converted.";
       }
@@ -4447,6 +4582,7 @@
       renderSequenceCheck();
       const ruleBreakCount = state.steps.filter((s) => (s.rule_flags || []).length).length;
       const blockedCount = state.steps.filter(isBlockedStep).length;
+      const holdCount = state.steps.filter((s) => s.hold && s.hold.role === "pick").length;
       document.querySelectorAll(".t-filter-chip").forEach((chip) => {
         const type = chip.getAttribute("data-type");
         if (type === "RULE_BREAK") {
@@ -4455,6 +4591,9 @@
         } else if (type === "BLOCKED") {
           chip.style.display = state.backendMode ? "" : "none";
           chip.textContent = `⛔ Blocked destinations (${blockedCount})`;
+        } else if (type === "hold" && state.backendMode) {
+          chip.style.display = holdCount ? "" : "none";
+          chip.textContent = `✋ Holds to make room (${holdCount})`;
         } else if (state.backendMode && type !== "ALL") {
           chip.style.display = "none";
         }
@@ -4467,6 +4606,7 @@
           if (filterType === "ALL") return true;
           if (filterType === "RULE_BREAK") return (s.rule_flags || []).length > 0;
           if (filterType === "BLOCKED") return isBlockedStep(s);
+          if (filterType === "hold" && state.backendMode) return Boolean(s.hold);
           if (filterType === "move" || filterType === "fix_in_bay") {
             return s.type === "move" || s.type === "fix_in_bay" || s.type === "slide";
           }
@@ -4507,9 +4647,7 @@
 
         let clearancePill = "";
         if (state.backendMode) {
-          const flagged = ((state.validation && state.validation.findings) || []).some((finding) =>
-            (finding.action_ids || []).map(String).includes(String(s.id))
-          );
+          const flagged = findingsForStep(s).length > 0;
           const look = { ...occupancyStyle(s.target_occupancy) };
           if (isBlockedStep(s)) {
             const occ = s.target_occupancy;
@@ -4560,6 +4698,7 @@
               ${s.is_slide ? `<span class="type-pill slide" style="padding:1px 5px; font-size:8.5px; margin-left:3px;">SLIDE</span>` : ''}
               ${s.backend_action ? `<div style="font-size:10px; color:var(--text-dim);">${escapeText(actionKind(s).does)}</div>` : ''}
               ${s.backend_action ? movementBadge(s.movement) : ''}
+              ${s.hold ? `<div style="font-size:9.5px; color:#fbbf24; font-weight:800;" title="Same-bay set aside that makes room for another product">✋ ${s.hold.role === "pick" ? `Hold to make room · back at step ${s.hold.place_step || "?"}` : `Put back · held since step ${s.hold.pick_step || "?"}`}</div>` : ''}
               ${s.backend_action ? ruleFlagsHtml(s, true) : ''}
             </td>
             <td class="trace-loc" title="${fromTitle}" style="color:${isCurrent ? 'var(--accent-blue)' : '#e2e8f0'};">
