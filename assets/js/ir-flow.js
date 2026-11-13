@@ -2373,7 +2373,8 @@
         item.setAttribute('aria-label', `View ${row.count} ${row.type} action details`);
 
         const firstItem = (row.items && row.items[0]) || null;
-        const rowScanId = (firstItem && (firstItem.scan_id || resolveItemScanId(firstItem))) || (id === 'ir-post-action-list' ? currentPostScanId() : currentPreScanId());
+        const postList = id === 'ir-post-action-list' || id === 'ir-post-performed-list' || id === 'ir-post-skipped-list';
+        const rowScanId = (firstItem && (firstItem.scan_id || resolveItemScanId(firstItem))) || (postList ? currentPostScanId() : currentPreScanId());
         const rowScanUrl = buildDigitalShelfScanUrl(rowScanId, firstItem, meta);
 
         const title = document.createElement('strong');
@@ -2390,7 +2391,7 @@
           summary: [
             ['Evidence source', id === 'ir-performed-action-list'
               ? 'Digital Shelf report'
-              : (id === 'ir-post-action-list' ? 'Post-photo action list' : 'Pre-photo action list')],
+              : (postList ? 'Post-photo action list' : 'Pre-photo action list')],
             ['Scan ID', rowScanId ? `<span class="ir-scan-tag">Scan #${escapeHtml(String(rowScanId))}</span>` : 'Not specified'],
             ['Digital Shelf', rowScanUrl ? `<a href="${escapeHtml(rowScanUrl)}" target="_blank" rel="noopener noreferrer" class="ir-scan-link">Open Digital Shelf ↗</a>` : 'Not linked'],
             ['Items shown', String(row.items.length)],
@@ -2455,14 +2456,72 @@
       target.appendChild(button);
     }
 
+    function postMarkedOk(item) {
+      return String(item.digital_action_type || '').trim().toLowerCase() === 'ok';
+    }
+    function postActionDash(item) {
+      const taken = String(item.digital_action_taken == null ? '' : item.digital_action_taken).trim();
+      return taken === '-' || taken === '—' || taken === '–';
+    }
+    function postActionNotPerformed(item) {
+      const state = String(item.state || '').toUpperCase();
+      // Action Taken "-" is a miss only when the product is not marked OK.
+      if (postActionDash(item) && !postMarkedOk(item)) return true;
+      // A rejection was taken by the associate. Only idle was left untaken.
+      if (state.includes('REJECT') || state.includes('ACCEPT') || state.includes('COMPLET') || state.includes('DONE') || state.includes('PERFORM')) {
+        return false;
+      }
+      if (state.includes('IDLE')) {
+        return !(postMarkedOk(item) && postActionDash(item));
+      }
+      return false;
+    }
+    function postOutcomeLabel(item, notDone) {
+      if (notDone && postActionDash(item) && !postMarkedOk(item)) return 'Action Taken “-” · not marked OK';
+      if (notDone) return 'Not taken (idle)';
+      if (postMarkedOk(item) && postActionDash(item)) return 'Marked OK · Action Taken “-”';
+      return ACTION_STATE_LABELS[item.state] || 'Taken by associate';
+    }
+    const postItems = postGenerated.flatMap((row) => row.items || []);
+    const postSkippedItems = postItems.filter(postActionNotPerformed);
+    const postPerformedItems = postItems.filter((item) => !postActionNotPerformed(item));
+    function postRows(items, notDone) {
+      return groupRows(items.map((item) => {
+        const type = String(item.action_type || 'Post-photo action').replaceAll('_', ' ');
+        const stateLabel = postOutcomeLabel(item, notDone);
+        return {
+          type,
+          count: 1,
+          detail: `${item.product_name || item.product_title || item.upc || 'Product'} · ${stateLabel}`,
+          state: item.state || stateLabel,
+          items: [item],
+        };
+      }));
+    }
+    const postPerformedSummary = postRows(postPerformedItems, false);
+    const postSkippedSummary = postRows(postSkippedItems, true);
+
     renderRows('ir-generated-action-list', generatedSummary, 'No generated actions were returned for this task.');
     renderRows(
       'ir-post-action-list',
       postGeneratedSummary,
       postPhoto.loaded
-        ? 'The post-photo action list is empty.'
+        ? 'The post-photo scan generated no actions.'
         : (postPhoto.error || 'A separate post-photo action list is unavailable for this task.'),
     );
+    renderRows(
+      'ir-post-performed-list',
+      postPerformedSummary,
+      postPhoto.loaded ? 'No post-photo action was taken by the associate.' : 'No post-photo action list to check.',
+    );
+    renderRows(
+      'ir-post-skipped-list',
+      postSkippedSummary,
+      postPhoto.loaded ? 'Every post-photo action was taken, or the product was already marked OK.' : 'No post-photo action list to check.',
+    );
+    setText('ir-post-generated-total', postGeneratedCount);
+    setText('ir-post-performed-total', postPerformedItems.length);
+    setText('ir-post-skipped-total', postSkippedItems.length);
     renderRows(
       'ir-performed-action-list',
       performedSummary,
@@ -2479,90 +2538,19 @@
     const reviewGrid = byId('ir-action-review-grid');
     const unperfKicker = byId('ir-unperformed-kicker');
     const unperfHeading = byId('ir-unperformed-heading');
-
-    if (!hasPostPhotoUploaded) {
-      // User did not upload post photo (task incomplete, stopped early, or post-photo skipped/error):
-      // Hide this review box. Pre-photo unperformed actions are already clearly shown in the reconciliation card above.
-      if (unperfCard) unperfCard.hidden = true;
-      if (reviewGrid) reviewGrid.classList.add('has-hidden-unperformed');
-      setText('ir-unperformed-action-total', '0');
-      const unperformedListEl = byId('ir-unperformed-action-list');
-      if (unperformedListEl) unperformedListEl.replaceChildren();
-    } else {
-      // User uploaded a post photo:
-      // Show this box to display actions not taken in post-photo if post photo was uploaded
-      if (unperfCard) unperfCard.hidden = false;
-      if (reviewGrid) reviewGrid.classList.remove('has-hidden-unperformed');
-      if (unperfKicker) unperfKicker.textContent = 'Post-photo · not performed';
-      if (unperfHeading) unperfHeading.textContent = 'Actions with no record';
-
-      const postItems = postGenerated.flatMap((row) => row.items || []);
-      const postUnperformedItems = postItems.filter((item) => {
-        const actTaken = (item.action_taken || '').trim();
-        const st = String(item.state || '').toUpperCase();
-        return (!actTaken || actTaken === '-') && !st.includes('COMPLET') && !st.includes('DONE') && !st.includes('PERFORM');
-      });
-
-      const postUnperformedRows = postUnperformedItems.map((item) => {
-        const aType = (item.action_type || 'Post-photo action').replaceAll('_', ' ');
-        const sId = item.scan_id || resolveItemScanId(item) || currentPostScanId();
-        const sUrl = item.digital_shelf_url || buildDigitalShelfScanUrl(sId, item, meta);
-        return {
-          type: aType,
-          count: 1,
-          detail: item.product_name || item.product_title || item.upc || `Section ${item.section || item.from_bay || 'unknown'}`,
-          state: 'NO_RECORD',
-          scan_id: sId,
-          digital_shelf_url: sUrl,
-          items: [{
-            scan_id: sId,
-            digital_shelf_url: sUrl,
-            product_name: item.product_name || item.product_title || item.title || 'Product',
-            upc: item.upc,
-            action_type: item.action_type || aType,
-            from_bay: item.section || item.from_bay || '—',
-            from_pos: item.rog_position || item.from_pos || '—',
-            to_bay: item.section || item.to_bay || '—',
-            to_pos: item.pog_position || item.to_pos || '—',
-            state: 'No Record in Post-Photo',
-            reason: item.reason || `Action type '${item.action_type}' required in post-photo, but no associate action was taken`,
-          }],
-        };
-      });
-
-      const postUnperformedSummary = groupRows(postUnperformedRows);
-      const postUnperformedCount = postUnperformedItems.length;
-
-      setText('ir-unperformed-action-total', postUnperformedCount);
-
-      renderRows(
-        'ir-unperformed-action-list',
-        postUnperformedSummary,
-        postUnperformedCount === 0
-          ? 'Zero unperformed actions. All post-photo actions were addressed and verified!'
-          : 'No post-photo unperformed actions recorded.',
-      );
-
-      const unperformedListEl = byId('ir-unperformed-action-list');
-      if (unperformedListEl && postUnperformedCount > 0 && !postUnperformedSummary.length) {
-        const unperfBtn = document.createElement('button');
-        unperfBtn.type = 'button';
-        unperfBtn.className = 'btn btn--outline btn--sm ir-evidence-button';
-        unperfBtn.textContent = 'View post-photo unconfirmed records';
-        unperfBtn.onclick = () => openInsightDialog({
-          title: 'Post-Photo Actions With No Record',
-          subtitle: `${postUnperformedCount} action(s) needed in post-photo with no completion record · Task #${meta.task_id || 'unknown'}`,
-          summary: [
-            ['Evidence Source', 'Post-photo verification scan'],
-            ['Scan ID', currentPostScanId() ? `#${currentPostScanId()}` : 'Available per item'],
-            ['Total Without Record', String(postUnperformedCount)],
-            ['Status', 'No associate action was recorded for these post-photo items'],
-          ],
-          items: postUnperformedItems,
-        });
-        unperformedListEl.appendChild(unperfBtn);
-      }
-    }
+    // Pre-photo actions with no record stay in this card. Post-photo performed and not performed are in the post-photo panel.
+    if (unperfKicker) unperfKicker.textContent = 'Pre-photo · not performed';
+    if (unperfHeading) unperfHeading.textContent = 'Actions with no record';
+    if (unperfCard) unperfCard.hidden = unperformedCount === 0;
+    if (reviewGrid) reviewGrid.classList.toggle('has-hidden-unperformed', unperformedCount === 0);
+    setText('ir-unperformed-action-total', unperformedCount);
+    renderRows(
+      'ir-unperformed-action-list',
+      unperformedSummary,
+      hasPostPhotoUploaded
+        ? 'No pre-photo action is missing a completion record.'
+        : 'No pre-photo action is missing a completion record.',
+    );
     const performedList = byId('ir-performed-action-list');
     if (performedList && !performedSummary.length) {
       const evidenceButton = document.createElement('button');
@@ -2996,6 +2984,9 @@
     setText('ir-overview-challenges', '—');
     setText('ir-generated-action-total', '0');
     setText('ir-post-action-total', '0');
+    setText('ir-post-generated-total', '0');
+    setText('ir-post-performed-total', '0');
+    setText('ir-post-skipped-total', '0');
     setText('ir-performed-action-total', '0');
     setText('ir-unperformed-action-total', '0');
     const unperfCard = byId('ir-unperformed-action-card');
@@ -3022,6 +3013,8 @@
     const emptyStates = {
       'ir-generated-action-list': 'Choose a recent task to see the work requested by the system.',
       'ir-post-action-list': 'Choose a recent task to check its separate post-photo actions.',
+      'ir-post-performed-list': 'Performed post-photo actions appear here.',
+      'ir-post-skipped-list': 'Post-photo actions still idle appear here.',
       'ir-performed-action-list': 'Choose a recent task to see the associate activity recorded in Digital Shelf.',
       'ir-unperformed-action-list': 'Choose a recent task to evaluate actions with no completion record.',
       'ir-challenge-list': 'Choose a recent task to evaluate execution challenges.',

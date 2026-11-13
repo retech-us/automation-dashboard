@@ -8454,8 +8454,37 @@ code {
   grid-column: 1 / -1;
 }
 
-.ir-action-review--challenges {
+.ir-action-review--challenges,
+.ir-action-review--post {
   grid-column: 1 / -1;
+}
+
+.ir-post-split {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.ir-post-col {
+  min-width: 0;
+}
+
+.ir-post-col h4 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.ir-post-col .ir-review-list {
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .ir-post-split { grid-template-columns: 1fr; }
 }
 
 .ir-action-review > header {

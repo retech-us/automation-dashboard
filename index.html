@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261105c" />
+  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261113a" />
   <script>
     (function() {
       try {
@@ -481,16 +481,34 @@
               </div>
             </article>
 
-            <article class="ir-action-review">
+            <article class="ir-action-review ir-action-review--post">
               <header>
                 <div>
-                  <span class="ir-review-kicker">Post-photo · verification</span>
+                  <span class="ir-review-kicker">Post-photo · after the reset</span>
                   <h3>Post-photo actions</h3>
                 </div>
                 <span id="ir-post-action-total" class="meta-pill">0</span>
               </header>
-              <div id="ir-post-action-list" class="ir-review-list">
-                <p class="data-note">Select a task to check for a separate post-photo action list.</p>
+              <p class="data-note">Generated is every action the post-photo scan created. Performed is what the associate took, including a rejection. Not performed is still idle, or Action Taken is “-” and the product is not marked OK. A product marked OK with Action Taken “-” needed no action.</p>
+              <div class="ir-post-split">
+                <div class="ir-post-col">
+                  <h4>Generated <span id="ir-post-generated-total" class="meta-pill">0</span></h4>
+                  <div id="ir-post-action-list" class="ir-review-list">
+                    <p class="data-note">Select a task to check for a separate post-photo action list.</p>
+                  </div>
+                </div>
+                <div class="ir-post-col">
+                  <h4>Performed <span id="ir-post-performed-total" class="meta-pill">0</span></h4>
+                  <div id="ir-post-performed-list" class="ir-review-list">
+                    <p class="data-note">Performed post-photo actions appear here.</p>
+                  </div>
+                </div>
+                <div class="ir-post-col">
+                  <h4>Not performed <span id="ir-post-skipped-total" class="meta-pill">0</span></h4>
+                  <div id="ir-post-skipped-list" class="ir-review-list">
+                    <p class="data-note">Post-photo actions still idle appear here.</p>
+                  </div>
+                </div>
               </div>
             </article>
 
@@ -1792,7 +1810,7 @@
   <script src="assets/js/issue-bridge.js?v=20261007e"></script>
   <script src="assets/js/ir-live-dashboard.js?v=20261007a"></script>
   <script src="assets/js/ir-history.js?v=20260923c"></script>
-  <script src="assets/js/ir-flow.js?v=20261106a"></script>
+  <script src="assets/js/ir-flow.js?v=20261113b"></script>
   <script src="assets/js/agent-center.js?v=20261012f"></script>
   <script src="assets/js/sentry-usage.js?v=20261012c"></script>
   <script src="assets/js/app.v16.js?v=20261106g"></script>
