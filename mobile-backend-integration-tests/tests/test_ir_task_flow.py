@@ -246,6 +246,39 @@ class TestIrTaskFlowBuilder(unittest.TestCase):
         self.assertEqual(bay1["pog_shelf_count"], 5)
         self.assertTrue(bay1["has_shelf_discrepancy"])
 
+    def test_shelf_count_discrepancy_belongs_to_the_section_the_shelf_is_in(self):
+        def move(item_id, cur_section, cur_shelf, exp_section, exp_shelf):
+            return {
+                "id": item_id,
+                "action": "ACTION_MOVE",
+                "displayed_upc": f"0111100000{item_id}",
+                "product_title": f"Product {item_id}",
+                "current_position": {"shelf": cur_shelf, "position": "1", "section_info": {"name": cur_section}},
+                "expected_position": {"shelf": exp_shelf, "position": "2", "section_info": {"name": exp_section}},
+            }
+
+        raw_actions = [
+            # Section 1 matches: 3 shelves in the scan and in the planogram.
+            move(1, "1", 3, "1", 3),
+            # Section 2 has 3 shelves in the scan. The planogram has 5, reached by moves that start in section 3.
+            move(2, "2", 3, "2", 3),
+            move(3, "3", 3, "2", 5),
+            # Section 3 has 3 shelves in the scan and 2 in the planogram, so it is not a discrepancy.
+            move(4, "3", 3, "3", 2),
+        ]
+        flow = synthesize_task_flow_from_raw_actions(45501406, raw_actions)
+        bays = flow["bay_summaries"]
+
+        self.assertEqual((bays["Bay 1"]["rog_shelf_count"], bays["Bay 1"]["pog_shelf_count"]), (3, 3))
+        self.assertFalse(bays["Bay 1"]["has_shelf_discrepancy"])
+
+        # Shelf 5 is a planogram shelf of section 2, so section 2 is flagged, not section 3 where the move started.
+        self.assertEqual((bays["Bay 2"]["rog_shelf_count"], bays["Bay 2"]["pog_shelf_count"]), (3, 5))
+        self.assertTrue(bays["Bay 2"]["has_shelf_discrepancy"])
+        self.assertEqual(bays["Bay 2"]["shelf_discrepancy_diff"], -2)
+
+        self.assertFalse(bays["Bay 3"]["has_shelf_discrepancy"])
+
     def test_format_duration_hm(self):
         self.assertEqual(format_duration_hm(None), "not recorded")
         self.assertEqual(format_duration_hm(0), "0 mins")
