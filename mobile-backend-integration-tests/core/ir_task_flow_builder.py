@@ -1506,6 +1506,28 @@ def synthesize_task_flow_from_raw_actions(
         bay_label = f"Bay {b_name}" if not str(b_name).lower().startswith("bay") else str(b_name)
         actions_by_bay.setdefault(bay_label, []).append(item)
 
+    # Shelf counts belong to the section a shelf is in, not to the bay an action is filed under.
+    # A move can start in one section and end in another, so its planogram shelf counts for the
+    # section it ends in. Counting by the filing bay gave the wrong bays (and numbers) a discrepancy.
+    def _shelf_number(value: Any) -> int:
+        return int(value) if value is not None and str(value).isdigit() and int(value) > 0 else 0
+
+    def _section_label(name: Any, fallback: str) -> str:
+        if not name:
+            return fallback
+        return f"Bay {name}" if not str(name).lower().startswith("bay") else str(name)
+
+    scan_shelves_by_bay: Dict[str, int] = {}
+    planogram_shelves_by_bay: Dict[str, int] = {}
+    for bay_label, grouped in actions_by_bay.items():
+        for item in grouped:
+            cp = item.get("current_position") or {}
+            ep = item.get("expected_position") or {}
+            scan_bay = _section_label((cp.get("section_info") or {}).get("name"), bay_label)
+            plan_bay = _section_label((ep.get("section_info") or {}).get("name"), scan_bay)
+            scan_shelves_by_bay[scan_bay] = max(scan_shelves_by_bay.get(scan_bay, 0), _shelf_number(cp.get("shelf")))
+            planogram_shelves_by_bay[plan_bay] = max(planogram_shelves_by_bay.get(plan_bay, 0), _shelf_number(ep.get("shelf")))
+
     inst_val = str(meta.get("instance") or "harr").strip()
     if "://" in inst_val:
         inst_clean = inst_val.split("://", 1)[1].split("/", 1)[0].split(":")[0]
@@ -1871,23 +1893,8 @@ def synthesize_task_flow_from_raw_actions(
             gate_status = "REVIEW"
 
         # Shelf Discrepancy: check number of shelves in planogram vs number of shelves in realogram
-        bay_rog_shelves = set()
-        bay_pog_shelves = set()
-        for itm in bay_items:
-            cp = itm.get("current_position") or {}
-            ep = itm.get("expected_position") or {}
-            cur_s = cp.get("shelf")
-            exp_s = ep.get("shelf")
-            if cur_s is not None and str(cur_s).isdigit() and int(cur_s) > 0:
-                bay_rog_shelves.add(int(cur_s))
-            if exp_s is not None and str(exp_s).isdigit() and int(exp_s) > 0:
-                bay_pog_shelves.add(int(exp_s))
-
-        rog_sh_count = max(bay_rog_shelves) if bay_rog_shelves else 0
-        pog_sh_count = max(bay_pog_shelves) if bay_pog_shelves else 0
-        
-        rog_sh_count = max(bay_rog_shelves) if bay_rog_shelves else 0
-        pog_sh_count = max(bay_pog_shelves) if bay_pog_shelves else 0
+        rog_sh_count = scan_shelves_by_bay.get(bay, 0)
+        pog_sh_count = planogram_shelves_by_bay.get(bay, 0)
 
         # Moving products between shelves is a normal ACTION_MOVE, not a shelf discrepancy.
         # When backend confirms fixture is validated, physical fixture and planogram match.
