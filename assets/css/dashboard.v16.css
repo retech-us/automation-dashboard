@@ -7086,11 +7086,10 @@ code {
 
 /* Big Executive Verdict Banner */
 .ir-exec-verdict {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
   align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
+  gap: 16px 24px;
   padding: 24px 28px;
   border-radius: var(--radius);
   margin-bottom: 20px;
@@ -7131,7 +7130,16 @@ code {
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  max-width: 680px;
+  min-width: 0;
+}
+
+.ir-exec-verdict > .ir-compliance-3stage {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .ir-exec-verdict { grid-template-columns: 1fr; }
 }
 
 .ir-exec-icon {
@@ -8450,11 +8458,8 @@ code {
   display: none !important;
 }
 
-.ir-action-review-grid.has-hidden-unperformed .ir-action-review:nth-child(3) {
-  grid-column: 1 / -1;
-}
-
 .ir-action-review--challenges,
+.ir-action-review--unperformed,
 .ir-action-review--post {
   grid-column: 1 / -1;
 }
