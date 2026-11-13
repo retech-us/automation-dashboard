@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261113a" />
+  <link rel="stylesheet" href="assets/css/dashboard.v16.css?v=20261113c" />
   <script>
     (function() {
       try {
@@ -481,6 +481,32 @@
               </div>
             </article>
 
+            <article class="ir-action-review">
+              <header>
+                <div>
+                  <span class="ir-review-kicker">Associate execution</span>
+                  <h3>Actions performed</h3>
+                </div>
+                <span id="ir-performed-action-total" class="meta-pill">0</span>
+              </header>
+              <div id="ir-performed-action-list" class="ir-review-list">
+                <p class="data-note">Select a task to see performed actions.</p>
+              </div>
+            </article>
+
+            <article id="ir-unperformed-action-card" class="ir-action-review ir-action-review--unperformed">
+              <header>
+                <div>
+                  <span id="ir-unperformed-kicker" class="ir-review-kicker">No record · not performed</span>
+                  <h3 id="ir-unperformed-heading">Actions with no record</h3>
+                </div>
+                <span id="ir-unperformed-action-total" class="meta-pill meta-pill--warning">0</span>
+              </header>
+              <div id="ir-unperformed-action-list" class="ir-review-list">
+                <p class="data-note">Select a task to evaluate unperformed actions.</p>
+              </div>
+            </article>
+
             <article class="ir-action-review ir-action-review--post">
               <header>
                 <div>
@@ -509,32 +535,6 @@
                     <p class="data-note">Post-photo actions still idle appear here.</p>
                   </div>
                 </div>
-              </div>
-            </article>
-
-            <article class="ir-action-review">
-              <header>
-                <div>
-                  <span class="ir-review-kicker">Associate execution</span>
-                  <h3>Actions performed</h3>
-                </div>
-                <span id="ir-performed-action-total" class="meta-pill">0</span>
-              </header>
-              <div id="ir-performed-action-list" class="ir-review-list">
-                <p class="data-note">Select a task to see performed actions.</p>
-              </div>
-            </article>
-
-            <article id="ir-unperformed-action-card" class="ir-action-review ir-action-review--unperformed">
-              <header>
-                <div>
-                  <span id="ir-unperformed-kicker" class="ir-review-kicker">No record · not performed</span>
-                  <h3 id="ir-unperformed-heading">Actions with no record</h3>
-                </div>
-                <span id="ir-unperformed-action-total" class="meta-pill meta-pill--warning">0</span>
-              </header>
-              <div id="ir-unperformed-action-list" class="ir-review-list">
-                <p class="data-note">Select a task to evaluate unperformed actions.</p>
               </div>
             </article>
 
