@@ -8069,6 +8069,94 @@ code {
   display: none;
 }
 
+.ir-shelf-discrepancy {
+  margin: 14px 0 16px;
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-left: 4px solid #ef4444;
+}
+
+.ir-shelf-discrepancy[hidden] {
+  display: none;
+}
+
+[data-theme="light"] .ir-shelf-discrepancy {
+  background: #fef2f2;
+  border-color: #fecaca;
+  border-left-color: #ef4444;
+}
+
+.ir-shelf-disc-bays {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.ir-shelf-disc-bay {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2, rgba(255, 255, 255, 0.04));
+}
+
+[data-theme="light"] .ir-shelf-disc-bay {
+  background: #ffffff;
+}
+
+.ir-shelf-disc-bay header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.ir-shelf-disc-bay h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.ir-shelf-disc-flag {
+  color: #ef4444;
+  font-weight: 800;
+}
+
+.ir-shelf-disc-counts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ir-shelf-disc-counts span {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ir-shelf-disc-counts strong {
+  font-size: 22px;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.ir-shelf-disc-bay p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.ir-shelf-disc-bay a {
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .ir-placement-stages {
   display: grid;
   grid-template-columns: 1fr 1fr;

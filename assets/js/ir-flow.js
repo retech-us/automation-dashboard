@@ -1951,10 +1951,10 @@
     // Shelf discrepancy is strictly when the physical fixture shelf count differs from planogram fixture.
     const shelfDiscrepancies = [];
     const isFixtureValidated = Boolean(meta && (meta.is_fixture_validated === true || meta.is_fixture_validated === 'true'));
-    const hasExplicitFixtureDiscrepancy = Boolean(meta && (meta.fixture_discrepancy === true || meta.has_shelf_discrepancy === true));
 
-    // Only inspect explicit backend fixture discrepancy flags; never infer shelf discrepancy from product moves
-    if (!isFixtureValidated && hasExplicitFixtureDiscrepancy) {
+    // The per-bay flag from the backend is enough. The task-level flag is often missing, so it is not required.
+    // Never infer a shelf discrepancy from product moves.
+    if (!isFixtureValidated) {
       const baySummariesObj = (evidenceInfo && evidenceInfo.baySummaries) || (currentFlowData && currentFlowData.bay_summaries) || (meta && meta.bay_summaries) || {};
       Object.entries(baySummariesObj).forEach(([bName, bData]) => {
         const pCount = Number(bData.pog_shelf_count || 0);
@@ -1964,9 +1964,64 @@
             bay: bName,
             pogCount: pCount,
             rogCount: rCount,
+            scanId: bData.pre_photo_scan_id || null,
+            url: bData.digital_shelf_url || '',
           });
         }
       });
+    }
+
+    const shelfDiscCard = byId('ir-shelf-discrepancy');
+    if (shelfDiscCard) {
+      shelfDiscCard.hidden = shelfDiscrepancies.length === 0;
+      setText('ir-shelf-disc-total', shelfDiscrepancies.length);
+      setText(
+        'ir-shelf-disc-sub',
+        'The shelves found in the scan do not match the shelves in the planogram. Products planned for a missing shelf cannot be placed correctly.',
+      );
+      const bayBox = byId('ir-shelf-disc-bays');
+      if (bayBox) {
+        bayBox.replaceChildren();
+        shelfDiscrepancies.forEach((disc) => {
+          const diff = disc.rogCount - disc.pogCount;
+          const card = document.createElement('article');
+          card.className = 'ir-shelf-disc-bay';
+          const head = document.createElement('header');
+          const title = document.createElement('h4');
+          title.textContent = disc.bay;
+          const flag = document.createElement('span');
+          flag.className = 'ir-shelf-disc-flag';
+          flag.textContent = diff < 0 ? `⚠ ${Math.abs(diff)} shelf missing` : `⚠ ${diff} extra shelf`;
+          head.append(title, flag);
+          const counts = document.createElement('div');
+          counts.className = 'ir-shelf-disc-counts';
+          const plan = document.createElement('span');
+          plan.append('Planogram shelves');
+          const planNum = document.createElement('strong');
+          planNum.textContent = String(disc.pogCount);
+          plan.appendChild(planNum);
+          const scan = document.createElement('span');
+          scan.append('Shelves in the scan');
+          const scanNum = document.createElement('strong');
+          scanNum.textContent = String(disc.rogCount);
+          scan.appendChild(scanNum);
+          counts.append(plan, scan);
+          const note = document.createElement('p');
+          note.textContent = diff < 0
+            ? `Products planned for shelf ${disc.rogCount + 1} and above have no shelf to go on.`
+            : `The scan found ${diff} more shelf than the planogram defines.`;
+          card.append(head, counts, note);
+          if (disc.url) {
+            const link = document.createElement('a');
+            link.href = disc.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = disc.scanId ? `Open scan #${disc.scanId} ↗` : 'Open Digital Shelf ↗';
+            card.appendChild(link);
+          }
+          bayBox.appendChild(card);
+        });
+      }
     }
 
     if (shelfDiscrepancies.length > 0) {
@@ -2987,6 +3042,8 @@
     setText('ir-post-generated-total', '0');
     setText('ir-post-performed-total', '0');
     setText('ir-post-skipped-total', '0');
+    const shelfDiscEmpty = byId('ir-shelf-discrepancy');
+    if (shelfDiscEmpty) shelfDiscEmpty.hidden = true;
     setText('ir-performed-action-total', '0');
     setText('ir-unperformed-action-total', '0');
     const unperfCard = byId('ir-unperformed-action-card');
