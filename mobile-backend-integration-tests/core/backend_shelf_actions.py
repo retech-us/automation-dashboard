@@ -434,19 +434,23 @@ def blocked_summary(steps: List[Dict[str, Any]]) -> Dict[str, int]:
 
     A place is counted once, however many facings or steps want it. `steps` counts the
     steps. `room_made` counts places that were occupied at the start and are emptied
-    by an earlier step before a product arrives.
+    by an earlier step before a product arrives. `kept_ok` counts places held by a
+    product marked OK, which stay OK and do not block.
     """
     counts = {
-        "total": 0, "steps": 0, "marked_ok": 0, "no_action": 0, "moves_later": 0, "other": 0, "room_made": 0,
+        "total": 0, "steps": 0, "no_action": 0, "moves_later": 0, "other": 0, "room_made": 0, "kept_ok": 0,
     }
     blocked_places: set = set()
     ready_places: set = set()
+    kept_places: set = set()
     for step in steps:
         occupancy = step.get("target_occupancy") or {}
         destination = step.get("toLocation") or {}
         place = tuple(str(destination.get(key) or "").strip().lstrip("0") for key in ("bay", "shelf", "position"))
         if occupancy.get("status") == "vacant" and occupancy.get("cleared_at_step"):
             ready_places.add(place)
+        if occupancy.get("status") == "kept_ok":
+            kept_places.add(place)
         if not occupancy.get("blocking"):
             continue
         counts["steps"] += 1
@@ -455,24 +459,70 @@ def blocked_summary(steps: List[Dict[str, Any]]) -> Dict[str, int]:
         blocked_places.add(place)
         counts["total"] += 1
         kind = occupancy.get("occupant_kind")
-        if kind == "marked_ok":
-            counts["marked_ok"] += 1
-        elif kind == "detected_no_action":
+        if kind == "detected_no_action":
             counts["no_action"] += 1
         elif occupancy.get("status") == "occupied_cleared_later":
             counts["moves_later"] += 1
         else:
             counts["other"] += 1
     counts["room_made"] = len(ready_places - blocked_places)
+    counts["kept_ok"] = len(kept_places)
     return counts
+
+
+def _judge_hold(
+    units: List[Dict[str, Any]],
+    position: int,
+    unit: Dict[str, Any],
+    holder: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """A same-bay set aside is allowed only as a hold that makes room.
+
+    That means its expected position is still taken when it is picked up, and another
+    product is placed into the spot it leaves before it is put back.
+    """
+    place_at = next(
+        (at for at in range(position + 1, len(units))
+         if units[at]["origin"] == unit["origin"] and units[at]["role"] == "add_to_shelf"),
+        None,
+    )
+    until = place_at if place_at is not None else len(units)
+    taker = next(
+        (other for other in units[position + 1:until]
+         if other["role"] in _FILL_ROLES and other["target"] == unit["source"] and not _same_product(other, unit)),
+        None,
+    )
+    busy = holder is not None and not _same_product(holder, unit)
+    plan: Dict[str, Any] = {
+        "justified": bool(busy and taker),
+        "place": (units[place_at]["origin"], units[place_at]["half"]) if place_at is not None else None,
+        "taker": (taker["origin"], taker["half"]) if taker else None,
+        "taker_product": taker["product"] if taker else "",
+        "waits_for": (holder.get("product") or "") if busy else "",
+    }
+    if not busy:
+        plan["reason"] = (
+            f"When it is picked up, {_slot_words(unit['expected'])} is already empty, "
+            "so it can go there directly with fix in bay."
+        )
+    elif not taker:
+        plan["reason"] = (
+            f"No other product is placed at {_slot_words(unit['current'])} while it is set aside, "
+            "so setting it aside makes no room for anything."
+        )
+    return plan
 
 
 def _walk_occupancy(
     raw_items: List[Dict[str, Any]],
     units: List[Dict[str, Any]],
     shelf_products: Optional[Dict[SlotKey, Dict[str, str]]] = None,
+    holds: Optional[Dict[int, Dict[str, Any]]] = None,
 ) -> List[Optional[Dict[str, Any]]]:
-    """Say whether each placement target is empty when its step comes up in the backend order."""
+    """Say whether each placement target is empty when its step comes up in this order.
+
+    When `holds` is given, each same-bay set aside is judged as a hold and recorded there by row.
+    """
     occupant = _initial_occupants(raw_items, shelf_products)
     vacated_by: Dict[SlotKey, Dict[str, Any]] = {}
 
@@ -484,6 +534,14 @@ def _walk_occupancy(
 
     results: List[Optional[Dict[str, Any]]] = []
     for position, unit in enumerate(units):
+        if (
+            holds is not None
+            and unit["role"] == "set_aside"
+            and unit["source"]
+            and unit["target"]
+            and unit["source"][0] == unit["target"][0]
+        ):
+            holds[unit["origin"]] = _judge_hold(units, position, unit, occupant.get(unit["target"]))
         target = unit["target"] if unit["role"] in _FILL_ROLES else None
         result: Optional[Dict[str, Any]] = None
         if target:
@@ -578,7 +636,25 @@ def _walk_occupancy(
                     [u["role"] for u in units if holder_id is not None and u.get("id") == holder_id],
                 )
 
-                if later:
+                if occupant_kind == "marked_ok":
+                    result = {
+                        "status": "kept_ok",
+                        "title": "Marked OK, kept",
+                        "text": (
+                            f"{holder_name}{f' (UPC {holder_upc})' if holder_upc else ''} is marked OK in the before photo "
+                            "and has no action, so it stays and this place counts as OK for now."
+                        ),
+                        "occupant_product": holder_name,
+                        "occupant_upc": holder_upc,
+                        "occupant_id": holder_id,
+                        "occupant_origin": occ_origin,
+                        "occupant_source": occupant_source,
+                        "occupant_has_action": occupant_has_action,
+                        "occupant_kind": occupant_kind,
+                        "occupant_note": occupant_note,
+                        "blocking": False,
+                    }
+                elif later:
                     later.setdefault("earlier_placements", []).append({
                         "index": unit["index"],
                         "product": unit.get("product") or "another product",
@@ -634,12 +710,55 @@ def _walk_occupancy(
             if holder and _same_product(holder, unit):
                 occupant.pop(unit["source"], None)
                 vacated_by[unit["source"]] = unit
-        # A blocked placement cannot happen yet, so the product standing there stays.
-        if target and not (result and result.get("blocking")):
+        # A blocked placement cannot happen yet, and a product marked OK keeps its place, so either one stays.
+        if target and not (result and (result.get("blocking") or result.get("status") == "kept_ok")):
             occupant[target] = unit
             vacated_by.pop(target, None)
         results.append(result)
     return results
+
+
+def _hold_plans(
+    raw_items: List[Dict[str, Any]],
+    shelf_products: Optional[Dict[SlotKey, Dict[str, str]]] = None,
+) -> Dict[int, Dict[str, Any]]:
+    """Judge every same-bay set aside in the order the associate works, keyed by backend row."""
+    shown, _hidden = _phone_units(raw_items, include_handled=True)
+    plans: Dict[int, Dict[str, Any]] = {}
+    _walk_occupancy(raw_items, shown, shelf_products, holds=plans)
+    return plans
+
+
+def _apply_holds(units: List[Dict[str, Any]], plans: Dict[int, Dict[str, Any]]) -> None:
+    """Drop the same-bay set aside flag from real holds, give the reason on the rest, and name both halves of a hold.
+
+    Step numbers come from `units`, so they match the order on screen.
+    """
+    index_of = {(unit["origin"], unit["half"]): unit["index"] for unit in units}
+    for unit in units:
+        plan = plans.get(unit["origin"])
+        if not plan:
+            continue
+        if not plan["justified"]:
+            unit["rule_flags"] = [
+                dict(flag, message=f"{flag['message']} {plan['reason']}", why=plan["reason"])
+                if flag["code"] == "SAME_BAY_SET_ASIDE" else flag
+                for flag in unit["rule_flags"]
+            ]
+            continue
+        unit["rule_flags"] = [flag for flag in unit["rule_flags"] if flag["code"] != "SAME_BAY_SET_ASIDE"]
+        pick_step = index_of.get((unit["origin"], 0))
+        place_step = index_of.get(plan["place"]) if plan["place"] else None
+        unit["hold"] = {
+            "role": "pick" if unit["role"] == "set_aside" else "place",
+            "pick_step": pick_step,
+            "place_step": place_step,
+            "pick_from": _slot_words(unit["current"]),
+            "place_at": _slot_words(unit["expected"]),
+            "makes_room_step": index_of.get(plan["taker"]) if plan["taker"] else None,
+            "makes_room_for": plan["taker_product"],
+            "waits_for": plan["waits_for"],
+        }
 
 
 def _present_units(
@@ -685,6 +804,7 @@ def _present_units(
             "step_role": role,
             "backend_action": unit["raw_name"],
             "rule_flags": unit["rule_flags"],
+            "hold": unit.get("hold"),
             "action_label": label,
             "action_meaning": meaning,
             "sequence_label": seq_lbl,
@@ -725,6 +845,7 @@ def present_backend_actions(
 ) -> List[Dict[str, Any]]:
     """Steps in the order the backend returned the rows. Nothing is sorted or dropped."""
     units = _walk_units(raw_items)
+    _apply_holds(units, _hold_plans(raw_items, shelf_products))
     occupancy = _walk_occupancy(raw_items, units, shelf_products)
     return _present_units(units, occupancy, _backend_band)
 
@@ -810,6 +931,27 @@ def _mobile_note(unit: Dict[str, Any], first_origin_for_id: Dict[Any, int], incl
     return ""
 
 
+def _phone_units(
+    raw_items: List[Dict[str, Any]],
+    include_handled: bool = False,
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Steps in the order the associate app shows them, numbered, and the steps it hides."""
+    seen: Dict[Any, int] = {}
+    shown: List[Dict[str, Any]] = []
+    hidden: List[Dict[str, Any]] = []
+    for unit in _walk_units(raw_items):
+        note = _mobile_note(unit, seen, include_handled)
+        copy = dict(unit)
+        copy["on_mobile"] = not note
+        copy["mobile_note"] = note
+        copy["already_handled"] = _is_handled(unit)
+        (hidden if note else shown).append(copy)
+    shown = sorted(shown, key=_mobile_sort_key)
+    for index, unit in enumerate(shown, start=1):
+        unit["index"] = index
+    return shown, sorted(hidden, key=_mobile_sort_key)
+
+
 def mobile_display_actions(
     raw_items: List[Dict[str, Any]],
     shelf_products: Optional[Dict[SlotKey, Dict[str, str]]] = None,
@@ -822,21 +964,10 @@ def mobile_display_actions(
     `include_handled` keeps finished actions in the list, flagged `already_handled`, so a
     task that is already done can still be checked against the phone order.
     """
-    units = _walk_units(raw_items)
-    seen: Dict[Any, int] = {}
-    shown: List[Dict[str, Any]] = []
-    hidden: List[Dict[str, Any]] = []
-    for unit in units:
-        note = _mobile_note(unit, seen, include_handled)
-        copy = dict(unit)
-        copy["on_mobile"] = not note
-        copy["mobile_note"] = note
-        copy["already_handled"] = _is_handled(unit)
-        (hidden if note else shown).append(copy)
-    shown = sorted(shown, key=_mobile_sort_key)
-    for index, unit in enumerate(shown, start=1):
-        unit["index"] = index
-    hidden = sorted(hidden, key=_mobile_sort_key)
+    shown, hidden = _phone_units(raw_items, include_handled)
+    plans = _hold_plans(raw_items, shelf_products)
+    _apply_holds(shown, plans)
+    _apply_holds(hidden, plans)
     occupancy = _walk_occupancy(raw_items, shown, shelf_products)
     return {
         "order": "mobile",
@@ -997,10 +1128,16 @@ def validate_backend_shelf_actions(
                 "A restock row also names a current shelf position.", row,
             ))
 
+    plans = _hold_plans(raw_items, shelf_products)
+    units = _walk_units(raw_items)
+    _apply_holds(units, plans)
+    flags_by_row = {}
+    for unit in units:
+        flags_by_row.setdefault(unit["origin"], unit["rule_flags"])
     rule_counts = {code: 0 for code in RULES}
     backend_names = {"swap": 0, "slide": 0}
-    for row in annotated:
-        for flag in _rule_flags(row):
+    for origin, row in enumerate(annotated):
+        for flag in flags_by_row.get(origin, []):
             rule_counts[flag["code"]] += 1
             findings.append(_finding(flag["code"], "critical", flag["title"], flag["message"], row))
         names = " ".join(str((_position(row.get(field)) or {}).get("action") or "") for field in ("current_position", "expected_position"))
@@ -1057,10 +1194,11 @@ def validate_backend_shelf_actions(
             f_item["claimants"] = claimant_details
             findings.append(f_item)
 
-    units = _walk_units(raw_items)
     occupancy = _walk_occupancy(raw_items, units, shelf_products)
-    never_cleared = cleared_later = 0
+    never_cleared = cleared_later = kept_ok = 0
     for unit, result in zip(units, occupancy):
+        if result and result["status"] == "kept_ok":
+            kept_ok += 1
         if not result or result["status"] not in ("occupied", "occupied_cleared_later"):
             continue
         flagged = dict(unit["row"])
@@ -1127,6 +1265,7 @@ def validate_backend_shelf_actions(
             "blocked_destinations": never_cleared + cleared_later,
             "destination_never_cleared": never_cleared,
             "destination_cleared_later": cleared_later,
+            "destination_kept_ok": kept_ok,
             "mutual_blocks": len(groups),
             "set_asides_without_placement": len(orphans),
             "occupancy_source": "action_rows_and_shelf_scan" if shelf_products else "action_rows",
@@ -1134,6 +1273,7 @@ def validate_backend_shelf_actions(
         "findings": findings,
         "rule_check": {
             "same_bay_set_aside": rule_counts["SAME_BAY_SET_ASIDE"],
+            "same_bay_hold_for_room": sum(1 for plan in plans.values() if plan["justified"]),
             "same_bay_move_not_fix_in_bay": rule_counts["SAME_BAY_MOVE_NOT_FIX_IN_BAY"],
             "fix_in_bay_across_bays": rule_counts["FIX_IN_BAY_ACROSS_BAYS"],
             "backend_swap_actions": backend_names["swap"],
