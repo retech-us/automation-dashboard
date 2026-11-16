@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-11-15T06:08:46Z",
-  "durationMs": 23301764,
+  "finishedAt": "2026-11-16T04:12:19Z",
+  "durationMs": 16287479,
   "summary": {
     "total": 25,
     "passed": 13,
-    "failed": 0,
-    "broken": 12,
+    "failed": 1,
+    "broken": 11,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/43653851898",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/43775475960",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -30,7 +30,7 @@
       "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
       "status": "broken",
       "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "reason": "Test failed: 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_8",
       "feature": "Navigation through steps of the task"
     },
     {
@@ -38,7 +38,7 @@
       "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
       "status": "broken",
       "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': Could not start or resume task. Status: UNKNOWN",
+      "reason": "Test failed: 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': Could not start or resume task. Status: NOT_STARTED",
       "feature": "Navigation through steps of the task"
     },
     {
@@ -52,56 +52,58 @@
     {
       "name": "Navigate through task with survey",
       "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Product name after UPC should match expected expected [BLU BUF DG FD NTRL ADLT CHKN BRN RICE] but found [BLBF CHK BRN RC WGT CNTRL]",
       "feature": "Navigation through steps of the task"
     },
     {
-      "name": "Tracked Capture Screen Camera icon",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
+      "name": "Price tag actions are generated when scan has incorrect price compared to config",
+      "fullName": "src/test/resources/featureFiles/08_PriceTagActions.feature:19",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Camera icon not found on tracked capture section",
-      "feature": "Tracked Capture Screen"
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/08_PriceTagActions.feature:19': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_8",
+      "feature": "to validate Price Tag actions"
+    },
+    {
+      "name": "Price tag actions are generated when scan matches configured price",
+      "fullName": "src/test/resources/featureFiles/08_PriceTagActions.feature:5",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/08_PriceTagActions.feature:5': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_8",
+      "feature": "to validate Price Tag actions"
+    },
+    {
+      "name": "Price tag actions are not generated if the price tag not detected",
+      "fullName": "src/test/resources/featureFiles/08_PriceTagActions.feature:34",
+      "status": "broken",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/08_PriceTagActions.feature:34': Store entry failed \u2014 in-store chrome (task search / bottom nav) not found after selecting: Automated_Store_8",
+      "feature": "to validate Price Tag actions"
     },
     {
       "name": "Tracked Capture Screen Camera icon",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 60 seconds",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     },
     {
-      "name": "Tracked Capture Screen section rejection",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
+      "name": "Tracked Capture Screen Camera icon",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
       "status": "broken",
-      "category": "locator",
-      "reason": "UI element not found or not interactable in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': No selectable reason option found within 40s",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen section rejection",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
-      "feature": "Tracked Capture Screen"
-    },
-    {
-      "name": "Tracked Capture Screen sorting by aisle Ascending/Descending order",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34",
-      "status": "broken",
-      "category": "timeout",
-      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:34'",
+      "category": "unknown",
+      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
       "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
-    "locator": 4,
-    "timeout": 8,
-    "unknown": 11
+    "locator": 3,
+    "timeout": 4,
+    "api": 1,
+    "assertion": 1,
+    "unknown": 19
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
@@ -131,7 +133,7 @@
       "status": "failure"
     }
   ],
-  "runId": "43653851898",
-  "runNumber": 359,
+  "runId": "43775475960",
+  "runNumber": 360,
   "environment": "CI"
 }
