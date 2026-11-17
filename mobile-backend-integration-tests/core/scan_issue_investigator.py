@@ -7,6 +7,8 @@ destination are the same slot, and a post-photo that generates that move again.
 
 import json
 import ssl
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from collections import defaultdict
@@ -584,13 +586,31 @@ def _default_opener(request, timeout=40):
     return urllib.request.urlopen(request, context=ssl._create_unverified_context(), timeout=timeout)
 
 
+_TRANSIENT_HTTP_CODES = frozenset({429, 500, 502, 503, 504})
+# Wait before the 2nd and 3rd try. The retailer backend sometimes answers 502 for a moment under load.
+_RETRY_DELAYS = (0.6, 1.8)
+
+
+def _is_transient(error: BaseException) -> bool:
+    if isinstance(error, urllib.error.HTTPError):
+        return error.code in _TRANSIENT_HTTP_CODES
+    return isinstance(error, (urllib.error.URLError, TimeoutError, ConnectionError, OSError))
+
+
 def _get_json(opener, base_url: str, token: str, path: str) -> Dict[str, Any]:
     request = urllib.request.Request(
         base_url.rstrip("/") + path,
         headers={"Accept": "application/json", "Authorization": f"Token {token}"},
     )
-    with opener(request, timeout=40) as response:
-        return json.loads(response.read().decode("utf-8"))
+    for attempt in range(len(_RETRY_DELAYS) + 1):
+        try:
+            with opener(request, timeout=40) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except Exception as error:  # noqa: BLE001 - only temporary failures are retried
+            if attempt >= len(_RETRY_DELAYS) or not _is_transient(error):
+                raise
+            time.sleep(_RETRY_DELAYS[attempt])
+    raise RuntimeError("unreachable")
 
 
 def _matching_scans(opener, base_url, token, store_id, planogram_public_id, date, store_planogram_id) -> List[Dict[str, Any]]:
