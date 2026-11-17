@@ -1307,6 +1307,7 @@
   }
 
   let placementRequestSeq = 0;
+  let lastPlacementArgs = null;
 
   function resetPlacementCheck(message) {
     placementRequestSeq += 1;
@@ -1373,6 +1374,15 @@
     if (!report || report.status !== 'ready') {
       setText('ir-placement-sub', (report && report.error) || 'The scans could not be compared with the planogram.');
       stagesEl.innerHTML = '';
+      if (lastPlacementArgs) {
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.id = 'ir-placement-retry';
+        retry.className = 'btn btn--outline btn--sm';
+        retry.textContent = 'Try again';
+        retry.onclick = () => loadPlacementCheck(lastPlacementArgs.taskId, lastPlacementArgs.inst);
+        stagesEl.appendChild(retry);
+      }
       return;
     }
     const stages = report.by_stage || {};
@@ -1382,6 +1392,7 @@
 
   async function loadPlacementCheck(taskId, inst) {
     if (!taskId || taskId === 'latest') return;
+    lastPlacementArgs = { taskId, inst };
     resetPlacementCheck('Comparing the scans with the planogram…');
     const seq = placementRequestSeq;
     try {

@@ -1,10 +1,14 @@
 """Scan problem investigator: wrong-slot ok, same-slot moves, post-photo repeats."""
 
+import json
 import sys
 import unittest
+import urllib.error
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from core import scan_issue_investigator as investigator
 from core.scan_issue_investigator import compare_realogram_positions, investigate_issue, parse_scan_url, planogram_slots
 
 
@@ -265,6 +269,70 @@ class ScanIssueInvestigatorTests(unittest.TestCase):
         self.assertEqual(report["ok_wrong_position"], 2)
         self.assertEqual(report["ok_wrong_position_no_action"], 1)
         self.assertEqual(report["ok_wrong_position_no_action_items"][0]["slot"], "1:2")
+
+
+class _Reply:
+    def __init__(self, body):
+        self._body = body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def read(self):
+        return json.dumps(self._body).encode("utf-8")
+
+
+def _flaky_opener(failures):
+    """Fail with each error in `failures`, then answer."""
+    calls = []
+
+    def opener(request, timeout=40):
+        calls.append(request.full_url)
+        if len(calls) <= len(failures):
+            raise failures[len(calls) - 1]
+        return _Reply({"ok": True})
+
+    opener.calls = calls
+    return opener
+
+
+class GetJsonRetryTests(unittest.TestCase):
+    def setUp(self):
+        patcher = patch.object(investigator, "_RETRY_DELAYS", (0, 0))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @staticmethod
+    def _http_error(code):
+        return urllib.error.HTTPError("https://krcs.rebotics.net/x", code, "err", None, None)
+
+    def test_a_temporary_bad_gateway_is_retried_and_then_succeeds(self):
+        opener = _flaky_opener([self._http_error(502), self._http_error(502)])
+        result = investigator._get_json(opener, "https://krcs.rebotics.net", "token", "/api/v4/processing/actions/1/")
+        self.assertEqual(result, {"ok": True})
+        self.assertEqual(len(opener.calls), 3)
+
+    def test_a_dropped_connection_is_retried(self):
+        opener = _flaky_opener([urllib.error.URLError("connection reset")])
+        self.assertEqual(investigator._get_json(opener, "https://krcs.rebotics.net", "t", "/x"), {"ok": True})
+        self.assertEqual(len(opener.calls), 2)
+
+    def test_it_gives_up_after_three_attempts(self):
+        opener = _flaky_opener([self._http_error(502)] * 5)
+        with self.assertRaises(urllib.error.HTTPError) as caught:
+            investigator._get_json(opener, "https://krcs.rebotics.net", "t", "/x")
+        self.assertEqual(caught.exception.code, 502)
+        self.assertEqual(len(opener.calls), 3)
+
+    def test_an_expired_sign_in_is_not_retried(self):
+        for code in (401, 403, 404):
+            opener = _flaky_opener([self._http_error(code)] * 3)
+            with self.assertRaises(urllib.error.HTTPError):
+                investigator._get_json(opener, "https://krcs.rebotics.net", "t", "/x")
+            self.assertEqual(len(opener.calls), 1, f"HTTP {code} must fail straight away")
 
 
 if __name__ == "__main__":
