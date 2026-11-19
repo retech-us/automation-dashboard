@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-19T21:32:05+00:00",
+  "generated_at": "2026-11-19T21:46:59+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
   "errors": [],
@@ -563,8 +563,8 @@
     {
       "date": "2026-11-19",
       "accepted": 0,
-      "quota_dropped": 40979417,
-      "dropped": 74650112
+      "quota_dropped": 41620310,
+      "dropped": 75666384
     }
   ],
   "months": [
@@ -593,20 +593,20 @@
       "month": "2026-11",
       "days_covered": 19,
       "accepted_total": 0,
-      "quota_dropped": 1260993564,
-      "all_dropped": 2385607318
+      "quota_dropped": 1261634457,
+      "all_dropped": 2386623590
     }
   ],
   "span_drop_reasons_90d": {
-    "rate_limited/span_usage_exceeded": 6023993076,
-    "client_discard/ratelimit_backoff": 4542545831,
-    "client_discard/sample_rate": 1150641649,
+    "rate_limited/span_usage_exceeded": 6024633969,
+    "client_discard/ratelimit_backoff": 4542756272,
+    "client_discard/sample_rate": 1150791586,
     "invalid/too_large:transaction": 1048177138,
     "rate_limited/spike_protection": 323270773,
-    "client_discard/backpressure": 173427687,
+    "client_discard/backpressure": 173442527,
     "client_discard/network_error": 7923369,
     "client_discard/send_error": 1446951,
-    "client_discard/before_send": 745936,
+    "client_discard/before_send": 746083,
     "filtered/web-crawlers": 675986,
     "invalid/too_large:span": 314955,
     "client_discard/buffer_overflow": 274208,
@@ -614,14 +614,14 @@
     "client_discard/queue_overflow": 118260,
     "filtered/filtered-transaction": 100928,
     "invalid/invalid_transaction": 15709,
-    "client_discard/no_parent_span": 7852,
+    "client_discard/no_parent_span": 7866,
     "filtered/legacy-browsers": 1048,
     "invalid/internal": 2
   },
   "period_usage": {
-    "error": 811739,
+    "error": 811842,
     "log_byte": 5002346080,
-    "replay": 255624,
+    "replay": 255743,
     "span": 271017293,
     "attachment": 34312555,
     "profile_duration_ui": 40.5,
@@ -630,11 +630,11 @@
     "uptime": 0
   },
   "error_outcomes_30d": {
+    "accepted": 955263,
     "filtered": 381,
-    "client_discard": 3060828,
-    "accepted": 955158,
-    "invalid": 301,
-    "rate_limited": 2121
+    "rate_limited": 2121,
+    "client_discard": 3061199,
+    "invalid": 301
   },
   "projects_period": [
     {
@@ -923,7 +923,18 @@
     }
   ],
   "span_ops_30d": {
-    "rebm": {},
+    "rebm": {
+      "event.django": 204613335.0,
+      "middleware.django": 27605964.0,
+      "db": 19978957.0,
+      "http.server": 1507404.0,
+      "view.render": 1300755.0,
+      "view.response.render": 1294123.0,
+      "http.client": 256803.0,
+      "db.redis": 245208.0,
+      "http.client.stream": 14400.0,
+      "template.render": 3.0
+    },
     "android": {
       "http.client": 3073676.0,
       "activity.load": 281387.0,
