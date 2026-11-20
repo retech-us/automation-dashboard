@@ -1,8 +1,10 @@
 {
-  "generated_at": "2026-11-20T03:32:02+00:00",
+  "generated_at": "2026-11-20T03:46:49+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
-  "errors": [],
+  "errors": [
+    "period_usage: The read operation timed out"
+  ],
   "billing_period": {
     "start": "2026-10-25",
     "end": "2026-11-24",
@@ -558,13 +560,13 @@
       "date": "2026-11-19",
       "accepted": 0,
       "quota_dropped": 46527027,
-      "dropped": 83406815
+      "dropped": 83407033
     },
     {
       "date": "2026-11-20",
       "accepted": 0,
-      "quota_dropped": 3647446,
-      "dropped": 6497408
+      "quota_dropped": 3815603,
+      "dropped": 6855973
     }
   ],
   "months": [
@@ -593,20 +595,20 @@
       "month": "2026-11",
       "days_covered": 20,
       "accepted_total": 0,
-      "quota_dropped": 1270188620,
-      "all_dropped": 2400862162
+      "quota_dropped": 1270356777,
+      "all_dropped": 2401220945
     }
   ],
   "span_drop_reasons_90d": {
-    "rate_limited/span_usage_exceeded": 6006390870,
-    "client_discard/ratelimit_backoff": 4533361329,
-    "client_discard/sample_rate": 1140913815,
+    "rate_limited/span_usage_exceeded": 6006559027,
+    "client_discard/ratelimit_backoff": 4533453585,
+    "client_discard/sample_rate": 1141008569,
     "invalid/too_large:transaction": 1048177138,
     "rate_limited/spike_protection": 323270773,
-    "client_discard/backpressure": 172777027,
-    "client_discard/network_error": 7912380,
+    "client_discard/backpressure": 172780540,
+    "client_discard/network_error": 7912475,
     "client_discard/send_error": 1446962,
-    "client_discard/before_send": 692878,
+    "client_discard/before_send": 692886,
     "filtered/web-crawlers": 675986,
     "invalid/too_large:span": 314955,
     "client_discard/buffer_overflow": 274208,
@@ -618,23 +620,12 @@
     "filtered/legacy-browsers": 1048,
     "invalid/internal": 2
   },
-  "period_usage": {
-    "error": 814335,
-    "log_byte": 5002346080,
-    "replay": 257045,
-    "span": 271017293,
-    "attachment": 34312555,
-    "profile_duration_ui": 40.5,
-    "profile_duration": 0.0,
-    "monitor_seat": 0,
-    "uptime": 0
-  },
   "error_outcomes_30d": {
-    "filtered": 381,
-    "rate_limited": 2020,
     "invalid": 294,
-    "client_discard": 2949614,
-    "accepted": 919279
+    "filtered": 381,
+    "accepted": 919318,
+    "client_discard": 2949800,
+    "rate_limited": 2020
   },
   "projects_period": [
     {
