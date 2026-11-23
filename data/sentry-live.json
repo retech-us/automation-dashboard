@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-22T23:46:37+00:00",
+  "generated_at": "2026-11-23T00:08:26+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
   "errors": [],
@@ -20,12 +20,6 @@
     "attachment": 1000000000.0
   },
   "daily": [
-    {
-      "date": "2026-08-24",
-      "accepted": 0,
-      "quota_dropped": 25458881,
-      "dropped": 49415333
-    },
     {
       "date": "2026-08-25",
       "accepted": 5445642,
@@ -563,17 +557,23 @@
     {
       "date": "2026-11-22",
       "accepted": 0,
-      "quota_dropped": 7484470,
-      "dropped": 21527702
+      "quota_dropped": 7534572,
+      "dropped": 21689112
+    },
+    {
+      "date": "2026-11-23",
+      "accepted": 0,
+      "quota_dropped": 37521,
+      "dropped": 105688
     }
   ],
   "months": [
     {
       "month": "2026-08",
-      "days_covered": 8,
+      "days_covered": 7,
       "accepted_total": 151142605,
-      "quota_dropped": 25469255,
-      "all_dropped": 455278450
+      "quota_dropped": 10374,
+      "all_dropped": 405863117
     },
     {
       "month": "2026-09",
@@ -591,37 +591,37 @@
     },
     {
       "month": "2026-11",
-      "days_covered": 22,
+      "days_covered": 23,
       "accepted_total": 0,
-      "quota_dropped": 1320635934,
-      "all_dropped": 2510830934
+      "quota_dropped": 1320723557,
+      "all_dropped": 2511098032
     }
   ],
   "span_drop_reasons_90d": {
-    "rate_limited/span_usage_exceeded": 6043416994,
-    "client_discard/ratelimit_backoff": 4554715689,
-    "client_discard/sample_rate": 1155585600,
+    "rate_limited/span_usage_exceeded": 6018045736,
+    "client_discard/ratelimit_backoff": 4544668304,
+    "client_discard/sample_rate": 1142683989,
     "invalid/too_large:transaction": 1048177138,
     "rate_limited/spike_protection": 323270773,
-    "client_discard/backpressure": 174111470,
-    "client_discard/network_error": 7931301,
-    "client_discard/send_error": 1447342,
-    "client_discard/before_send": 696668,
+    "client_discard/backpressure": 173386405,
+    "client_discard/network_error": 7836584,
+    "client_discard/send_error": 1447298,
+    "client_discard/before_send": 689042,
     "filtered/web-crawlers": 675986,
     "invalid/too_large:span": 314955,
     "client_discard/buffer_overflow": 274208,
-    "client_discard/cache_overflow": 129273,
-    "client_discard/queue_overflow": 118930,
+    "client_discard/cache_overflow": 129138,
+    "client_discard/queue_overflow": 118552,
     "filtered/filtered-transaction": 100928,
     "invalid/invalid_transaction": 15709,
-    "client_discard/no_parent_span": 8213,
+    "client_discard/no_parent_span": 8197,
     "filtered/legacy-browsers": 1048,
     "invalid/internal": 2
   },
   "period_usage": {
-    "error": 851979,
+    "error": 851998,
     "log_byte": 5002346080,
-    "replay": 267366,
+    "replay": 267379,
     "span": 271017293,
     "attachment": 36105848,
     "profile_duration_ui": 40.5,
@@ -630,11 +630,11 @@
     "uptime": 0
   },
   "error_outcomes_30d": {
+    "filtered": 380,
+    "client_discard": 2780438,
     "rate_limited": 2020,
-    "client_discard": 2886960,
-    "accepted": 885151,
-    "invalid": 294,
-    "filtered": 380
+    "accepted": 856435,
+    "invalid": 256
   },
   "projects_period": [
     {
@@ -714,8 +714,8 @@
     {
       "project": "android",
       "environment": "production",
-      "stored": 4055488.0,
-      "extrapolated": 4055697.0
+      "stored": 4055465.0,
+      "extrapolated": 4055674.0
     },
     {
       "project": "rebotics-frontend",
@@ -936,16 +936,16 @@
       "template.render": 3.0
     },
     "android": {
-      "http.client": 3073364.0,
-      "activity.load": 281334.0,
-      "ui.load": 266008.0,
-      "ui.load.initial_display": 266008.0,
+      "http.client": 3073359.0,
+      "activity.load": 281327.0,
+      "ui.load": 266003.0,
+      "ui.load.initial_display": 266003.0,
       "Instance , albt|ModelName , LineDetection_Mobile_3_May_2023": 60131.0,
       "Instance , krcs|ModelName , LineDetection_Android_3_May_2023": 35266.0,
       "Instance , kroger|ModelName , LineDetection_Android_3_May_2023": 23347.0,
       "app.start.warm": 10631.0,
       "Instance , whfd|ModelName , LineDetection_Android_3_May_2023": 9888.0,
-      "app.start.cold": 9220.0,
+      "app.start.cold": 9219.0,
       "process.load": 8572.0,
       "Instance , harr|ModelName , LineDetection_Android_3_May_2023": 6471.0,
       "Instance , albertsons|ModelName , LineDetection_Mobile_3_May_2023": 2694.0,
