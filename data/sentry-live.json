@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-25T02:46:40+00:00",
+  "generated_at": "2026-11-25T03:03:47+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
   "errors": [],
@@ -558,13 +558,13 @@
       "date": "2026-11-24",
       "accepted": 0,
       "quota_dropped": 20282267,
-      "dropped": 40378409
+      "dropped": 40378561
     },
     {
       "date": "2026-11-25",
-      "accepted": 256484,
+      "accepted": 271596,
       "quota_dropped": 189957,
-      "dropped": 1684179
+      "dropped": 1826856
     }
   ],
   "months": [
@@ -592,74 +592,74 @@
     {
       "month": "2026-11",
       "days_covered": 25,
-      "accepted_total": 256484,
+      "accepted_total": 271596,
       "quota_dropped": 1366602072,
-      "all_dropped": 2600049379
+      "all_dropped": 2600192208
     }
   ],
   "span_drop_reasons_90d": {
     "rate_limited/span_usage_exceeded": 6063913877,
     "client_discard/ratelimit_backoff": 4544679350,
-    "client_discard/sample_rate": 1142461126,
-    "invalid/too_large:transaction": 1022075240,
+    "client_discard/sample_rate": 1142585176,
+    "invalid/too_large:transaction": 1022093238,
     "rate_limited/spike_protection": 293445400,
     "client_discard/backpressure": 172740241,
     "client_discard/network_error": 7801774,
-    "client_discard/send_error": 1435456,
+    "client_discard/send_error": 1435829,
     "client_discard/before_send": 660520,
-    "filtered/web-crawlers": 600793,
+    "filtered/web-crawlers": 601156,
     "invalid/too_large:span": 293660,
     "client_discard/buffer_overflow": 274208,
     "client_discard/cache_overflow": 130358,
     "client_discard/queue_overflow": 121078,
-    "filtered/filtered-transaction": 89670,
+    "filtered/filtered-transaction": 89715,
     "invalid/invalid_transaction": 15314,
     "client_discard/no_parent_span": 8633,
     "filtered/legacy-browsers": 564,
     "invalid/internal": 2
   },
   "period_usage": {
-    "error": 757,
-    "log_byte": 4809755,
-    "replay": 312,
-    "span": 256484,
+    "error": 777,
+    "log_byte": 4821407,
+    "replay": 329,
+    "span": 271596,
     "attachment": 0,
-    "profile_duration_ui": 0.28,
+    "profile_duration_ui": 0.3,
     "profile_duration": 0.0,
     "monitor_seat": 0,
     "uptime": 0
   },
   "error_outcomes_30d": {
-    "accepted": 910223,
+    "client_discard": 2971052,
+    "invalid": 256,
     "filtered": 390,
-    "rate_limited": 2020,
-    "client_discard": 2970856,
-    "invalid": 256
+    "accepted": 910244,
+    "rate_limited": 2020
   },
   "projects_period": [
     {
       "project": "rebm",
-      "accepted": 133945
+      "accepted": 139026
     },
     {
       "project": "hawkeye",
-      "accepted": 56228
+      "accepted": 64651
     },
     {
       "project": "race-platform",
-      "accepted": 50426
+      "accepted": 50430
     },
     {
       "project": "ios",
-      "accepted": 11200
+      "accepted": 12292
     },
     {
       "project": "android",
-      "accepted": 4222
+      "accepted": 4736
     },
     {
       "project": "rebotics-frontend",
-      "accepted": 463
+      "accepted": 573
     }
   ],
   "environments_30d": [
@@ -678,8 +678,8 @@
     {
       "project": "rebm",
       "environment": "albt",
-      "stored": 20356676.0,
-      "extrapolated": 58711588.0
+      "stored": 20361757.0,
+      "extrapolated": 58716669.0
     },
     {
       "project": "rebm",
@@ -714,14 +714,14 @@
     {
       "project": "android",
       "environment": "production",
-      "stored": 3864180.0,
-      "extrapolated": 3864389.0
+      "stored": 3863444.0,
+      "extrapolated": 3863653.0
     },
     {
       "project": "rebotics-frontend",
       "environment": "production",
-      "stored": 3768671.0,
-      "extrapolated": 3768671.0
+      "stored": 3768781.0,
+      "extrapolated": 3768781.0
     },
     {
       "project": "rebm",
@@ -732,8 +732,8 @@
     {
       "project": "ios",
       "environment": "production",
-      "stored": 3271673.0,
-      "extrapolated": 10496152.0
+      "stored": 3271262.0,
+      "extrapolated": 10496338.0
     },
     {
       "project": "rebm",
@@ -744,14 +744,14 @@
     {
       "project": "hawkeye",
       "environment": "epsilon",
-      "stored": 1049031.0,
-      "extrapolated": 1049031.0
+      "stored": 1051250.0,
+      "extrapolated": 1051250.0
     },
     {
       "project": "hawkeye",
       "environment": "stgalbt",
-      "stored": 1003917.0,
-      "extrapolated": 1003917.0
+      "stored": 1004683.0,
+      "extrapolated": 1004683.0
     },
     {
       "project": "rebm",
@@ -762,8 +762,8 @@
     {
       "project": "race-platform",
       "environment": "dev01",
-      "stored": 213087.0,
-      "extrapolated": 215139.0
+      "stored": 212930.0,
+      "extrapolated": 214982.0
     },
     {
       "project": "rebm",
@@ -786,8 +786,8 @@
     {
       "project": "hawkeye",
       "environment": "qktp",
-      "stored": 42296.0,
-      "extrapolated": 219960302.0
+      "stored": 42284.0,
+      "extrapolated": 219840302.0
     },
     {
       "project": "rebm",
@@ -822,8 +822,8 @@
     {
       "project": "race-platform",
       "environment": "test02",
-      "stored": 3210.0,
-      "extrapolated": 3210.0
+      "stored": 3206.0,
+      "extrapolated": 3206.0
     },
     {
       "project": "rebm",
@@ -930,28 +930,28 @@
   ],
   "span_ops_30d": {
     "rebm": {
-      "event.django": 201439673.0,
-      "middleware.django": 27105445.0,
-      "db": 19619140.0,
-      "http.server": 1480354.0,
-      "view.render": 1276387.0,
-      "view.response.render": 1270208.0,
-      "http.client": 251098.0,
-      "db.redis": 237517.0,
+      "event.django": 201443479.0,
+      "middleware.django": 27106133.0,
+      "db": 19619609.0,
+      "http.server": 1480391.0,
+      "view.render": 1276421.0,
+      "view.response.render": 1270242.0,
+      "http.client": 251102.0,
+      "db.redis": 237526.0,
       "http.client.stream": 14092.0
     },
     "android": {
-      "http.client": 2918805.0,
-      "activity.load": 270100.0,
-      "ui.load": 255355.0,
-      "ui.load.initial_display": 255355.0,
+      "http.client": 2918145.0,
+      "activity.load": 270073.0,
+      "ui.load": 255335.0,
+      "ui.load.initial_display": 255335.0,
       "Instance , albt|ModelName , LineDetection_Mobile_3_May_2023": 56927.0,
       "Instance , krcs|ModelName , LineDetection_Android_3_May_2023": 35209.0,
       "Instance , kroger|ModelName , LineDetection_Android_3_May_2023": 23270.0,
-      "app.start.warm": 10337.0,
+      "app.start.warm": 10339.0,
       "Instance , whfd|ModelName , LineDetection_Android_3_May_2023": 9888.0,
-      "app.start.cold": 8947.0,
-      "process.load": 8331.0,
+      "app.start.cold": 8943.0,
+      "process.load": 8327.0,
       "Instance , harr|ModelName , LineDetection_Android_3_May_2023": 6471.0,
       "Instance , albertsons|ModelName , LineDetection_Mobile_3_May_2023": 2631.0,
       "Instance , weis|ModelName , LineDetection_Android_3_May_2023": 2554.0
