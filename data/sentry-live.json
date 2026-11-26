@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-26T14:03:36+00:00",
+  "generated_at": "2026-11-26T14:18:46+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
   "errors": [],
@@ -562,9 +562,9 @@
     },
     {
       "date": "2026-11-26",
-      "accepted": 3022501,
+      "accepted": 3050487,
       "quota_dropped": 0,
-      "dropped": 12608252
+      "dropped": 12776402
     }
   ],
   "months": [
@@ -592,74 +592,74 @@
     {
       "month": "2026-11",
       "days_covered": 26,
-      "accepted_total": 8279632,
+      "accepted_total": 8307618,
       "quota_dropped": 1366602072,
-      "all_dropped": 2639497003
+      "all_dropped": 2639665153
     }
   ],
   "span_drop_reasons_90d": {
     "rate_limited/span_usage_exceeded": 6063913877,
     "client_discard/ratelimit_backoff": 4545172858,
-    "client_discard/sample_rate": 1145479841,
-    "invalid/too_large:transaction": 1008845687,
+    "client_discard/sample_rate": 1145607627,
+    "invalid/too_large:transaction": 1008885727,
     "rate_limited/spike_protection": 298958900,
     "client_discard/backpressure": 172889865,
     "client_discard/network_error": 7660398,
     "client_discard/send_error": 1482095,
     "client_discard/before_send": 623246,
-    "filtered/web-crawlers": 599996,
+    "filtered/web-crawlers": 600291,
     "client_discard/buffer_overflow": 274208,
     "invalid/too_large:span": 271304,
     "client_discard/cache_overflow": 131465,
-    "client_discard/queue_overflow": 124596,
-    "filtered/filtered-transaction": 90893,
+    "client_discard/queue_overflow": 124610,
+    "filtered/filtered-transaction": 90908,
     "invalid/invalid_transaction": 16015,
     "client_discard/no_parent_span": 9102,
     "filtered/legacy-browsers": 496,
     "invalid/internal": 2
   },
   "period_usage": {
-    "error": 42826,
-    "log_byte": 483845248,
-    "replay": 8455,
-    "span": 8279687,
+    "error": 43323,
+    "log_byte": 489082621,
+    "replay": 8500,
+    "span": 8307658,
     "attachment": 539032,
-    "profile_duration_ui": 8.97,
+    "profile_duration_ui": 9.03,
     "profile_duration": 0.0,
     "monitor_seat": 0,
     "uptime": 0
   },
   "error_outcomes_30d": {
-    "accepted": 921691,
     "filtered": 391,
-    "invalid": 244,
     "rate_limited": 1735,
-    "client_discard": 3048140
+    "invalid": 244,
+    "accepted": 922189,
+    "client_discard": 3048439
   },
   "projects_period": [
     {
       "project": "rebm",
-      "accepted": 4080347
+      "accepted": 4092367
     },
     {
       "project": "rebotics-frontend",
-      "accepted": 1714248
+      "accepted": 1716258
     },
     {
       "project": "hawkeye",
-      "accepted": 1231174
+      "accepted": 1241947
     },
     {
       "project": "ios",
-      "accepted": 585049
+      "accepted": 585279
     },
     {
       "project": "race-platform",
-      "accepted": 341627
+      "accepted": 341629
     },
     {
       "project": "android",
-      "accepted": 327242
+      "accepted": 330214
     }
   ],
   "environments_30d": [
@@ -678,8 +678,8 @@
     {
       "project": "rebm",
       "environment": "albt",
-      "stored": 19373736.0,
-      "extrapolated": 58749534.0
+      "stored": 19375326.0,
+      "extrapolated": 58755328.0
     },
     {
       "project": "rebm",
@@ -714,8 +714,8 @@
     {
       "project": "rebotics-frontend",
       "environment": "production",
-      "stored": 3493126.0,
-      "extrapolated": 3493126.0
+      "stored": 3485724.0,
+      "extrapolated": 3485724.0
     },
     {
       "project": "rebm",
@@ -726,32 +726,32 @@
     {
       "project": "rebm",
       "environment": "sona",
-      "stored": 2822595.0,
-      "extrapolated": 10708734.0
+      "stored": 2834040.0,
+      "extrapolated": 11349549.0
     },
     {
       "project": "ios",
       "environment": "production",
-      "stored": 2724667.0,
-      "extrapolated": 8193727.0
+      "stored": 2699502.0,
+      "extrapolated": 8123383.0
     },
     {
       "project": "android",
       "environment": "production",
-      "stored": 2671158.0,
-      "extrapolated": 2671318.0
+      "stored": 2652697.0,
+      "extrapolated": 2652857.0
     },
     {
       "project": "hawkeye",
       "environment": "epsilon",
-      "stored": 1273298.0,
-      "extrapolated": 1273298.0
+      "stored": 1271419.0,
+      "extrapolated": 1271419.0
     },
     {
       "project": "hawkeye",
       "environment": "stgalbt",
-      "stored": 1172899.0,
-      "extrapolated": 1172899.0
+      "stored": 1174734.0,
+      "extrapolated": 1174734.0
     },
     {
       "project": "rebm",
@@ -792,8 +792,8 @@
     {
       "project": "hawkeye",
       "environment": "qktp",
-      "stored": 64490.0,
-      "extrapolated": 226261868.0
+      "stored": 64282.0,
+      "extrapolated": 226241662.0
     },
     {
       "project": "rebm",
@@ -924,30 +924,30 @@
   ],
   "span_ops_30d": {
     "rebm": {
-      "event.django": 169779149.0,
-      "middleware.django": 23094823.0,
-      "db": 16820152.0,
-      "http.server": 1259276.0,
-      "view.render": 1093272.0,
-      "view.response.render": 1087966.0,
-      "http.client": 219726.0,
-      "db.redis": 199080.0,
+      "event.django": 169786384.0,
+      "middleware.django": 23098338.0,
+      "db": 16821620.0,
+      "http.server": 1259461.0,
+      "view.render": 1093457.0,
+      "view.response.render": 1088151.0,
+      "http.client": 219740.0,
+      "db.redis": 199204.0,
       "http.client.stream": 12697.0
     },
     "rebotics-frontend": {
-      "resource.script": 855863.0,
-      "mark": 622065.0,
-      "measure": 585074.0,
-      "ui.angular.routing": 381468.0,
-      "http.client": 299110.0,
-      "browser": 287803.0,
-      "navigation": 237614.0,
-      "resource.img": 91500.0,
-      "resource.css": 35095.0,
-      "resource.link": 32685.0,
-      "pageload": 32349.0,
-      "paint": 23248.0,
-      "resource.other": 7204.0,
+      "resource.script": 853950.0,
+      "mark": 620711.0,
+      "measure": 583846.0,
+      "ui.angular.routing": 381080.0,
+      "http.client": 297959.0,
+      "browser": 287250.0,
+      "navigation": 237417.0,
+      "resource.img": 91125.0,
+      "resource.css": 35091.0,
+      "resource.link": 32616.0,
+      "pageload": 32284.0,
+      "paint": 23152.0,
+      "resource.other": 7195.0,
       "web.vitals": 647.0,
       "ui.long-animation-frame": 228.0
     }
