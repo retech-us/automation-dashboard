@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T13:17:00+00:00",
+  "generated_at": "2026-11-28T13:31:46+00:00",
   "org": "retech-labs",
   "source": "sentry-api",
   "errors": [],
@@ -562,9 +562,9 @@
     },
     {
       "date": "2026-11-28",
-      "accepted": 2386586,
+      "accepted": 2426911,
       "quota_dropped": 0,
-      "dropped": 9797311
+      "dropped": 10024330
     }
   ],
   "months": [
@@ -592,37 +592,37 @@
     {
       "month": "2026-11",
       "days_covered": 28,
-      "accepted_total": 18252817,
+      "accepted_total": 18293142,
       "quota_dropped": 1366602072,
-      "all_dropped": 2679242769
+      "all_dropped": 2679469788
     }
   ],
   "span_drop_reasons_90d": {
     "rate_limited/span_usage_exceeded": 6063913877,
     "client_discard/ratelimit_backoff": 4545378670,
-    "client_discard/sample_rate": 1143621656,
-    "invalid/too_large:transaction": 999485197,
+    "client_discard/sample_rate": 1143744722,
+    "invalid/too_large:transaction": 999588807,
     "rate_limited/spike_protection": 300796540,
     "client_discard/backpressure": 172925362,
     "client_discard/network_error": 7543018,
     "client_discard/send_error": 1491134,
     "client_discard/before_send": 583447,
-    "filtered/web-crawlers": 574128,
+    "filtered/web-crawlers": 574456,
     "client_discard/buffer_overflow": 274208,
     "invalid/too_large:span": 248700,
     "client_discard/cache_overflow": 132457,
     "client_discard/queue_overflow": 126226,
-    "filtered/filtered-transaction": 87110,
+    "filtered/filtered-transaction": 87125,
     "invalid/invalid_transaction": 17038,
     "client_discard/no_parent_span": 9275,
     "filtered/legacy-browsers": 711,
     "invalid/internal": 2
   },
   "period_usage": {
-    "error": 65109,
-    "log_byte": 783378831,
-    "replay": 10806,
-    "span": 18252817,
+    "error": 65119,
+    "log_byte": 784646184,
+    "replay": 10808,
+    "span": 18293241,
     "attachment": 682499,
     "profile_duration_ui": 12.86,
     "profile_duration": 0.0,
@@ -631,19 +631,19 @@
   },
   "error_outcomes_30d": {
     "filtered": 392,
-    "accepted": 867469,
     "invalid": 237,
-    "rate_limited": 1234,
-    "client_discard": 2914521
+    "accepted": 867479,
+    "client_discard": 2914702,
+    "rate_limited": 1234
   },
   "projects_period": [
     {
       "project": "rebm",
-      "accepted": 11047766
+      "accepted": 11079387
     },
     {
       "project": "hawkeye",
-      "accepted": 2720357
+      "accepted": 2727325
     },
     {
       "project": "rebotics-frontend",
@@ -651,15 +651,15 @@
     },
     {
       "project": "race-platform",
-      "accepted": 832133
+      "accepted": 832864
     },
     {
       "project": "ios",
-      "accepted": 708047
+      "accepted": 708638
     },
     {
       "project": "android",
-      "accepted": 485478
+      "accepted": 485991
     },
     {
       "project": "fvm",
@@ -670,8 +670,8 @@
     {
       "project": "rebm",
       "environment": "albt",
-      "stored": 10179759.0,
-      "extrapolated": 50024220.0
+      "stored": 10208411.0,
+      "extrapolated": 50085116.0
     },
     {
       "project": "rebotics-frontend",
@@ -682,32 +682,32 @@
     {
       "project": "hawkeye",
       "environment": "stgalbt",
-      "stored": 1373291.0,
-      "extrapolated": 1373291.0
+      "stored": 1376257.0,
+      "extrapolated": 1376257.0
     },
     {
       "project": "hawkeye",
       "environment": "epsilon",
-      "stored": 1289029.0,
-      "extrapolated": 1289029.0
+      "stored": 1292450.0,
+      "extrapolated": 1292450.0
     },
     {
       "project": "ios",
       "environment": "production",
-      "stored": 708566.0,
-      "extrapolated": 2004064.0
+      "stored": 709140.0,
+      "extrapolated": 2006814.0
     },
     {
       "project": "race-platform",
       "environment": "test01",
-      "stored": 539201.0,
-      "extrapolated": 546858.0
+      "stored": 539599.0,
+      "extrapolated": 547256.0
     },
     {
       "project": "android",
       "environment": "production",
-      "stored": 484617.0,
-      "extrapolated": 484617.0
+      "stored": 485128.0,
+      "extrapolated": 485128.0
     },
     {
       "project": "rebm",
@@ -718,8 +718,8 @@
     {
       "project": "race-platform",
       "environment": "dev01",
-      "stored": 286898.0,
-      "extrapolated": 297177.0
+      "stored": 287211.0,
+      "extrapolated": 297490.0
     },
     {
       "project": "rebm",
@@ -748,14 +748,14 @@
     {
       "project": "hawkeye",
       "environment": "qktp",
-      "stored": 57397.0,
-      "extrapolated": 243753025.0
+      "stored": 57549.0,
+      "extrapolated": 245273025.0
     },
     {
       "project": "race-platform",
       "environment": "test02",
-      "stored": 6034.0,
-      "extrapolated": 6034.0
+      "stored": 6054.0,
+      "extrapolated": 6054.0
     },
     {
       "project": "rebm",
@@ -850,26 +850,26 @@
   ],
   "span_ops_30d": {
     "rebm": {
-      "event.django": 7568746.0,
-      "middleware.django": 1972436.0,
-      "db": 1100037.0,
-      "http.server": 103999.0,
-      "view.render": 103315.0,
-      "view.response.render": 103072.0,
-      "http.client": 62462.0,
-      "db.redis": 31780.0,
-      "http.client.stream": 4886.0
+      "event.django": 7588275.0,
+      "middleware.django": 1976720.0,
+      "db": 1103636.0,
+      "http.server": 104225.0,
+      "view.render": 103539.0,
+      "view.response.render": 103296.0,
+      "http.client": 62918.0,
+      "db.redis": 31851.0,
+      "http.client.stream": 4925.0
     },
     "hawkeye": {
-      "event.django": 874686.0,
-      "middleware.django": 710100.0,
-      "db": 532946.0,
-      "http.server": 145140.0,
-      "view.response.render": 144828.0,
-      "db.redis": 142956.0,
-      "view.authenticate": 90239.0,
-      "view.render": 54624.0,
-      "http.client": 25174.0,
+      "event.django": 876872.0,
+      "middleware.django": 711634.0,
+      "db": 534260.0,
+      "http.server": 145503.0,
+      "view.response.render": 145191.0,
+      "db.redis": 143311.0,
+      "view.authenticate": 90484.0,
+      "view.render": 54742.0,
+      "http.client": 25235.0,
       "http.client.stream": 93.0,
       "template.render": 23.0
     }
