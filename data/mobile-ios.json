@@ -5,17 +5,17 @@
   "repository": "retech-us/retech-mobile-automation",
   "status": "active",
   "suite": "regression",
-  "finishedAt": "2026-11-27T06:36:11Z",
-  "durationMs": 24879674,
+  "finishedAt": "2026-11-28T04:27:32Z",
+  "durationMs": 16431883,
   "summary": {
     "total": 25,
-    "passed": 9,
+    "passed": 14,
     "failed": 0,
-    "broken": 16,
+    "broken": 11,
     "skipped": 0
   },
   "reportUrl": "https://retech-us.github.io/retech-mobile-automation/ios/",
-  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/45911733517",
+  "ciRunUrl": "https://github.com/retech-us/retech-mobile-automation/actions/runs/46083201324",
   "topFailures": [
     {
       "name": "Navigate through all the steps of the task",
@@ -29,16 +29,16 @@
       "name": "Navigate through all the steps of the task",
       "fullName": "src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/05_NavigateThroughTheTask.feature:4': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 60 seconds",
       "feature": "Navigation through steps of the task"
     },
     {
       "name": "Navigate through task with action step included",
       "fullName": "src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': Could not start or resume task. Status: UNKNOWN",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/06_TaskWithActionListCompletion.feature:5': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 80 seconds",
       "feature": "Navigation through steps of the task"
     },
     {
@@ -52,18 +52,10 @@
     {
       "name": "Navigate through task with survey",
       "fullName": "src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Could not start or resume task. Status: UNKNOWN",
+      "status": "failed",
+      "category": "assertion",
+      "reason": "Assertion failed in 'src/test/resources/featureFiles/03_SurveyTaskCompletion.feature:4': Product name after UPC should match expected expected [BLU BUF DG FD NTRL ADLT CHKN BRN RICE] but found [BLBF CHK BRN RC WGT CNTRL]",
       "feature": "Navigation through steps of the task"
-    },
-    {
-      "name": "Tracked Capture Screen Camera icon",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
-      "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
-      "feature": "Tracked Capture Screen"
     },
     {
       "name": "Tracked Capture Screen Camera icon",
@@ -74,11 +66,19 @@
       "feature": "Tracked Capture Screen"
     },
     {
+      "name": "Tracked Capture Screen Camera icon",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27",
+      "status": "broken",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:27': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 60 seconds",
+      "feature": "Tracked Capture Screen"
+    },
+    {
       "name": "Tracked Capture Screen View POG from planogram level",
       "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:5': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
       "feature": "Tracked Capture Screen"
     },
     {
@@ -90,32 +90,33 @@
       "feature": "Tracked Capture Screen"
     },
     {
-      "name": "Tracked Capture Screen section rejection",
-      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19",
+      "name": "Tracked Capture Screen View POG from section level",
+      "fullName": "src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12",
       "status": "broken",
-      "category": "unknown",
-      "reason": "Test failed: 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:19': Could not find or click Capture button after all attempts. Please check if the app is on the correct screen.",
+      "category": "timeout",
+      "reason": "Operation timed out in 'src/test/resources/featureFiles/02_TrackedCaptureScreen.feature:12': [ENVIRONMENT_SLOW_LOAD] Element never appeared or became visible within 120 seconds",
       "feature": "Tracked Capture Screen"
     }
   ],
   "failureCategories": {
-    "locator": 3,
-    "timeout": 6,
-    "unknown": 19
+    "locator": 6,
+    "timeout": 9,
+    "assertion": 1,
+    "unknown": 15
   },
   "dataSource": "allure-report",
   "reportName": "Allure Report",
   "counts": {
     "total": 25,
-    "passed": 9,
-    "review": 16,
+    "passed": 14,
+    "review": 11,
     "skipped": 0
   },
   "historyTrend": [
     {
-      "passPct": 36.0,
+      "passPct": 56.0,
       "total": 25,
-      "failed": 16
+      "failed": 11
     }
   ],
   "platform": "iOS",
@@ -131,7 +132,7 @@
       "status": "failure"
     }
   ],
-  "runId": "45911733517",
-  "runNumber": 371,
+  "runId": "46083201324",
+  "runNumber": 372,
   "environment": "CI"
 }
